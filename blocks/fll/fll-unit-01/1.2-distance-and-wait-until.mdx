@@ -1,0 +1,31 @@
+---
+id: distance-and-wait-until
+title: "Lesson F1.2: Distance and Wait Until"
+slug: /fll/unit-01/distance-and-wait-until
+sidebar_label: "F1.2 · Distance and Wait Until"
+sidebar_position: 2
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson F1.2: Distance and Wait Until
+
+The distance sensor estimates how far the nearest visible surface is from the sensor. A wait-until approach keeps moving while the reading is above a threshold, then stops close to the object.
+
+This is a stopping rule, so it needs a safe limit. A sensor can miss a narrow, angled, transparent, or low object. Telemark limits the search distance; a physical program should also include a maximum travel or time.
+
+## Official hardware activity
+
+Complete [Training Camp 2: Playing with Objects](https://education.lego.com/en-us/lessons/prime-competition-ready/training-camp-2-playing-with-objects/).
+
+## Simulator practice
+
+Turn toward the loose object or target, then use a distance stop. Compare a 5 cm threshold with a 20 cm threshold.
+
+<FllPractice lessonId="fll-unit-01/distance-and-wait-until" />
+
+## Try it in the SPIKE App
+
+Approach a broad wall at low speed. Add a second stopping condition based on motor rotation or elapsed time so a missing reading cannot run the robot forever.
+
+<MarkComplete lessonId="fll-unit-01/distance-and-wait-until" nextUnit="/blocks/fll/unit-01/hub-heading" nextUnitName="Lesson F1.3: Hub Heading and Yaw Reset" />

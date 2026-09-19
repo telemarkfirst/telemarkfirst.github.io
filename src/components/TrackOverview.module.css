@@ -1,0 +1,321 @@
+/* Landing grid for a whole track, rendered inside the docs layout. */
+
+.hero {
+  margin: 0 0 1.75rem;
+  padding: 0 0 1rem;
+}
+
+.eyebrow {
+  margin-bottom: 0.6rem;
+  color: var(--tm-accent);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0 0 0.6rem;
+  font-family: var(--tm-font-display);
+  font-size: clamp(1.9rem, 4vw, 2.7rem);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.subtitle {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--tm-text);
+  font-size: var(--tm-fs-md);
+  line-height: 1.6;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.stat {
+  padding: 0.7rem 0.8rem;
+}
+
+.statValue {
+  display: block;
+  color: var(--tm-accent);
+  font-family: var(--tm-font-display);
+  font-size: var(--tm-fs-xl);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.statLabel {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--tm-text-muted);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: 1.25rem;
+}
+
+.primaryAction,
+.secondaryAction {
+  padding: 0.6rem 1.15rem;
+  border-radius: var(--tm-r-sm);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.primaryAction {
+  border: 1px solid var(--tm-accent-a55);
+  background: var(--tm-accent-a12);
+  color: var(--tm-text-strong);
+}
+
+.primaryAction:hover {
+  background: var(--tm-accent-a20);
+  color: var(--tm-text-strong);
+  text-decoration: none;
+}
+
+.secondaryAction {
+  border: 1px solid var(--tm-blue-a32);
+  background: transparent;
+  color: var(--tm-blue-soft);
+}
+
+.secondaryAction:hover {
+  border-color: var(--tm-blue-a32);
+  color: var(--tm-text-strong);
+  text-decoration: none;
+}
+
+.sectionTitle {
+  margin: 2rem 0 0.9rem;
+  color: var(--tm-accent);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.foundations {
+  margin: 0 0 var(--tm-sp-6);
+}
+
+.foundationsToggle {
+  display: flex;
+  align-items: center;
+  gap: var(--tm-sp-3);
+  width: 100%;
+  margin-bottom: var(--tm-sp-3);
+  padding: var(--tm-sp-4) var(--tm-sp-5);
+  border: 1px solid var(--tm-accent-a35);
+  border-radius: var(--tm-r-md);
+  background: var(--tm-accent-a08);
+  color: var(--tm-text-strong);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.foundationsText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tm-sp-1);
+}
+
+.foundationsText small {
+  color: var(--tm-text-soft);
+}
+
+.foundationsToggle:focus-visible {
+  outline: 3px solid var(--tm-accent-a55);
+  outline-offset: 2px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1rem 1.05rem 1.05rem;
+  color: inherit;
+  transition: border-color 150ms ease;
+}
+
+.card:nth-child(even) {
+  border-radius: var(--tm-r-sm);
+}
+
+.card:hover {
+  border-color: var(--tm-accent-a55);
+  color: inherit;
+  text-decoration: none;
+  background: var(--tm-surface-2);
+}
+
+.cardNum {
+  color: var(--tm-accent);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.cardTitle {
+  font-family: var(--tm-font-display);
+  font-size: var(--tm-fs-lg);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.cardDesc {
+  color: var(--tm-text-soft);
+  font-size: var(--tm-fs-sm);
+  line-height: 1.5;
+}
+
+.cardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: auto;
+  padding-top: 0.6rem;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 4px 9px;
+  border-radius: var(--tm-r-sm);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.tagBeginner {
+  color: var(--tm-blue-soft);
+}
+
+.tagIntermediate {
+  color: var(--tm-accent);
+}
+
+.tagAdvanced {
+  color: var(--tm-blue);
+}
+
+.tagProgress {
+  color: var(--tm-text-muted);
+}
+
+.tagDone {
+  color: var(--tm-text-strong);
+}
+
+.switcher {
+  margin-top: 2.25rem;
+  padding: 1rem 1.15rem;
+}
+
+.switcherTitle {
+  margin: 0 0 0.35rem;
+  font-family: var(--tm-font-display);
+  font-size: var(--tm-fs-md);
+  font-weight: 700;
+}
+
+.switcherDesc {
+  margin: 0 0 0.75rem;
+  color: var(--tm-text-soft);
+  font-size: var(--tm-fs-sm);
+  line-height: 1.55;
+}
+
+/* Locked lessons are disclosed without blocking the public unit overview. */
+.cardLocked {
+  border-style: dashed;
+  border-color: var(--tm-border-quiet);
+}
+
+.cardLocked:hover {
+  border-color: var(--tm-border-strong);
+}
+
+.tagLocked {
+  color: var(--tm-text-muted);
+}
+
+/* Reveal wraps each card, so the wrapper must not collapse the grid cell. */
+.grid > * { display: flex; }
+.grid > * > .card { flex: 1; }
+
+.mobileCurriculumToggle {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .hero {
+    padding: 1.1rem;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .primaryAction,
+  .secondaryAction {
+    width: 100%;
+    text-align: center;
+  }
+
+  .mobileCurriculumExtra {
+    display: none !important;
+  }
+
+  .mobileCurriculumToggle {
+    display: block;
+    width: 100%;
+    margin-top: var(--tm-sp-4);
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--tm-border-strong);
+    border-radius: var(--tm-r-sm);
+    background: var(--tm-surface-2);
+    color: var(--tm-text-strong);
+    cursor: pointer;
+    font-family: var(--tm-font-label);
+    font-size: var(--tm-fs-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .mobileCurriculumToggle:hover,
+  .mobileCurriculumToggle:focus-visible {
+    border-color: var(--tm-accent);
+    background: var(--tm-accent-a08);
+  }
+}

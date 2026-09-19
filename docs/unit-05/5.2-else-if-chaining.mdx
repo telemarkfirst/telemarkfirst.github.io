@@ -1,0 +1,96 @@
+---
+id: else-if-chaining
+title: "Lesson 5.2: Using else if Chains to Pick One Robot Action at a Time"
+sidebar_label: "5.2 · else if Chaining"
+sidebar_position: 2
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit5Simulator from '@site/src/components/Unit5Simulator';
+
+# Lesson 5.2: Using else if Chains to Pick One Robot Action at a Time
+
+---
+
+## Technical Context
+
+Using `else if` chaining prevents conflicting hardware commands within the same execution cycle. For example, if a programmer uses two independent `if` statements to control an arm (one for "up" and one for "down"), pressing both buttons simultaneously could send rapid, conflicting voltage signals to the Control Hub, causing jitter and mechanical strain on the motor gears.
+
+---
+
+## Why else if Chains Prevent Conflicting Commands
+
+`else if` and `else` clauses allow for the creation of a **priority ladder**. When Java encounters an `if`/`else if` chain, it evaluates conditions from top to bottom and executes only the **first** block that is `true`. The final `else` block acts as a catch-all fail-safe, which is critical for ensuring hardware returns to a "neutral" or "zero-power" state when no inputs are active. This structure ensures that the `DcMotor`'s `setPower()` method receives exactly one unambiguous command per loop.
+
+---
+
+## Annotated Code
+
+```java
+@Override
+public void loop() {
+    // Priority 1: Move Forward
+    if (gamepad1.dpad_up) {
+        driveMotor.setPower(0.5);
+    }
+    // Priority 2: Move Backward (Only checked if dpad_up is false)
+    else if (gamepad1.dpad_down) {
+        driveMotor.setPower(-0.5);
+    }
+    // Fail-safe: Stop (Executed only if both inputs are false)
+    else {
+        driveMotor.setPower(0.0);
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. To handle a condition that is only checked if the previous `if` statement was false, we use the `__________` keywords.
+2. The `__________` block is used to execute code when all other preceding conditions in the chain have evaluated to `false`.
+3. Chaining logical decisions is essential to prevent sending `__________` commands to hardware in the same loop cycle.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`else if`**
+2. **`else`**
+3. **conflicting**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+**Robot Scenario:** Control a Servo named `"grabber"`. If Button A is pressed, set the position to `1.0` (closed). If Button B is pressed, set it to `0.0` (open). Otherwise, the servo should stay at `0.5` (ready position).
+
+<SimulatorRunGuide />
+
+<Unit5Simulator lesson="else-if-chaining" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+@Override
+public void loop() {
+    if (gamepad1.a) {
+        grabber.setPosition(1.0);
+    } else if (gamepad1.b) {
+        grabber.setPosition(0.0);
+    } else {
+        grabber.setPosition(0.5);
+    }
+}
+```
+
+</details>
+
+<MarkComplete
+  lessonId="unit-05/else-if-chaining"
+  nextUnit="/docs/unit-05/comparison-operators"
+  nextUnitName="Lesson 5.3: Implementing Hardware Safe-Zones with Comparison Operators"
+/>

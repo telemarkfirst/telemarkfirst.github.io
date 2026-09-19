@@ -1,0 +1,150 @@
+---
+id: modifying-solids
+title: "Lesson 5.5: Fillet, Chamfer, Shell, Draft, Rib, and Hole"
+sidebar_label: "5.5 · Modifying Solids"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 5.5: Fillet, Chamfer, Shell, Draft, Rib, and Hole
+
+---
+
+## Technical Context
+
+The features in Lesson 5.4 create material. These six modify what already exists. They are applied to edges and faces rather than sketched, which makes them fast to add and easy to add carelessly.
+
+Every one of them exists for a physical reason. Knowing the reason tells you the size to use.
+
+---
+
+## Fillet
+
+A **fillet** rounds an edge. It does two different jobs depending on which edge it is on.
+
+On an **internal** corner it removes a stress concentration. A sharp internal corner is where a bracket cracks, because stress concentrates at the corner and the material has nowhere to spread the load. A fillet of even a few millimetres spreads it substantially.
+
+On an **external** corner it removes a sharp edge that would cut hands, snag wiring, or catch on field elements.
+
+Rules of thumb for FTC parts:
+
+- Internal corners on a load-bearing bracket: fillet at least equal to the material thickness
+- External corners on anything handled: 1–2 mm is enough to be safe
+- A 3D-printed internal corner: fillet, always, because layer lines make sharp corners even weaker
+
+:::tip Fillet last
+Add fillets near the end of the feature list. Fillets applied early get copied by patterns, break when the faces beneath them change, and are the most common cause of a feature list that fails on a small edit.
+:::
+
+---
+
+## Chamfer
+
+A **chamfer** cuts an angled flat instead of a round. Prefer it over a fillet when the edge needs to guide something into place.
+
+- A chamfer on the end of a shaft lets it start into a bearing without forcing
+- A chamfer on the mouth of a bore does the same from the other side
+- A chamfer on a 3D print's bottom edge counteracts elephant's foot
+
+Chamfers are also easier to machine than fillets on a manual mill, which matters if the part is being made in the shop rather than printed.
+
+---
+
+## Shell
+
+**Shell** hollows a solid to a wall thickness, removing chosen faces. It is how you get a light part that keeps its outside shape.
+
+The wall thickness is a manufacturing decision, not an aesthetic one:
+
+| Process | Practical minimum wall |
+| --- | --- |
+| FDM 3D print | 3 perimeters, typically 1.2–2 mm |
+| Injection-moulded vendor parts | 1–3 mm |
+| Machined aluminium | 1.5–2 mm before it chatters |
+
+Shell fails when the wall thickness is larger than the smallest internal radius. If a shell will not compute, look for a tight corner before blaming the feature.
+
+---
+
+## Draft
+
+**Draft** angles a face away from vertical so a part can leave a mould, or so a print's overhang is printable.
+
+FTC teams meet draft in two places, and mostly the second:
+
+- Anything cast or moulded needs 1–3° so it releases
+- 3D-printed overhangs beyond roughly 45° from vertical need support material, and a draft angle can remove the need entirely
+
+Drafting a wall to 45° instead of 90° often turns an unprintable feature into one that prints unsupported, which is faster and comes out cleaner.
+
+---
+
+## Rib
+
+A **rib** adds a thin supporting web from a sketched line, without you having to model the web as a solid.
+
+Ribs are the efficient answer to a bracket that flexes. Adding material to the whole part adds mass everywhere; a rib adds stiffness exactly along the line where the part is bending. A tall thin rib resists bending far better than the same mass spread flat, because stiffness grows with the cube of depth in the bending direction.
+
+Put ribs where the part bends, running along the direction of the load, and fillet where they meet the wall.
+
+---
+
+## Hole
+
+The **hole** feature places a properly specified hole rather than cutting a circle and hoping.
+
+This matters because it carries the specification with it: clearance or tap size, counterbore or countersink, depth, and thread. That connects directly to Lesson 4.1, and it is why a hole feature beats an extruded circle.
+
+The mistake that costs a build day: a **3 mm hole for an M3 screw**. An M3 screw is 3 mm across, so it will not fit a 3 mm hole. A clearance hole for M3 is 3.2 to 3.4 mm; a tapped hole is 2.5 mm before threading.
+
+| Screw | Clearance hole | Tap drill |
+| --- | --- | --- |
+| M3 | 3.2–3.4 mm | 2.5 mm |
+| M4 | 4.3–4.5 mm | 3.3 mm |
+| M5 | 5.3–5.5 mm | 4.2 mm |
+
+:::warning Use the hole feature, not a circle
+An extruded circle records only a diameter. A hole feature records the intent, shows in the drawing correctly, and can be changed from clearance to tapped in one edit. Every hole on a part someone else has to manufacture should be a hole feature.
+:::
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. A `__________` on an internal corner reduces the stress concentration that causes brackets to crack.
+2. Hollowing a solid to a set wall thickness while removing chosen faces is done with `__________`.
+3. Angling a face so a part releases from a mould, or so an overhang prints without support, is called `__________`.
+4. A thin web that stiffens a part along the line where it bends is a `__________`.
+5. The clearance hole for an M3 screw is about `__________` mm, not 3.0 mm.
+
+<details>
+<summary>Show answers</summary>
+
+1. **fillet**
+2. **shell**
+3. **draft**
+4. **rib**
+5. **3.2** (3.2 to 3.4 is fine)
+
+</details>
+
+---
+
+:::tip Practice
+Graded exercises with hard numbers and self-checks are in [CAD Practice Exercises](/mechanical/cad-practice).
+:::
+
+---
+
+## Exercise
+
+Take a printed bracket that has failed, or one you expect to. Identify the internal corner where it cracked or would crack, add a fillet equal to the wall thickness, and add one rib along the bending direction.
+
+Compare the mass before and after. If the rib added less than 10 percent and removed the flex, you have understood the lesson.
+
+<MarkComplete
+  lessonId="module-05/modifying-solids"
+  nextUnit="/mechanical/module-05/patterns-and-booleans"
+  nextUnitName="Lesson 5.6: Patterns, Booleans, Transform, and Mirror"
+/>

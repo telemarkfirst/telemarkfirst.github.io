@@ -1,0 +1,140 @@
+---
+id: mastery-quiz
+title: "Module 13 Mastery Quiz: Proven Mechanisms and Why They Work"
+sidebar_label: "Module 13 · Mastery Quiz"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import ScoredQuiz from '@site/src/components/mechanical/ScoredQuiz';
+import {MASTERY_QUESTIONS} from '@site/src/telemark/mechanicalQuizzes';
+
+# Module 13 Mastery Quiz: Proven Mechanisms and Why They Work
+
+---
+
+## I. Conceptual Questions
+
+**1. The compliance trade:** A team's rigid claw works on the bench and misses constantly on the field. Explain what a compliant intake changes about the problem, in terms of grip force.
+
+<details>
+<summary>Show answer</summary>
+
+The claw's grip force is set by closing to an exact width. Slightly open and the normal force is zero, so there is no friction and the element is not held. The claw therefore requires the element to be within a millimetre or two of an expected pose, and the field never provides that.
+
+A compliant intake makes normal force a function of deformation, roughly N = kx. A few millimetres of position error now changes the grip force a little rather than removing it. The requirement moved from exact position to approximate position, and approximate is what a robot on a field can deliver.
+
+</details>
+
+---
+
+**2. Paying for lift speed:** A three stage cascading lift extends three times as far per spool rotation as a single stage. Say what that costs and where it shows up as a failure.
+
+<details>
+<summary>Show answer</summary>
+
+Work is conserved, so tripling the extension per rotation triples the force in the cable, before friction. It is the same trade as gearing for speed.
+
+It fails at the cable and the spool rather than in the slides: the cable itself, the point where it is terminated, and the spool mounting are all carrying three times what a naive payload calculation suggests. Teams size the slides correctly and then break the 2 mm cable.
+
+</details>
+
+---
+
+**3. Why a parallelogram is a guarantee:** State what a parallelogram four-bar guarantees, and what would break the guarantee.
+
+<details>
+<summary>Show answer</summary>
+
+The far member stays exactly parallel to the fixed member through the whole range of motion, so an end effector mounted on it holds its absolute angle with no sensor, no second motor, and no code.
+
+It breaks if the opposite members are not equal in length, or if the linkage reaches a singular position where the pivots line up and the mechanism can no longer be driven. Wear and backlash at the four pivots degrade it gradually rather than breaking it outright.
+
+</details>
+
+---
+
+**4. The silent linkage failure:** Compare how a physical four-bar and a virtual four-bar fail, and say which is more dangerous in a match.
+
+<details>
+<summary>Show answer</summary>
+
+A physical four-bar degrades visibly and gradually: bent members and worn pivots add slop, but the geometry still roughly holds.
+
+A virtual four-bar fails when the belt skips a tooth. The end effector is then wrong by that tooth for the rest of the match, the error is permanent until someone re-indexes it, and nothing on the robot reports it. That silence is what makes it more dangerous, and it is why belt tension and wrap angle are not optional details.
+
+</details>
+
+---
+
+**5. Why dead wheels work:** Explain why a dead wheel measures position better than a drive wheel, and give the general principle.
+
+<details>
+<summary>Show answer</summary>
+
+A drive wheel slips precisely when accuracy matters most: under acceleration and while being pushed. Encoder counts on a slipping wheel report motion that did not happen, so the error appears exactly when the robot most needs to know where it is.
+
+A dead wheel carries almost no load and transmits no torque, so it does not slip, and its count measures the floor rather than the motor.
+
+The general principle is that odometry works by decoupling measurement from actuation. Any time the same element both acts and measures, the measurement inherits every error of the actuator.
+
+</details>
+
+---
+
+## II. Read the Design
+
+A team proposes this arm. **Identify the 3 problems.**
+
+```text
+Arm for scoring at 90 cm.
+
+- Rigid claw at the end, sized to the element's nominal width.
+- Single 700 mm bar on a pivot, no linkage. Claw bolted rigidly
+  to the bar.
+- Battery and motors mounted on top of the chassis to keep the
+  floor clear.
+```
+
+<details>
+<summary>Show answers</summary>
+
+**1. A rigid claw sized to nominal width.** The element will not arrive at nominal position or orientation. There is no compliance to absorb the difference, so the grip force goes to zero the moment anything is off.
+
+```text
+Fix: compliant wheels or tubing, or accept the claw only where
+the robot itself placed the element.
+```
+
+**2. The claw is rigid to a rotating bar.** It tips through the whole swing, so the element is presented at a different angle at every height and falls out past some angle.
+
+```text
+Fix: a parallelogram four-bar, or a virtual four-bar if the
+swept volume behind the pivot is not available.
+```
+
+**3. Mass mounted high.** Weight transfer under acceleration grows with centre of mass height, so the robot loses traction on the unloaded wheels and moves closer to tipping, and a 700 mm arm makes both worse.
+
+```text
+Fix: battery and motors low and centred. Height is the term
+that is actually under your control.
+```
+
+</details>
+
+---
+
+## III. Scored Check
+
+The questions above are for working something through. These are graded, so you can find out whether it stuck. Everything is scored in your browser.
+
+<ScoredQuiz
+  lessonId="module-13/mastery-quiz"
+  questions={MASTERY_QUESTIONS['module-13']}
+/>
+
+<MarkComplete
+  lessonId="module-13/mastery-quiz"
+  nextUnit="/mechanical"
+  nextUnitName="the Mechanical Track Overview"
+/>

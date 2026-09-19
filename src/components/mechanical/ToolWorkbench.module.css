@@ -1,0 +1,187 @@
+/* Two-pane workbench: a tool rail and a canvas, the layout CAD and graphing
+   tools use. Replaces a stack of tabs with everything rendered at once. */
+
+.shell {
+  display: grid;
+  grid-template-columns: minmax(210px, 250px) minmax(0, 1fr);
+  min-height: 620px;
+  margin: var(--tm-sp-5) 0;
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-surface-2);
+  overflow: hidden;
+}
+
+.shell:fullscreen {
+  min-height: 100vh;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+}
+
+/* ── Rail ─────────────────────────────────────────────────────────────── */
+.rail {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--tm-border-hair);
+  background: var(--tm-surface-1);
+}
+
+.railSearch {
+  padding: var(--tm-sp-3);
+  border-bottom: 1px solid var(--tm-border-hair);
+}
+
+.railInput {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-bg);
+  color: var(--tm-text-strong);
+  font-family: var(--tm-font-body);
+  font-size: var(--tm-fs-xs);
+}
+
+.railInput::placeholder { color: var(--tm-text-faint); }
+.railInput:focus { border-color: var(--tm-accent-a55); outline: none; }
+
+.railList {
+  flex: 1;
+  padding: var(--tm-sp-2);
+  overflow-y: auto;
+}
+
+.railGroup {
+  padding: var(--tm-sp-3) var(--tm-sp-2) var(--tm-sp-1);
+  color: var(--tm-text-faint);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: var(--tm-track-label);
+  text-transform: uppercase;
+}
+
+.railItem {
+  display: block;
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--tm-r-sm);
+  background: transparent;
+  color: var(--tm-text-soft);
+  cursor: pointer;
+  font-size: var(--tm-fs-sm);
+  line-height: 1.35;
+  text-align: left;
+  transition: background var(--tm-dur-fast) var(--tm-ease),
+              color var(--tm-dur-fast) var(--tm-ease);
+}
+
+.railItem:hover { background: var(--tm-accent-a08); color: var(--tm-text-strong); }
+
+.railItemActive {
+  border-color: var(--tm-border-strong);
+  background: var(--tm-accent-a12);
+  color: var(--tm-text-strong);
+  font-weight: 600;
+}
+
+.railEmpty {
+  padding: var(--tm-sp-5) var(--tm-sp-3);
+  color: var(--tm-text-faint);
+  font-size: var(--tm-fs-xs);
+  text-align: center;
+}
+
+/* ── Canvas ───────────────────────────────────────────────────────────── */
+.canvas {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tm-sp-3);
+  align-items: center;
+  padding: var(--tm-sp-3) var(--tm-sp-4);
+  border-bottom: 1px solid var(--tm-border-hair);
+  background: var(--tm-surface-2);
+}
+
+.toolName {
+  flex: 1;
+  min-width: 0;
+  color: var(--tm-text-strong);
+  font-family: var(--tm-font-display);
+  font-size: var(--tm-fs-md);
+  font-weight: 700;
+}
+
+.toolChip {
+  padding: 3px 9px;
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-sm);
+  color: var(--tm-accent);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.toolAction {
+  padding: 5px 11px;
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-sm);
+  background: transparent;
+  color: var(--tm-text-muted);
+  cursor: pointer;
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: border-color var(--tm-dur) var(--tm-ease), color var(--tm-dur) var(--tm-ease);
+}
+
+.toolAction:hover { border-color: var(--tm-border-strong); color: var(--tm-text-strong); }
+
+/* A faint drafting grid, which is the domain's own visual language. */
+.surface {
+  flex: 1;
+  min-height: 0;
+  padding: var(--tm-sp-5);
+  background-color: var(--tm-bg);
+  overflow-y: auto;
+}
+
+.surfaceInner {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+/* The tool's own shell already has a border; drop the doubled frame. */
+.surfaceInner > section:first-child {
+  margin-top: 0;
+}
+
+.lessonLink {
+  display: inline-flex;
+  gap: var(--tm-sp-2);
+  align-items: center;
+  margin-top: var(--tm-sp-4);
+  color: var(--tm-text-muted);
+  font-size: var(--tm-fs-xs);
+}
+
+.lessonLink a { color: var(--tm-accent); }
+
+@media (max-width: 860px) {
+  .shell { grid-template-columns: 1fr; min-height: 0; }
+  .rail { border-right: none; border-bottom: 1px solid var(--tm-border-hair); }
+  .railList { max-height: 190px; }
+  .surface { padding: var(--tm-sp-4) var(--tm-sp-3); }
+}

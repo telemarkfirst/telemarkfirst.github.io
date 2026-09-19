@@ -1,0 +1,105 @@
+---
+id: drivetrain-archetypes
+title: "Lesson 7.1: Tank, Mecanum, and Swerve Drivetrain Trade-Offs"
+sidebar_label: "7.1 · Archetypes"
+sidebar_position: 1
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 7.1: Tank, Mecanum, and Swerve Drivetrain Trade-Offs
+
+---
+
+## Technical Context
+
+Every robot needs a drivetrain, and replacing one after the rest of the robot has been built is difficult. Choose it from the game strategy and the team's available build time.
+
+Do not choose mecanum only because a successful robot used it. First check whether sideways motion improves your own scoring cycles enough to justify the trade-offs.
+
+---
+
+## The Three Families
+
+**Tank drive** has wheels that only roll forward and backward. The robot turns by driving the sides at different speeds. Simple, efficient, strong in a pushing match, and it cannot move sideways.
+
+**Mecanum drive** uses four wheels with angled rollers around the circumference. By combining wheel directions the robot translates in any direction and rotates independently. Excellent maneuverability, and it pays for it in traction and efficiency.
+
+**Swerve drive** puts each wheel on a module that can rotate to any heading. It has the maneuverability of mecanum with the traction of tank, and it costs substantially more in complexity, parts, weight, and programming.
+
+---
+
+## Comparing Them Honestly
+
+| | Tank | Mecanum | Swerve |
+| --- | --- | --- | --- |
+| Pushing force | Highest | Lowest | High |
+| Sideways motion | None | Yes | Yes |
+| Mechanical complexity | Low | Low | Very high |
+| Programming complexity | Low | Moderate | High |
+| Weight | Low | Moderate | High |
+| Efficiency | High | Lower | High |
+| Cost | Low | Moderate | High |
+| Failure modes | Few | Roller wear | Many |
+| Odometry friendliness | Good | Moderate | Good |
+
+Mecanum's trade-offs may not appear in a short demonstration. Its angled rollers direct only part of the contact force along the direction of travel, so an equivalent tank drive can produce more pushing force. The rollers also wear. Because the change is gradual, ask drivers about handling and inspect the wheels throughout the season.
+
+:::tip Strafing is a capability, not a virtue
+Ask what your robot would do with sideways motion that it could not do by turning. If the honest answer is "align at the scoring position slightly faster," weigh that against the pushing force and reliability you give up. Sometimes it is worth it. Often it is not.
+:::
+
+---
+
+## Choosing From Strategy
+
+Work from the requirements written in Module 0.
+
+**Choose tank when** the strategy involves defense, pushing, or repeatedly driving a fixed path. It is also a practical choice for a new team that wants to keep drivetrain build and programming time low.
+
+**Choose mecanum when** alignment is a large part of your cycle time and the field is congested, so that turning to align is genuinely slower. It suits robots that approach scoring positions from varying angles.
+
+**Choose swerve when** your strategy needs both sideways motion and strong traction, and the team can support the added mechanical and programming work. Budget that work before committing. If swerve would delay the scoring mechanisms or leave too little time for testing, use a simpler drivetrain.
+
+:::warning Start with your own requirements
+A successful robot's drivetrain was chosen for that team's strategy and constraints. Compare the options against your requirements and record the reasoning in the notebook.
+:::
+
+---
+
+## Variants Worth Knowing
+
+**Six wheel tank with a dropped center.** The center wheels sit slightly lower than the outer ones, so the robot pivots about the center rather than dragging four contact patches through the turn. This substantially reduces turning scrub. Common and effective.
+
+**Tank with omni wheels on one end.** Replacing two of the four wheels with omni wheels cuts turning resistance dramatically while keeping full traction on the driven pair. It also reduces pushing force somewhat and makes the robot easier to push sideways.
+
+**H-drive.** A tank drive with one additional wheel mounted transversely for strafing. It gives limited sideways motion without paying mecanum's full traction cost.
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Mecanum wheels have lower effective traction than tank wheels because the angled `__________` direct only part of the contact force along the direction of travel.
+2. A six wheel tank drive with a dropped `__________` wheel reduces scrub during turns.
+3. The drivetrain choice should be derived from the team's `__________` rather than from what a successful robot used last season.
+
+<details>
+<summary>Show answers</summary>
+
+1. **rollers**
+2. **center**
+3. **strategy** (requirements)
+
+</details>
+
+---
+
+## Exercise
+
+Write down why your team chose its current drivetrain. If the reason references another team's robot or last season, redo the choice from your requirements list and see whether you arrive at the same answer.
+
+<MarkComplete
+  lessonId="module-07/drivetrain-archetypes"
+  nextUnit="/mechanical/module-07/wheels-and-traction"
+  nextUnitName="Lesson 7.2: Wheel Selection, Traction, and Weight Transfer"
+/>

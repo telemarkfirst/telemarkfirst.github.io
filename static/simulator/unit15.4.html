@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Telemark Unit 15.4 Simulator</title>
+<style>
+  #sim-right-panel #sim-scene-container {
+    flex: 1 0 clamp(390px, 56vh, 640px);
+    min-height: 390px;
+    background: #020204;
+  }
+
+  #sim-right-panel .u154-panel {
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: clamp(305px, 42vh, 520px);
+    overflow-y: auto;
+    margin: 10px;
+    padding: 12px;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #0b0b0f;
+    color: #e5e7eb;
+    font-family: var(--font-ui, Arial, sans-serif);
+  }
+
+  #sim-scene-container .u154-scene-badge,
+  #sim-scene-container .u154-drift-badge,
+  #sim-scene-container .u154-correction-badge {
+    position: absolute;
+    z-index: 5;
+    border: 1px solid rgba(243, 234, 215, 0.34);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.88);
+    color: #f3ead7;
+    pointer-events: none;
+    font-weight: 800;
+    box-shadow: 0 0 18px rgba(243, 234, 215, 0.08);
+  }
+
+  #sim-scene-container .u154-scene-badge {
+    top: 12px;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 11px;
+  }
+
+  #sim-scene-container .u154-drift-badge {
+    right: 12px;
+    bottom: 12px;
+    padding: 10px 13px;
+    font-size: 1rem;
+  }
+
+  #sim-scene-container .u154-correction-badge {
+    left: 12px;
+    bottom: 12px;
+    display: none;
+    padding: 9px 12px;
+  }
+
+  #sim-right-panel .u154-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0 8px;
+    font-weight: 800;
+  }
+
+  #sim-right-panel .u154-title:first-child {
+    margin-top: 0;
+  }
+
+  #sim-right-panel .u154-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  #sim-right-panel .u154-card,
+  #sim-right-panel .u154-guard,
+  #sim-right-panel .u154-conversion {
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #08080c;
+    color: #9ca3af;
+    padding: 9px;
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  #sim-right-panel .u154-card strong {
+    color: #f4f4f5;
+    font-size: 1.1rem;
+  }
+
+  #sim-right-panel .u154-card.large strong {
+    font-size: 1.35rem;
+  }
+
+  #sim-right-panel .u154-card.good,
+  #sim-right-panel .u154-guard.good,
+  #sim-right-panel .u154-conversion.good {
+    border-color: #22cc66;
+    color: #bbf7d0;
+    box-shadow: 0 0 12px rgba(34, 204, 102, 0.12);
+  }
+
+  #sim-right-panel .u154-card.warn,
+  #sim-right-panel .u154-guard.warn {
+    border-color: #8a6a20;
+    color: #fde68a;
+  }
+
+  #sim-right-panel .u154-card.bad,
+  #sim-right-panel .u154-guard.bad,
+  #sim-right-panel .u154-conversion.bad {
+    border-color: #7f1d1d;
+    color: #fecaca;
+  }
+
+  #sim-right-panel .u154-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  #sim-right-panel .u154-button {
+    border: 1px solid #3f3f46;
+    border-radius: 8px;
+    background: #111118;
+    color: #f4f4f5;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 800;
+    padding: 7px 10px;
+  }
+
+  #sim-right-panel .u154-button.active,
+  #sim-right-panel .u154-button:hover {
+    border-color: #f3ead7;
+    color: #f3ead7;
+  }
+
+  #sim-right-panel .u154-slider {
+    width: 100%;
+    accent-color: #f3ead7;
+  }
+
+  #sim-right-panel .u154-callout,
+  #sim-right-panel .u154-warning,
+  #sim-right-panel .u154-success {
+    margin-top: 10px;
+    border-radius: 8px;
+    padding: 9px;
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  #sim-right-panel .u154-callout {
+    border: 1px solid #374151;
+    background: rgba(244, 244, 245, 0.05);
+    color: #e5e7eb;
+  }
+
+  #sim-right-panel .u154-warning {
+    display: none;
+    border: 1px solid #8a6a20;
+    background: rgba(255, 204, 102, 0.08);
+    color: #fde68a;
+  }
+
+  #sim-right-panel .u154-warning.error {
+    border-color: #7f1d1d;
+    background: rgba(239, 68, 68, 0.1);
+    color: #fecaca;
+  }
+
+  #sim-right-panel .u154-success {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #22cc66;
+    background: rgba(34, 204, 102, 0.1);
+    color: #22cc66;
+    font-weight: 800;
+  }
+</style>
+<script src="./simulator_base.js"></script>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+<script>
+window.onSimulatorReady = function () {
+  "use strict";
+
+  const starterCode = `import com.pedropathing.follower.Follower;
+import com.pedropathing.math.Pose;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+import org.firstinspires.ftc.teamcode.pedro.Constants;
+
+@TeleOp(name="Pose_Correction")
+public class PoseCorrection extends OpMode {
+
+    Follower    follower;
+    Limelight3A limelight;
+
+    @Override
+    public void init() {
+        follower  = Constants.create(hardwareMap);
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+
+        limelight.pipelineSwitch(0);
+        limelight.start();
+
+        telemetry.addData("Status", "Initialized");
+    }
+
+    void correctPoseFromLimelight() {
+        LLResult result = limelight.getLatestResult();
+
+        // TODO: Reject invalid, stale (>100 ms), or tagless results
+
+        // TODO: Read result.getBotpose() into a Pose3D named botpose
+        // TODO: Return if botpose is null
+
+        // TODO: Read the current follower Pose, then calculate x, y, and
+        // normalized-heading innovations (measurement minus estimate)
+
+        // TODO: Reject position innovations larger than 12 inches
+
+        // TODO: Choose a gain between 0 and 1 and apply that fraction of
+        // each innovation instead of overwriting the estimate
+    }
+
+    @Override
+    public void loop() {
+        follower.update();
+        correctPoseFromLimelight();
+
+        Pose pose = follower.pose();
+        telemetry.addData("X",       pose.x());
+        telemetry.addData("Y",       pose.y());
+        telemetry.addData("Heading", pose.heading());
+        telemetry.update();
+    }
+}`;
+
+  const requirements = [
+    "Call limelight.getLatestResult()",
+    "Reject invalid Limelight results",
+    "Gate on result freshness and tag count",
+    "Read and null-check result.getBotpose()",
+    "Compute innovations from the current follower pose",
+    "Reject a large position innovation",
+    "Use a fusion gain strictly between 0 and 1",
+    "Blend x, y, and normalized heading in follower.setPose()"
+  ];
+
+  const INCHES_PER_METER = 39.3701;
+  const FIELD_INCHES = 144;
+  const FIELD_SCALE = 0.047;
+  const TRUE_POSE = { x: 78, y: 68, heading: Math.PI / 5 };
+
+  const state = {
+    running: false,
+    scenario: "valid",
+    driftAmount: 7,
+    odomPose: { x: TRUE_POSE.x + 7, y: TRUE_POSE.y - 3.5, heading: TRUE_POSE.heading + 0.14 },
+    limelightPose: { x: TRUE_POSE.x, y: TRUE_POSE.y, heading: TRUE_POSE.heading },
+    correctedAt: 0,
+    lastCorrectionStatus: "DRIFTING",
+    lastError: "",
+    pipeline: 0,
+    limelightStarted: false,
+    guardRuntime: {
+      resultNotNull: true,
+      valid: true,
+      botposeNotNull: true,
+      freshAndTagged: true,
+      innovationOk: true
+    }
+  };
+
+  let followerDevice;
+  let limelightDevice;
+  let initFn = null;
+  let loopFn = null;
+  let correctFn = null;
+  let sceneRoot;
+  let odomRobot;
+  let trueRobot;
+  let driftLine;
+  let beamLine;
+  let flashRing;
+  let animationRegistered = false;
+  let telemetryFrameData = {};
+  let telemetryFrameOrder = [];
+  let lastTelemetrySignature = "";
+  const followerPoseCallbacks = [];
+  const limelightBotposeCallbacks = [];
+
+  function el(id) {
+    return document.getElementById(id);
+  }
+
+  function safeCall(fn) {
+    if (typeof fn !== "function") return undefined;
+    const args = Array.prototype.slice.call(arguments, 1);
+    return fn.apply(null, args);
+  }
+
+  function beginTelemetryFrame() {
+    telemetryFrameData = {};
+    telemetryFrameOrder = [];
+  }
+
+  function formatTelemetryValue(format, values) {
+    let valueIndex = 0;
+    return String(format).replace(/%(\.\d+)?([dfs])/g, function (match, precision, type) {
+      const value = values[valueIndex++];
+      if (type === "s") return String(value);
+      if (type === "d") return String(Math.round(Number(value) || 0));
+      const decimals = precision ? Number(precision.slice(1)) : 6;
+      const numeric = Number(value);
+      return Number.isFinite(numeric) ? numeric.toFixed(decimals) : String(value);
+    });
+  }
+
+  function addStableTelemetry(key, value) {
+    const k = String(key);
+    if (!(k in telemetryFrameData)) telemetryFrameOrder.push(k);
+    let v = value;
+    if (arguments.length > 2 && typeof value === "string") {
+      v = formatTelemetryValue(value, Array.prototype.slice.call(arguments, 2));
+    }
+    if (typeof v === "number" && v !== Math.floor(v)) v = v.toFixed(2);
+    telemetryFrameData[k] = String(v);
+  }
+
+  function updateStableTelemetry() {
+    const signature = telemetryFrameOrder.map(function (key) {
+      return key + "\u0001" + telemetryFrameData[key];
+    }).join("\u0002");
+    if (signature === lastTelemetrySignature) return;
+
+    const panel = el("sim-telemetry-log");
+    const previousScroll = panel ? panel.scrollTop : 0;
+    const wasAtBottom = !panel || panel.scrollHeight - panel.clientHeight - panel.scrollTop < 6;
+    const selection = window.getSelection ? window.getSelection() : null;
+    const selectingTelemetry = !!(
+      selection &&
+      String(selection) &&
+      panel &&
+      selection.anchorNode &&
+      panel.contains(selection.anchorNode)
+    );
+
+    if (selectingTelemetry) return;
+    safeCall(clearTelemetry);
+    telemetryFrameOrder.forEach(function (key) {
+      safeCall(addTelemetry, key, telemetryFrameData[key]);
+    });
+    safeCall(updateTelemetry);
+    if (panel && !wasAtBottom) panel.scrollTop = previousScroll;
+    lastTelemetrySignature = signature;
+  }
+
+  ensurePoseHardware();
+
+  setCode(starterCode);
+  setChallenge(
+    "Telemark Unit 15.4 Simulator",
+    "Gated Limelight + Odometry Pose Fusion",
+    requirements
+  );
+  setBadges([
+    { icon: "fa-crosshairs", iconClass: "fa-solid fa-crosshairs", label: "Limelight", active: true },
+    { icon: "fa-route", iconClass: "fa-solid fa-route", label: "PedroPathing", active: true },
+    { icon: "fa-arrows-to-dot", iconClass: "fa-solid fa-arrows-to-dot", label: "SensorFusion", active: true },
+    { icon: "fa-display", iconClass: "fa-solid fa-display", label: "Telemetry", active: true }
+  ]);
+  setActiveInputs([]);
+
+  const banner = el("sim-success-banner");
+  if (banner) {
+    banner.innerHTML = '<i class="fa-solid fa-circle-check"></i> Challenge Complete! The estimator gates and blends AprilTag measurements.';
+  }
+
+  followerDevice = hardwareMap.registerFollower("follower");
+  limelightDevice = hardwareMap.registerLimelight("limelight");
+
+  hardwareMap.onFollowerPoseSet(function (x, y, heading) {
+    updateCorrectedPose(x, y, heading);
+  });
+  hardwareMap.onLimelightBotpose(function (x, y, heading) {
+    updateLimelightPose(x, y, heading);
+  });
+
+  createPanel();
+  setupScene();
+  applyDrift();
+  validateCode();
+  updatePanel();
+
+  window.onInit = function () {
+    state.running = false;
+    state.lastError = "";
+    lastTelemetrySignature = "";
+    compileStudentCode();
+  };
+
+  window.onRun = function () {
+    if ((!initFn || !loopFn || !correctFn) && !compileStudentCode()) return;
+    state.running = true;
+    const runFrame = function () {
+      if (!state.running) return;
+      try {
+        beginTelemetryFrame();
+        if (loopFn) {
+          loopFn(
+            hardwareMap,
+            limelightDevice,
+            followerDevice,
+            callCorrectPose,
+            getFollowerPose,
+            addStableTelemetry,
+            updateStableTelemetry
+          );
+        }
+        validateCode();
+        updatePanel();
+      } catch (err) {
+        state.lastError = "runtime error: " + err.message;
+        state.lastCorrectionStatus = "ERROR";
+        state.running = false;
+        failStudentExecution(state.lastError);
+        updatePanel();
+      }
+    };
+    if (typeof _simStartLoop === "function") _simStartLoop(runFrame);
+    else window.setInterval(runFrame, 50);
+  };
+
+  window.onStart = window.onRun;
+
+  window.onStop = function () {
+    state.running = false;
+    state.lastCorrectionStatus = "STOPPED";
+    updatePanel();
+  };
+
+  window.onReset = function () {
+    state.running = false;
+    state.scenario = "valid";
+    state.driftAmount = 7;
+    state.pipeline = 0;
+    state.limelightStarted = false;
+    state.lastCorrectionStatus = "DRIFTING";
+    state.lastError = "";
+    lastTelemetrySignature = "";
+    applyDrift();
+    safeCall(clearTelemetry);
+    validateCode();
+    updateScenarioButtons();
+    updatePanel();
+  };
+
+  if (!animationRegistered && typeof addAnimationCallback === "function") {
+    addAnimationCallback(tick);
+    animationRegistered = true;
+  }
+
+  function ensurePoseHardware() {
+    if (typeof hardwareMap.registerFollower !== "function") {
+      hardwareMap.registerFollower = function (name) {
+        const device = {
+          _name: name,
+          setPose: function (pose) { setFollowerPose(pose); },
+          pose: function () { return getFollowerPose(); }
+        };
+        hardwareMap._devices[name] = device;
+        return device;
+      };
+    }
+
+    if (typeof hardwareMap.registerLimelight !== "function") {
+      hardwareMap.registerLimelight = function (name) {
+        const device = {
+          _name: name,
+          pipelineSwitch: function (slot) { switchPipeline(slot); },
+          start: function () { state.limelightStarted = true; },
+          getLatestResult: function () { return getLimelightResult(); }
+        };
+        hardwareMap._devices[name] = device;
+        return device;
+      };
+    }
+
+    const originalGet = hardwareMap.get.bind(hardwareMap);
+    hardwareMap.get = function (type, name) {
+      const typeStr = String(type).toLowerCase();
+      if (typeStr.includes("limelight")) {
+        if (hardwareMap._devices[name]) return hardwareMap._devices[name];
+        return hardwareMap.registerLimelight(name);
+      }
+      return originalGet(type, name);
+    };
+
+    if (typeof hardwareMap.onFollowerPoseSet !== "function") {
+      hardwareMap.onFollowerPoseSet = function (cb) { followerPoseCallbacks.push(cb); };
+    } else {
+      const originalFollower = hardwareMap.onFollowerPoseSet.bind(hardwareMap);
+      hardwareMap.onFollowerPoseSet = function (cb) {
+        followerPoseCallbacks.push(cb);
+        originalFollower(cb);
+      };
+    }
+
+    if (typeof hardwareMap.onLimelightBotpose !== "function") {
+      hardwareMap.onLimelightBotpose = function (cb) { limelightBotposeCallbacks.push(cb); };
+    } else {
+      const originalLimelight = hardwareMap.onLimelightBotpose.bind(hardwareMap);
+      hardwareMap.onLimelightBotpose = function (cb) {
+        limelightBotposeCallbacks.push(cb);
+        originalLimelight(cb);
+      };
+    }
+  }
+
+  function createPanel() {
+    const rightPanel = el("sim-right-panel");
+    const sceneContainer = el("sim-scene-container");
+    if (!rightPanel || !sceneContainer) return;
+
+    ["u154-panel", "u154-scene-badge", "u154-drift-badge", "u154-correction-badge"].forEach(function (id) {
+      const old = el(id);
+      if (old) old.remove();
+    });
+
+    const sceneBadge = document.createElement("div");
+    sceneBadge.id = "u154-scene-badge";
+    sceneBadge.className = "u154-scene-badge";
+    sceneContainer.appendChild(sceneBadge);
+
+    const driftBadge = document.createElement("div");
+    driftBadge.id = "u154-drift-badge";
+    driftBadge.className = "u154-drift-badge";
+    sceneContainer.appendChild(driftBadge);
+
+    const correctionBadge = document.createElement("div");
+    correctionBadge.id = "u154-correction-badge";
+    correctionBadge.className = "u154-correction-badge";
+    sceneContainer.appendChild(correctionBadge);
+
+    const panel = document.createElement("div");
+    panel.id = "u154-panel";
+    panel.className = "u154-panel";
+    panel.innerHTML = `
+      <div class="u154-title"><i class="fa-solid fa-map-location-dot"></i> Pose Fusion</div>
+      <div class="u154-grid">
+        <div class="u154-card large" id="u154-odom-card"></div>
+        <div class="u154-card large" id="u154-lime-card"></div>
+        <div class="u154-card" id="u154-drift-card"></div>
+        <div class="u154-card" id="u154-status-card"></div>
+      </div>
+
+      <div class="u154-title"><i class="fa-solid fa-shield-halved"></i> Guard Clauses</div>
+      <div class="u154-grid">
+        <div class="u154-guard" id="u154-guard-result"></div>
+        <div class="u154-guard" id="u154-guard-valid"></div>
+        <div class="u154-guard" id="u154-guard-botpose"></div>
+        <div class="u154-guard" id="u154-guard-length"></div>
+      </div>
+
+      <div class="u154-title"><i class="fa-solid fa-calculator"></i> Unit Conversion</div>
+      <div class="u154-grid">
+        <div class="u154-conversion" id="u154-conv-x"></div>
+        <div class="u154-conversion" id="u154-conv-yaw"></div>
+      </div>
+
+      <div class="u154-title"><i class="fa-solid fa-sliders"></i> Test Scenarios</div>
+      <div class="u154-actions">
+        <button class="u154-button" type="button" data-scenario="valid">Valid Reading</button>
+        <button class="u154-button" type="button" data-scenario="nullBotpose">Null Botpose</button>
+        <button class="u154-button" type="button" data-scenario="invalid">Invalid Result</button>
+        <button class="u154-button" type="button" data-scenario="stale">Stale Frame</button>
+        <button class="u154-button" type="button" data-scenario="outlier">Pose Outlier</button>
+      </div>
+      <div class="u154-card" style="margin-top:8px">
+        <i class="fa-solid fa-arrows-left-right"></i> Drift slider<br>
+        <strong id="u154-drift-slider-label">7.0 in</strong>
+        <input class="u154-slider" id="u154-drift-slider" type="range" min="0" max="12" step="0.5" value="7">
+      </div>
+
+      <div class="u154-callout">
+        <i class="fa-solid fa-circle-info"></i>
+        Odometry predicts continuously. Fresh AprilTag poses constrain the estimate according to a tunable gain.
+      </div>
+      <div class="u154-success" id="u154-success"><i class="fa-solid fa-circle-check"></i> Challenge Complete! Measurements are gated and blended.</div>
+      <div class="u154-warning" id="u154-warning"></div>
+    `;
+    rightPanel.appendChild(panel);
+
+    const buttons = panel.querySelectorAll("[data-scenario]");
+    buttons.forEach(function (button) {
+      button.addEventListener("click", function () {
+        state.scenario = button.getAttribute("data-scenario") || "valid";
+        state.lastCorrectionStatus = "DRIFTING";
+        state.lastError = "";
+        applyDrift();
+        updateScenarioButtons();
+        updatePanel();
+      });
+    });
+
+    const slider = el("u154-drift-slider");
+    if (slider) {
+      slider.addEventListener("input", function () {
+        state.driftAmount = Number(slider.value) || 0;
+        state.lastCorrectionStatus = "DRIFTING";
+        applyDrift();
+        updatePanel();
+      });
+    }
+    updateScenarioButtons();
+  }
+
+  function setupScene() {
+    if (!window.THREE || !window.scene) return;
+    if (sceneRoot) window.scene.remove(sceneRoot);
+
+    sceneRoot = new THREE.Group();
+    sceneRoot.name = "unit15_4_scene";
+    window.scene.add(sceneRoot);
+    window.scene.background = new THREE.Color(0x000000);
+
+    if (window.camera) {
+      window.camera.position.set(0, 11.5, 0.2);
+      window.camera.lookAt(0, 0, 0);
+    }
+
+    const ambient = new THREE.AmbientLight(0xffffff, 1.25);
+    sceneRoot.add(ambient);
+    const dir = new THREE.DirectionalLight(0xf3ead7, 1.0);
+    dir.position.set(3, 7, 4);
+    sceneRoot.add(dir);
+
+    const fieldSize = FIELD_INCHES * FIELD_SCALE;
+    const FLOOR_Y = 0;
+    const GRID_Y = 0.018;
+    const RING_Y = 0.045;
+    const LINE_Y = 0.09;
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(fieldSize, fieldSize),
+      new THREE.MeshStandardMaterial({
+        color: 0x050505,
+        roughness: 0.95,
+        metalness: 0.02,
+        polygonOffset: true,
+        polygonOffsetFactor: 1,
+        polygonOffsetUnits: 1
+      })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = FLOOR_Y;
+    sceneRoot.add(floor);
+
+    const grid = new THREE.GridHelper(fieldSize, 6, 0xd8c7a5, 0x1f1f1f);
+    grid.material.transparent = true;
+    grid.material.opacity = 0.42;
+    grid.material.depthWrite = false;
+    grid.position.y = GRID_Y;
+    sceneRoot.add(grid);
+
+    addFieldWall(fieldSize);
+    addAprilTags(fieldSize);
+
+    driftLine = makeLine(0x8f8778, 0.78, true);
+    beamLine = makeLine(0xf3ead7, 0.82, false);
+    sceneRoot.add(driftLine);
+    sceneRoot.add(beamLine);
+
+    trueRobot = buildRobot(0xf3ead7, 1);
+    odomRobot = buildRobot(0x8f8778, 0.46);
+    sceneRoot.add(odomRobot);
+    sceneRoot.add(trueRobot);
+
+    flashRing = new THREE.Mesh(
+      new THREE.RingGeometry(0.42, 0.62, 48),
+      new THREE.MeshBasicMaterial({ color: 0xf3ead7, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false })
+    );
+    flashRing.rotation.x = -Math.PI / 2;
+    flashRing.userData.floorY = RING_Y;
+    flashRing.userData.lineY = LINE_Y;
+    sceneRoot.add(flashRing);
+  }
+
+  function addFieldWall(size) {
+    const material = new THREE.MeshBasicMaterial({ color: 0xd8c7a5, transparent: true, opacity: 0.16, depthWrite: false });
+    [
+      [0, 0.12, -size / 2, size, 0.24],
+      [-size / 2, 0.12, 0, 0.24, size]
+    ].forEach(function (wall) {
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(wall[3], 0.24, wall[4]), material);
+      mesh.position.set(wall[0], wall[1], wall[2]);
+      sceneRoot.add(mesh);
+    });
+  }
+
+  function addAprilTags(size) {
+    const tagData = [
+      { id: 1, x: 35, y: 142, rot: 0 },
+      { id: 2, x: 72, y: 142, rot: 0 },
+      { id: 3, x: 109, y: 142, rot: 0 },
+      { id: 4, x: 2, y: 45, rot: Math.PI / 2 },
+      { id: 5, x: 2, y: 96, rot: Math.PI / 2 }
+    ];
+    tagData.forEach(function (tag) {
+      const pos = fieldToScene(tag.x, tag.y);
+      const group = new THREE.Group();
+      group.position.set(pos.x, 0.18, pos.z);
+      group.rotation.y = tag.rot;
+      const backing = new THREE.Mesh(
+        new THREE.BoxGeometry(0.36, 0.02, 0.36),
+        new THREE.MeshBasicMaterial({ color: 0xf3ead7 })
+      );
+      const center = new THREE.Mesh(
+        new THREE.BoxGeometry(0.18, 0.03, 0.18),
+        new THREE.MeshBasicMaterial({ color: 0x050505 })
+      );
+      group.add(backing);
+      group.add(center);
+      sceneRoot.add(group);
+      addSceneLabel("ID " + tag.id, pos.x, 0.42, pos.z, "#d8c7a5");
+    });
+  }
+
+  function buildRobot(color, opacity) {
+    const group = new THREE.Group();
+    const mat = new THREE.MeshStandardMaterial({
+      color: color,
+      roughness: 0.68,
+      metalness: 0.08,
+      transparent: opacity < 1,
+      opacity: opacity
+    });
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.28, 0.58), mat);
+    body.position.y = 0.18;
+    group.add(body);
+
+    const front = new THREE.Mesh(
+      new THREE.BoxGeometry(0.16, 0.08, 0.62),
+      new THREE.MeshBasicMaterial({ color: 0xd8c7a5, transparent: opacity < 1, opacity: opacity })
+    );
+    front.position.set(0.36, 0.34, 0);
+    group.add(front);
+    return group;
+  }
+
+  function makeLine(color, opacity, dashed) {
+    const material = dashed
+      ? new THREE.LineDashedMaterial({ color: color, transparent: true, opacity: opacity, dashSize: 0.16, gapSize: 0.1 })
+      : new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: opacity });
+    return new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), material);
+  }
+
+  function addSceneLabel(text, x, y, z, color) {
+    if (!window.THREE) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = 256;
+    canvas.height = 64;
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.font = "700 24px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = color || "#f3ead7";
+    ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+    const texture = new THREE.CanvasTexture(canvas);
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true }));
+    sprite.position.set(x, y, z);
+    sprite.scale.set(1.1, 0.28, 1);
+    sceneRoot.add(sprite);
+    return sprite;
+  }
+
+  function tick() {
+    updateSceneVisuals();
+  }
+
+  function updateSceneVisuals() {
+    if (!window.THREE || !sceneRoot) return;
+    placeRobot(trueRobot, TRUE_POSE);
+    placeRobot(odomRobot, state.odomPose);
+
+    const truePos = fieldToScene(TRUE_POSE.x, TRUE_POSE.y);
+    const odomPos = fieldToScene(state.odomPose.x, state.odomPose.y);
+    const lineY = flashRing && flashRing.userData.lineY ? flashRing.userData.lineY : 0.09;
+    setLinePoints(driftLine, [
+      new THREE.Vector3(odomPos.x, lineY, odomPos.z),
+      new THREE.Vector3(truePos.x, lineY, truePos.z)
+    ]);
+
+    const nearestTag = fieldToScene(72, 142);
+    setLinePoints(beamLine, [
+      new THREE.Vector3(truePos.x, lineY + 0.035, truePos.z),
+      new THREE.Vector3(nearestTag.x, lineY + 0.035, nearestTag.z)
+    ]);
+
+    if (flashRing) {
+      flashRing.position.set(odomPos.x, flashRing.userData.floorY || 0.045, odomPos.z);
+      const age = performance.now() - state.correctedAt;
+      flashRing.material.opacity = age < 700 ? Math.max(0, 0.75 - age / 900) : 0;
+      const scale = age < 700 ? 1 + age / 600 : 1;
+      flashRing.scale.setScalar(scale);
+    }
+  }
+
+  function placeRobot(robot, pose) {
+    if (!robot) return;
+    const pos = fieldToScene(pose.x, pose.y);
+    robot.position.set(pos.x, 0, pos.z);
+    robot.rotation.y = -pose.heading;
+  }
+
+  function fieldToScene(x, y) {
+    return {
+      x: (Number(x) - FIELD_INCHES / 2) * FIELD_SCALE,
+      z: (FIELD_INCHES / 2 - Number(y)) * FIELD_SCALE
+    };
+  }
+
+  function setLinePoints(line, points) {
+    if (!line || !points || points.length < 2) return;
+    line.geometry.dispose();
+    line.geometry = new THREE.BufferGeometry().setFromPoints(points);
+    if (line.computeLineDistances) line.computeLineDistances();
+  }
+
+  function compileStudentCode() {
+    const code = getCodeSafe();
+    const initBody = extractMethodBody(code, "init") || "";
+    const loopBody = extractMethodBody(code, "loop") || "";
+    const correctBody = extractMethodBody(code, "correctPoseFromLimelight") || "";
+    try {
+      initFn = new Function(
+        "hardwareMap",
+        "createFollower",
+        "switchPipeline",
+        "startLimelight",
+        "addTelemetry",
+        "updateTelemetry",
+        '"use strict"; let follower; let limelight;\n' + transpileInitBody(initBody)
+      );
+      correctFn = new Function(
+        "getLimelightResult",
+        "getFollowerPose",
+        "setFollowerPose",
+        "createPose",
+        "normalizeAngle",
+        '"use strict";\n' + transpileCorrectBody(correctBody)
+      );
+      loopFn = new Function(
+        "hardwareMap",
+        "limelight",
+        "follower",
+        "callCorrectPose",
+        "getFollowerPose",
+        "addTelemetry",
+        "updateTelemetry",
+        '"use strict";\n' + transpileLoopBody(loopBody)
+      );
+    } catch (err) {
+      state.lastError = "compile error: " + err.message;
+      initFn = null;
+      loopFn = null;
+      correctFn = null;
+      failStudentExecution(state.lastError);
+      return false;
+    }
+
+    try {
+      safeCall(clearTelemetry);
+      initFn(hardwareMap, createFollower, switchPipeline, startLimelight, addTelemetry, updateTelemetry);
+      updateTelemetry();
+      state.lastError = "";
+    } catch (err) {
+      state.lastError = "init() runtime error: " + err.message;
+      initFn = null;
+      loopFn = null;
+      correctFn = null;
+      failStudentExecution(state.lastError);
+      return false;
+    }
+    validateCode();
+    updatePanel();
+    return true;
+  }
+
+  function transpileInitBody(body) {
+    let js = body || "";
+    js = js
+      .replace(/\bConstants\s*\.\s*create\s*\(\s*hardwareMap\s*\)/g, "createFollower()")
+      .replace(/\bhardwareMap\s*\.\s*get\s*\(\s*Limelight3A\.class\s*,\s*"limelight"\s*\)/g, 'hardwareMap.get("Limelight3A", "limelight")')
+      .replace(/\blimelight\s*\.\s*pipelineSwitch\s*\(/g, "switchPipeline(")
+      .replace(/\blimelight\s*\.\s*start\s*\(\s*\)/g, "startLimelight()")
+      .replace(/\btelemetry\s*\.\s*addData\s*\(/g, "addTelemetry(")
+      .replace(/\btelemetry\s*\.\s*update\s*\(\s*\)/g, "updateTelemetry()")
+      .replace(/(^|[;{}\n]\s*)(?:final\s+)?(?:Follower|Limelight3A|double|int|boolean|String|float|long|byte|short|char)\s+([A-Za-z_$])/gm, "$1let $2");
+    if (typeof _simTranspile === "function") js = _simTranspile(js);
+    return js;
+  }
+
+  function transpileCorrectBody(body) {
+    let js = body || "";
+    js = js
+      .replace(/\blimelight\s*\.\s*getLatestResult\s*\(\s*\)/g, "getLimelightResult()")
+      .replace(/\bresult\s*\.\s*getBotpose\s*\(\s*\)/g, "result.botpose")
+      .replace(/\bresult\s*\.\s*isValid\s*\(\s*\)/g, "result.valid")
+      .replace(/\bresult\s*\.\s*getStaleness\s*\(\s*\)/g, "result.staleness")
+      .replace(/\bresult\s*\.\s*getBotposeTagCount\s*\(\s*\)/g, "result.tagCount")
+      .replace(/\bbotpose\s*\.\s*getPosition\s*\(\s*\)\s*\.\s*x\b/g, "botpose.position.x")
+      .replace(/\bbotpose\s*\.\s*getPosition\s*\(\s*\)\s*\.\s*y\b/g, "botpose.position.y")
+      .replace(/\bbotpose\s*\.\s*getOrientation\s*\(\s*\)\s*\.\s*getYaw\s*\(\s*AngleUnit\.RADIANS\s*\)/g, "botpose.orientation.yawRadians")
+      .replace(/\bfollower\s*\.\s*pose\s*\(\s*\)/g, "getFollowerPose()")
+      .replace(/\bfollower\s*\.\s*setPose\s*\(/g, "setFollowerPose(")
+      .replace(/\bnew\s+Pose\s*\(/g, "createPose(")
+      .replace(/\bAngleUnit\s*\.\s*normalizeRadians\s*\(/g, "normalizeAngle(")
+      .replace(/\.x\s*\(\s*\)/g, ".x")
+      .replace(/\.y\s*\(\s*\)/g, ".y")
+      .replace(/\.heading\s*\(\s*\)/g, ".heading")
+      .replace(/(^|[;{}\n]\s*)(?:final\s+)?(?:LLResult|Pose3D|Pose|double|int|boolean|String|float|long|byte|short|char)\s+([A-Za-z_$])/gm, "$1let $2");
+    if (typeof _simTranspile === "function") js = _simTranspile(js);
+    return js;
+  }
+
+  function transpileLoopBody(body) {
+    let js = body || "";
+    js = js
+      .replace(/\bcorrectPoseFromLimelight\s*\(\s*\)/g, "callCorrectPose()")
+      .replace(/\bfollower\s*\.\s*update\s*\(\s*\)/g, "updateFollower()")
+      .replace(/\bfollower\s*\.\s*pose\s*\(\s*\)/g, "getFollowerPose()")
+      .replace(/\.x\s*\(\s*\)/g, ".x")
+      .replace(/\.y\s*\(\s*\)/g, ".y")
+      .replace(/\.heading\s*\(\s*\)/g, ".heading")
+      .replace(/\btelemetry\s*\.\s*addData\s*\(/g, "addTelemetry(")
+      .replace(/\btelemetry\s*\.\s*update\s*\(\s*\)/g, "updateTelemetry()")
+      .replace(/(^|[;{}\n]\s*)(?:final\s+)?(?:Pose|double|int|boolean|String|float|long|byte|short|char)\s+([A-Za-z_$])/gm, "$1let $2");
+    if (typeof _simTranspile === "function") js = _simTranspile(js);
+    return js;
+  }
+
+  function createFollower() {
+    return followerDevice || hardwareMap.registerFollower("follower");
+  }
+
+  function createPose(x, y, heading) {
+    return { x: Number(x) || 0, y: Number(y) || 0, heading: Number(heading) || 0 };
+  }
+
+  function getFollowerPose() {
+    return { x: state.odomPose.x, y: state.odomPose.y, heading: state.odomPose.heading };
+  }
+
+  function setFollowerPose(pose) {
+    const before = driftMagnitude();
+    state.odomPose = createPose(pose && pose.x, pose && pose.y, pose && pose.heading);
+    state.lastCorrectionStatus = driftMagnitude() < before ? "FUSED" : "FUSION MOVED AWAY";
+    state.correctedAt = performance.now();
+    emitFollowerPoseSet();
+  }
+
+  function updateCorrectedPose(x, y, heading) {
+    state.odomPose = createPose(x, y, heading);
+  }
+
+  function updateLimelightPose(x, y, heading) {
+    state.limelightPose = createPose(x, y, heading);
+  }
+
+  function switchPipeline(slot) {
+    state.pipeline = Number(slot) || 0;
+  }
+
+  function startLimelight() {
+    state.limelightStarted = true;
+  }
+
+  function callCorrectPose() {
+    if (!correctFn) {
+      state.lastError = "correctPoseFromLimelight() was not found.";
+      return;
+    }
+    correctFn(getLimelightResult, getFollowerPose, setFollowerPose, createPose, normalizeAngle);
+  }
+
+  function getLimelightResult() {
+    const botpose = makeBotposeForScenario();
+    const runtime = {
+      resultNotNull: true,
+      valid: !!botpose.result.valid,
+      botposeNotNull: !!botpose.result.botpose,
+      freshAndTagged: botpose.result.staleness <= 100 && botpose.result.tagCount > 0,
+      innovationOk: state.scenario !== "outlier"
+    };
+    state.guardRuntime = runtime;
+    if (runtime.botposeNotNull) emitLimelightBotpose();
+    return botpose.result;
+  }
+
+  function makeBotposeForScenario() {
+    const raw = {
+      position: {
+        x: TRUE_POSE.x / INCHES_PER_METER,
+        y: TRUE_POSE.y / INCHES_PER_METER
+      },
+      orientation: {
+        yawRadians: TRUE_POSE.heading
+      }
+    };
+    if (state.scenario === "outlier") {
+      raw.position.x = (TRUE_POSE.x + 48) / INCHES_PER_METER;
+      raw.position.y = (TRUE_POSE.y - 36) / INCHES_PER_METER;
+    }
+    if (state.scenario === "valid") return { result: { valid: true, botpose: raw, staleness: 22, tagCount: 2 } };
+    if (state.scenario === "nullBotpose") return { result: { valid: true, botpose: null, staleness: 22, tagCount: 2 } };
+    if (state.scenario === "stale") return { result: { valid: true, botpose: raw, staleness: 260, tagCount: 1 } };
+    if (state.scenario === "outlier") return { result: { valid: true, botpose: raw, staleness: 22, tagCount: 1 } };
+    return { result: { valid: false, botpose: null, staleness: 0, tagCount: 0 } };
+  }
+
+  function applyDrift() {
+    const d = state.driftAmount;
+    state.odomPose = {
+      x: TRUE_POSE.x + d,
+      y: TRUE_POSE.y - d * 0.52,
+      heading: TRUE_POSE.heading + d * 0.022
+    };
+    state.correctedAt = 0;
+    emitFollowerPoseSet();
+  }
+
+  function driftMagnitude() {
+    const dx = state.odomPose.x - TRUE_POSE.x;
+    const dy = state.odomPose.y - TRUE_POSE.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function emitFollowerPoseSet() {
+    followerPoseCallbacks.forEach(function (cb) {
+      cb(state.odomPose.x, state.odomPose.y, state.odomPose.heading);
+    });
+  }
+
+  function emitLimelightBotpose() {
+    limelightBotposeCallbacks.forEach(function (cb) {
+      cb(TRUE_POSE.x, TRUE_POSE.y, TRUE_POSE.heading);
+    });
+  }
+
+  function updatePanel() {
+    const checks = validateCode(false);
+    const drift = driftMagnitude();
+    const rawX = TRUE_POSE.x / INCHES_PER_METER;
+    const rawYaw = TRUE_POSE.heading;
+    const driftClass = drift < 2 ? "good" : drift < 5 ? "warn" : "bad";
+    const statusClass = state.lastCorrectionStatus === "FUSED" ? "good" : state.lastCorrectionStatus === "ERROR" ? "bad" : "warn";
+
+    renderCard("u154-odom-card", '<i class="fa-solid fa-route"></i> ODOM<br><strong>(' + fmt(state.odomPose.x) + ", " + fmt(state.odomPose.y) + ", " + fmt(state.odomPose.heading) + " rad)</strong>", driftClass);
+    renderCard("u154-lime-card", '<i class="fa-solid fa-crosshairs"></i> LIMELIGHT<br><strong>(' + fmt(TRUE_POSE.x) + ", " + fmt(TRUE_POSE.y) + ", " + fmt(TRUE_POSE.heading) + " rad)</strong>", "good");
+    renderCard("u154-drift-card", '<i class="fa-solid fa-ruler"></i> DRIFT<br><strong>' + fmt(drift) + " inches</strong>", driftClass);
+    renderCard("u154-status-card", '<i class="fa-solid fa-location-crosshairs"></i> Status<br><strong>' + escapeHTML(state.lastCorrectionStatus) + "</strong>", statusClass);
+
+    renderGuard("u154-guard-result", "result.isValid()", checks.meta.hasValidCheck, state.guardRuntime.valid);
+    renderGuard("u154-guard-botpose", "Pose3D botpose", checks.meta.hasPose3D, state.guardRuntime.botposeNotNull);
+    renderGuard("u154-guard-valid", "fresh + tagged", checks.meta.hasFreshnessGate && checks.meta.hasTagGate, state.guardRuntime.freshAndTagged);
+    renderGuard("u154-guard-length", "innovation gate", checks.meta.hasInnovationGate, state.guardRuntime.innovationOk);
+
+    renderConversion("u154-conv-x", "Raw Limelight X", fmt(rawX) + " m", "Converted X", fmt(rawX * INCHES_PER_METER) + " in", checks.meta.hasMetersConversion);
+    renderConversion("u154-conv-yaw", "Requested yaw", fmt(rawYaw) + " rad", "Heading residual", "normalized", checks.meta.hasYawConversion && checks.meta.hasInnovations);
+
+    const sliderLabel = el("u154-drift-slider-label");
+    if (sliderLabel) sliderLabel.textContent = fmt(state.driftAmount) + " in";
+    const slider = el("u154-drift-slider");
+    if (slider && Number(slider.value) !== state.driftAmount) slider.value = String(state.driftAmount);
+
+    const success = el("u154-success");
+    if (success) success.style.display = checks.list.every(Boolean) ? "flex" : "none";
+    const warning = el("u154-warning");
+    const warningData = getHint(checks.meta);
+    if (warning) {
+      warning.style.display = warningData.message ? "block" : "none";
+      warning.classList.toggle("error", warningData.type === "error");
+      warning.innerHTML = warningData.message ? '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(warningData.message) : "";
+    }
+
+    const sceneBadge = el("u154-scene-badge");
+    if (sceneBadge) {
+      sceneBadge.innerHTML = '<i class="fa-solid fa-satellite-dish"></i> Scenario: ' + scenarioLabel(state.scenario);
+    }
+    const driftBadge = el("u154-drift-badge");
+    if (driftBadge) {
+      driftBadge.style.color = drift < 2 ? "#f3ead7" : drift < 5 ? "#d8c7a5" : "#8f8778";
+      driftBadge.style.borderColor = drift < 2 ? "rgba(243, 234, 215, 0.58)" : drift < 5 ? "rgba(216, 199, 165, 0.48)" : "rgba(143, 135, 120, 0.58)";
+      driftBadge.innerHTML = '<i class="fa-solid fa-ruler-combined"></i> DRIFT: ' + fmt(drift) + " in";
+    }
+    const correctionBadge = el("u154-correction-badge");
+    if (correctionBadge) {
+      const recent = performance.now() - state.correctedAt < 1200;
+      correctionBadge.style.display = recent || state.lastCorrectionStatus === "ERROR" ? "block" : "none";
+      correctionBadge.style.color = state.lastCorrectionStatus === "ERROR" ? "#8f8778" : "#f3ead7";
+      correctionBadge.style.borderColor = state.lastCorrectionStatus === "ERROR" ? "rgba(143, 135, 120, 0.58)" : "rgba(243, 234, 215, 0.58)";
+      correctionBadge.innerHTML = state.lastCorrectionStatus === "ERROR"
+        ? '<i class="fa-solid fa-burst"></i> RUNTIME ERROR'
+        : '<i class="fa-solid fa-circle-check"></i> MEASUREMENT FUSED';
+    }
+  }
+
+  function renderCard(id, html, status) {
+    const node = el(id);
+    if (!node) return;
+    node.className = "u154-card" + (status ? " " + status : "");
+    node.innerHTML = html;
+  }
+
+  function renderGuard(id, label, codeHasGuard, runtimePass) {
+    const node = el(id);
+    if (!node) return;
+    const status = codeHasGuard ? "good" : "bad";
+    node.className = "u154-guard " + status;
+    node.innerHTML =
+      '<i class="fa-solid ' + (codeHasGuard ? "fa-circle-check" : "fa-circle-xmark") + '"></i> ' +
+      escapeHTML(label) + '<br><strong>Code: ' + (codeHasGuard ? "present" : "missing") +
+      "</strong><br>Runtime: " + (runtimePass ? "passes" : "blocked");
+  }
+
+  function renderConversion(id, leftLabel, leftValue, rightLabel, rightValue, ok) {
+    const node = el(id);
+    if (!node) return;
+    node.className = "u154-conversion " + (ok ? "good" : "bad");
+    node.innerHTML =
+      '<i class="fa-solid ' + (ok ? "fa-circle-check" : "fa-circle-xmark") + '"></i> ' +
+      escapeHTML(leftLabel) + ": <strong>" + escapeHTML(leftValue) + "</strong><br>" +
+      escapeHTML(rightLabel) + ": <strong>" + escapeHTML(rightValue) + "</strong>";
+  }
+
+  function validateCode(updateRequirements) {
+    const code = getCodeSafe();
+    const correctBody = extractMethodBody(code, "correctPoseFromLimelight") || "";
+    const setPoseIndex = correctBody.search(/follower\s*\.\s*setPose\s*\(/);
+    const beforeSetPose = setPoseIndex >= 0 ? correctBody.slice(0, setPoseIndex) : correctBody;
+    const hasLatestResult = /limelight\s*\.\s*getLatestResult\s*\(\s*\)/.test(correctBody);
+    const hasValidCheck = /!\s*result\s*\.\s*isValid\s*\(\s*\)|result\s*\.\s*isValid\s*\(\s*\)\s*==\s*false|result\s*\.\s*isValid\s*\(\s*\)/.test(correctBody);
+    const hasFreshnessGate = /getStaleness\s*\(\s*\)\s*>\s*(?:100(?:\.0)?|[A-Z_][A-Z0-9_]*)/.test(beforeSetPose);
+    const hasTagGate = /getBotposeTagCount\s*\(\s*\)\s*<\s*(?:1(?:\.0)?|[A-Z_][A-Z0-9_]*)/.test(beforeSetPose);
+    const hasPose3D = /\bPose3D\s+botpose\s*=\s*result\s*\.\s*getBotpose\s*\(\s*\)/.test(correctBody);
+    const hasBotposeNull = /botpose\s*==\s*null|null\s*==\s*botpose|botpose\s*!=\s*null|null\s*!=\s*botpose/.test(correctBody);
+    const hasMetersConversion = /getPosition\s*\(\s*\)\s*\.\s*x/.test(correctBody) &&
+      /getPosition\s*\(\s*\)\s*\.\s*y/.test(correctBody) &&
+      /39\.3701|39\.37|\/\s*0\.0254/.test(correctBody);
+    const hasYawConversion = /getOrientation\s*\(\s*\)\s*\.\s*getYaw\s*\(\s*AngleUnit\s*\.\s*RADIANS\s*\)/.test(correctBody);
+    const hasEstimate = /\bPose\s+(?:estimate|predicted)\s*=\s*follower\s*\.\s*pose\s*\(\s*\)/.test(correctBody);
+    const hasInnovations = /\bdouble\s+innovationX\s*=/.test(correctBody) &&
+      /\bdouble\s+innovationY\s*=/.test(correctBody) &&
+      /\bdouble\s+innovationHeading\s*=\s*AngleUnit\s*\.\s*normalizeRadians\s*\(/.test(correctBody);
+    const hasInnovationGate = /Math\s*\.\s*hypot\s*\(\s*innovationX\s*,\s*innovationY\s*\)\s*>\s*(?:12(?:\.0)?|[A-Z_][A-Z0-9_]*)/.test(beforeSetPose);
+    const gainMatch = correctBody.match(/\bdouble\s+gain\s*=\s*(0(?:\.\d+)?|1(?:\.0+)?)\s*;/);
+    const gainValue = gainMatch ? Number(gainMatch[1]) : NaN;
+    const hasGain = Number.isFinite(gainValue) && gainValue > 0 && gainValue < 1;
+    const hasSetPose = /follower\s*\.\s*setPose\s*\(\s*new\s+Pose\s*\(/.test(correctBody);
+    const hasBlendedX = /(?:estimate|predicted)\s*\.\s*x\s*\(\s*\)\s*\+\s*gain\s*\*\s*innovationX/.test(correctBody);
+    const hasBlendedY = /(?:estimate|predicted)\s*\.\s*y\s*\(\s*\)\s*\+\s*gain\s*\*\s*innovationY/.test(correctBody);
+    const hasBlendedHeading = /AngleUnit\s*\.\s*normalizeRadians\s*\([\s\S]*?(?:estimate|predicted)\s*\.\s*heading\s*\(\s*\)\s*\+\s*gain\s*\*\s*innovationHeading/.test(correctBody);
+    const guardsBeforeSetPose = setPoseIndex > 0 && hasValidCheck && hasFreshnessGate &&
+      hasTagGate && hasBotposeNull && hasInnovationGate;
+
+    const checks = [
+      hasLatestResult,
+      hasValidCheck,
+      hasFreshnessGate && hasTagGate,
+      hasPose3D && hasBotposeNull,
+      hasMetersConversion && hasYawConversion && hasEstimate && hasInnovations,
+      hasInnovationGate,
+      hasGain,
+      hasSetPose && hasBlendedX && hasBlendedY && hasBlendedHeading && guardsBeforeSetPose
+    ];
+    if (updateRequirements !== false) {
+      checks.forEach(function (passed, index) {
+        safeCall(setRequirement, index, !!passed);
+      });
+    }
+    return {
+      list: checks,
+      meta: {
+        hasValidCheck: hasValidCheck,
+        hasFreshnessGate: hasFreshnessGate,
+        hasTagGate: hasTagGate,
+        hasPose3D: hasPose3D,
+        hasBotposeNull: hasBotposeNull,
+        hasMetersConversion: hasMetersConversion,
+        hasYawConversion: hasYawConversion,
+        hasEstimate: hasEstimate,
+        hasInnovations: hasInnovations,
+        hasInnovationGate: hasInnovationGate,
+        hasGain: hasGain,
+        hasSetPose: hasSetPose,
+        hasBlendedX: hasBlendedX,
+        hasBlendedY: hasBlendedY,
+        hasBlendedHeading: hasBlendedHeading,
+        setPoseIndex: setPoseIndex,
+        correctBody: correctBody
+      }
+    };
+  }
+
+  function getHint(meta) {
+    if (!meta.hasValidCheck) return { type: "error", message: "Check result.isValid() before using pose data" };
+    if (!meta.hasFreshnessGate || !meta.hasTagGate) return { type: "error", message: "Reject stale results and require at least one tag" };
+    if (!meta.hasPose3D) return { type: "error", message: "Store result.getBotpose() in a Pose3D variable named botpose" };
+    if (!meta.hasBotposeNull) return { type: "error", message: "Check botpose != null before reading its position" };
+    if (!meta.hasMetersConversion) return { type: "error", message: "Read botpose.getPosition().x and .y, then convert meters to inches" };
+    if (!meta.hasYawConversion) return { type: "error", message: "Read yaw with getYaw(AngleUnit.RADIANS)" };
+    if (!meta.hasEstimate || !meta.hasInnovations) return { type: "error", message: "Compute measurement-minus-estimate innovations for x, y, and normalized heading" };
+    if (!meta.hasInnovationGate) return { type: "error", message: "Reject position innovations above 12 inches before fusion" };
+    if (!meta.hasGain) return { type: "error", message: "Declare a double gain strictly between 0 and 1" };
+    if (!meta.hasSetPose || !meta.hasBlendedX || !meta.hasBlendedY || !meta.hasBlendedHeading) return { type: "error", message: "Blend all three innovations into the follower pose and normalize heading" };
+    if (!/telemetry\s*\.\s*update\s*\(\s*\)/.test(getCodeSafe())) {
+      return { type: "warn", message: "Call telemetry.update() to send data to the Driver Station" };
+    }
+    if (state.lastError) return { type: "error", message: state.lastError };
+    return { type: "warn", message: "" };
+  }
+
+  function updateScenarioButtons() {
+    const buttons = document.querySelectorAll("[data-scenario]");
+    buttons.forEach(function (button) {
+      button.classList.toggle("active", button.getAttribute("data-scenario") === state.scenario);
+    });
+  }
+
+  function scenarioLabel(value) {
+    if (value === "valid") return "Valid Reading";
+    if (value === "nullBotpose") return "Null Botpose";
+    if (value === "invalid") return "Invalid Result";
+    if (value === "stale") return "Stale Frame";
+    return "Pose Outlier";
+  }
+
+  function extractMethodBody(source, methodName) {
+    const text = source || "";
+    const re = new RegExp("\\b" + methodName + "\\s*\\([^)]*\\)\\s*\\{", "g");
+    const match = re.exec(text);
+    if (!match) return "";
+    const open = text.indexOf("{", match.index);
+    return extractBalanced(text, open);
+  }
+
+  function extractBalanced(text, openIndex) {
+    if (openIndex < 0) return "";
+    let depth = 0;
+    for (let i = openIndex; i < text.length; i++) {
+      const ch = text[i];
+      if (ch === "{") depth++;
+      else if (ch === "}") {
+        depth--;
+        if (depth === 0) return text.slice(openIndex + 1, i);
+      }
+    }
+    return "";
+  }
+
+  function getCodeSafe() {
+    if (typeof getCode !== "function") return starterCode;
+    try {
+      return getCode();
+    } catch (err) {
+      return starterCode;
+    }
+  }
+
+  function showStudentError(message) {
+    const text = String(message || "Unknown simulator error");
+    state.lastError = text;
+    const warning = el("u154-warning");
+    if (warning) {
+      warning.style.display = "block";
+      warning.classList.add("error");
+      warning.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(text);
+    }
+    if (typeof _simShowTelemetryError === "function") {
+      _simShowTelemetryError(text);
+    } else {
+      safeCall(addTelemetry, "ERROR", text);
+      safeCall(updateTelemetry);
+    }
+  }
+
+  function failStudentExecution(message) {
+    if (typeof stopExecution === "function") stopExecution();
+    showStudentError(message);
+  }
+
+  function fmt(value) {
+    return (Number(value) || 0).toFixed(1);
+  }
+
+  function normalizeAngle(value) {
+    let angle = Number(value) || 0;
+    while (angle > Math.PI) angle -= Math.PI * 2;
+    while (angle < -Math.PI) angle += Math.PI * 2;
+    return angle;
+  }
+
+  function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, function (ch) {
+      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch];
+    });
+  }
+};
+</script>
+</body>
+</html>

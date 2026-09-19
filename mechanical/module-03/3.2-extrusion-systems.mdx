@@ -1,0 +1,113 @@
+---
+id: extrusion-systems
+title: "Lesson 3.2: Working Inside goBILDA, REV, and Tetrix Build Systems"
+sidebar_label: "3.2 · Build Systems"
+sidebar_position: 2
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 3.2: Working Inside goBILDA, REV, and Tetrix Build Systems
+
+---
+
+## Technical Context
+
+Commercial FTC build systems are hole patterns. Everything else about them, the extrusion profile, the brackets, the hubs, exists to make parts land on a consistent grid so that pieces bolt together without custom machining.
+
+Design around the grid when possible. Ignoring it creates extra adapter plates, awkward spacing, and more dimensions that the team must manufacture accurately.
+
+---
+
+## What a Build System Gives You
+
+- **A repeating hole pattern** at a fixed spacing, so any bracket lands on any rail
+- **Matched hardware**: fasteners, spacers, standoffs, and hubs sized to the pattern
+- **Structural sections** with known dimensions and predictable stiffness
+- **Motion components** with bore sizes that match the system's shafts
+
+The value is compounding: a team that stays inside one system can rebuild a subsystem in an evening, because every part already fits every other part.
+
+---
+
+## The Grid Is a Constraint, and That Is Fine
+
+Design your mechanisms so that mounting points fall on the pattern. When a motor needs to sit 47 mm from a shaft and the grid gives you 40 or 48, move the design to 48. The 1 mm rarely matters, and forcing 47 means a custom plate that has to be made accurately.
+
+When you genuinely cannot land on the grid, the fix is a **custom adapter plate**: one part that has grid holes on one side and your arbitrary spacing on the other. Make one custom part, not a custom robot.
+
+:::tip Slots buy forgiveness
+Where you can, use a slot rather than a hole in a custom plate. A slot lets you adjust position during assembly, which absorbs both your tolerance stack and the fact that the first assembly always reveals something.
+:::
+
+---
+
+## Mixing Systems
+
+Teams end up with parts from several systems, often because of what was donated or what was on sale. Mixing is workable if you are deliberate about it.
+
+The two conflicts to plan for:
+
+**Hole spacing.** Different systems use different grid pitches, so a rail from one system does not naturally align with a bracket from another. Resolve this at a small number of deliberate interface plates rather than trying to make everything align everywhere.
+
+**Fastener size and thread.** Systems standardize on different fasteners, and some are metric while others are imperial. Mixing them means two sets of hex drivers in the pit and screws that look similar but are not interchangeable. Sort them into labeled bins and mark each size clearly.
+
+:::warning Do not force a metric screw into an imperial thread
+M3 and 6-32 are close enough in diameter to start and different enough in pitch to destroy the threads. This ruins tapped holes in expensive parts and is one of the most common avoidable damages in a mixed-system shop.
+:::
+
+---
+
+## Structural Sections and How to Orient Them
+
+Most systems provide channel and rectangular tube. These are not symmetric: a channel is much stiffer in one direction than the other, and orientation is a design decision, not a packaging convenience.
+
+The rule from Lesson 3.3, stated early: the **depth of the section in the direction of the load** dominates stiffness. A channel lying flat under a vertical load is dramatically more flexible than the same channel standing on edge.
+
+When you mount a rail, ask which way it will be loaded and orient the deep dimension along that load.
+
+---
+
+## When to Leave the System
+
+Custom fabrication is worth it when:
+
+- The part is highly loaded and a stock bracket would be a weak link
+- The packaging genuinely cannot be reached from the grid
+- The part is a one-off interface between two systems
+- Weight matters enough to justify machining material away
+
+It is not worth it when the only reason is that a stock part is 3 mm off from ideal, or that a custom part would look better. Custom parts cost hours, cannot be replaced at a tournament, and are the parts that break at the worst time because they were made once and never validated.
+
+:::info Official references
+- Vendor documentation carries the authoritative hole patterns and dimensions for each system. Check the specific part page for the pattern before designing around it.
+:::
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. When a design needs a spacing the grid does not provide, the preferred solution is one custom `__________` plate rather than custom parts throughout.
+2. Using a `__________` instead of a hole in a custom plate allows adjustment during assembly.
+3. A channel section is much stiffer when the deep dimension is oriented along the direction of the `__________`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **adapter** (interface)
+2. **slot**
+3. **load**
+
+</details>
+
+---
+
+## Exercise
+
+Find one place on your robot where a part was forced to fit, either by drilling a new hole in a stock part or by making a custom bracket. Determine whether a small change in the design would have let it land on the grid. Record what you find.
+
+<MarkComplete
+  lessonId="module-03/extrusion-systems"
+  nextUnit="/mechanical/module-03/stiffness-and-deflection"
+  nextUnitName="Lesson 3.3: Stiffness, Deflection, and Why Beam Depth Wins"
+/>

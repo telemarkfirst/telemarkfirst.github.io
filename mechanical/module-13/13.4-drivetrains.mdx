@@ -1,0 +1,119 @@
+---
+id: drivetrains
+title: "Lesson 13.4: Traction, Weight Transfer, and Dead Wheels"
+sidebar_label: "13.4 · Drivetrain Theory"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import LessonTool from '@site/src/components/mechanical/LessonTool';
+import DrivetrainCalculator from '@site/src/components/mechanical/DrivetrainCalculator';
+
+# Lesson 13.4: Traction, Weight Transfer, and Dead Wheels
+
+---
+
+## Technical Context
+
+Wheel type and wheel count are visible drivetrain choices, but they follow from more basic requirements.
+
+Start with two questions: how must the drivetrain apply force to the floor, and what position information does autonomous need? Traction and localization requirements will narrow the useful wheel and layout options.
+
+---
+
+## Traction is a budget, not a property
+
+The force a wheel can put into the floor before it slips is:
+
+**F = μN**
+
+μ comes from the wheel and the field tile. N is the weight on that wheel. You cannot change the tile, and μ for a given wheel is what it is. **The only variable you control is where the weight sits.**
+
+That reframes several familiar arguments:
+
+- **Mecanum wheels trade traction for a degree of freedom.** Their rollers only contact the tile along a line, and only some of the force from each wheel points where you want. You gain strafing and you give up pushing force. Whether that is a good trade is a game question, not a drivetrain question.
+- **More wheels does not mean more traction.** Total normal force is the robot's weight regardless of how many wheels carry it. Six wheels spread the same N further. What extra wheels buy is contact continuity over the field seams and less sensitivity to one wheel unloading.
+- **A pushing robot wants weight, not motors.** Once every wheel is at the slip limit, adding torque only spins the wheels faster.
+
+---
+
+## Weight transfer is why robots tip and slip
+
+When a robot accelerates, load shifts off the front and onto the rear. When it stops, the reverse. The size of that shift is set by how high the centre of mass is relative to the wheelbase:
+
+**ΔN = m·a·h / L**
+
+where h is the centre of mass height and L is the wheelbase. Two consequences that decide real designs:
+
+1. **A tall robot loses traction on the unloaded wheels under acceleration**, which is why a robot with a raised lift full of game elements suddenly drives badly. The traction did not change; the load distribution did.
+2. **Tipping happens when ΔN reaches the static load on the front wheels.** A robot with a high, extended arm is much closer to that limit than the same robot retracted, which is why "drive slowly with the lift up" is a real rule and not caution.
+
+This is the argument for keeping heavy things low and the argument for retracting before driving, both of which are geometry rather than discipline.
+
+<LessonTool
+  toolId="drivetrain"
+  bring="Robot mass, wheel diameter, and the gear ratio you are considering."
+  change="The ratio, and see where the speed you gain stops being usable."
+  read="Whether the torque you asked for exceeds the traction available. Past that point, more torque only spins the wheels."
+>
+  <DrivetrainCalculator />
+</LessonTool>
+
+---
+
+## Dead wheels: why odometry stopped being optional
+
+A drive wheel is a bad position sensor. It slips exactly when you most need to know where you are, under acceleration and in contact with another robot, and encoder counts on a slipping wheel report motion that never happened.
+
+A **dead wheel**, or odometry pod, is an unpowered wheel held against the tile by a spring, with its own encoder. It carries almost no load, transmits no torque, and therefore does not slip. Its count is a measurement of the floor rather than of the motor.
+
+Three pods, or two plus an IMU heading, is enough to track position and rotation continuously. The design requirements are unglamorous and they are the whole thing:
+
+| Requirement | Why |
+| --- | --- |
+| Constant, light spring preload | Enough to prevent skip, little enough to avoid deflection under load |
+| Known, rigid mounting position | The maths uses the distance between pods; a pod that flexes reports a lie |
+| A wheel that does not compress much | A compressible wheel changes effective radius with load |
+| Free of drivetrain torque | Any powered contact reintroduces the slip you removed |
+
+The theory point: **odometry works because it decouples measurement from actuation.** The moment the same wheel does both, the measurement inherits every error of the actuator. That principle generalises well past drivetrains.
+
+---
+
+## Reading a drivetrain choice
+
+- **Does the game reward pushing?** Traction wheels, weight low and centred.
+- **Does it reward repositioning without turning?** Mecanum or an omni arrangement, and accept the traction cost.
+- **Does it reward precise repeatable placement?** Dead wheels, and design the mounts as carefully as the drivetrain.
+- **Is the robot tall or does it carry mass high?** Widen the wheelbase or lower the mass before touching the motors.
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The traction available to a wheel is set by μ and the \_\_\_\_\_\_\_\_ on it.
+2. Weight transfer under acceleration grows with the centre of mass \_\_\_\_\_\_\_\_ and shrinks with wheelbase.
+3. A dead wheel does not slip because it carries almost no \_\_\_\_\_\_\_\_.
+4. Odometry works because it separates measurement from \_\_\_\_\_\_\_\_.
+
+<details>
+<summary>Show answers</summary>
+
+1. normal force (weight)
+2. height
+3. load (torque)
+4. actuation
+
+</details>
+
+---
+
+## Exercise
+
+Estimate your robot's mass, centre of mass height, and wheelbase. Compute the load transfer at a hard stop. Then say what fraction of the front wheels' static load that represents, and whether your answer changes with the lift extended.
+
+<MarkComplete
+  lessonId="module-13/drivetrains"
+  nextUnit="/mechanical/module-13/mastery-quiz"
+  nextUnitName="Module 13 Mastery Quiz"
+/>

@@ -1,0 +1,123 @@
+---
+id: imported-and-surface-geometry
+title: "Lesson 5.7: Direct Editing, Imported Geometry, Surfaces, and Mesh"
+sidebar_label: "5.7 · Imports & Surfaces"
+sidebar_position: 7
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 5.7: Direct Editing, Imported Geometry, Surfaces, and Mesh
+
+---
+
+## Technical Context
+
+Everything so far assumed you built the geometry and can edit the sketch that made it. Much of what enters an FTC design does not work that way. A vendor STEP file, a scanned mesh, or a downloaded model arrives as finished shape with no recipe behind it.
+
+This lesson is about working with geometry you did not author.
+
+---
+
+## Imported Geometry
+
+Imported files fall into two categories, and the difference decides what you can do with them.
+
+**Solid formats**, meaning STEP, Parasolid, and native CAD, carry exact mathematical geometry. A cylinder is a cylinder, so a hole measures exactly 3.2 mm and you can mate to its axis.
+
+**Mesh formats**, meaning STL, OBJ, and 3MF, carry triangles only. A cylinder is a many-sided prism, curves read slightly small, and there are no edges or axes to mate to in the way solids have.
+
+| | STEP | STL |
+| --- | --- | --- |
+| Geometry | Exact | Triangles |
+| Hole sizes | As modelled | Slightly under |
+| Feature history | None | None |
+| Good for | Fit, mates, dimensions | Mass, printing, visual bulk |
+
+**Ask vendors for STEP.** Most FTC vendors publish it. Reach for STL only when it is all that exists, and never take a dimension off one that matters.
+
+:::tip This is the same distinction the CAD checker uses
+The practice page explains why STEP catches a 3.0 mm hole where 3.2 mm belonged, and STL does not. See [CAD Practice Exercises](/mechanical/cad-practice).
+:::
+
+---
+
+## Direct Editing
+
+Imported geometry has no feature list, so parametric editing has nothing to grip. **Direct editing** works on the geometry itself: move a face, delete a face, replace a face, change a hole size.
+
+Legitimate uses:
+
+- Deleting detail you do not need, so the assembly is not carrying a vendor's cosmetic fillets and logos
+- Removing a boss that interferes with your bracket
+- Moving a face to correct a supplier's model that is wrong
+
+The rule from Lesson 5.6 holds: direct editing is for geometry whose dimensions you cannot reach. On a model you built, fix the sketch.
+
+**Simplify aggressively.** A vendor motor model can carry thousands of faces of detail that no one will ever see. Delete the fine detail and keep the mounting interface and the envelope. Assemblies rebuild far faster, and nothing you care about was in those faces.
+
+---
+
+## Surface Modelling
+
+A **surface** has area but no thickness. Solid modelling is the right default and surfaces are the specialist tool, but three FTC situations genuinely want them.
+
+**Sheet material.** Polycarbonate and sheet metal are naturally surfaces with a thickness added at the end. Model the shape as a surface, thicken it, and changing the material gauge is one number.
+
+**Shapes solids cannot make cleanly.** A curved deflector or a compound-curved cowling is easier to build as surfaces and then thicken than to force out of extrudes.
+
+**Repairing imports.** When a STEP file arrives with a gap, patching the gap with a surface and knitting the result back into a solid is often the only way to recover it.
+
+The workflow is always the same: build surfaces, join them into a closed skin, then thicken or enclose to get a solid back. Anything you intend to manufacture must end as a solid.
+
+---
+
+## Mesh and Complex Geometry Workflows
+
+Mesh geometry, whether a scan, a topology-optimised part, or a downloaded STL, is triangles with no underlying maths. Onshape can import, position, and cut against a mesh, but it cannot treat it as a parametric solid.
+
+The practical FTC workflow:
+
+1. **Import the mesh** for bulk and visual reference, so you can see whether a thing fits at all.
+2. **Do not dimension from it.** Curves read small and the surface is faceted.
+3. **Model your own interface parametrically**, meaning the bracket, the plate, the mount, and use the mesh only for clearance.
+4. **Convert only if you must**, and expect to rebuild rather than convert. Auto-conversion produces a solid with thousands of tiny planar faces that is worse than useless downstream.
+
+:::warning A converted mesh is not a parametric model
+Converting an STL gives you a solid made of triangles. It will import, it will look right, and it will make every subsequent operation slow and every fillet fail. Treat a mesh as reference, and model the real part yourself.
+:::
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. `__________` files carry exact geometry, while `__________` files carry only triangles.
+2. Editing geometry that has no feature history, by pushing faces directly, is called `__________` editing.
+3. A geometric entity with area but no thickness is a `__________`.
+4. Sheet polycarbonate is well modelled as a surface that is then `__________` to the material gauge.
+5. Dimensions taken from a mesh read slightly `__________` because curves are approximated by flat facets.
+
+<details>
+<summary>Show answers</summary>
+
+1. **STEP**, **STL**
+2. **direct**
+3. **surface**
+4. **thickened**
+5. **small** (under)
+
+</details>
+
+---
+
+## Exercise
+
+Download the STEP file for a motor or servo your team uses. Import it, then delete every face that is not the mounting interface or the outer envelope.
+
+Record the face count before and after, and the assembly rebuild time. That number is why simplification is worth doing.
+
+<MarkComplete
+  lessonId="module-05/imported-and-surface-geometry"
+  nextUnit="/mechanical/module-05/variables-and-equations"
+  nextUnitName="Lesson 5.8: Variables, Expressions, and Equations"
+/>

@@ -1,0 +1,140 @@
+---
+id: pit-and-match-day
+title: "Lesson 11.4: Pit Organization and Match Day Maintenance"
+sidebar_label: "11.4 · Match Day"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import LessonPhoto from '@site/src/components/mechanical/LessonPhoto';
+
+# Lesson 11.4: Pit Organization and Match Day Maintenance
+
+---
+
+## Technical Context
+
+A tournament puts the robot through repeated impacts, battery changes, and full-speed cycles with little repair time between matches. The pit crew needs a consistent way to inspect, diagnose, and repair it under that schedule.
+
+This lesson turns the track's inspection and maintenance practices into a match-day routine.
+
+---
+
+## The Between Match Routine
+
+Have a written routine that runs after every match, in the same order, every time. The order matters more than the content, because a fixed order is what stops things being skipped when the team is rushed.
+
+```text
+1. Battery out, on the charger. Fresh battery in, secured.
+2. Marked fastener check: the fixed list, visually, by the
+   paint pen marks.
+3. Mechanism check: run each mechanism through full range.
+4. Cable check: look at the flex points identified in
+   Module 9.
+5. Wear check: compliant wheels, tubing, chain tension.
+6. Driver report: anything that felt wrong, written down.
+7. Anything found gets fixed now or added to the list.
+```
+
+Assign the routine to specific people, and have the same people do it every time so they notice changes.
+
+:::tip The driver report is data
+The driver can report hesitation, pulling, or a control that felt different during the match. Ask for that report every time and write it down. Repeated observations help the pit crew separate a pattern from a one-off event.
+:::
+
+---
+
+## Designing for Serviceability
+
+Serviceability is a design property, and it is decided months before the tournament. During the design review from Lesson 10.4, ask the question directly: how long does it take to replace the part most likely to fail?
+
+Design rules that pay off on match day:
+
+- **Keep fasteners accessible.** A bracket that requires removing three other subsystems is a bracket that will not be repaired between matches.
+- **Standardize fastener sizes.** A robot using two hex sizes is faster to work on than one using five, and it means fewer tools to lose.
+- **Make wear items removable without disassembly.** Compliant wheels, tubing, and odometry pods should come off with a few fasteners.
+- **Keep the battery and main switch reachable.** They are touched between every match.
+- **Leave slack in cables** so a connector can be reached without dismantling a mechanism.
+
+---
+
+## The Pit Box
+
+Organize by what you reach for, not by category.
+
+**Immediate access, top of the box:** the hex drivers your robot uses, zip ties, tape, spare fasteners in the sizes on the robot, and a charged battery.
+
+**Spares for parts that have broken or worn out before.** Use the notebook and maintenance log to build the packing list.
+
+**Consumables:** compliant wheels, surgical tubing, chain or belt, string for slides, heat shrink.
+
+**Tools:** driver set, pliers, side cutters, caliper, soldering iron if you can use one safely at the venue, multimeter.
+
+**Documents:** port map, inspection checklist, notebook, and the between match routine posted where everyone can see it.
+
+Label bins so any pit crew member can find the correct fastener or spare without asking the person who packed it.
+
+---
+
+## Triage Under Time Pressure
+
+When something breaks shortly before a match, choose a safe repair that fits the available time.
+
+A workable triage:
+
+1. **Can the robot play safely without it?** If yes and time is short, disable the mechanism in software and play without it. Scoring less is better than not playing.
+2. **Is there a spare?** Swap it, do not repair it. Repair the broken one later when there is time.
+3. **Is there a temporary fix that lasts one match?** Zip ties and tape are legitimate engineering under time pressure, provided the fix is safe and legal.
+4. **Do the proper repair between matches later**, and record it in the notebook.
+
+Do not begin a long repair unless the crew has enough time to finish, reassemble, and test the robot before queueing.
+
+:::warning Never send an untested robot to the field
+After any repair, run the affected mechanism through its full range and drive the robot briefly. A repair that reassembled something incorrectly is common, and finding it in the pit costs a minute while finding it on the field costs the match.
+:::
+
+---
+
+## Recording the Day
+
+Keep a running log through the tournament: what broke, in which match, what was done, and whether it held. It takes a minute per entry.
+
+Use the log during the event to spot repeated failures that need more than another quick repair. Keep it afterward as a prioritized list for design changes, maintenance work, and the engineering notebook.
+
+---
+
+<LessonPhoto
+  alt="An organized pit table with labeled bins, tools laid out, and the between match routine posted."
+  caption="A pit that can repair a robot in the six minutes available. Bins are labeled, the drivers the robot actually needs are together, and the between match routine is posted where the crew can see it."
+  shot="Your own pit setup at an event, with labeled spares bins, the tool roll, and the printed routine visible."
+  framing="Wide enough to show the whole table, taken before the day starts while it is still tidy."
+/>
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The between match routine should be run in the same `__________` every time, so that steps are not skipped under pressure.
+2. When a mechanism breaks with little time before a match, the first triage question is whether the robot can play `__________` without it.
+3. After any repair, the affected mechanism must be run through its full range because an incorrect `__________` is common.
+
+<details>
+<summary>Show answers</summary>
+
+1. **order**
+2. **safely**
+3. **reassembly**
+
+</details>
+
+---
+
+## Exercise
+
+Write your team's between match routine and post it where the pit crew will see it. Then time it: run the whole routine on the robot with a stopwatch. If it takes longer than the time between your matches, shorten it to the checks that matter most and note what you dropped.
+
+<MarkComplete
+  lessonId="module-11/pit-and-match-day"
+  nextUnit="/mechanical/module-11/mastery-quiz"
+  nextUnitName="Module 11 Mastery Quiz: Fabrication and Competition Readiness"
+/>

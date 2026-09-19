@@ -1,0 +1,81 @@
+---
+id: learning-paths
+title: "Learning Paths and Time Estimates"
+sidebar_label: "Learning Paths"
+sidebar_position: -1
+---
+
+import {MeetingRhythmDiagram} from '@site/src/components/DocDiagrams';
+
+# Learning Paths and Time Estimates
+
+Telemark is arranged as a full sequence, but you do not need every unit before you begin contributing. Choose the path that matches your current role, then return to other units when the work requires them.
+
+:::info Time estimate assumptions
+The estimates below assume a student reads the lesson, completes the simulator challenge, and asks at least one debugging question. A fast reader may move quicker; a team building and testing on real hardware should expect extra time for wiring, configuration, and mechanical fixes.
+:::
+
+## Rookie Programmer Path
+
+**Goal:** become useful in TeleOp and understand the FTC SDK lifecycle.
+
+**Recommended order:** Units 0, 1, 2, 3, 4, 5, 7, then Unit 8 lessons 8.1 and 8.2.
+
+**Estimated time:** 10-16 hours.
+
+**Checkpoint:** you can write a TeleOp that maps motors, reads gamepad input, sends telemetry, and stops safely.
+
+:::tip Mentor note
+Before new programmers move into autonomous pathing, ask them to explain `init()`, `loop()`, `hardwareMap.get()`, and why motor power must be set back to zero.
+:::
+
+## Drive-Base Path
+
+**Goal:** own drivetrain code, driver feel, and basic autonomous movement.
+
+**Recommended order:** Units 4, 5, 8, 10, 12. Add Unit 6 if you are writing LinearOpMode autonomous routines.
+
+**Estimated time:** 12-20 hours.
+
+**Checkpoint:** you can tune drive directions, choose motor modes intentionally, read encoders, and use IMU heading data without mixing up axes.
+
+:::warning Real-world failure to watch for
+If the robot drives perfectly on blocks but poorly on the field, suspect wheel traction, motor direction mismatches, bad center of gravity, or loose mechanical parts before rewriting the whole drivetrain.
+:::
+
+## Autonomous Lead Path
+
+**Goal:** coordinate mechanisms, sensors, and timed or state-based autonomous routines.
+
+**Recommended order:** Units 6, 7, 8, 10, 11, 12, 13, then Unit 15.5.
+
+**Estimated time:** 18-30 hours.
+
+**Checkpoint:** you can write nonblocking routines, isolate subsystem classes, reset sensors deliberately, and build a state machine that can be debugged from telemetry.
+
+:::tip Mentor note
+Keep a tested, simple autonomous routine in the repository. If the more complex routine becomes unreliable at an event, the team can switch to the simpler option instead of running unverified changes.
+:::
+
+## Vision and Pathing Path
+
+**Goal:** use cameras and path following for more reliable autonomous scoring.
+
+**Recommended order:** Units 12, 14, 15.1, 15.2, 15.3, 15.4, then 15.5.
+
+**Estimated time:** 16-28 hours, plus robot-specific tuning time.
+
+**Checkpoint:** you can initialize a camera, validate results before using them, stop streams when appropriate, tune path following from real field tests, and fuse vision corrections only when the data is trustworthy.
+
+:::info Official references
+- FTC SDK Javadocs: [RobotCore](https://javadoc.io/doc/org.firstinspires.ftc/RobotCore/latest/index.html)
+- REV control system docs: [REV DUO Control System](https://docs.revrobotics.com/duo-control)
+- Pedro Pathing docs: [Pedro Pathing](https://pedropathing.com/docs/pathing)
+- Limelight FTC guide: [FTC Java and Blockly Programming Guide](https://docs.limelightvision.io/docs/docs-limelight/apis/ftc-programming)
+:::
+
+## Suggested Weekly Rhythm
+
+<MeetingRhythmDiagram />
+
+Move at a pace that lets each student explain what the robot is doing, why the code is structured that way, and what they would check first when it fails.

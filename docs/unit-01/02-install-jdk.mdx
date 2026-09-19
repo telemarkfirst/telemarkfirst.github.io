@@ -1,0 +1,44 @@
+---
+id: install-jdk
+title: "Section 2: Understanding Java Versions for Android Studio"
+sidebar_label: "2 · Java Versions (Optional)"
+sidebar_position: 2
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Section 2: Understanding Java Versions for Android Studio
+
+:::info Optional Android Studio path
+Skip this section if you are using Telemark only, OnBot Java, or another browser-based workflow.
+:::
+
+---
+
+## The Two Java Versions You May See
+
+Android Studio uses a JDK to run Gradle and build the Robot Controller app. The Java version used by that build process is different from the language level accepted by FTC team code.
+
+The current official FTC project:
+
+- Supports Android Studio Ladybug 2024.2 or later.
+- Can use Android Studio's bundled JDK for Gradle.
+- Keeps `sourceCompatibility` and `targetCompatibility` at Java 8 so Android Studio and OnBot Java code remain compatible.
+
+This means you should not change the project to `JavaVersion.VERSION_17`. That setting would make the project inconsistent with the official SDK.
+
+## When a Separate JDK Is Useful
+
+A separate JDK can still be useful for unrelated Java projects or a team-specific build system. If your team's repository documents a required version, follow that repository. Otherwise, start with Android Studio's bundled JDK.
+
+To see the Java runtime selected by Android Studio, open:
+
+**Settings → Build, Execution, Deployment → Build Tools → Gradle → Gradle JDK**
+
+Leave the selected runtime unchanged unless the official FTC README or your team's repository says otherwise.
+
+<MarkComplete
+  lessonId="unit-01/install-jdk"
+  nextUnit="/docs/unit-01/install-android-studio"
+  nextUnitName="Section 3: Installing Android Studio (Optional)"
+/>

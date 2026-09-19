@@ -1,0 +1,198 @@
+---
+id: sensor-gated-intake
+title: "Lesson 11.5: Creating an Automated Sensor-Gated Intake System"
+sidebar_label: "11.5 · Sensor-Gated Intake"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit11Simulator from '@site/src/components/Unit11Simulator';
+
+# Lesson 11.5: Creating an Automated Sensor-Gated Intake System
+
+---
+
+## What a Sensor Gate Is
+
+A sensor-gated system replaces a driver command with an environmental condition. Instead of requiring the driver to decide when to start and stop the intake, the robot's sensors make that decision automatically. The driver focuses on positioning the robot, and the intake handles itself.
+
+This approach reduces the number of simultaneous decisions the driver must make during a match cycle, which directly reduces errors. It also makes the mechanism more consistent: a sensor reacts in microseconds, whereas a driver's reaction time is measured in tenths of a second.
+
+---
+
+## Combining Multiple Sensor Types
+
+This lesson integrates a `DistanceSensor` and a `DigitalChannel` to create a two-condition gate. The intake motor should run only when both of the following are true:
+
+- A game element is within detection range of the distance sensor (close enough to collect).
+- The internal storage is not yet full (the touch sensor at the back of the intake is not triggered).
+
+If either condition fails, the motor stops. The `&&` operator in the `if` statement enforces this precisely:
+
+```java
+if (dist < 10.0 && !isFull) {
+    intakeMotor.setPower(0.8);
+} else {
+    intakeMotor.setPower(0.0);
+}
+```
+
+## Prepare the Five-Sensor Sorter
+
+The mastery challenge combines every sensor from this unit. Use these exact configuration names:
+
+- Intake motor: `"intake"`
+- Storage switch: `"storage_full"`
+- Arm potentiometer: `"arm_pot"`
+- Color sensor: `"intake_color"`
+- Distance sensor: `"intake_range"`
+
+Your red-alliance sorter has one exact job. First, configure `storage_full` as a digital input. Treat `false` as full. Convert 0 to 3.3 V into 0 to 180 degrees. Then apply these rules:
+
+- If storage is not full, the arm angle is from 20 to 160 degrees, the sample is closer than 10 cm, and red is greater than blue, set intake power to `0.8`.
+- Under the same safety limits, if blue is greater than red, set intake power to `-0.5`.
+- In every other case, set intake power to `0.0`.
+
+This is the core decision:
+
+```java
+double armAngle = Range.scale(armPot.getVoltage(), 0, 3.3, 0, 180);
+double dist = range.getDistance(DistanceUnit.CM);
+int redValue = color.red();
+int blueValue = color.blue();
+boolean isFull = !fullStop.getState();
+String sorterState;
+
+boolean safe = !isFull && armAngle >= 20.0 && armAngle <= 160.0;
+
+if (safe && dist < 10.0 && redValue > blueValue) {
+    intake.setPower(0.8);
+    sorterState = "COLLECT RED";
+} else if (safe && dist < 10.0 && blueValue > redValue) {
+    intake.setPower(-0.5);
+    sorterState = "EJECT BLUE";
+} else {
+    intake.setPower(0.0);
+    sorterState = "STOP";
+}
+
+telemetry.addData("Storage Full", isFull);
+telemetry.addData("Arm Angle", armAngle);
+telemetry.addData("Distance (cm)", dist);
+telemetry.addData("Red / Blue", "%d / %d", redValue, blueValue);
+telemetry.addData("Sorter State", sorterState);
+```
+
+---
+
+## Hysteresis: Preventing Motor Chatter at the Threshold
+
+One subtlety that appears in real hardware: if the distance reading fluctuates right at the threshold boundary, the motor will start and stop many times per second. This rapid switching is called chatter, and it causes mechanical wear and inconsistent behavior.
+
+A useful approach is to use two different threshold values. A smaller value triggers the start of collection (for example, 8 cm means "an element is definitely in range"), and a slightly larger value defines when the system allows stopping (for example, 12 cm means "definitely no element present"). The gap between these two values is called a hysteresis band.
+
+Implementing hysteresis requires tracking a state variable, a `boolean` that records whether the intake is currently active, and updating it based on which threshold was crossed most recently. This prevents the motor from switching states on every tiny fluctuation.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+
+@TeleOp(name="Sensor_Gate_Demo")
+public class SensorGateDemo extends LinearOpMode {
+
+    private static final double START_THRESHOLD = 8.0;  // cm. Element is in range.
+    private static final double STOP_THRESHOLD  = 12.0; // cm. Element is gone.
+
+    @Override
+    public void runOpMode() {
+        DcMotor        intake   = hardwareMap.get(DcMotor.class,        "intake");
+        DistanceSensor range    = hardwareMap.get(DistanceSensor.class, "intake_range");
+        DigitalChannel fullStop = hardwareMap.get(DigitalChannel.class, "storage_full");
+
+        fullStop.setMode(DigitalChannel.Mode.INPUT);
+
+        waitForStart();
+
+        boolean intakeActive = false;
+
+        while (opModeIsActive()) {
+            double  dist   = range.getDistance(DistanceUnit.CM);
+            boolean isFull = !fullStop.getState(); // active-low inversion
+
+            // Hysteresis: only start the intake when the element is close enough
+            if (!intakeActive && dist < START_THRESHOLD && !isFull) {
+                intakeActive = true;
+            }
+
+            // Stop collecting when the element moves away or storage is full
+            if (intakeActive && (dist > STOP_THRESHOLD || isFull)) {
+                intakeActive = false;
+            }
+
+            intake.setPower(intakeActive ? 0.8 : 0.0);
+
+            telemetry.addData("Distance (cm)",  "%.1f", dist);
+            telemetry.addData("Storage Full",   isFull);
+            telemetry.addData("Intake Active",  intakeActive);
+            telemetry.update();
+        }
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Combining data from two or more sensors to make a single control decision is a form of sensor `__________`.
+2. The rapid and undesirable switching of a motor on and off as a sensor reading fluctuates at a boundary is called `__________`.
+3. The gap between a "start" threshold and a "stop" threshold that prevents this switching behavior is called a `__________` band.
+
+<details>
+<summary>Show answers</summary>
+
+1. **fusion** (or integration)
+2. **chatter**
+3. **hysteresis**
+
+</details>
+
+---
+
+## Simulator Practice
+
+Use the simulator below to complete the smart intake gate. The editor starts with incomplete starter code, so fill in the distance read, storage sensor check, and single `if/else` motor gate before collecting elements.
+
+<SimulatorRunGuide />
+
+<Unit11Simulator lesson="sensor-gated-intake" />
+
+## A Team Normalizes Sensor Meaning First
+
+BunyipsLib wraps an active-low touch sensor so the rest of the robot can ask `isPressed()` without remembering its wiring polarity. That makes a gate read directly:
+
+```java
+boolean storageFull = storageSwitch.isPressed();
+boolean sampleReady = distanceCm < 10.0;
+
+if (sampleReady && !storageFull) intake.collect();
+else intake.stop();
+```
+
+The source wrapper remains outside this excerpt. The sensor and action names were changed to match the intake lesson. Adapted from [BunyipsLib's `InvertibleTouchSensor.java` at a pinned commit](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/src/main/java/au/edu/sa/mbhs/studentrobotics/bunyipslib/hardware/InvertibleTouchSensor.java) under the [MIT License](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/LICENSE).
+
+<MarkComplete
+  lessonId="unit-11/sensor-gated-intake"
+  nextUnit="/docs/unit-11/mastery-coding-challenge"
+  nextUnitName="Unit 11 Comprehensive Coding Challenge"
+/>

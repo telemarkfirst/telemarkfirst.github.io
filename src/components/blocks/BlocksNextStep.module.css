@@ -1,0 +1,10 @@
+.choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--tm-sp-5); margin: var(--tm-sp-6) 0; }
+.choice { padding: var(--tm-sp-6); border: 1px solid var(--tm-border-strong); border-radius: var(--tm-r-lg); background: var(--tm-surface-1); }
+.choice h2 { margin-top: 0; }
+.label { color: var(--tm-accent); font-family: var(--tm-font-mono); font-size: var(--tm-fs-xs); letter-spacing: var(--tm-track-wide); text-transform: uppercase; }
+.primary, .secondary { display: inline-flex; margin-top: var(--tm-sp-3); padding: var(--tm-sp-2) var(--tm-sp-4); border: 1px solid var(--tm-accent); border-radius: var(--tm-r-pill); font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
+.primary { color: var(--tm-text-on-accent) !important; background: var(--tm-accent); }
+.secondary { color: var(--tm-text) !important; background: transparent; }
+.primary:focus-visible, .secondary:focus-visible { outline: 3px solid var(--tm-accent-a55); outline-offset: 3px; }
+.primary:disabled, .secondary:disabled { cursor: wait; opacity: 0.7; }
+@media (max-width: 700px) { .choices { grid-template-columns: 1fr; } }

@@ -1,0 +1,128 @@
+---
+id: part-libraries
+title: "Lesson 5.10: Using Vendor Part Libraries and Managing Versions"
+sidebar_label: "5.10 · Part Libraries"
+sidebar_position: 10
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 5.10: Using Vendor Part Libraries and Managing Versions
+
+---
+
+## Technical Context
+
+Before modeling a purchased component, check whether the vendor publishes a CAD file. A verified vendor model saves time and usually represents mounting geometry more accurately than a model rebuilt from a datasheet.
+
+---
+
+## What to Pull From Libraries
+
+Anything you buy rather than make:
+
+- Motors, servos, and gearboxes
+- Wheels, hubs, and shafts
+- Bearings, sprockets, pulleys, and gears
+- Structural extrusion and channel
+- Brackets, standoffs, and spacers
+- Control Hub, battery, and other electronics, at least as bounding boxes
+
+The major FTC vendors publish CAD for their catalogs, and several maintain Onshape documents that can be inserted directly into your assembly. Search the vendor's part page for the specific part number before modeling anything yourself.
+
+:::tip Electronics as boxes is enough
+You do not need a detailed Control Hub model. A correctly sized box in the correct location answers the questions you have, which are whether it fits, whether the ports are reachable, and whether a mechanism sweeps through the space where the cables go.
+:::
+
+---
+
+## Insert, Do Not Copy
+
+Most CAD systems let you either **reference** an external part or **copy** it into your document.
+
+Referencing keeps a link to the source, so a fix in the source propagates. Copying makes an independent duplicate.
+
+For vendor parts, referencing is usually right: you are not going to modify a motor, and the link keeps your document small. For a part you intend to modify, such as a bracket you will add holes to, copy it into your own document first so you are not modifying something other people depend on.
+
+---
+
+## Versions, Branches, and Not Losing Work
+
+Onshape and most modern CAD tools track a full history. Use it deliberately.
+
+**Create a named version** at every meaningful milestone: "drivetrain complete," "intake v3 with 35 deg funnel," "week 6 competition build." A named version is a recoverable state.
+
+**Branch** when trying something risky. A branch lets one student explore a different slide design without destabilizing the model everyone else is working from. Merge it back if it wins, discard it if it does not.
+
+**Do not rely on undo.** Undo history is local and short. A named version is durable and shared.
+
+:::warning Reference a version, not the tip
+When your assembly references another document, reference a specific published version rather than the latest state. Otherwise someone editing that document changes your assembly without knowing it, and your model breaks for reasons that are not visible in your own edit history.
+:::
+
+---
+
+## Naming and Organization
+
+A model that only its author can navigate is a model with one maintainer, which is a problem at competition when that person is driving.
+
+A workable convention:
+
+```text
+Documents
+  Robot 2026            main assembly and custom parts
+  Vendor Parts          referenced libraries
+  Prototypes            experiments, not in the main assembly
+
+Parts within the robot document
+  DT-side-plate-left
+  DT-side-plate-right
+  SL-tower-upright
+  IN-funnel-wall
+```
+
+A two or three letter subsystem prefix makes a long parts list sortable and makes it obvious when a part is in the wrong place.
+
+---
+
+## From CAD to Fabrication
+
+The model has to become parts. Two outputs matter.
+
+**Drawings** for anything hand-made, showing dimensions, hole sizes marked as tap or clearance, and the material. Anyone cutting a part should work from a drawing, not from a screen someone is scrolling.
+
+**Export files** for anything machine-made: DXF for laser or waterjet, STL or STEP for printing. Export the file from the model rather than redrawing it, so the part matches the assembly it was checked in.
+
+:::info Official references
+- Onshape documentation on versions, branches, and referencing: [Onshape Learning Center](https://learn.onshape.com/)
+- Vendor part models are published on the individual product pages of the major FTC suppliers.
+:::
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. When your assembly uses a part from another document, you should reference a published `__________` rather than the document's latest state.
+2. A part you intend to modify should be `__________` into your own document rather than referenced.
+3. A part that is hand-fabricated should be made from a `__________` showing dimensions, hole types, and material.
+
+<details>
+<summary>Show answers</summary>
+
+1. **version**
+2. **copied**
+3. **drawing**
+
+</details>
+
+---
+
+## Exercise
+
+Insert vendor models for every purchased component in one subsystem, then create a named version. Change something, then restore the named version to confirm you can recover. Practicing recovery before you need it is the point.
+
+<MarkComplete
+  lessonId="module-05/part-libraries"
+  nextUnit="/mechanical/module-05/mastery-quiz"
+  nextUnitName="Module 5 Mastery Quiz: CAD With Onshape"
+/>

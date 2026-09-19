@@ -1,0 +1,143 @@
+---
+id: gear-ratios
+title: "Lesson 6.2: Calculating Gear Ratios Across Multiple Stages"
+sidebar_label: "6.2 · Gear Ratios"
+sidebar_position: 2
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import LessonTool from '@site/src/components/mechanical/LessonTool';
+import GearRatioCalculator from '@site/src/components/mechanical/GearRatioCalculator';
+
+# Lesson 6.2: Calculating Gear Ratios Across Multiple Stages
+
+---
+
+## Technical Context
+
+A motor produces one combination of speed and torque. A gear ratio trades one for the other. Every mechanism on the robot is an answer to the question "how much of that trade do I need?"
+
+---
+
+## The Basic Relationship
+
+For a single pair of meshing gears:
+
+```text
+ratio = driven teeth / driving teeth
+```
+
+The **driving** gear is on the motor side. The **driven** gear is on the output side.
+
+A 12 tooth gear driving a 60 tooth gear is a 5:1 reduction. The output turns at one fifth the speed and, ignoring losses, produces five times the torque.
+
+If the driven gear is smaller than the driving gear, the ratio is less than 1 and you have an overdrive: faster output, less torque. Correct for a flywheel, almost never correct for a drivetrain or an arm.
+
+---
+
+## Multiple Stages Multiply
+
+Reductions in series multiply:
+
+```text
+total ratio = (driven1/driving1) * (driven2/driving2) * ...
+```
+
+A 5:1 followed by a 3:1 is 15:1, not 8:1. This is why large reductions are built from several modest stages rather than one enormous gear: a single stage 100:1 reduction would need a gear a hundred times the diameter of its pinion, while three stages of about 4.65:1 each achieve the same in a package that fits on a robot.
+
+---
+
+## Efficiency Compounds
+
+Each stage costs something. If a stage is 95% efficient, three stages give:
+
+```text
+0.95 * 0.95 * 0.95 = 0.857
+```
+
+So about 86% of the input torque reaches the output, not 95%. Six stages would give roughly 74%.
+
+This is why deep reductions built from many stages deliver noticeably less than the arithmetic suggests, and it is one of several reasons a mechanism sized with no margin disappoints.
+
+:::tip Efficiency numbers are estimates, not constants
+Spur gears in clean, well aligned mesh are commonly estimated near 95% per stage. Misalignment, tight mesh, debris, and poor lubrication all reduce it, sometimes substantially. Treat the number as a planning estimate, and treat a mechanism that is much slower than predicted as a sign that real efficiency is worse than assumed.
+:::
+
+---
+
+## Choosing a Ratio
+
+Work backward from the requirement.
+
+1. **Determine the torque the mechanism needs**, including a safety factor. For an arm this is the gravity torque from Lesson 8.3; for a drivetrain it is the traction limit from Lesson 7.3.
+2. **Compute the minimum ratio** that supplies it: `ratio >= required_torque / (motor_stall_torque * efficiency)`.
+3. **Check the resulting speed.** Does the mechanism still move fast enough to meet the cycle time requirement?
+4. **Iterate.** If both cannot be satisfied, you need a different motor, more motors, a lighter mechanism, or a counterbalance.
+
+Steps 3 and 4 are the ones teams skip. A ratio that supplies plenty of torque and makes the arm take eight seconds to raise has traded away the thing that mattered.
+
+:::warning Torque margin is not free
+Every additional unit of reduction slows the mechanism proportionally. A safety factor of 2 is prudent; a safety factor of 6, chosen because bigger felt safer, produces a mechanism that cannot complete its cycle in time.
+:::
+
+---
+
+## Try It
+
+<LessonTool
+  toolId="gear-ratio"
+  bring="Tooth counts for every stage, counted off the real gears."
+  change="A stage tooth count, and see how ratio and torque move together."
+  read="Output RPM is a free speed. Under load the mechanism runs below it."
+>
+  <GearRatioCalculator />
+</LessonTool>
+
+---
+
+## Practical Gear Notes
+
+**Gears must share a module or pitch to mesh.** Metric gears are specified by module; imperial gears by diametral pitch. A module 1 gear will not mesh with a 32 pitch gear regardless of tooth count.
+
+**Center distance is set by the gears.** For two meshing gears, the center distance is half the sum of their pitch diameters. You do not get to choose it freely, which is why gear stages constrain layout more than belts do.
+
+**Tooth count affects strength.** Very small pinions concentrate load on few teeth and wear faster. Where a large reduction is needed in one stage, consider whether two smaller stages would last longer.
+
+**Backlash exists.** Some free play between meshing teeth is necessary; too little causes binding. Lesson 6.4 covers what backlash means for control.
+
+---
+
+:::info Connects to the software track
+The ratio you choose here is the number the software team divides by to turn encoder ticks into inches. Get it wrong in either place and the robot drives the wrong distance.
+
+See [Lesson 10.2: Converting Encoder Ticks to Distance](/docs/unit-10/ticks-to-distance).
+:::
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The gear ratio of a single pair is the driven tooth count divided by the `__________` tooth count.
+2. Reductions in series `__________` rather than add.
+3. Two gears can only mesh if they share the same `__________` or diametral pitch.
+
+<details>
+<summary>Show answers</summary>
+
+1. **driving**
+2. **multiply**
+3. **module**
+
+</details>
+
+---
+
+## Exercise
+
+For one geared mechanism on your robot, count the teeth at each stage and compute the total ratio. Compare it against the ratio your team believed it was using. Then compute the output speed and check it against the cycle time the mechanism actually achieves.
+
+<MarkComplete
+  lessonId="module-06/gear-ratios"
+  nextUnit="/mechanical/module-06/chain-and-belt"
+  nextUnitName="Lesson 6.3: Sizing Chain and Timing Belt Drives"
+/>

@@ -1,0 +1,190 @@
+---
+id: opencv-zones
+title: "Lesson 14.4: Defining Vision Windows with OpenCV Rect Boundaries"
+sidebar_label: "14.4 · OpenCV Zones"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit14Simulator from '@site/src/components/Unit14Simulator';
+
+# Lesson 14.4: Defining Vision Windows with OpenCV Rect Boundaries
+
+---
+
+## Why Limiting the Analysis Region Matters
+
+A standard USB webcam captures a wide field of view. In a typical FTC setup, that frame contains field tiles, alliance wall structures, other robots, the edge of the scoring area, and whatever happens to be behind the field. When you ask an algorithm to analyze the entire frame to find a game element, most of the pixels it examines are irrelevant and computationally expensive to process. Two problems follow from this.
+
+The first is performance. Processing a full 640x480 frame on every camera update cycle competes with motor control, sensor polling, and communication tasks on the Control Hub's CPU. Restricting analysis to a small region of interest can reduce the processing load by an order of magnitude.
+
+The second is reliability. A full-frame analysis might find background colors that match a game element, such as a red alliance wall segment, a colored field marking, or a team member's clothing, and misclassify them as the target. Restricting the analysis to a small zone that can only contain the spike mark or scoring target eliminates these false positives structurally.
+
+---
+
+## The OpenCV Coordinate System
+
+OpenCV, the computer vision library that the FTC SDK builds on, uses a coordinate system where the origin (0, 0) is at the top-left corner of the image. The x-axis increases to the right, and the y-axis increases downward. This is the opposite of the standard mathematical convention where y increases upward, and it catches many programmers by surprise the first time.
+
+The `Rect` class from `org.opencv.core.Rect` defines a rectangular region using four values: the x-coordinate of the left edge, the y-coordinate of the top edge, the width of the rectangle, and the height of the rectangle. Written as a constructor call:
+
+```java
+Rect zone = new Rect(x, y, width, height);
+```
+
+For a 640x480 camera image, a zone centered horizontally in the middle third of the frame and covering a band near the bottom might be defined as:
+
+```java
+Rect centerZone = new Rect(213, 360, 214, 80);
+// Left edge at x=213, top edge at y=360, 214 pixels wide, 80 pixels tall
+```
+
+---
+
+## Extracting a Submat
+
+Once a `Rect` is defined, you extract the corresponding region from the full frame using `frame.submat(rect)`. The result is a new `Mat` object containing only the pixels inside the rectangle. This submat is what you pass to color analysis functions rather than the full frame.
+
+```java
+Mat zonePixels = frame.submat(centerZone);
+```
+
+`submat()` does not copy the pixel data. It returns a view into the same memory as the original frame. This makes it extremely efficient. When you are done analyzing it, you should call `zonePixels.release()` to free the view reference, though in the context of a `processFrame()` method that runs repeatedly, the JVM will handle this correctly on its own.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode.vision;
+
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.vision.VisionProcessor;
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
+import android.graphics.Canvas;
+
+/**
+ * A custom VisionProcessor that defines three analysis zones
+ * corresponding to the left, center, and right spike mark positions.
+ */
+public class SpikeMarkProcessor implements VisionProcessor {
+
+    // ── Zone definitions (left edge, top edge, width, height) ──────────
+    // These values assume a 640x480 camera image.
+    // Adjust based on your specific camera mounting position.
+    public Rect zoneLeft   = new Rect(50,  340, 80, 80);
+    public Rect zoneCenter = new Rect(280, 340, 80, 80);
+    public Rect zoneRight  = new Rect(510, 340, 80, 80);
+
+    // Average saturation of each zone. Updated every frame.
+    public double satLeft, satCenter, satRight;
+
+    private Mat hsvFrame = new Mat();
+
+    @Override
+    public Object processFrame(Mat frame, long captureTimeNanos) {
+        // Convert RGB camera output to HSV for more reliable color analysis
+        Imgproc.cvtColor(frame, hsvFrame, Imgproc.COLOR_RGB2HSV);
+
+        // Extract and analyze each zone independently
+        Mat subLeft   = hsvFrame.submat(zoneLeft);
+        Mat subCenter = hsvFrame.submat(zoneCenter);
+        Mat subRight  = hsvFrame.submat(zoneRight);
+
+        // Core.mean() returns the average value of each channel.
+        // Index [1] in HSV is the Saturation channel.
+        satLeft   = Core.mean(subLeft).val[1];
+        satCenter = Core.mean(subCenter).val[1];
+        satRight  = Core.mean(subRight).val[1];
+
+        // Release the submat views
+        subLeft.release();
+        subCenter.release();
+        subRight.release();
+
+        return null;
+    }
+
+    @Override
+    public void init(int width, int height, org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration calibration) {}
+
+    @Override
+    public void onDrawFrame(Canvas canvas, int onscreenWidth, int onscreenHeight,
+                            float scaleBmpPxToCanvasPx, float scaleCanvasDensity, Object userContext) {}
+}
+```
+
+## KookyBotz's PowerPlay Sleeve Region
+
+Team 16379 KookyBotz published a compact PowerPlay sleeve pipeline and explicitly invited teams to place the two Java files in their projects. Its `processFrame()` crops one rectangle and compares the summed color channels:
+
+```java
+Mat areaMat = input.submat(new Rect(sleeve_pointA, sleeve_pointB));
+Scalar sumColors = Core.sumElems(areaMat);
+
+double minColor = Math.min(
+    sumColors.val[0],
+    Math.min(sumColors.val[1], sumColors.val[2])
+);
+
+if (sumColors.val[0] == minColor) {
+    position = ParkingPosition.CENTER;
+} else if (sumColors.val[1] == minColor) {
+    position = ParkingPosition.RIGHT;
+} else {
+    position = ParkingPosition.LEFT;
+}
+
+areaMat.release();
+return input;
+```
+
+This is a useful example of reducing a full frame to the pixels that answer the autonomous question. A competition pipeline should also test the chosen region and thresholds under varied lighting. Excerpted from [KookyBotz's `SleeveDetection.java` at a pinned commit](https://github.com/KookyBotz/PowerPlaySleeveDetection/blob/247fccab99a8bb5de1c4b45ac6095567afa7c087/SleeveDetection.java) under the [MIT License](https://github.com/KookyBotz/PowerPlaySleeveDetection/blob/247fccab99a8bb5de1c4b45ac6095567afa7c087/LICENSE).
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. In the OpenCV coordinate system, the origin (0, 0) is located at the `__________` corner of the image frame.
+2. The `Rect` constructor takes four parameters in this order: left edge x, top edge y, `__________`, and `__________`.
+3. To extract the pixels inside a defined `Rect` from a camera frame `Mat`, call `frame.__________( rect )`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **top-left**
+2. **width**, **height**
+3. **`submat`**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Your camera is a 640x480 stream. Define three `Rect` zone constants named `LEFT_ZONE`, `CENTER_ZONE`, and `RIGHT_ZONE` for detecting a team scoring element at the three possible spike mark positions. Each zone should be 60 pixels wide and 60 pixels tall. Position the left zone starting at x=60, the center zone starting at x=290, and the right zone starting at x=510. All three should have their top edge at y=350.
+
+<SimulatorRunGuide />
+
+<Unit14Simulator lesson="opencv-zones" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+static final Rect LEFT_ZONE   = new Rect(60,  350, 60, 60);
+static final Rect CENTER_ZONE = new Rect(290, 350, 60, 60);
+static final Rect RIGHT_ZONE  = new Rect(510, 350, 60, 60);
+```
+
+</details>
+
+<MarkComplete
+  lessonId="unit-14/opencv-zones"
+  nextUnit="/docs/unit-14/multi-zone-challenge"
+  nextUnitName="Lesson 14.5: Multi-Zone Vision Processing for Autonomous Scoring Selection"
+/>

@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Telemark Unit 13.3 Simulator</title>
+
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+/>
+
+<style>
+    :root{
+        --bg:#0f172a;
+        --panel:#111827;
+        --panel2:#1f2937;
+        --border:#334155;
+        --text:#e5e7eb;
+        --muted:#94a3b8;
+        --green:#22c55e;
+        --yellow:#f59e0b;
+        --red:#ef4444;
+        --blue:#38bdf8;
+        --orange:#22d3ee;
+        --purple:#a855f7;
+    }
+
+    html,body{
+        margin:0;
+        padding:0;
+        background:var(--bg);
+        color:var(--text);
+        font-family:Inter,system-ui,sans-serif;
+        overflow:hidden;
+    }
+
+    #challenge-root{
+        position:absolute;
+        inset:0;
+        pointer-events:none;
+    }
+
+    #sim-right-panel #sim-scene-container{
+        flex:1 0 clamp(360px, 55vh, 620px);
+        min-height:360px;
+        background:#020204;
+    }
+
+    #sim-right-panel #challenge-root{
+        position:static;
+        inset:auto;
+        flex:0 1 auto;
+        min-height:0;
+        max-height:clamp(300px, 42vh, 520px);
+        overflow:auto;
+        display:grid;
+        grid-template-columns:minmax(250px,.8fr) minmax(360px,1.2fr);
+        gap:10px;
+        margin:10px;
+        pointer-events:auto;
+    }
+
+    .overlay-panel{
+        position:absolute;
+        background:rgba(17,24,39,.92);
+        border:1px solid var(--border);
+        border-radius:14px;
+        backdrop-filter: blur(10px);
+        box-shadow:0 0 20px rgba(0,0,0,.4);
+        pointer-events:auto;
+    }
+
+    #sim-right-panel #challenge-root .overlay-panel{
+        position:static;
+        border-radius:8px;
+        box-shadow:none;
+        backdrop-filter:none;
+    }
+
+    #uml-panel{
+        top:16px;
+        right:16px;
+        width:360px;
+        padding:14px;
+    }
+
+    #sim-right-panel #uml-panel{
+        width:auto;
+        padding:12px;
+    }
+
+    #bottom-panel{
+        left:16px;
+        right:16px;
+        bottom:16px;
+        height:250px;
+        padding:14px;
+        overflow:hidden;
+    }
+
+    #sim-right-panel #bottom-panel{
+        height:auto;
+        padding:12px;
+        overflow:visible;
+    }
+
+    #warning-banner{
+        position:absolute;
+        top:16px;
+        left:50%;
+        transform:translateX(-50%);
+        padding:12px 20px;
+        border-radius:999px;
+        font-weight:700;
+        letter-spacing:.5px;
+        border:2px solid transparent;
+        background:rgba(15,23,42,.95);
+        display:flex;
+        align-items:center;
+        gap:10px;
+        z-index:5;
+    }
+
+    #sim-right-panel #warning-banner{
+        position:static;
+        grid-column:1 / -1;
+        justify-content:center;
+        transform:none;
+        padding:9px 12px;
+        border-radius:8px;
+        letter-spacing:0;
+    }
+
+    .danger{
+        color:#fff;
+        background:rgba(127,29,29,.96)!important;
+        border-color:var(--red)!important;
+        animation:pulse .7s infinite alternate;
+    }
+
+    .safe{
+        color:#fff;
+        background:rgba(20,83,45,.96)!important;
+        border-color:var(--green)!important;
+    }
+
+    #sim-right-panel #warning-banner.danger{
+        animation:none;
+    }
+
+    @keyframes pulse{
+        from{ transform:translateX(-50%) scale(1);}
+        to{ transform:translateX(-50%) scale(1.03);}
+    }
+
+    .uml-title{
+        font-size:18px;
+        font-weight:700;
+        margin-bottom:10px;
+        display:flex;
+        align-items:center;
+        gap:10px;
+    }
+
+    .class-box{
+        border:2px solid var(--border);
+        border-radius:12px;
+        overflow:hidden;
+        margin-bottom:14px;
+        background:#0b1220;
+    }
+
+    .class-header{
+        padding:10px;
+        background:#172033;
+        font-weight:700;
+        text-align:center;
+        border-bottom:1px solid var(--border);
+    }
+
+    .section{
+        padding:8px 12px;
+        border-bottom:1px solid rgba(255,255,255,.06);
+    }
+
+    .section:last-child{
+        border-bottom:none;
+    }
+
+    .member{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        padding:4px 0;
+        font-size:13px;
+    }
+
+    .member.good{
+        color:var(--green);
+    }
+
+    .member.bad{
+        color:var(--muted);
+    }
+
+    .inheritance-arrow{
+        text-align:center;
+        margin:-6px 0 8px;
+        color:var(--yellow);
+        font-size:20px;
+    }
+
+    .override-badge{
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        background:rgba(59,130,246,.15);
+        border:1px solid rgba(59,130,246,.4);
+        color:var(--blue);
+        border-radius:999px;
+        padding:4px 10px;
+        font-size:12px;
+        margin-top:8px;
+    }
+
+    .grid{
+        display:grid;
+        grid-template-columns:1.3fr 1fr;
+        gap:18px;
+        height:100%;
+    }
+
+    #sim-right-panel #bottom-panel .grid{
+        height:auto;
+        gap:10px;
+    }
+
+    @media (max-width: 1100px){
+        #sim-right-panel #challenge-root,
+        #sim-right-panel #bottom-panel .grid{
+            grid-template-columns:1fr;
+        }
+    }
+
+    .panel-section{
+        background:#0b1220;
+        border:1px solid var(--border);
+        border-radius:12px;
+        padding:12px;
+    }
+
+    .panel-title{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        margin-bottom:10px;
+        font-weight:700;
+        color:#fff;
+    }
+
+    .metric{
+        display:flex;
+        justify-content:space-between;
+        margin-bottom:10px;
+        font-size:14px;
+    }
+
+    .metric strong{
+        color:#fff;
+    }
+
+    .bar-wrap{
+        margin-bottom:12px;
+    }
+
+    .bar-header{
+        display:flex;
+        justify-content:space-between;
+        margin-bottom:5px;
+        font-size:13px;
+    }
+
+    .bar{
+        height:16px;
+        background:#1e293b;
+        border-radius:999px;
+        overflow:hidden;
+        border:1px solid var(--border);
+        position:relative;
+    }
+
+    .fill{
+        height:100%;
+        transition:width .1s linear;
+    }
+
+    .green{
+        background:var(--green);
+    }
+
+    .red{
+        background:var(--red);
+    }
+
+    .formula{
+        font-family:monospace;
+        line-height:1.7;
+        background:#020617;
+        border:1px solid var(--border);
+        border-radius:10px;
+        padding:10px;
+        margin-top:8px;
+        color:#cbd5e1;
+        font-size:13px;
+    }
+
+    .delegation{
+        display:flex;
+        flex-wrap:wrap;
+        gap:8px;
+        align-items:center;
+        margin-top:10px;
+    }
+
+    .delegation-step{
+        background:#172033;
+        border:1px solid var(--border);
+        border-radius:999px;
+        padding:7px 12px;
+        font-size:12px;
+    }
+
+    .arrow{
+        color:var(--blue);
+    }
+
+    .status-pill{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        padding:8px 12px;
+        border-radius:999px;
+        font-weight:700;
+        margin-top:10px;
+    }
+
+    .status-green{
+        background:rgba(34,197,94,.16);
+        color:var(--green);
+        border:1px solid rgba(34,197,94,.4);
+    }
+
+    .status-red{
+        background:rgba(239,68,68,.16);
+        color:var(--red);
+        border:1px solid rgba(239,68,68,.4);
+    }
+
+    .preset-grid{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:10px;
+        margin-top:12px;
+    }
+
+    .preset-btn{
+        border:none;
+        background:#172033;
+        color:#fff;
+        border-radius:10px;
+        padding:10px;
+        cursor:pointer;
+        border:1px solid var(--border);
+        transition:.15s;
+    }
+
+    .preset-btn:hover{
+        transform:translateY(-1px);
+        border-color:var(--blue);
+    }
+
+    .legend{
+        display:flex;
+        gap:12px;
+        margin-top:12px;
+        flex-wrap:wrap;
+        font-size:12px;
+    }
+
+    .legend span{
+        display:flex;
+        align-items:center;
+        gap:6px;
+    }
+
+    .dot{
+        width:10px;
+        height:10px;
+        border-radius:50%;
+        display:inline-block;
+    }
+
+    canvas{
+        display:block;
+    }
+</style>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+
+<body>
+<div id="challenge-root">
+
+    <div id="warning-banner" class="safe">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span id="banner-text">SafetySlide.move() ACTIVE</span>
+    </div>
+
+    <div id="uml-panel" class="overlay-panel">
+        <div class="uml-title">
+            <i class="fa-solid fa-diagram-project"></i>
+            <span>Override Relationship</span>
+        </div>
+
+        <div class="class-box">
+            <div class="class-header">GenericSlide</div>
+
+            <div class="section">
+                <div class="member bad" id="req-motor">
+                    <span># motor : DcMotor</span>
+                    <i class="fa-solid fa-circle"></i>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="member bad" id="req-init">
+                    <span>+ init(hwMap, motorName)</span>
+                    <i class="fa-solid fa-circle"></i>
+                </div>
+
+                <div class="member bad" id="req-parent-move">
+                    <span><em>+ move(power)</em></span>
+                    <i class="fa-solid fa-circle"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="inheritance-arrow">
+            <i class="fa-solid fa-arrow-up"></i>
+            extends
+        </div>
+
+        <div class="class-box">
+            <div class="class-header">SafetySlide</div>
+
+            <div class="section">
+                <div class="member bad" id="req-extends">
+                    <span>extends GenericSlide</span>
+                    <i class="fa-solid fa-circle"></i>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="member bad" id="req-override">
+                    <span>@Override move()</span>
+                    <i class="fa-solid fa-circle"></i>
+                </div>
+
+                <div class="member bad" id="req-min">
+                    <span>Math.min(0.5, Math.abs(power))</span>
+                    <i class="fa-solid fa-circle"></i>
+                </div>
+
+                <div class="member bad" id="req-sign">
+                    <span>Math.signum(power)</span>
+                    <i class="fa-solid fa-circle"></i>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="override-badge">
+                    <i class="fa-solid fa-shield"></i>
+                    OVERRIDES GenericSlide.move()
+                </div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <span><i class="fa-solid fa-plus" style="color:#22c55e"></i> public</span>
+            <span><i class="fa-solid fa-hashtag" style="color:#f59e0b"></i> protected</span>
+            <span><i class="fa-solid fa-minus" style="color:#ef4444"></i> private</span>
+        </div>
+    </div>
+
+    <div id="bottom-panel" class="overlay-panel">
+        <div class="grid">
+
+            <div class="panel-section">
+                <div class="panel-title">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Power Clamping</span>
+                </div>
+
+                <div class="bar-wrap">
+                    <div class="bar-header">
+                        <span>RAW INPUT</span>
+                        <strong id="raw-label">0.00</strong>
+                    </div>
+                    <div class="bar">
+                        <div id="raw-fill" class="fill green" style="width:0%"></div>
+                    </div>
+                </div>
+
+                <div class="bar-wrap">
+                    <div class="bar-header">
+                        <span>SAFE POWER</span>
+                        <strong id="safe-label">0.00</strong>
+                    </div>
+                    <div class="bar">
+                        <div id="safe-fill" class="fill green" style="width:0%"></div>
+                    </div>
+                </div>
+
+                <div class="formula" id="formula-box">
+Math.abs(power) = 0.00
+Math.min(0.5, X) = 0.00
+Math.signum(power) = 0
+safePower = 0.00
+                </div>
+
+                <div id="override-status" class="status-pill status-green">
+                    <i class="fa-solid fa-check"></i>
+                    <span>SafetySlide.move() ACTIVE</span>
+                </div>
+
+                <div class="preset-grid">
+                    <button class="preset-btn" data-power="1.0">
+                        <i class="fa-solid fa-arrow-up"></i>
+                        Power: 1.0
+                    </button>
+
+                    <button class="preset-btn" data-power="-1.0">
+                        <i class="fa-solid fa-arrow-down"></i>
+                        Power: -1.0
+                    </button>
+
+                    <button class="preset-btn" data-power="0.3">
+                        <i class="fa-solid fa-arrow-up"></i>
+                        Power: 0.3
+                    </button>
+
+                    <button class="preset-btn" data-power="-0.3">
+                        <i class="fa-solid fa-arrow-down"></i>
+                        Power: -0.3
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <div class="panel-title">
+                    <i class="fa-solid fa-code-branch"></i>
+                    <span>Override Delegation Chain</span>
+                </div>
+
+                <div class="metric">
+                    <span>Raw Input</span>
+                    <strong id="metric-raw">0.00</strong>
+                </div>
+
+                <div class="metric">
+                    <span>Safe Power</span>
+                    <strong id="metric-safe">0.00</strong>
+                </div>
+
+                <div class="metric">
+                    <span>Current Method</span>
+                    <strong id="metric-method">SafetySlide.move()</strong>
+                </div>
+
+                <div class="delegation">
+                    <div class="delegation-step">
+                        slide.move(input)
+                    </div>
+
+                    <div class="arrow">
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+
+                    <div class="delegation-step">
+                        Math.min + Math.signum
+                    </div>
+
+                    <div class="arrow">
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+
+                    <div class="delegation-step">
+                        motor.setPower(safePower)
+                    </div>
+                </div>
+
+                <div class="formula" id="call-chain">
+RAW INPUT: 0.00
+CLAMPED : 0.00
+DIRECTION: 0
+FINAL SAFE POWER: 0.00
+                </div>
+
+                <div class="status-pill status-red" id="unsafe-warning" style="display:none">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>UNSAFE POWER — override not working</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script src="./simulator_base.js"></script>
+
+<script>
+window.onSimulatorReady = () => {
+
+    const starterCode = `import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+
+// Parent class - basic slide with no safety
+class GenericSlide {
+    protected DcMotor motor;
+
+    public void init(HardwareMap hwMap, String motorName) {
+        motor = hwMap.get(DcMotor.class, motorName);
+    }
+
+    public void move(double power) {
+        motor.setPower(power);
+    }
+}
+
+// Child class - overrides move() to enforce max power of 0.5
+class SafetySlide extends GenericSlide {
+
+    @Override
+    public void move(double power) {
+        // TODO: Clamp power to a maximum magnitude of 0.5
+        // TODO: Send the clamped safePower to the motor
+    }
+}
+
+// OpMode using SafetySlide
+@TeleOp(name="Safety_Slide")
+public class SafetySlideOp extends OpMode {
+
+    SafetySlide slide = new SafetySlide();
+
+    @Override
+    public void init() {
+        slide.init(hardwareMap, "slide");
+        telemetry.addData("Status", "Initialized");
+    }
+
+    @Override
+    public void loop() {
+        double input = -gamepad1.left_stick_y;
+        slide.move(input);
+
+        telemetry.addData("Raw Input",   input);
+        telemetry.addData("Safe Power",  Math.min(0.5, Math.abs(input)) * Math.signum(input));
+        telemetry.update();
+    }
+}`;
+
+    const requirements = [
+        "Create GenericSlide parent class",
+        "Use protected DcMotor motor field",
+        "Implement move(double power) in GenericSlide",
+        "Create SafetySlide extends GenericSlide",
+        "Add @Override annotation",
+        "Clamp with Math.min(0.5, Math.abs(power))",
+        "Preserve direction with Math.signum(power)",
+        "Never exceed 0.5 magnitude",
+        "Preserve negative direction",
+        "Initialize slide motor in OpMode",
+        "Call slide.move() in loop()"
+    ];
+
+    setCode(starterCode);
+
+    setChallenge(
+        "Telemark Unit 13.3 Simulator",
+        "Method overriding with safe slide power.",
+        requirements
+    );
+
+    setBadges([
+        { iconClass:"fa-solid fa-shield", label:"Override", active:true },
+        { iconClass:"fa-solid fa-microchip", label:"DcMotor", active:true },
+        { iconClass:"fa-solid fa-display", label:"Telemetry", active:true },
+        { iconClass:"fa-solid fa-gamepad", label:"Gamepad", active:true }
+    ]);
+
+    setActiveInputs(["left_stick_y"]);
+
+    const slideDevice = hardwareMap.registerMotor("slide");
+
+    let sceneRoot;
+    let robot, slideOuter, slideInner;
+    let rawInput = 0;
+    let safePower = 0;
+    let currentExtension = 0;
+    let simulationRunning = false;
+    let overrideCorrect = true;
+    let animationRegistered = false;
+    let compiledMoveFn = null;
+    let compiledInitFn = null;
+    let compiledLoopFn = null;
+    let compiledSource = "";
+
+    const motorState = {
+        slide:0
+    };
+
+    function safeCall(fn){
+        if(typeof fn !== "function") return;
+        const args = Array.prototype.slice.call(arguments, 1);
+        return fn.apply(null, args);
+    }
+
+    function ensureOverlayRoot(){
+        if(document.getElementById("challenge-root")) return;
+
+        const root = document.createElement("div");
+        root.id = "challenge-root";
+        root.innerHTML = `
+            <div id="warning-banner" class="safe">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span id="banner-text">SafetySlide.move() ACTIVE</span>
+            </div>
+
+            <div id="uml-panel" class="overlay-panel">
+                <div class="uml-title"><i class="fa-solid fa-diagram-project"></i><span>Override Relationship</span></div>
+                <div class="class-box">
+                    <div class="class-header">GenericSlide</div>
+                    <div class="section">
+                        <div class="member bad" id="req-motor"><span># motor : DcMotor</span><i class="fa-solid fa-circle"></i></div>
+                    </div>
+                    <div class="section">
+                        <div class="member bad" id="req-init"><span>+ init(hwMap, motorName)</span><i class="fa-solid fa-circle"></i></div>
+                        <div class="member bad" id="req-parent-move"><span><em>+ move(power)</em></span><i class="fa-solid fa-circle"></i></div>
+                    </div>
+                </div>
+                <div class="inheritance-arrow"><i class="fa-solid fa-arrow-up"></i> extends</div>
+                <div class="class-box">
+                    <div class="class-header">SafetySlide</div>
+                    <div class="section">
+                        <div class="member bad" id="req-extends"><span>extends GenericSlide</span><i class="fa-solid fa-circle"></i></div>
+                    </div>
+                    <div class="section">
+                        <div class="member bad" id="req-override"><span>@Override move()</span><i class="fa-solid fa-circle"></i></div>
+                        <div class="member bad" id="req-min"><span>Math.min(0.5, Math.abs(power))</span><i class="fa-solid fa-circle"></i></div>
+                        <div class="member bad" id="req-sign"><span>Math.signum(power)</span><i class="fa-solid fa-circle"></i></div>
+                    </div>
+                    <div class="section">
+                        <div class="override-badge"><i class="fa-solid fa-shield"></i> OVERRIDES GenericSlide.move()</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="bottom-panel" class="overlay-panel">
+                <div class="grid">
+                    <div class="panel-section">
+                        <div class="panel-title"><i class="fa-solid fa-sliders"></i><span>Power Clamping</span></div>
+                        <div class="bar-wrap">
+                            <div class="bar-header"><span>RAW INPUT</span><strong id="raw-label">0.00</strong></div>
+                            <div class="bar"><div id="raw-fill" class="fill green" style="width:0%"></div></div>
+                        </div>
+                        <div class="bar-wrap">
+                            <div class="bar-header"><span>SAFE POWER</span><strong id="safe-label">0.00</strong></div>
+                            <div class="bar"><div id="safe-fill" class="fill green" style="width:0%"></div></div>
+                        </div>
+                        <div class="formula" id="formula-box">Math.abs(power) = 0.00
+Math.min(0.5, X) = 0.00
+Math.signum(power) = 0
+safePower = 0.00</div>
+                        <div id="override-status" class="status-pill status-green">
+                            <i class="fa-solid fa-check"></i>
+                            <span>SafetySlide.move() ACTIVE</span>
+                        </div>
+                        <div class="preset-grid">
+                            <button class="preset-btn" data-power="1.0"><i class="fa-solid fa-arrow-up"></i> Power: 1.0</button>
+                            <button class="preset-btn" data-power="-1.0"><i class="fa-solid fa-arrow-down"></i> Power: -1.0</button>
+                            <button class="preset-btn" data-power="0.3"><i class="fa-solid fa-arrow-up"></i> Power: 0.3</button>
+                            <button class="preset-btn" data-power="-0.3"><i class="fa-solid fa-arrow-down"></i> Power: -0.3</button>
+                        </div>
+                    </div>
+                    <div class="panel-section">
+                        <div class="panel-title"><i class="fa-solid fa-code-branch"></i><span>Override Delegation Chain</span></div>
+                        <div class="metric"><span>Raw Input</span><strong id="metric-raw">0.00</strong></div>
+                        <div class="metric"><span>Safe Power</span><strong id="metric-safe">0.00</strong></div>
+                        <div class="metric"><span>Current Method</span><strong id="metric-method">SafetySlide.move()</strong></div>
+                        <div class="delegation">
+                            <div class="delegation-step">slide.move(input)</div>
+                            <div class="arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                            <div class="delegation-step">Math.min + Math.signum</div>
+                            <div class="arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                            <div class="delegation-step">motor.setPower(safePower)</div>
+                        </div>
+                        <div class="formula" id="call-chain">RAW INPUT: 0.00
+CLAMPED : 0.00
+DIRECTION: 0
+FINAL SAFE POWER: 0.00</div>
+                        <div class="status-pill status-red" id="unsafe-warning" style="display:none">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <span>UNSAFE POWER - override not working</span>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        document.body.appendChild(root);
+    }
+
+    function attachOverlayToViewer(){
+        ensureOverlayRoot();
+        const root = document.getElementById("challenge-root");
+        const rightPanel = document.getElementById("sim-right-panel");
+        if(rightPanel && root && root.parentElement !== rightPanel){
+            rightPanel.appendChild(root);
+        }
+        document.querySelectorAll(".preset-btn").forEach(btn=>{
+            if(btn.dataset.bound === "true") return;
+            btn.dataset.bound = "true";
+            btn.addEventListener("click", ()=>{
+                const p = parseFloat(btn.dataset.power);
+                callSlideMove(p);
+                publishTelemetry();
+            });
+        });
+    }
+
+    function initThreeScene(){
+        if(!window.THREE || !window.scene) return;
+        if(sceneRoot) window.scene.remove(sceneRoot);
+
+        sceneRoot = new THREE.Group();
+        sceneRoot.name = "unit13_3_scene";
+        window.scene.add(sceneRoot);
+        window.scene.background = new THREE.Color(0x000000);
+
+        safeCall(setFieldVisible, false);
+        safeCall(setCameraOrbit, {
+            theta: 0,
+            phi: 1.05,
+            radius: 10,
+            target: { x: 2.6, y: 1.0, z: 0 }
+        });
+
+        const ambient = new THREE.AmbientLight(0xffffff, 1.4);
+        sceneRoot.add(ambient);
+
+        const dir = new THREE.DirectionalLight(0xf6efe1, 1.5);
+        dir.position.set(5,8,5);
+        sceneRoot.add(dir);
+
+        const floor = new THREE.Mesh(
+            new THREE.PlaneGeometry(40,40),
+            new THREE.MeshStandardMaterial({
+                color:0x050505,
+                roughness:1
+            })
+        );
+
+        floor.rotation.x = -Math.PI / 2;
+        sceneRoot.add(floor);
+
+        const grid = new THREE.GridHelper(40,40,0xf3ead7,0x1f1f1f);
+        sceneRoot.add(grid);
+
+        robot = new THREE.Group();
+        sceneRoot.add(robot);
+
+        const body = new THREE.Mesh(
+            new THREE.BoxGeometry(3,1.5,3),
+            new THREE.MeshStandardMaterial({
+                color:0x080808,
+                roughness:0.72,
+                metalness:0.18
+            })
+        );
+
+        body.position.y = 0.75;
+        robot.add(body);
+
+        slideOuter = new THREE.Mesh(
+            new THREE.BoxGeometry(4,0.5,0.8),
+            new THREE.MeshStandardMaterial({
+                color:0x2a2925,
+                roughness:0.58,
+                metalness:0.22
+            })
+        );
+
+        slideOuter.position.set(2.2,1,0);
+        robot.add(slideOuter);
+
+        slideInner = new THREE.Mesh(
+            new THREE.BoxGeometry(3,0.35,0.55),
+            new THREE.MeshStandardMaterial({
+                color:0xf3ead7,
+                emissive:0x000000
+            })
+        );
+
+        slideInner.position.set(3.2,1,0);
+        robot.add(slideInner);
+
+        const unsafeZone = new THREE.Mesh(
+            new THREE.BoxGeometry(0.15,2,2),
+            new THREE.MeshBasicMaterial({
+                color:0xf3ead7,
+                transparent:true,
+                opacity:0.22
+            })
+        );
+
+        unsafeZone.position.set(6.5,1,0);
+        sceneRoot.add(unsafeZone);
+
+        if(!animationRegistered && typeof addAnimationCallback === "function"){
+            addAnimationCallback(animate);
+            animationRegistered = true;
+        }
+    }
+
+    function animate(){
+        if(!slideInner) return;
+
+        const target = safePower * 5;
+        currentExtension += (target - currentExtension) * 0.08;
+
+        slideInner.position.x = 3.2 + currentExtension;
+
+        if(Math.abs(rawInput) > 0.5){
+            slideInner.material.emissive.setHex(0x441111);
+        } else {
+            slideInner.material.emissive.setHex(0x000000);
+        }
+    }
+
+    function updateSlideVisual(name, value){
+        motorState[name] = value;
+        safePower = value;
+        refreshPanels();
+    }
+
+    hardwareMap.onMotorPower((name, value)=>{
+        updateSlideVisual(name, value);
+    });
+
+    function refreshPanels(){
+
+        const rawMagnitude = Math.min(100, Math.abs(rawInput) * 100);
+        const safeMagnitude = Math.min(100, Math.abs(safePower) * 100);
+
+        const rawFill = document.getElementById("raw-fill");
+        const safeFill = document.getElementById("safe-fill");
+        if(!rawFill || !safeFill) return;
+
+        rawFill.style.width = rawMagnitude + "%";
+        safeFill.style.width = safeMagnitude + "%";
+
+        rawFill.className = "fill " + (Math.abs(rawInput) > 0.5 ? "red" : "green");
+        safeFill.className = "fill green";
+
+        document.getElementById("raw-label").textContent = rawInput.toFixed(2);
+        document.getElementById("safe-label").textContent = safePower.toFixed(2);
+
+        document.getElementById("metric-raw").textContent = rawInput.toFixed(2);
+        document.getElementById("metric-safe").textContent = safePower.toFixed(2);
+
+        document.getElementById("formula-box").textContent =
+`Math.abs(power) = ${Math.abs(rawInput).toFixed(2)}
+Math.min(0.5, X) = ${Math.min(0.5, Math.abs(rawInput)).toFixed(2)}
+Math.signum(power) = ${Math.sign(rawInput).toFixed(1)}
+safePower = ${(Math.min(0.5, Math.abs(rawInput)) * Math.sign(rawInput)).toFixed(2)}`;
+
+        document.getElementById("call-chain").textContent =
+`RAW INPUT: ${rawInput.toFixed(2)}
+CLAMPED : ${Math.min(0.5, Math.abs(rawInput)).toFixed(2)}
+DIRECTION: ${Math.sign(rawInput).toFixed(1)}
+FINAL SAFE POWER: ${safePower.toFixed(2)}`;
+
+        const unsafe = Math.abs(safePower) > 0.5001;
+
+        const banner = document.getElementById("warning-banner");
+        const bannerText = document.getElementById("banner-text");
+
+        const overrideStatus = document.getElementById("override-status");
+        const unsafeWarning = document.getElementById("unsafe-warning");
+        if(!banner || !bannerText || !overrideStatus || !unsafeWarning) return;
+
+        if(unsafe){
+            banner.className = "danger";
+            bannerText.textContent = "GenericSlide.move() ACTIVE";
+            overrideStatus.className = "status-pill status-red";
+            overrideStatus.innerHTML = `
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>GenericSlide.move() ACTIVE</span>
+            `;
+            unsafeWarning.style.display = "inline-flex";
+        } else {
+            banner.className = "safe";
+            bannerText.textContent = "SafetySlide.move() ACTIVE";
+            overrideStatus.className = "status-pill status-green";
+            overrideStatus.innerHTML = `
+                <i class="fa-solid fa-check"></i>
+                <span>SafetySlide.move() ACTIVE</span>
+            `;
+            unsafeWarning.style.display = "none";
+        }
+    }
+
+    function publishTelemetry(){
+        if(typeof clearTelemetry !== "function" ||
+           typeof addTelemetry !== "function" ||
+           typeof updateTelemetry !== "function"){
+            return;
+        }
+
+        clearTelemetry();
+        addTelemetry("Raw Input", rawInput);
+        addTelemetry("Safe Power", safePower);
+        addTelemetry("Clamp Limit", 0.5);
+        addTelemetry("Method", Math.abs(safePower) > 0.5001 ? "GenericSlide.move()" : "SafetySlide.move()");
+        updateTelemetry();
+    }
+
+    function markRequirement(id, good){
+        const el = document.getElementById(id);
+        if(!el) return;
+
+        el.classList.remove("good","bad");
+        el.classList.add(good ? "good" : "bad");
+
+        const icon = el.querySelector("i");
+        if(!icon) return;
+        icon.className = good
+            ? "fa-solid fa-circle-check"
+            : "fa-solid fa-circle";
+    }
+
+    function validateCode(code){
+        const genericBody = extractClassBody(code, "GenericSlide");
+        const safetyBody = extractClassBody(code, "SafetySlide");
+        const opBody = extractOpModeBody(code);
+        const safetyMove = extractMethodBody(safetyBody, "move");
+        const opInit = extractMethodBody(opBody, "init");
+        const opLoop = extractMethodBody(opBody, "loop");
+
+        const checks = [
+            /class\s+GenericSlide\b/.test(code),
+            /protected\s+DcMotor\s+motor/.test(genericBody),
+            /void\s+move\s*\(\s*double\s+power\s*\)/.test(genericBody),
+            /class\s+SafetySlide\s+extends\s+GenericSlide/.test(code),
+            /@Override[\s\S]*?void\s+move\s*\(\s*double\s+power\s*\)/.test(safetyBody),
+            /Math\.min\s*\(\s*0\.5\s*,\s*Math\.abs\s*\(\s*power\s*\)\s*\)/.test(safetyMove),
+            /Math\.signum\s*\(\s*power\s*\)/.test(safetyMove),
+            /motor\s*\.\s*setPower\s*\(\s*safePower\s*\)|super\s*\.\s*move\s*\(\s*safePower\s*\)/.test(safetyMove),
+            /Math\.signum\s*\(\s*power\s*\)/.test(safetyMove),
+            /slide\s*\.\s*init\s*\(\s*hardwareMap\s*,\s*"slide"\s*\)/.test(opInit),
+            /slide\s*\.\s*move\s*\(/.test(opLoop)
+        ];
+
+        checks.forEach((passed, index) => safeCall(setRequirement, index, !!passed));
+
+        markRequirement("req-motor",
+            checks[1]);
+
+        markRequirement("req-init",
+            /void\s+init\s*\(\s*HardwareMap\s+\w+\s*,\s*String\s+\w+\s*\)/.test(genericBody));
+
+        markRequirement("req-parent-move",
+            checks[2]);
+
+        markRequirement("req-extends",
+            checks[3]);
+
+        markRequirement("req-override",
+            checks[4]);
+
+        markRequirement("req-min",
+            checks[5]);
+
+        markRequirement("req-sign",
+            checks[6]);
+
+        if(/private\s+DcMotor\s+motor/.test(code)){
+            showHint(
+                "Make motor protected not private — SafetySlide needs access to motor through inheritance",
+                "red"
+            );
+        }
+
+        if(!/@Override/.test(code)){
+            showHint(
+                "Add @Override above move() in SafetySlide to clearly document that this replaces the parent method",
+                "yellow"
+            );
+        }
+
+        if(!/Math\.signum\s*\(\s*power\s*\)/.test(code)){
+            showHint(
+                "Without Math.signum() negative inputs become positive — direction is lost",
+                "red"
+            );
+        }
+
+        if(/class\s+SafetySlide(?!\s+extends\s+GenericSlide)/.test(code)){
+            showHint(
+                "Add extends GenericSlide to SafetySlide — without it there is no override relationship",
+                "red"
+            );
+        }
+
+        if(/super\.move\s*\(\s*power\s*\)/.test(code)){
+            showHint(
+                "Calling super.move() passes raw unclamped power — apply clamping first",
+                "yellow"
+            );
+        }
+    }
+
+    function showHint(message, type){
+
+        const banner = document.getElementById("warning-banner");
+        const text = document.getElementById("banner-text");
+        if(!banner || !text) return;
+
+        banner.className = type === "red"
+            ? "danger"
+            : "safe";
+
+        text.textContent = message;
+    }
+
+    function getCodeSafe(){
+        if(typeof getCode === "function"){
+            return getCode();
+        }
+
+        return starterCode;
+    }
+
+    function failStudentExecution(message){
+        simulationRunning = false;
+        if(typeof stopExecution === "function") stopExecution();
+        if(typeof _simShowTelemetryError === "function"){
+            _simShowTelemetryError(message);
+        } else {
+            addTelemetry("ERROR", message);
+            updateTelemetry();
+        }
+    }
+
+    function compileStudentSimulation(){
+        const code = getCodeSafe();
+        if(code === compiledSource && compiledMoveFn && compiledLoopFn) return true;
+
+        const genericBody = extractClassBody(code, "GenericSlide");
+        const safetyBody = extractClassBody(code, "SafetySlide");
+        const opBody = extractOpModeBody(code);
+        const moveBody =
+            extractMethodBody(safetyBody, "move") ||
+            extractMethodBody(genericBody, "move");
+        const initBody = extractMethodBody(opBody, "init");
+        const loopBody = extractMethodBody(opBody, "loop");
+
+        if(!moveBody || !loopBody){
+            failStudentExecution("SafetySlide.move() or loop() was not found.");
+            return false;
+        }
+
+        try{
+            compiledMoveFn = new Function(
+                "power",
+                "setSlidePower",
+                '"use strict";\n' + transpileMoveBody(moveBody)
+            );
+            compiledInitFn = new Function(
+                "hardwareMap",
+                "callSlideInit",
+                "addTelemetry",
+                "updateTelemetry",
+                '"use strict";\n' + transpileOpModeBody(initBody || "")
+            );
+            compiledLoopFn = new Function(
+                "gamepad",
+                "callSlideMove",
+                "addTelemetry",
+                "updateTelemetry",
+                '"use strict";\n' + transpileOpModeBody(loopBody)
+            );
+            compiledSource = code;
+            return true;
+        } catch(err){
+            compiledMoveFn = null;
+            compiledInitFn = null;
+            compiledLoopFn = null;
+            compiledSource = "";
+            failStudentExecution("compile error: " + err.message);
+            return false;
+        }
+    }
+
+    function transpileMoveBody(body){
+        let js = body || "";
+        js = js
+            .replace(/\bMath\s*\.\s*signum\s*\(/g, "Math.sign(")
+            .replace(/\bsuper\s*\.\s*move\s*\(/g, "setSlidePower(")
+            .replace(/\b(?:this\s*\.\s*)?motor\s*\.\s*setPower\s*\(/g, "setSlidePower(")
+            .replace(/\b(?:final\s+)?(?:double|int|boolean|String|float|long|byte|short|char|DcMotor|HardwareMap)\s+(?=[A-Za-z_$])/g, "let ");
+        if(typeof _simTranspile === "function") js = _simTranspile(js);
+        return js;
+    }
+
+    function transpileOpModeBody(body){
+        let js = body || "";
+        js = js
+            .replace(/\bdouble\s+input\s*=/g, "let input =")
+            .replace(/\bgamepad1\s*\.\s*left_stick_y\b/g, "gamepad.left_stick_y")
+            .replace(/\bslide\s*\.\s*init\s*\(\s*hardwareMap\s*,\s*"slide"\s*\)/g, "callSlideInit()")
+            .replace(/\bslide\s*\.\s*move\s*\(/g, "callSlideMove(")
+            .replace(/\bMath\s*\.\s*signum\s*\(/g, "Math.sign(")
+            .replace(/\btelemetry\s*\.\s*addData\s*\(/g, "addTelemetry(")
+            .replace(/\btelemetry\s*\.\s*update\s*\(\s*\)/g, "updateTelemetry()")
+            .replace(/\b(?:final\s+)?(?:double|int|boolean|String|float|long|byte|short|char|DcMotor|HardwareMap)\s+(?=[A-Za-z_$])/g, "let ");
+        if(typeof _simTranspile === "function") js = _simTranspile(js);
+        return js;
+    }
+
+    function callSlideInit(){
+        rawInput = 0;
+        setSlidePower(0);
+    }
+
+    function callSlideMove(power){
+        rawInput = Number(power) || 0;
+        if(!compiledMoveFn && !compileStudentSimulation()) return;
+        try{
+            compiledMoveFn(rawInput, setSlidePower);
+        } catch(err){
+            failStudentExecution("SafetySlide.move() runtime error: " + err.message);
+        }
+        refreshPanels();
+    }
+
+    function setSlidePower(value){
+        const power = Number(value) || 0;
+        safePower = power;
+        if(slideDevice && typeof slideDevice.setPower === "function"){
+            slideDevice.setPower(power);
+        } else {
+            updateSlideVisual("slide", power);
+        }
+    }
+
+    function runStudentInit(){
+        if(!compileStudentSimulation() || !compiledInitFn) return;
+        try{
+            clearTelemetry();
+            compiledInitFn(hardwareMap, callSlideInit, addTelemetry, updateTelemetry);
+            updateTelemetry();
+        } catch(err){
+            failStudentExecution("init() runtime error: " + err.message);
+        }
+    }
+
+    function extractOpModeBody(code){
+        const match = /\bclass\s+([A-Za-z_$][\w$]*)\s+extends\s+OpMode\b/.exec(code);
+        return match ? extractClassBody(code, match[1]) : "";
+    }
+
+    function extractClassBody(code, name){
+        const re = new RegExp("\\bclass\\s+" + name + "\\b[^{]*\\{");
+        const match = re.exec(code || "");
+        if(!match) return "";
+        let index = match.index + match[0].length;
+        let depth = 1;
+        for(; index < code.length; index++){
+            if(code[index] === "{") depth++;
+            if(code[index] === "}"){
+                depth--;
+                if(depth === 0) return code.slice(match.index + match[0].length, index);
+            }
+        }
+        return "";
+    }
+
+    function extractMethodBody(scope, name){
+        const re = new RegExp("\\b(?:public\\s+|private\\s+|protected\\s+)?(?:void|boolean|double|int|String)\\s+" + name + "\\s*\\([^)]*\\)\\s*\\{");
+        const match = re.exec(scope || "");
+        if(!match) return "";
+        let index = match.index + match[0].length;
+        let depth = 1;
+        for(; index < scope.length; index++){
+            if(scope[index] === "{") depth++;
+            if(scope[index] === "}"){
+                depth--;
+                if(depth === 0) return scope.slice(match.index + match[0].length, index);
+            }
+        }
+        return "";
+    }
+
+    function simulateInputLoop(){
+
+        setInterval(()=>{
+
+            if(!simulationRunning) return;
+            if(!compileStudentSimulation()) return;
+
+            if(window.gamepad){
+                window.gamepad.left_stick_y = window.gamepad.left_stick_y || 0;
+            }
+
+            try{
+                clearTelemetry();
+                compiledLoopFn(window.gamepad || {}, callSlideMove, addTelemetry, updateTelemetry);
+                updateTelemetry();
+            } catch(err){
+                failStudentExecution("loop() runtime error: " + err.message);
+                return;
+            }
+
+            refreshPanels();
+            validateCode(getCodeSafe());
+
+        },50);
+    }
+
+    document.querySelectorAll(".preset-btn").forEach(btn=>{
+        if(btn.dataset.bound === "true") return;
+        btn.dataset.bound = "true";
+        btn.addEventListener("click", ()=>{
+
+            const p = parseFloat(btn.dataset.power);
+            callSlideMove(p);
+            refreshPanels();
+            publishTelemetry();
+        });
+    });
+
+    window.onInit = () => {
+        simulationRunning = false;
+        if(!compileStudentSimulation()) return;
+        runStudentInit();
+        validateCode(getCodeSafe());
+    };
+
+    window.onStart = () => {
+        if(!compileStudentSimulation()) return;
+        simulationRunning = true;
+        validateCode(getCodeSafe());
+        publishTelemetry();
+    };
+
+    window.onStop = () => {
+        simulationRunning = false;
+        rawInput = 0;
+        safePower = 0;
+        refreshPanels();
+        publishTelemetry();
+    };
+
+    window.onReset = () => {
+        simulationRunning = false;
+        rawInput = 0;
+        safePower = 0;
+        currentExtension = 0;
+        refreshPanels();
+        publishTelemetry();
+    };
+
+    attachOverlayToViewer();
+    initThreeScene();
+    refreshPanels();
+    simulateInputLoop();
+};
+</script>
+</body>
+</html>

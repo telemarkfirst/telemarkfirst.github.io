@@ -1,0 +1,108 @@
+---
+id: hardware-map-object
+title: "Lesson 7.1: Using hardwareMap to Find the Devices You Configured"
+sidebar_label: "7.1 · hardwareMap Object"
+sidebar_position: 1
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit7Simulator from '@site/src/components/Unit7Simulator';
+
+# Lesson 7.1: Using hardwareMap to Find the Devices You Configured
+
+---
+
+## Technical Context
+
+The active Robot Controller configuration maps physical ports to user-defined names. `HardwareMap.get(Class, String)` returns a matching configured device, but **throws an exception if no such device is found**. It does not return `null`. For optional hardware, `HardwareMap.tryGet(Class, String)` performs a lookup that returns `null` when no matching device is available. See the [`HardwareMap` SDK Javadoc](https://javadoc.io/doc/org.firstinspires.ftc/RobotCore/latest/com/qualcomm/robotcore/hardware/HardwareMap.html).
+
+---
+
+## How hardwareMap Connects Code to Real Hardware
+
+The `hardwareMap` object is an instance of the SDK's `HardwareMap` class. It acts as a **lookup service**. When you call `get()`, the SDK searches the active Robot Controller configuration for a device with the requested type and name, then returns the Java object used to communicate with that configured device.
+
+The `get()` method requires two parameters:
+
+1. **The hardware class**: tells the SDK what type of device to return (e.g., `DcMotor.class`)
+2. **The configuration name string**: must match the name defined in the Robot Controller app exactly, character for character
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+
+@TeleOp(name="HardwareMap_Demo")
+public class HardwareMapDemo extends OpMode {
+
+    private DcMotor armMotor;
+
+    @Override
+    public void init() {
+        // The SDK performs a lookup in the Hub's XML configuration registry
+        // Parameters: (Hardware Class Type, "Exact Configuration Name")
+        armMotor = hardwareMap.get(DcMotor.class, "arm_motor");
+
+        telemetry.addData("Status", "arm_motor mapped successfully");
+    }
+
+    @Override
+    public void loop() {
+        armMotor.setPower(0.5);
+    }
+}
+```
+
+For a genuinely optional device, use `tryGet()` and test its result before calling methods on it:
+
+```java
+DcMotor testMotor = hardwareMap.tryGet(DcMotor.class, "test_motor");
+if (testMotor != null) {
+    testMotor.setPower(0.25);
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The `hardwareMap` object is used to perform a `__________` in the robot's configuration registry.
+2. The `get()` method requires two parameters: the `__________` of the device and the exact string name from the configuration.
+3. Calling `get()` for a device that is not present in the active configuration will result in an `__________` during OpMode initialization.
+
+<details>
+<summary>Show answers</summary>
+
+1. **lookup** (configuration registry search)
+2. **class type** (e.g., `DcMotor.class`)
+3. **exception**. Use `tryGet()` when a missing device should instead produce `null`.
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Use the simulator below to practice mapping a single motor from the Robot Controller configuration into Java.
+
+<SimulatorRunGuide />
+
+<Unit7Simulator lesson="hardware-map-object" />
+
+:::info Connects to the mechanical track
+The names you request here have to match the labels on the physical wiring.
+
+See [Lesson 9.1: The FTC Control System Layout and Port Map](/mechanical/module-09/control-system-layout).
+:::
+
+<MarkComplete
+  lessonId="unit-07/hardware-map-object"
+  nextUnit="/docs/unit-07/dcmotor-mapping"
+  nextUnitName="Lesson 7.2: Registering DcMotors and Assigning Port-Specific Names"
+/>

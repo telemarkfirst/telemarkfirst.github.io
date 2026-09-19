@@ -1,0 +1,39 @@
+---
+id: mastery-coding-challenge
+title: "Unit 14 Project Stage: Vision Subsystem"
+sidebar_label: "Unit 14 · Coding Challenge"
+sidebar_position: 6
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import MasterySimulator from '@site/src/components/MasterySimulator';
+
+# Stage 13: Vision Subsystem
+
+The project adds `Vision.java` beside the finished TeleOp. Vision becomes another owned subsystem; it does not replace `CompetitionTeleOp.java`.
+
+The simulator keeps `CompetitionTeleOp` selected as the runnable entry point and carries forward the same DECODE competition robot. Your existing drivetrain, intake, transfer, launcher, and sensor code remains untouched while the camera layer is added.
+
+## Your Task
+
+1. Map webcam `"Webcam 1"` inside Vision and build an `AprilTagProcessor`.
+2. Build a `VisionPortal` with the camera and processor.
+3. Iterate safely over current `AprilTagDetection` objects.
+4. Read tag ID and `ftcPose` data for navigation telemetry.
+5. Define multiple OpenCV `Rect` regions for left, center, and right analysis.
+6. Classify a stable left, center, or right selection.
+7. Initialize and update Vision through `RobotHardware`.
+8. Close the `VisionPortal` through the subsystem's cleanup method.
+
+Treat missing detections as a normal state. Your program must not assume a tag is always visible.
+
+## Coding Challenge Simulator
+
+<MasterySimulator unit={14} project />
+
+<MarkComplete
+  lessonId="unit-14/mastery-coding-challenge"
+  completesUnit="unit-14"
+  nextUnit="/docs/unit-15"
+  nextUnitName="Unit 15: Advanced Integration"
+/>

@@ -1,0 +1,41 @@
+.figure {
+  margin: 0;
+}
+
+/* currentColor drives every stroke, so the whole drawing is one ink and the
+   page keeps its single accent. */
+.svg {
+  display: block;
+  width: 100%;
+  max-width: 30rem;
+  height: auto;
+  margin-inline: auto;
+  color: var(--tm-text-strong);
+}
+
+/* Parts start hidden and are brought in by the timeline in RobotAssembly.
+   Opacity lives here so the first paint has no flash of a finished robot
+   before the script runs. */
+.part {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.caption {
+  max-width: 30rem;
+  margin: var(--tm-sp-4) auto 0;
+  color: var(--tm-text-muted);
+  font-size: var(--tm-fs-xs);
+  line-height: var(--tm-lh-normal);
+  text-align: center;
+}
+
+/* Reduced motion gets the assembled robot, which is the informative state. */
+/* Reduced motion gets the assembled robot, which is the informative state.
+   The timeline also checks, so this is the no-JavaScript path too. */
+@media (prefers-reduced-motion: reduce) {
+  .part {
+    opacity: 1;
+  }
+}

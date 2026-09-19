@@ -1,0 +1,134 @@
+---
+id: test-plans
+title: "Lesson 10.2: Writing Test Plans and Collecting Reliability Data"
+sidebar_label: "10.2 · Test Plans"
+sidebar_position: 2
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 10.2: Writing Test Plans and Collecting Reliability Data
+
+---
+
+## Technical Context
+
+"We tested it and it works" does not say how many trials were run, what conditions were used, or what counted as success. Without those details, the team cannot estimate competition reliability.
+
+A test plan converts that into a number you can act on.
+
+---
+
+## What a Test Plan Contains
+
+Five parts, written before the test rather than after:
+
+```text
+QUESTION
+Does the intake acquire a game element placed up to 2 in off
+center, reliably enough for competition?
+
+SUCCESS CRITERION
+At least 23 of 25 attempts acquired within 2.0 s.
+
+METHOD
+Robot stationary on field tile. Element placed at 0, 1, and 2
+in off center, alternating left and right. Driver commands
+intake at full power. One attempt per placement, 25 total.
+
+WHAT WE RECORD
+Success or failure per attempt, time from contact to secured,
+offset and side for each attempt, and a note on any failure.
+
+CONDITIONS
+Battery above 12.5 V at start. New compliant wheels. Field
+tile swept before starting.
+```
+
+Write the success criterion before the test. Otherwise, the team can unconsciously adjust the standard to match the result.
+
+---
+
+## Trial Counts and What They Buy You
+
+More trials narrow the uncertainty. A rough guide for FTC decisions:
+
+| Purpose | Trials | What it tells you |
+| --- | --- | --- |
+| Does it work at all | 3 to 5 | Basic feasibility |
+| Is it worth keeping | 10 | Rough reliability, obvious failure modes |
+| Is it competition ready | 25 or more | A reliability figure you can plan around |
+| Is a change an improvement | 25 before and after | Whether the difference is real |
+
+That last row matters. A mechanism that goes from 8 out of 10 to 9 out of 10 has not demonstrably improved: with ten trials, that difference is easily chance. Comparing changes requires enough trials that the difference is larger than the noise.
+
+:::warning Include another operator
+The builder already knows the approach speed, angle, and small corrections that help the mechanism work. Have someone else run at least part of the test, ideally the driver, to check whether the result depends on that knowledge.
+:::
+
+---
+
+## Record Failures Individually
+
+A total is much less useful than a list.
+
+```text
+Fail 4:  element 2 in left, rode up funnel wall, not acquired
+Fail 11: element 2 in left, same behavior
+Fail 19: element 1 in left, jammed at handoff
+```
+
+Three failures out of 25 is a number. That list is a diagnosis: two failures share a cause at 2 in left, which points at an asymmetry, and the third is a different problem entirely at the handoff.
+
+Also record the conditions for each failure: battery voltage, which element, where on the tile, who was operating. Patterns hide in those columns.
+
+---
+
+## Test in Realistic Conditions
+
+Test under the conditions the mechanism will face in a match:
+
+- On field tile, not a table
+- With the robot at match weight, including the battery and all mechanisms
+- With a battery at realistic charge, not only a fresh one
+- With the mechanism at the temperature it reaches after several matches
+- With the driver operating from the driver station position, not standing over the robot
+
+A result collected only at 13 V with a cold motor and the builder operating does not establish match reliability.
+
+---
+
+## Repeat Tests After Changes
+
+A test result belongs to the version of the mechanism that was tested. Any change, including a repair that put things back the way they were, invalidates the number.
+
+A mechanism may behave differently after reassembly because a spacer order, alignment, or tension changed. Run an abbreviated test after a significant repair or revision so the current version has a current result.
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The success criterion must be written `__________` the test is run, so the standard is not adjusted to fit the result.
+2. Comparing whether a change improved a mechanism requires enough trials that the difference exceeds the `__________`.
+3. Failures should be recorded `__________` with their conditions, rather than only as a total count.
+
+<details>
+<summary>Show answers</summary>
+
+1. **before**
+2. **noise** (random variation)
+3. **individually**
+
+</details>
+
+---
+
+## Exercise
+
+Write a full test plan for one mechanism using the five part format, then run it with 25 trials and someone other than the builder operating. Record each failure individually with conditions. Then look for a pattern in the failures.
+
+<MarkComplete
+  lessonId="module-10/test-plans"
+  nextUnit="/mechanical/module-10/failure-analysis"
+  nextUnitName="Lesson 10.3: Root Cause Analysis of Mechanical Failures"
+/>

@@ -1,0 +1,122 @@
+---
+id: design-cycle
+title: "Lesson 0.1: The Engineering Design Cycle and Why It Loops"
+sidebar_label: "0.1 · Design Cycle"
+sidebar_position: 1
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import {DesignCycleDiagram} from '@site/src/components/mechanical/EngineeringDiagrams';
+
+# Lesson 0.1: The Engineering Design Cycle and Why It Loops
+
+---
+
+## Technical Context
+
+A linear season plan has four steps: read the game, choose a design, build it, and compete. It leaves no scheduled response when testing exposes a bad assumption. If the intake cannot reach an element against the wall, the team needs time to revise and retest it.
+
+The engineering design cycle repeats those activities. What you learn in a test becomes an input to the next version.
+
+---
+
+## The Stages
+
+The cycle is usually described in five or six stages. The exact list matters less than the fact that it returns to the start.
+
+| Stage | What you actually do | What you have when it is done |
+| --- | --- | --- |
+| Define | Read the game, identify scoring actions, write requirements | A list of things the robot must do |
+| Ideate | Generate several different ways to satisfy each requirement | Multiple concepts, not one |
+| Select | Compare concepts against weighted criteria | A chosen concept and a written reason |
+| Build | Prototype the concept in the cheapest material that answers the question | A physical thing you can test |
+| Test | Run it enough times to see the failure modes | Data, not an opinion |
+| Refine | Change the design based on what the test showed | A better version, and a new question |
+
+Refine feeds straight back into Define, because a real test usually reveals that one of your original requirements was wrong.
+
+<DesignCycleDiagram />
+
+---
+
+## Why the Loop Is the Point
+
+Each pass through the loop answers questions that planning alone cannot settle. Repeating the loop gives you more chances to catch weak assumptions while they are still cheap to fix.
+
+Consider an intake for a ball-shaped game element:
+
+- **Pass one** answers "can a spinning compliant wheel pick this up at all?" It takes an afternoon with a wheel zip-tied to a scrap bracket. Answer: yes, but only if the ball is within about one inch of center.
+- **Pass two** answers "how do we handle balls that are not centered?" It adds funnel walls. Answer: works, but the funnel now sticks out past the frame.
+- **Pass three** answers "how do we get the funnel inside the size limit at start?" It adds a deploying funnel on a spring hinge.
+
+None of those problems was obvious on a whiteboard. A team that goes straight from CAD to a finished intake may not find them until the schedule leaves little room for another version.
+
+:::tip Mentor note
+When a student says "I already know it will work," ask them to define a quick test. A short prototype either confirms the idea or finds a problem while there is still time to revise it.
+:::
+
+---
+
+## Where FTC Teams Break the Cycle
+
+Watch for three common shortcuts.
+
+**Skipping Ideate.** The team builds the first plausible concept without comparing it with alternatives. That makes it hard to tell whether the choice is strong or simply familiar.
+
+**Building the competition version first.** A rough prototype can answer a question in a few hours. A machined version may take weeks, and that investment makes the design harder to abandon when the result is poor.
+
+**Testing once.** A mechanism that works on the first try has not been tested. It has been demonstrated. Reliability is a number, and you cannot get a number from one trial.
+
+:::warning The sunk cost trap
+Time spent on a design can make the team reluctant to replace it. Build the first version quickly and cheaply so a failed test can lead to a new concept without derailing the schedule.
+:::
+
+---
+
+## The Cycle Applies to the Whole Robot and to Each Part
+
+Run the loop at two levels at once:
+
+- **Robot level:** what is our overall strategy, and does the robot as a whole achieve it?
+- **Subsystem level:** does this specific intake, slide, or drivetrain do its job?
+
+These interact. A subsystem loop can succeed while the robot loop fails, which is what happens when a team builds an excellent mechanism for a scoring method that turns out not to be worth many points.
+
+:::info Official references
+- FIRST Tech Challenge season materials and award criteria: [Game and Season Info](https://www.firstinspires.org/resource-library/ftc/game-and-season-info)
+:::
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The stage that turns a chosen concept into something physical you can test is called `__________`.
+2. Building the machined aluminum version before testing a rough version violates the principle that prototypes should be `__________`.
+3. A mechanism that has worked exactly one time has been demonstrated, but it has not been `__________`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **Build** (or Prototype)
+2. **cheap** (rough, fast, disposable)
+3. **tested** (reliability requires repeated trials)
+
+</details>
+
+---
+
+## Try It On Your Own Team
+
+Pick one mechanism on your current or most recent robot. Write down, honestly:
+
+- How many distinct concepts were considered before the one you built?
+- How many times was it rebuilt after testing?
+- Which assumption did the first test disprove?
+
+If the answers are "one," "zero," and "we did not test it," start by changing how your team generates concepts and schedules tests. You can improve that process before buying any new parts.
+
+<MarkComplete
+  lessonId="module-00/design-cycle"
+  nextUnit="/mechanical/module-00/reading-the-game"
+  nextUnitName="Lesson 0.2: Reading a Game Manual Like an Engineer"
+/>

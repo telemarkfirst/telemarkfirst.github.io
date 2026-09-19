@@ -1,0 +1,141 @@
+---
+id: mastery-quiz
+title: "Module 0 Mastery Quiz: Engineering Design Process"
+sidebar_label: "Module 0 · Mastery Quiz"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import ScoredQuiz from '@site/src/components/mechanical/ScoredQuiz';
+import {MASTERY_QUESTIONS} from '@site/src/telemark/mechanicalQuizzes';
+
+# Module 0 Mastery Quiz: Engineering Design Process
+
+---
+
+## I. Conceptual Questions
+
+**1. Why the Loop:** A team argues that the design cycle wastes time, and that a skilled team should be able to design correctly on the first attempt. What is the engineering counterargument?
+
+<details>
+<summary>Show answer</summary>
+
+Every design contains assumptions about the game element, field friction, alignment time, and other conditions. Planning can identify some of them, but a prototype is needed to test them. Each cycle checks a set of assumptions and gives the team time to respond to the result before the design is finished.
+
+</details>
+
+---
+
+**2. Points Per Second:** Scoring action A is worth 6 points and takes 9 seconds. Action B is worth 2 points and takes 4 seconds. Which is the better strategy target, and what additional information would change your answer?
+
+<details>
+<summary>Show answer</summary>
+
+A is worth 0.67 points per second and B is worth 0.5, so A is better on that metric alone. Several things would change the answer. If A's cycle time is measured optimistically and the real alignment time pushes it to 12 seconds, A falls to 0.5 and the two tie. If A requires a mechanism that costs five weeks to build and B requires one week, the schedule may favor B. If the field gets congested near the high goal in real matches, A's effective cycle time rises while B's does not. Points per second ranks actions; it does not by itself pick the strategy.
+
+</details>
+
+---
+
+**3. Requirement or Constraint:** Classify each of the following and explain why the classification matters:
+(a) the robot must fit the starting size limit,
+(b) the robot must score in the high goal,
+(c) the team will use mecanum wheels.
+
+<details>
+<summary>Show answer</summary>
+
+(a) is a constraint, sourced from the game manual. It cannot be negotiated, and a design that violates it is dead regardless of its other merits.
+
+(b) is a requirement, derived from the team's strategy. If the high goal turns out to be unreachable in the time available, the requirement can be dropped and the strategy revised.
+
+(c) is neither: it is a preference stated as though it were a constraint. It is a solution, and putting it in the constraint list eliminates tank and swerve drivetrains before anyone compares them.
+
+The classification determines what the team can change. A constraint rules out a design that violates it. A requirement can be revised with the strategy, and a preference should remain open to comparison.
+
+</details>
+
+---
+
+**4. Generating and Judging:** Why should the generating and judging phases of a brainstorm be separated in time, and what specifically goes wrong when they are not?
+
+<details>
+<summary>Show answer</summary>
+
+Immediate criticism narrows the discussion before the group has produced enough alternatives. Separating the phases gives everyone time to propose and develop ideas. The team can then evaluate the full set against the same requirements and keep useful parts of concepts that do not survive as a whole.
+
+</details>
+
+---
+
+**5. Recording Rejections:** Your team chose an active roller intake and rejected three other concepts. Why is it worth writing down the rejected ones with reasons, given that you are not building them?
+
+<details>
+<summary>Show answer</summary>
+
+Two reasons. First, judges directly ask why a design was chosen, and the strength of the answer depends on being able to show what it was chosen over. Second, and more practically, the chosen concept sometimes fails late in the season. When it does, the annotated list of rejected concepts is the fastest available path to a replacement, because the analysis has already been done and only needs rechecking against what you have since learned.
+
+</details>
+
+---
+
+## II. Review the Process
+
+A team describes its season as follows. **Identify the 2 process errors and state what should have happened instead.**
+
+```text
+Week 1   Read the game manual once as a team. Agreed the high goal
+         was the priority. Someone suggested a linear slide with a
+         claw; everyone liked it, so that became the plan.
+
+Week 2-6 Built the slide and claw out of machined aluminum. Took
+         longer than expected because of the custom brackets.
+
+Week 7   First test. The claw grips the element reliably, but it
+         takes about 4 seconds to align the robot before the claw
+         closes, so a full cycle is 14 seconds instead of the 8
+         seconds the team assumed.
+
+Week 8   Team decides to keep the mechanism because of the amount
+         of work already invested, and to practice driving faster.
+```
+
+<details>
+<summary>Show answers</summary>
+
+**Error 1 - No alternatives were generated.**
+One concept was proposed in week one and adopted because the group liked it. There was nothing to compare it against, so the team never learned whether a funnel, a roller intake, or a passive design would have had a shorter alignment time. The fix is a generating block producing several concepts, a constraint screen, and rough prototypes of the top two before committing.
+
+```text
+Week 1  Generate 6 concepts, screen against constraints,
+        prototype the top 2 in cardboard and scrap.
+```
+
+**Error 2 - The competition version was built before the concept was tested.**
+Six weeks of machined aluminum went in before anyone measured a cycle time. The 8 second assumption, which was the entire basis of the strategy, went unchecked until week seven. A rough prototype in week two would have exposed the 4 second alignment problem while there was still time to change the concept.
+
+```text
+Week 2  Rough prototype, measure real cycle time,
+        compare against the 8 s requirement.
+```
+
+**On the week 8 decision:** keeping the mechanism only because of the work already invested is the sunk cost trap. Compare the available options using the remaining schedule and expected scoring performance. Past build hours do not make the current mechanism more effective.
+
+</details>
+
+---
+
+## III. Scored Check
+
+The questions above are for working something through. These are graded, so you can find out whether it stuck. Everything is scored in your browser.
+
+<ScoredQuiz
+  lessonId="module-00/mastery-quiz"
+  questions={MASTERY_QUESTIONS['module-00']}
+/>
+
+<MarkComplete
+  lessonId="module-00/mastery-quiz"
+  nextUnit="/mechanical/module-01"
+  nextUnitName="Module 1: The Engineering Notebook"
+/>

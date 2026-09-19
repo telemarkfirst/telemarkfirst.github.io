@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>Telemark Unit 12.3 Simulator</title>
+
+<script src="./simulator_base.js"></script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+
+<style>
+html, body {
+    margin: 0;
+    background: #0f1117;
+    color: #e6edf3;
+    font-family: Inter, Arial, sans-serif;
+}
+
+#strafe-panel {
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: clamp(190px, 34vh, 330px);
+    overflow-y: auto;
+    width: 100%;
+    background: #161b22;
+    border-top: 1px solid #30363d;
+    padding: 14px;
+    box-sizing: border-box;
+}
+
+#sim-right-panel #sim-scene-container {
+    flex: 1 0 clamp(360px, 58vh, 560px);
+    min-height: 360px;
+}
+
+.strafe-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+}
+
+.strafe-card {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 12px;
+}
+
+.strafe-title {
+    font-size: 13px;
+    color: #8b949e;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 14px;
+    align-items: center;
+}
+
+.big {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.green { color: #3fb950; }
+.red { color: #f85149; }
+
+.bar-bg {
+    width: 120px;
+    height: 10px;
+    background: #21262d;
+    border-radius: 5px;
+    overflow: hidden;
+    border: 1px solid #30363d;
+}
+
+.bar-fill {
+    height: 100%;
+    width: 50%;
+    background: #58a6ff;
+}
+
+.formula {
+    margin-top: 10px;
+    background: #010409;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 10px;
+    font-family: monospace;
+    line-height: 1.5;
+    font-size: 12px;
+    color: #c9d1d9;
+}
+
+.btn {
+    width: 100%;
+    background: #21262d;
+    color: #c9d1d9;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.btn:hover {
+    background: #30363d;
+    color: #e6edf3;
+}
+
+.status-banner {
+    margin-top: 10px;
+    padding: 12px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: 700;
+    display: none;
+}
+
+.correct {
+    background: rgba(63,185,80,0.15);
+    border: 1px solid #3fb950;
+    color: #3fb950;
+}
+</style>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+
+<body>
+
+<div id="strafe-panel">
+    <div class="strafe-grid">
+        <div class="strafe-card">
+            <div class="strafe-title">
+                <i class="fa-solid fa-calculator"></i>
+                Field Relative Strafe
+            </div>
+
+            <div class="row">
+                <span style="font-size: 11px; color:#8b949e;">HEADING</span>
+                <strong class="big" id="headingText">0.0°</strong>
+            </div>
+
+            <div class="row">
+                <span style="font-size: 11px; color:#8b949e;">RAW STRAFE (L-Stick X)</span>
+                <div class="bar-bg"><div id="strafeBar" class="bar-fill"></div></div>
+            </div>
+
+            <div class="row">
+                <span style="font-size: 11px; color:#8b949e;">RAW FORWARD (L-Stick Y)</span>
+                <div class="bar-bg"><div id="forwardBar" class="bar-fill"></div></div>
+            </div>
+
+            <div class="row" style="margin-top: 12px;">
+                <span style="font-size: 11px; color:#8b949e;">FIELD STRAFE RESULT</span>
+                <strong class="big green" id="resultText">0.000</strong>
+            </div>
+
+            <div class="formula" id="formulaBox">
+                Formula Loading...
+            </div>
+        </div>
+
+        <div class="strafe-card">
+            <div class="strafe-title">
+                <i class="fa-solid fa-vial"></i>
+                Test Cases
+            </div>
+
+            <button class="btn" onclick="applyPreset(1)">Case 1 — 0° Heading</button>
+            <button class="btn" onclick="applyPreset(2)">Case 2 — 90° Heading</button>
+            <button class="btn" onclick="applyPreset(3)">Case 3 — 45° Heading</button>
+            <button class="btn" onclick="applyPreset(4)">Case 4 — Custom Input</button>
+
+            <div class="formula">
+                <div>Expected: <span id="expectedText" class="green">0.000</span></div>
+                <div>Student: <span id="studentText">0.000</span></div>
+                <div>Difference: <span id="diffText">0.000</span></div>
+            </div>
+
+            <div id="successBanner" class="status-banner correct">
+                <i class="fa-solid fa-circle-check"></i> Field-relative strafe is correct!
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function createStrafePanel() {
+    const right = document.getElementById("sim-right-panel");
+
+    if (!right || document.getElementById("strafe-panel")) {
+        return;
+    }
+
+    const panel = document.createElement("div");
+    panel.id = "strafe-panel";
+    panel.innerHTML = `
+        <div class="strafe-grid">
+            <div class="strafe-card">
+                <div class="strafe-title">
+                    <i class="fa-solid fa-calculator"></i>
+                    Field Relative Strafe
+                </div>
+
+                <div class="row">
+                    <span style="font-size: 11px; color:#8b949e;">HEADING</span>
+                    <strong class="big" id="headingText">0.0°</strong>
+                </div>
+
+                <div class="row">
+                    <span style="font-size: 11px; color:#8b949e;">HEADING RADIANS</span>
+                    <strong class="big" id="headingRadText">0.00 rad</strong>
+                </div>
+
+                <div class="row">
+                    <span style="font-size: 11px; color:#8b949e;">RAW STRAFE (L-Stick X)</span>
+                    <div class="bar-bg"><div id="strafeBar" class="bar-fill"></div></div>
+                </div>
+
+                <div class="row">
+                    <span style="font-size: 11px; color:#8b949e;">RAW FORWARD (L-Stick Y)</span>
+                    <div class="bar-bg"><div id="forwardBar" class="bar-fill"></div></div>
+                </div>
+
+                <div class="row" style="margin-top: 12px;">
+                    <span style="font-size: 11px; color:#8b949e;">FIELD STRAFE RESULT</span>
+                    <strong class="big green" id="resultText">0.000</strong>
+                </div>
+
+                <div class="formula" id="formulaBox">
+                    Formula Loading...
+                </div>
+            </div>
+
+            <div class="strafe-card">
+                <div class="strafe-title">
+                    <i class="fa-solid fa-vial"></i>
+                    Test Cases
+                </div>
+
+                <button class="btn" onclick="applyPreset(1)">Case 1 - 0° Heading</button>
+                <button class="btn" onclick="applyPreset(2)">Case 2 - 90° Heading</button>
+                <button class="btn" onclick="applyPreset(3)">Case 3 - 45° Heading</button>
+                <button class="btn" onclick="applyPreset(4)">Case 4 - Custom Input</button>
+
+                <div class="formula">
+                    <div>Expected: <span id="expectedText" class="green">0.000</span></div>
+                    <div>Student: <span id="studentText">0.000</span></div>
+                    <div>Difference: <span id="diffText">0.000</span></div>
+                </div>
+
+                <div id="successBanner" class="status-banner correct">
+                    <i class="fa-solid fa-circle-check"></i> Challenge Complete! Field-relative strafe calculation is correct.
+                </div>
+            </div>
+        </div>
+    `;
+    right.appendChild(panel);
+}
+
+window.onSimulatorReady = () => {
+
+const starterCode = `@TeleOp(name="Field_Relative_Strafe")
+public class FieldRelativeStrafe extends OpMode {
+
+    IMU imu;
+
+    @Override
+    public void init() {
+        imu = hardwareMap.get(IMU.class, "imu");
+
+        IMU.Parameters parameters = new IMU.Parameters(
+            new RevHubOrientationOnRobot(
+                RevHubOrientationOnRobot.LogoFacingDirection.UP,
+                RevHubOrientationOnRobot.UsbFacingDirection.FORWARD
+            )
+        );
+
+        imu.initialize(parameters);
+        telemetry.addData("Status", "IMU Ready");
+    }
+
+    double getFieldRelativeStrafe(double rawStrafe, double rawForward, double headingRadians) {
+        // TODO: rotate the joystick vector by the robot heading.
+        return 0.0;
+    }
+
+    @Override
+    public void loop() {
+        double heading        = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        double headingRadians = Math.toRadians(heading);
+        double rawStrafe      = gamepad1.left_stick_x;
+        double rawForward     = -gamepad1.left_stick_y;
+
+        double fieldStrafe = getFieldRelativeStrafe(rawStrafe, rawForward, headingRadians);
+
+        telemetry.addData("Heading",      heading);
+        telemetry.addData("Raw Strafe",   rawStrafe);
+        telemetry.addData("Raw Forward",  rawForward);
+        telemetry.addData("Field Strafe", fieldStrafe);
+        telemetry.update();
+    }
+}`;
+
+const requirements = [
+    "Create getFieldRelativeStrafe method",
+    "Use three parameters: rawStrafe, rawForward, headingRadians",
+    "Return a double",
+    "Use Math.cos(headingRadians)",
+    "Use Math.sin(headingRadians)",
+    "Pass 0° heading test",
+    "Pass 90° heading test",
+    "Pass 45° heading test",
+    "Display field strafe in telemetry"
+];
+
+if (window.setCode) {
+    setCode(starterCode);
+}
+
+if (window.setChallenge) {
+    setChallenge(
+        "Field-Relative Strafe Calculation",
+        "Rotate joystick vectors into field-relative space using trigonometry and IMU heading.",
+        requirements
+    );
+    setHeader(
+        "Telemark Unit 12.3 Simulator",
+        "Field-Relative Strafe Calculation"
+    );
+}
+
+if (window.setBadges) {
+    setBadges([
+        { iconClass: "fa-solid fa-compass", label: "IMU", active: true },
+        { iconClass: "fa-solid fa-calculator", label: "Math", active: true },
+        { iconClass: "fa-solid fa-display", label: "Telemetry", active: true },
+        { iconClass: "fa-solid fa-gamepad", label: "Gamepad", active: true }
+    ]);
+}
+
+if (window.setActiveInputs) {
+    setActiveInputs([
+        "left_stick_x",
+        "left_stick_y",
+        "right_stick_x"
+    ]);
+}
+
+if (window.hardwareMap && typeof hardwareMap.registerIMU === "function") {
+    hardwareMap.registerIMU("imu");
+}
+
+createStrafePanel();
+
+let scene;
+let camera;
+let robot, rawArrow, fieldArrow, strafeArrow;
+
+let headingDeg = 0;
+let rawStrafe = 0;
+let rawForward = 0;
+
+let expectedResult = 0;
+let studentResult = 0;
+let useCustom = true;
+let studentStrafeFunction = null;
+
+function initThree() {
+    if (typeof THREE === "undefined") return;
+
+    scene = window.scene;
+    camera = window.camera;
+
+    if (!scene || !camera) return;
+
+    if (window.setFieldVisible) {
+        window.setFieldVisible(false);
+    }
+
+    // Top-down camera view to properly see 2D vectors
+    camera.position.set(0, 15, 0.1);
+    camera.lookAt(0,0,0);
+
+    buildLights();
+    buildField();
+    buildRobot();
+    buildVectors();
+
+    animate();
+}
+
+function buildLights() {
+    const ambient = new THREE.AmbientLight(0xffffff, 1.4);
+    scene.add(ambient);
+    const dir = new THREE.DirectionalLight(0xffffff, 1.8);
+    dir.position.set(8,20,10);
+    scene.add(dir);
+}
+
+function buildField() {
+    const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(50,50),
+        new THREE.MeshStandardMaterial({
+            color: 0x1a1a2e,
+            metalness: 0.35,
+            roughness: 0.8
+        })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    scene.add(floor);
+
+    const grid = new THREE.GridHelper(50, 25, 0x334155, 0x1e293b);
+    scene.add(grid);
+}
+
+function buildRobot() {
+    robot = new THREE.Group();
+    const body = new THREE.Mesh(
+        new THREE.BoxGeometry(3,1,4),
+        new THREE.MeshStandardMaterial({
+            color: 0xff6600,
+            metalness: 0.9,
+            roughness: 0.2
+        })
+    );
+    robot.add(body);
+
+    const front = new THREE.Mesh(
+        new THREE.BoxGeometry(2,0.2,0.4),
+        new THREE.MeshStandardMaterial({
+            color: 0x00ffff,
+            emissive: 0x00ffff,
+            emissiveIntensity: 0.8
+        })
+    );
+    front.position.set(0, 0.25, -2.2);
+    robot.add(front);
+
+    robot.position.y = 0.5;
+    scene.add(robot);
+}
+
+function createArrow(color) {
+    const group = new THREE.Group();
+    const shaft = new THREE.Mesh(
+        new THREE.BoxGeometry(0.15,0.15,4),
+        new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.5 })
+    );
+    shaft.position.z = -2;
+    group.add(shaft);
+
+    const tip = new THREE.Mesh(
+        new THREE.ConeGeometry(0.35,1,16),
+        new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.8 })
+    );
+    tip.rotation.x = Math.PI;
+    tip.position.z = -4.5;
+    group.add(tip);
+    return group;
+}
+
+function buildVectors() {
+    rawArrow = createArrow(0x94a3b8);
+    fieldArrow = createArrow(0x3b82f6);
+    strafeArrow = createArrow(0x3fb950);
+
+    scene.add(rawArrow);
+    scene.add(fieldArrow);
+    scene.add(strafeArrow);
+}
+
+function updateVectors() {
+    if (!scene) return;
+    const headingRad = headingDeg * Math.PI / 180;
+
+    expectedResult = rawStrafe * Math.cos(headingRad) - rawForward * Math.sin(headingRad);
+
+    try {
+        studentResult = studentStrafeFunction
+            ? Number(studentStrafeFunction(rawStrafe,rawForward,headingRad))
+            : expectedResult;
+    } catch (err) {
+        studentResult = Number.NaN;
+        studentStrafeFunction = null;
+        failStudentFormula("getFieldRelativeStrafe() runtime error",err);
+    }
+
+    const rawAngle = Math.atan2(rawStrafe, rawForward);
+    const fieldAngle = rawAngle - headingRad;
+    const rawLength = Math.sqrt(rawStrafe * rawStrafe + rawForward * rawForward);
+
+    rawArrow.rotation.y = rawAngle;
+    rawArrow.scale.z = Math.max(0.2, rawLength);
+
+    fieldArrow.rotation.y = fieldAngle;
+    fieldArrow.scale.z = Math.max(0.2, rawLength);
+
+    strafeArrow.rotation.y = expectedResult >= 0 ? Math.PI / 2 : -Math.PI / 2;
+    strafeArrow.scale.z = Math.abs(expectedResult);
+
+    robot.rotation.y = headingRad;
+
+    updateUI(headingRad);
+}
+
+function updateUI(headingRad) {
+    const hText = document.getElementById("headingText");
+    const hRadText = document.getElementById("headingRadText");
+    const strafeBar = document.getElementById("strafeBar");
+    const forwardBar = document.getElementById("forwardBar");
+    const resultText = document.getElementById("resultText");
+    const expectedText = document.getElementById("expectedText");
+    const studentText = document.getElementById("studentText");
+    const diffEl = document.getElementById("diffText");
+    const formulaBox = document.getElementById("formulaBox");
+
+    if (
+        !hText ||
+        !hRadText ||
+        !strafeBar ||
+        !forwardBar ||
+        !resultText ||
+        !expectedText ||
+        !studentText ||
+        !diffEl ||
+        !formulaBox
+    ) return;
+
+    hText.textContent = headingDeg.toFixed(1) + "°";
+    hRadText.textContent = headingRad.toFixed(2) + " rad";
+    strafeBar.style.width = ((rawStrafe + 1) / 2 * 100) + "%";
+    forwardBar.style.width = ((rawForward + 1) / 2 * 100) + "%";
+    resultText.textContent = Number.isFinite(studentResult)
+        ? studentResult.toFixed(3)
+        : "ERROR";
+
+    const diff = Math.abs(expectedResult - studentResult);
+    expectedText.textContent = expectedResult.toFixed(3);
+    studentText.textContent = Number.isFinite(studentResult)
+        ? studentResult.toFixed(3)
+        : "ERROR";
+
+    diffEl.textContent = Number.isFinite(diff)
+        ? diff.toFixed(6)
+        : "ERROR";
+    diffEl.className = diff < 0.001 ? "green" : "red";
+
+    formulaBox.innerHTML = `
+rawStrafe × cos(heading) - rawForward × sin(heading)<br><br>
+= ${rawStrafe.toFixed(2)} × cos(${headingRad.toFixed(2)}) - ${rawForward.toFixed(2)} × sin(${headingRad.toFixed(2)})<br>
+= ${rawStrafe.toFixed(2)} × ${Math.cos(headingRad).toFixed(2)} - ${rawForward.toFixed(2)} × ${Math.sin(headingRad).toFixed(2)}<br>
+= Expected ${expectedResult.toFixed(3)} | Student <span class="${diff < 0.001 ? "green" : "red"}">${Number.isFinite(studentResult) ? studentResult.toFixed(3) : "ERROR"}</span>
+`;
+
+    validate();
+}
+
+function getMethodBody(code,name) {
+    const re = new RegExp(
+        "(?:public\\s+|private\\s+|protected\\s+)?" +
+        "double\\s+" + name + "\\s*\\([^)]*\\)\\s*\\{"
+    );
+    const match = re.exec(code);
+    if (!match) return "";
+
+    let index = match.index + match[0].length;
+    let depth = 1;
+
+    for (; index < code.length; index++) {
+        if (code[index] === "{") depth++;
+        else if (code[index] === "}") {
+            depth--;
+            if (depth === 0) {
+                return code.slice(match.index + match[0].length,index);
+            }
+        }
+    }
+
+    return "";
+}
+
+let studentFormulaError = "";
+
+function reportStudentFormulaError(context,err) {
+    const message = context + ": " + (err && err.message ? err.message : String(err));
+    studentFormulaError = message;
+    console.error("Unit 12.3 " + context,err);
+    if (window._simShowTelemetryError) window._simShowTelemetryError(message);
+}
+
+function failStudentFormula(context,err) {
+    if (typeof stopExecution === "function") stopExecution();
+    reportStudentFormulaError(context,err);
+}
+
+function compileStudentFormula() {
+    const code = window.getCode ? getCode() : starterCode;
+    const body = getMethodBody(code,"getFieldRelativeStrafe")
+        .replace(/\bdouble\s+(?=[A-Za-z_$])/g,"let ")
+        .replace(/\bMath\.cos\s*\(/g,"Math.cos(")
+        .replace(/\bMath\.sin\s*\(/g,"Math.sin(");
+
+    if (!body) {
+        studentStrafeFunction = null;
+        failStudentFormula("Java compile error",new Error("getFieldRelativeStrafe() was not found or is missing a closing brace"));
+        return false;
+    }
+
+    try {
+        studentStrafeFunction =
+            new Function(
+                "rawStrafe",
+                "rawForward",
+                "headingRadians",
+                body
+            );
+        studentFormulaError = "";
+        return true;
+    } catch (err) {
+        studentStrafeFunction = null;
+        failStudentFormula("getFieldRelativeStrafe() compile error",err);
+        return false;
+    }
+}
+
+function runFormula(rawS,rawF,headingRad) {
+    if (!studentStrafeFunction) return Number.NaN;
+    try {
+        return Number(studentStrafeFunction(rawS,rawF,headingRad));
+    } catch (err) {
+        studentStrafeFunction = null;
+        failStudentFormula("getFieldRelativeStrafe() runtime error",err);
+        return Number.NaN;
+    }
+}
+
+function testCase(id) {
+    if (id === 1) return runFormula(1,0,0);
+    if (id === 2) return runFormula(0,1,Math.PI/2);
+    return runFormula(1,1,Math.PI/4);
+}
+
+function validate() {
+    if (!window.getCode) return;
+    const code = getCode();
+    
+    const methodBody = getMethodBody(code,"getFieldRelativeStrafe");
+    const checks = [
+        /\bgetFieldRelativeStrafe\s*\(/.test(code),
+        /getFieldRelativeStrafe\s*\(\s*double\s+rawStrafe\s*,\s*double\s+rawForward\s*,\s*double\s+headingRadians\s*\)/.test(code),
+        /double\s+getFieldRelativeStrafe/.test(code),
+        /Math\.cos\s*\(\s*headingRadians\s*\)/.test(methodBody),
+        /Math\.sin\s*\(\s*headingRadians\s*\)/.test(methodBody),
+        Math.abs(testCase(1) - 1.0) < 0.001,
+        Math.abs(testCase(2) - (-1.0)) < 0.001,
+        Math.abs(testCase(3) - 0.0) < 0.001,
+        code.includes('telemetry.addData("Field Strafe"')
+    ];
+
+    if (window.setRequirement) {
+        checks.forEach((passed,index) => setRequirement(index,passed));
+    }
+
+    const success = checks.every(Boolean);
+    const banner = document.getElementById("successBanner");
+    if (banner) {
+        banner.style.display = success ? "block" : "none";
+    }
+}
+
+window.applyPreset = function(id) {
+    useCustom = false;
+    if (id === 1) { rawStrafe = 1; rawForward = 0; headingDeg = 0; }
+    if (id === 2) { rawStrafe = 0; rawForward = 1; headingDeg = 90; }
+    if (id === 3) { rawStrafe = 1; rawForward = 1; headingDeg = 45; }
+    if (id === 4) { useCustom = true; }
+    updateVectors();
+};
+
+function animate() {
+    requestAnimationFrame(animate);
+
+    if (useCustom) {
+        const gp = window.gamepad || {};
+        rawStrafe = gp.left_stick_x || 0;
+        rawForward = -(gp.left_stick_y || 0);
+        headingDeg += (gp.right_stick_x || 0) * 1.8;
+
+        if (headingDeg > 180) headingDeg -= 360;
+        if (headingDeg < -180) headingDeg += 360;
+    }
+    updateVectors();
+}
+
+window.updateHeadingVisual = function(heading) {
+    headingDeg = heading;
+};
+
+window.onRun = function() {
+    headingDeg = 0;
+    compileStudentFormula();
+    updateVectors();
+};
+window.onStop = function() {};
+window.onReset = function() {
+    headingDeg = 0;
+    rawStrafe = 0;
+    rawForward = 0;
+    useCustom = true;
+    compileStudentFormula();
+    updateVectors();
+};
+
+if (window.hardwareMap && typeof hardwareMap.onIMUHeading === "function") {
+    hardwareMap.onIMUHeading((heading) => {
+        headingDeg = heading;
+    });
+}
+
+if (window.hardwareMap && typeof hardwareMap.onIMU === "function") {
+    hardwareMap.onIMU((name,data) => {
+        if (name === "imu" && data && typeof data.heading === "number") {
+            headingDeg = data.heading;
+        }
+    });
+}
+
+try {
+    compileStudentFormula();
+    initThree();
+    updateVectors();
+} catch (err) {
+    console.error(err);
+    if (window.addTelemetry) addTelemetry("ERROR", err.message);
+}
+
+};
+</script>
+
+</body>
+</html>

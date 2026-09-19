@@ -1,0 +1,132 @@
+---
+id: solid-features
+title: "Lesson 5.4: Extrude, Revolve, Sweep, and Loft"
+sidebar_label: "5.4 · Solid Features"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 5.4: Extrude, Revolve, Sweep, and Loft
+
+---
+
+## Technical Context
+
+Four features create almost all solid geometry. They differ in one thing: what the sketch does as it travels. Extrude pushes it in a straight line, revolve spins it about an axis, sweep drags it along a path you drew, and loft blends it into a different shape.
+
+Choose the feature that matches the intended geometry and likely revisions. A model can have the correct current shape and still be difficult to update if its feature structure does not reflect the design.
+
+---
+
+## Extrude
+
+**Extrude** pushes a closed sketch a set distance to make a solid. It is the workhorse: plates, brackets, standoffs, blocks.
+
+The end condition matters more than most people use:
+
+| End condition | Behaviour | Use when |
+| --- | --- | --- |
+| Blind | A number you type | The thickness is a specification, like 3 mm plate |
+| Up to face | Stops at chosen geometry | The part must meet something else exactly |
+| Through all | Passes entirely through | Cutting a hole that must always clear |
+| Symmetric | Equal both directions | The feature is centred on its sketch plane |
+
+"Up to face" and "through all" are **adaptive**: change the thing they run into and they follow. A blind 12 mm cut through a plate that later becomes 15 mm leaves 3 mm of material behind. A "through all" cut does not.
+
+**Extrude remove** is the same operation subtracting material, and it is how most holes, slots, and pockets are made.
+
+:::tip Symmetric beats offset
+Extruding symmetrically about a plane keeps the part centred on that plane forever. Extruding 20 mm one way puts the centre 10 mm off, and every downstream mate inherits the error.
+:::
+
+---
+
+## Revolve
+
+**Revolve** spins a sketch about an axis. Anything with rotational symmetry should be revolved rather than extruded and filleted into shape: shafts, spools, pulleys, spacers, wheel hubs.
+
+Two rules:
+
+- The sketch must be entirely on one side of the axis, or the revolve self-intersects.
+- Sketch the profile as a cross-section through the middle, not as the outside shape.
+
+A stepped shaft with three diameters is one revolve of a stair-shaped profile. Modelled as three stacked extrudes it is three features that can drift apart.
+
+---
+
+## Sweep
+
+**Sweep** drags a profile along a path. It needs two sketches: the shape of the cross-section, and the route it travels.
+
+In FTC this is how you model anything with a constant cross-section following a curve:
+
+- Wire and pneumatic tube runs, when you want to check they physically fit
+- A bent tube or formed bracket
+- A belt or chain path, for a rough clearance check
+
+The profile should sit perpendicular to the start of the path. If it does not, the sweep either fails or produces a twisted solid.
+
+---
+
+## Loft
+
+**Loft** blends between two or more different profiles. Use it when a shape genuinely changes along its length: a transition from a round bore to a square mount, a funnel, a tapered intake guide.
+
+Loft is the least predictable of the four because it interpolates between profiles, and small changes to one profile change the whole shape. Keep the number of profiles low, and add guide curves only when the default blend is wrong.
+
+:::warning Do not loft what you can extrude
+Loft is where over-modelling starts. If the shape is a straight taper, a draft on an extrude is simpler, faster, and easier to change. Reach for loft when the shape really does change from one cross-section to another.
+:::
+
+---
+
+## Choosing Between Them
+
+Ask what the cross-section does along the length of the part.
+
+| The cross-section... | Feature |
+| --- | --- |
+| Stays the same, in a straight line | Extrude |
+| Stays the same, around an axis | Revolve |
+| Stays the same, along a curve you drew | Sweep |
+| Changes from one shape to another | Loft |
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. An extrude end condition of `__________` `__________` follows the geometry it stops at when that geometry moves.
+2. A revolve sketch must lie entirely on one side of the `__________`.
+3. A `__________` requires both a profile sketch and a separate path sketch.
+4. Blending between two different cross-sections is done with a `__________`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **up to** (face)
+2. **axis**
+3. **sweep**
+4. **loft**
+
+</details>
+
+---
+
+:::tip Practice
+Graded exercises with hard numbers and self-checks are in [CAD Practice Exercises](/mechanical/cad-practice).
+:::
+
+---
+
+## Exercise
+
+Find a round part on your robot: a spacer, a spool, a hub. Model it twice, once as a revolve and once as an extrude with fillets. Time both, then change the outer diameter by 4 mm and time the edit.
+
+The second measurement is the one that matters.
+
+<MarkComplete
+  lessonId="module-05/solid-features"
+  nextUnit="/mechanical/module-05/modifying-solids"
+  nextUnitName="Lesson 5.5: Fillet, Chamfer, Shell, Draft, Rib, and Hole"
+/>

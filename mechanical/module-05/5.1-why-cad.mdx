@@ -1,0 +1,105 @@
+---
+id: why-cad
+title: "Lesson 5.1: What CAD Catches Before the Robot Is Built"
+sidebar_label: "5.1 · Why CAD"
+sidebar_position: 1
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 5.1: What CAD Catches Before the Robot Is Built
+
+---
+
+## Technical Context
+
+CAD lets you check dimensions, motion, and fit before committing material and fabrication time.
+
+Without that check, the team still has to resolve interference and reach problems, but it finds them during assembly when changes cost more.
+
+---
+
+## What CAD Actually Finds
+
+**Interference.** Two parts occupying the same space. Obvious in a model, invisible in a sketch, and expensive at the workbench. The arm that hits the frame at 95 degrees of travel is found in ten seconds in CAD.
+
+**Reach.** Whether the end effector can get to the scoring position with the robot in a legal position on the field. This requires modeling the field element too, at least roughly, and it is worth the twenty minutes.
+
+**Packaging.** Whether the whole robot fits the starting envelope with every mechanism retracted. Check the full assembly throughout the design, including wiring and guards.
+
+**Stack-ups.** The dimension chain from Lesson 4.4 falls out of an assembly automatically once parts are mated.
+
+**Mass and center of gravity.** With materials assigned, CAD reports both. The center of gravity location predicts tipping, which is otherwise discovered by tipping.
+
+:::tip Model the field, not just the robot
+A robot model can check internal fit. Add the relevant field geometry to check reach, approach angles, and clearance in the positions where the robot will score.
+:::
+
+---
+
+## Why Onshape for FTC
+
+Onshape runs entirely in a browser, which matters for teams sharing school computers or working on Chromebooks. It has full version history, so you can see what changed and revert. Multiple students can work in the same document simultaneously. FTC teams qualify for a free education plan, and the major FTC vendors publish part libraries that can be inserted directly.
+
+Other CAD tools are entirely usable. Fusion, SolidWorks, and Inventor are all used by successful teams. The workflow ideas in this module apply to all of them; only the menu names change.
+
+---
+
+## How Much to Model
+
+Full-robot CAD is a real time investment, and a team that models every screw will not finish. Choose a level deliberately.
+
+| Level | What it gets you | Cost |
+| --- | --- | --- |
+| Sketch only | Fast concept comparison | Minutes |
+| Key parts, rough | Interference and reach checks | A few hours per subsystem |
+| Full assembly with vendor parts | Stack-ups, mass, buildable drawings | Days |
+| Every fastener modeled | Marginal additional value | Very high |
+
+The practical target for most FTC teams is the third row without the fourth: model the structural parts and the motion components, use vendor parts where they exist, and represent fasteners as holes rather than as modeled screws.
+
+:::warning CAD is not a substitute for a prototype
+A model will tell you the intake fits and will not tell you whether it picks up the game element. Physical behavior, friction, compliance, and how an element actually tumbles are outside what CAD reports. Use CAD to check geometry and prototypes to check behavior.
+:::
+
+---
+
+## Version History and Not Losing Work
+
+Name versions at meaningful points, such as "intake v2, funnel at 35 deg," instead of relying on an unbroken edit history. A named version gives the team a known state to restore when a later change does not work.
+
+Equally important: decide who owns which part of the model. Two students editing the same part simultaneously in different directions produces a merge problem that neither wants to resolve.
+
+:::info Official references
+- Onshape documentation and the education plan: [Onshape Learning Center](https://learn.onshape.com/)
+- Community design guides, covering the same mechanisms from a build perspective: [Game Manual 0: Design Skills](https://gm0.org/en/latest/docs/design-skills/index.html)
+:::
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. CAD reliably catches geometry problems such as interference, reach, and packaging, but cannot predict `__________` behavior such as how a game element tumbles.
+2. Modeling the relevant `__________` geometry alongside the robot is what turns a fit check into a function check.
+3. Naming CAD versions at meaningful milestones makes it possible to `__________` when a change turns out to be wrong.
+
+<details>
+<summary>Show answers</summary>
+
+1. **physical** (or dynamic)
+2. **field**
+3. **revert** (roll back)
+
+</details>
+
+---
+
+## Exercise
+
+Take one mechanism from your robot that had a fit or interference problem during build. Estimate how long it took to discover and fix at the workbench, then estimate how long it would have taken to find in CAD. Write both numbers down. That ratio is the argument for CAD, in your team's own numbers.
+
+<MarkComplete
+  lessonId="module-05/why-cad"
+  nextUnit="/mechanical/module-05/sketches-and-constraints"
+  nextUnitName="Lesson 5.2: Fully Defined Sketches and the Core Feature Set"
+/>

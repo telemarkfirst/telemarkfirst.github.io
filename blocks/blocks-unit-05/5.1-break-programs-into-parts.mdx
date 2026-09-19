@@ -1,0 +1,34 @@
+---
+id: break-programs-into-parts
+title: "Lesson 5.1: Break a Program into Smaller Parts"
+sidebar_label: "5.1 · Break Programs into Parts"
+sidebar_position: 1
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 5.1: Break a Program into Smaller Parts
+
+**Decomposition** means splitting a problem into smaller parts that can be planned, built, and tested separately. Each part should have one clear job.
+
+Begin with the required result. List the information the program starts with, the output it must produce, and the rules it must follow. Then name the smaller jobs in execution order.
+
+A delivery program might have parts for reading a list, checking one item, choosing a route, moving, and reporting the result. Some parts become functions. Others remain a short sequence in the main program.
+
+Do not create a function only to make the program longer. A function is useful when its name explains a real job, its work is reused, or it can be tested as one unit.
+
+## Guided practice
+
+Plan a program that reads three scores and reports whether each score is at least 5. Write no more than six numbered steps.
+
+Build one function named `reportScore` with a score parameter. Put the comparison and output inside it. Store the scores in a list and call the function for each item.
+
+Test the function with 4, 5, and 6. These cases cover a value below the boundary, exactly at it, and above it.
+
+<BlockPractice lessonId="blocks-unit-05/break-programs-into-parts" />
+
+<MarkComplete
+  lessonId="blocks-unit-05/break-programs-into-parts"
+  nextUnit="/blocks/blocks-unit-05/combine-programming-tools"
+  nextUnitName="Lesson 5.2: Combine State, Decisions, Loops, and Functions"
+/>

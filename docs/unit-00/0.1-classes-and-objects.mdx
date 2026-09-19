@@ -1,0 +1,160 @@
+---
+id: classes-and-objects
+title: "Lesson 0.1: Classes, and Objects"
+sidebar_label: "0.1 · Classes & Objects"
+sidebar_position: 1
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 0.1: Classes, and Objects
+
+An object is an instance of a class, meaning that it is a specific thing that is made from the class.
+
+To help you understand, think about a house blueprint. The blueprint states that each house has a street address, a paint color, and a front door. Builders can use the same blueprint more than once. The finished houses share a design, but each house has its own address, color, and door state.
+
+Similarly, in Java:
+
+| House example | Java meaning |
+|---|---|
+| The blueprint | A class definition |
+| One completed house | An object created from the class |
+| The house's address and paint color | Field values stored by that object |
+| Opening one house's door | Calling a method on one object |
+
+## Example: Robot Arm
+
+`RobotArm` is a class. It states what every arm object stores and what every arm object can do.
+
+<AnnotatedCode
+  title="RobotArm example"
+  java={String.raw`class RobotArm {
+    private double power;
+
+    public void move(double requestedPower) {
+        power = requestedPower;
+    }
+}
+
+RobotArm frontArm = new RobotArm();
+RobotArm rearArm = new RobotArm();`}
+  python={String.raw`class RobotArm:
+    def __init__(self):
+        self.power = 0.0
+
+    def move(self, requested_power):
+        self.power = requested_power
+
+front_arm = RobotArm()
+rear_arm = RobotArm()`}
+/>
+
+Both languages create independent `RobotArm` objects from the class definition. The syntax differs, but the blueprint-and-house relationship stays the same.
+
+## Java Keyword Explanations {#read-the-java-keywords}
+
+Java reserves certain words for the language itself. These **keywords** have fixed meanings, so you cannot use them as the name of a class, field, or method.
+
+| Word | What it tells Java |
+|---|---|
+| `class` | Start a class definition. The name after it, such as `RobotArm`, names the class. |
+| `public` | Allow code outside this class to use the class, constructor, field, or method. |
+| `private` | Allow only code inside this class to use the field or method directly. |
+| `double` | Store a number that can have a decimal part, such as `0.75`. |
+| `void` | This method performs work but does not send a value back to its caller. |
+| `new` | Create an object, then run its constructor to prepare it. |
+| `this` | Refer to the current object whose constructor or method is running. |
+| `return` | End a method and, when required, send a value back to its caller. |
+
+Some important words in Java code are not keywords. `String` is a class provided by Java for text. `RobotArm`, `power`, and `move` are **identifiers**, which are names chosen by the programmer. A type appears before a field, parameter, or method name and states what kind of value it uses. For example, `double power` declares a field named `power` that stores a decimal number.
+
+You do not need to memorize this table before continuing. Use it to translate each line into plain language.
+
+```java
+public class RobotArm {
+    private String name;
+    private double power;
+
+    public RobotArm(String name) {
+        this.name = name;
+        this.power = 0.0;
+    }
+
+    public void move(double requestedPower) {
+        power = requestedPower;
+    }
+
+    public void stop() {
+        power = 0.0;
+    }
+}
+```
+
+This code essentially makes the blueprint. It doesn't create a real arm yet.
+
+```java
+RobotArm frontArm = new RobotArm("front");
+RobotArm rearArm = new RobotArm("rear");
+```
+
+These declarations create separate objects from the `RobotArm` class. Each arm stores its own `name` and `power`.
+
+```java
+frontArm.move(0.75);
+rearArm.move(-0.40);
+```
+
+`frontArm.move(0.75)` changes only the front arm, while `rearArm.move(-0.40)` changes only the rear arm. Sharing a class does not mean sharing every stored value.
+
+## How Classes Can Help Your Team
+
+A robot can use one arm in TeleOp and the same arm rules in autonomous. If those rules are defined in a class, both OpModes can call the same methods. One fix or addition can then automatically be implemented without needing other changes.
+
+## Terms to Keep
+
+| Term | Meaning |
+|---|---|
+| Class | A definition that describes fields and methods. |
+| Object | A specific value created from a class while the program runs. |
+| Instance | Another name for an object created from a class. |
+| State | The field values currently stored by an object. |
+| Method | A named operation defined by a class. |
+
+## Check Your Understanding
+
+```java
+RobotArm left = new RobotArm("left");
+RobotArm right = new RobotArm("right");
+left.move(0.5);
+```
+
+<details>
+<summary>How many RobotArm objects exist?</summary>
+
+Two. Every `new RobotArm(...)` expression creates a separate object.
+
+</details>
+
+<details>
+<summary>Does right's power also become 0.5?</summary>
+
+No. `left.move(0.5)` changes the object referred to by `left`. The other object keeps its own power value.
+
+</details>
+
+<details>
+<summary>Which part is the blueprint?</summary>
+
+The `RobotArm` class definition is the blueprint. The values created with `new` are the objects.
+
+</details>
+
+## Where You Will Use This
+
+[Unit 13](/docs/unit-13) turns this basic model into complete intake, lift, robot hardware, TeleOp, and autonomous project files.
+
+<MarkComplete
+  lessonId="unit-00/classes-and-objects"
+  nextUnit="/docs/unit-00/fields-constructors-methods"
+  nextUnitName="Lesson 0.2: Fields, Constructors, and Methods"
+/>

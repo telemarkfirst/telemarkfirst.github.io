@@ -1,0 +1,656 @@
+.page {
+  min-height: 100vh;
+  background: var(--tm-bg);
+  color: var(--tm-text-strong);
+}
+
+.content {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  padding: var(--tm-sp-8) var(--tm-sp-5) calc(var(--tm-sp-8) * 1.5);
+}
+
+.coachHero,
+.studentPanelHeader,
+.classroomHeader,
+.studentClassroom > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--tm-sp-5);
+}
+
+.coachHero {
+  padding-bottom: var(--tm-sp-7);
+  border-bottom: 1px solid var(--tm-border);
+}
+
+.eyebrow {
+  margin: 0 0 var(--tm-sp-2);
+  color: var(--tm-accent);
+  font-family: var(--tm-font-mono);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.coachHero h1 {
+  margin: 0;
+  font-family: var(--tm-font-display);
+  font-size: var(--tm-fs-3xl);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.heroLead {
+  max-width: 62ch;
+  margin: var(--tm-sp-4) 0 0;
+  color: var(--tm-text-soft);
+  font-size: var(--tm-fs-md);
+  line-height: 1.6;
+}
+
+.heroLead strong,
+.verifiedEmail {
+  color: var(--tm-accent);
+}
+
+.verifiedEmail {
+  margin: var(--tm-sp-2) 0 0;
+  font-family: var(--tm-font-mono);
+  font-size: var(--tm-fs-xs);
+}
+
+.heroActions,
+.inviteActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--tm-sp-2);
+}
+
+.primaryLink,
+.secondaryLink,
+.primaryButton,
+.secondaryButton,
+.textButton {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  padding: var(--tm-sp-2) var(--tm-sp-4);
+  border: 1px solid var(--tm-accent);
+  border-radius: var(--tm-r-sm);
+  font: inherit;
+  font-size: var(--tm-fs-xs);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.primaryLink,
+.primaryButton {
+  background: var(--tm-accent);
+  color: var(--tm-text-on-accent) !important;
+}
+
+.secondaryLink,
+.secondaryButton,
+.textButton {
+  background: transparent;
+  color: var(--tm-text-strong) !important;
+}
+
+.textButton {
+  min-height: 30px;
+  padding: var(--tm-sp-1) var(--tm-sp-3);
+  border-color: var(--tm-border-strong);
+  color: var(--tm-text-soft) !important;
+  white-space: nowrap;
+}
+
+.primaryLink:hover,
+.secondaryLink:hover,
+.primaryButton:hover,
+.secondaryButton:hover,
+.textButton:hover {
+  border-color: var(--tm-accent-bright);
+  background: var(--tm-accent-a08);
+  color: var(--tm-accent) !important;
+  text-decoration: none;
+}
+
+.primaryLink:focus-visible,
+.secondaryLink:focus-visible,
+.primaryButton:focus-visible,
+.secondaryButton:focus-visible,
+.textButton:focus-visible,
+.inlineForm input:focus-visible,
+.atInput:focus-within {
+  outline: 3px solid var(--tm-accent-a55);
+  outline-offset: 2px;
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled,
+.textButton:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--tm-sp-3);
+  margin-top: var(--tm-sp-6);
+}
+
+.stats > div {
+  padding: var(--tm-sp-5);
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-surface-1);
+}
+
+.stats > div:nth-child(even) {
+  border-radius: var(--tm-r-sm);
+}
+
+.stats strong,
+.stats span {
+  display: block;
+}
+
+.stats strong {
+  color: var(--tm-accent);
+  font-family: var(--tm-font-display);
+  font-size: var(--tm-fs-2xl);
+}
+
+.stats span {
+  margin-top: var(--tm-sp-1);
+  color: var(--tm-text-soft);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.createBlock {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.7fr) minmax(340px, 1.3fr);
+  gap: var(--tm-sp-6);
+  align-items: center;
+  margin-top: var(--tm-sp-5);
+  padding: var(--tm-sp-5);
+  border: 1px solid var(--tm-accent-a20);
+  border-radius: var(--tm-r-md);
+  background: var(--tm-accent-a08);
+}
+
+.createBlock h2,
+.classroomHeader h2,
+.studentPanel h2,
+.studentClassroom h3 {
+  margin: 0;
+  color: var(--tm-text-strong);
+  font-family: var(--tm-font-display);
+}
+
+.createBlock p,
+.classroomHeader p,
+.studentPanelHeader p,
+.studentClassroom header p {
+  margin: var(--tm-sp-2) 0 0;
+  color: var(--tm-text-soft);
+  font-size: var(--tm-fs-sm);
+}
+
+.inlineForm {
+  display: flex;
+  align-items: stretch;
+  gap: var(--tm-sp-2);
+}
+
+.inlineForm > input,
+.atInput {
+  min-width: 0;
+  flex: 1;
+  border: 1px solid var(--tm-border-strong);
+  border-radius: var(--tm-r-md);
+  background: var(--tm-surface-2);
+  color: var(--tm-text-strong);
+}
+
+.inlineForm > input {
+  padding: var(--tm-sp-3) var(--tm-sp-4);
+  font: inherit;
+}
+
+.atInput {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.atInput > span {
+  padding-left: var(--tm-sp-3);
+  color: var(--tm-accent);
+  font-family: var(--tm-font-mono);
+}
+
+.atInput input {
+  width: 100%;
+  min-width: 0;
+  padding: var(--tm-sp-3) var(--tm-sp-3) var(--tm-sp-3) var(--tm-sp-1);
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--tm-text-strong);
+  font: inherit;
+}
+
+.classroomList,
+.studentClassroomList {
+  display: grid;
+  gap: var(--tm-sp-5);
+  margin-top: var(--tm-sp-6);
+}
+
+.classroomCard,
+.studentPanel,
+.studentClassroom {
+  overflow: hidden;
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-surface-1);
+}
+
+.classroomHeader,
+.studentPanelHeader,
+.studentClassroom > header {
+  padding: var(--tm-sp-5);
+}
+
+.inviteForm {
+  padding: var(--tm-sp-5);
+  border-block: 1px solid var(--tm-border-hair);
+  background: var(--tm-surface-2);
+}
+
+.inviteForm > label {
+  display: block;
+  margin-bottom: var(--tm-sp-2);
+  color: var(--tm-text-strong);
+  font-weight: 700;
+}
+
+.formHint,
+.progressBreakdown {
+  margin: var(--tm-sp-2) 0 0;
+  color: var(--tm-text-muted);
+  font-size: var(--tm-fs-2xs);
+}
+
+.pendingBlock,
+.rosterBlock,
+.studentInvites {
+  padding: var(--tm-sp-5);
+}
+
+.pendingBlock {
+  border-bottom: 1px solid var(--tm-border-hair);
+}
+
+.pendingBlock h3,
+.rosterBlock h3,
+.studentInvites h3 {
+  margin: 0 0 var(--tm-sp-3);
+  color: var(--tm-text-strong);
+  font-family: var(--tm-font-display);
+  font-size: var(--tm-fs-md);
+}
+
+.pendingList {
+  display: grid;
+  gap: var(--tm-sp-2);
+}
+
+.pendingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tm-sp-3);
+  padding: var(--tm-sp-3);
+  border: 1px solid var(--tm-border-hair);
+  border-radius: var(--tm-r-md);
+  background: var(--tm-surface-2);
+}
+
+.pendingRow strong,
+.pendingRow span,
+.rosterTable th > strong,
+.rosterTable th > span,
+.studentInvite strong,
+.studentInvite span {
+  display: block;
+}
+
+.pendingRow span,
+.rosterTable th > span,
+.studentInvite span {
+  margin-top: 2px;
+  color: var(--tm-text-muted);
+  font-size: var(--tm-fs-2xs);
+}
+
+.tableScroll {
+  overflow-x: auto;
+}
+
+.rosterTable {
+  width: 100%;
+  min-width: 850px;
+  border-collapse: collapse;
+}
+
+.rosterTable th,
+.rosterTable td {
+  padding: var(--tm-sp-3);
+  border-bottom: 1px solid var(--tm-border-hair);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.rosterTable thead th {
+  color: var(--tm-text-muted);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.rosterTable tbody th {
+  min-width: 140px;
+}
+
+.rosterTable td:nth-child(2) {
+  width: 270px;
+}
+
+.rosterTable td:nth-child(3),
+.rosterTable td:nth-child(4) {
+  width: 160px;
+}
+
+.progressMeter {
+  min-width: 140px;
+}
+
+.progressMeterCompact {
+  min-width: 110px;
+}
+
+.progressMeta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--tm-sp-3);
+  margin-bottom: var(--tm-sp-2);
+  color: var(--tm-text-soft);
+  font-size: var(--tm-fs-2xs);
+}
+
+.progressMeta strong {
+  color: var(--tm-accent);
+}
+
+.progressTrack {
+  height: 6px;
+  overflow: hidden;
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-blue-a10);
+}
+
+.progressTrack > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--tm-accent);
+}
+
+.successMessage,
+.errorMessage,
+.inlineError,
+.panelStatus,
+.emptyPage,
+.emptyState {
+  padding: var(--tm-sp-3) var(--tm-sp-4);
+  border-radius: var(--tm-r-md);
+  font-size: var(--tm-fs-sm);
+}
+
+.successMessage {
+  margin: var(--tm-sp-4) 0 0;
+  border: 1px solid var(--tm-accent-a35);
+  background: var(--tm-accent-a08);
+  color: var(--tm-text-strong);
+}
+
+.errorMessage,
+.inlineError {
+  border: 1px solid var(--tm-danger);
+  background: var(--tm-danger-wash);
+  color: var(--tm-danger);
+}
+
+.errorMessage {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tm-sp-3);
+  margin-top: var(--tm-sp-4);
+}
+
+.errorMessage button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.inlineError {
+  margin: var(--tm-sp-3) 0 0;
+}
+
+.loading,
+.emptyPage {
+  margin-top: var(--tm-sp-6);
+  border: 1px dashed var(--tm-border-strong);
+  color: var(--tm-text-soft);
+  text-align: center;
+}
+
+.loading {
+  padding: var(--tm-sp-8);
+}
+
+.emptyState {
+  margin: 0;
+  background: var(--tm-surface-2);
+  color: var(--tm-text-soft);
+}
+
+.studentPanel {
+  margin-bottom: var(--tm-sp-6);
+  text-align: left;
+}
+
+.studentPanelHeader {
+  border-bottom: 1px solid var(--tm-border-hair);
+}
+
+.studentPanel h2 {
+  font-size: var(--tm-fs-xl);
+}
+
+.studentInvites {
+  border-bottom: 1px solid var(--tm-border-hair);
+  background: var(--tm-accent-a08);
+}
+
+.studentInvite {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--tm-sp-5);
+  align-items: center;
+  padding: var(--tm-sp-4);
+  border: 1px solid var(--tm-accent-a35);
+  border-radius: var(--tm-r-md);
+  background: var(--tm-surface-1);
+}
+
+.studentInvite + .studentInvite {
+  margin-top: var(--tm-sp-3);
+}
+
+.studentInvite p {
+  max-width: 72ch;
+  margin: var(--tm-sp-3) 0 0;
+  color: var(--tm-text-soft);
+  font-size: var(--tm-fs-xs);
+  line-height: 1.55;
+}
+
+.studentClassroomList {
+  margin: 0;
+  padding: var(--tm-sp-5);
+}
+
+.studentClassroom > header {
+  border-bottom: 1px solid var(--tm-border-hair);
+  background: var(--tm-surface-2);
+}
+
+.studentClassroom h3 {
+  font-size: var(--tm-fs-lg);
+}
+
+.classmateList {
+  display: grid;
+}
+
+.classmateRow {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.65fr) minmax(190px, 1fr) auto;
+  gap: var(--tm-sp-4);
+  align-items: center;
+  padding: var(--tm-sp-3) var(--tm-sp-4);
+  border-top: 1px solid var(--tm-border-hair);
+}
+
+.classmateRow:first-child {
+  border-top: 0;
+}
+
+.currentStudent {
+  background: var(--tm-accent-a08);
+}
+
+.classmateName {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tm-sp-2);
+}
+
+.classmateName span {
+  padding: 2px var(--tm-sp-2);
+  border: 1px solid var(--tm-accent-a35);
+  border-radius: var(--tm-r-sm);
+  color: var(--tm-accent);
+  font-size: var(--tm-fs-2xs);
+}
+
+.classmateCount {
+  color: var(--tm-text-muted);
+  font-size: var(--tm-fs-2xs);
+  white-space: nowrap;
+}
+
+.panelStatus {
+  margin: var(--tm-sp-4);
+  background: var(--tm-surface-2);
+  color: var(--tm-text-soft);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 850px) {
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .createBlock {
+    grid-template-columns: 1fr;
+  }
+
+  .studentInvite,
+  .classmateRow {
+    grid-template-columns: 1fr;
+  }
+
+  .classmateCount {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 600px) {
+  .content {
+    padding: var(--tm-sp-6) var(--tm-sp-3) var(--tm-sp-8);
+  }
+
+  .coachHero,
+  .studentPanelHeader,
+  .studentClassroom > header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .heroActions,
+  .inviteActions {
+    justify-content: flex-start;
+  }
+
+  .inlineForm {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primaryLink,
+  .secondaryLink,
+  .primaryButton,
+  .secondaryButton,
+  .textButton,
+  .progressTrack > span {
+    transition: none;
+  }
+}
+
+

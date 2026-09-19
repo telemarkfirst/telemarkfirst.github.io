@@ -1,0 +1,148 @@
+---
+id: static-and-nested-members
+title: "Lesson 0.5: Instance, Static, and Nested Members"
+sidebar_label: "0.5 · Instance, Static & Nested"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 0.5: Instance, Static, and Nested Members
+
+Most fields belong to one object. A `static` field belongs to the class itself.
+
+Return to the house blueprint. Each completed house has its own address, so an address acts like an instance field. The blueprint's model number applies to every house built from that plan, so it acts more like a static value.
+
+The comparison has limits. Java follows exact ownership rules, and those rules matter more than the analogy.
+
+## Instance Members Belong to Objects
+
+```java
+public class RobotArm {
+    private double power;
+
+    public void move(double requestedPower) {
+        power = requestedPower;
+    }
+}
+```
+
+Each `RobotArm` object stores a separate `power` field. You call `move` on a specific object, such as `leftArm.move(0.5)`.
+
+## Static Members Belong to the Class
+
+<AnnotatedCode
+  title="Instance state and a shared constant"
+  java={String.raw`public class RobotArm {
+    public static final double MAX_POWER = 0.8;
+    private double power;
+
+    public void move(double requestedPower) {
+        power = Math.max(-MAX_POWER,
+            Math.min(MAX_POWER, requestedPower));
+    }
+}
+
+double limit = RobotArm.MAX_POWER;`}
+  python={String.raw`class RobotArm:
+    MAX_POWER = 0.8
+
+    def __init__(self):
+        self.power = 0.0
+
+    def move(self, requested_power):
+        self.power = max(-RobotArm.MAX_POWER,
+                         min(RobotArm.MAX_POWER, requested_power))
+
+limit = RobotArm.MAX_POWER`}
+/>
+
+`MAX_POWER` belongs to `RobotArm`, not to one arm object. Java code reads it through the class name. `final` prevents reassignment after initialization.
+
+Both `static` and `final` are Java keywords. In this example, `static` makes one value belong to the class, while `final` prevents code from assigning a different value later. Teams commonly combine them for constants.
+
+Avoid making robot hardware fields static. A static motor reference becomes shared program state, which hides ownership and complicates testing. Unit 13 uses static fields for constants and instance fields for hardware.
+
+## Nested Classes
+
+Java permits one class declaration inside another class.
+
+```java
+public class RobotStatus {
+    public static class Snapshot {
+        public double liftHeight;
+        public boolean intakeRunning;
+    }
+}
+```
+
+`boolean` is a Java keyword and primitive type. A `boolean` value can only be `true` or `false`, so `intakeRunning` records a two-state condition.
+
+A **static nested class** belongs to the outer class as a named type. It does not require a `RobotStatus` object.
+
+```java
+RobotStatus.Snapshot snapshot = new RobotStatus.Snapshot();
+```
+
+A non-static nested class is called an **inner class**. Each inner-class object stays connected to one outer-class object. That connection can be useful for small helpers, but it also adds hidden context. FTC subsystem classes are usually clearer as separate top-level files.
+
+:::caution Telemark simulator limit
+Telemark's Java simulator does not support nested classes. Put each practice class in its own `.java` file. Android Studio and OnBot Java support standard Java nested classes, but this course uses top-level subsystem files because teams can reuse and test them more easily.
+:::
+
+```java title="RobotStatus.java"
+public class RobotStatus {
+    // Robot-level status methods belong here.
+}
+```
+
+```java title="RobotSnapshot.java"
+public class RobotSnapshot {
+    public double liftHeight;
+    public boolean intakeRunning;
+}
+```
+
+## Terms to Keep
+
+| Term | Meaning |
+|---|---|
+| Instance member | A field or method associated with an object. |
+| Static member | A field or method associated with the class itself. |
+| Constant | A named value that code does not reassign. |
+| Static nested class | A class inside another class without an outer-object reference. |
+| Inner class | A non-static nested class connected to an outer object. |
+| Top-level class | A class declared outside every other class. |
+
+## Check Your Understanding
+
+<details>
+<summary>Does every RobotArm object receive a separate MAX_POWER value?</summary>
+
+No. The static field belongs to the class and has one shared value.
+
+</details>
+
+<details>
+<summary>Which field should remain separate for each arm?</summary>
+
+`power` should remain an instance field because each arm can run at a different power.
+
+</details>
+
+<details>
+<summary>What should you do when the Telemark simulator reports that nested classes are unsupported?</summary>
+
+Move the helper class into its own Java file and refer to it by its class name.
+
+</details>
+
+## Where You Will Use This
+
+[Lesson 13.4](/docs/unit-13/static-constants) applies `static final` to robot configuration. The later Unit 13 build lessons keep `Intake`, `Lift`, and `RobotHardware` in separate files.
+
+<MarkComplete
+  lessonId="unit-00/static-and-nested-members"
+  nextUnit="/docs/unit-01"
+  nextUnitName="Unit 1: Environment Setup"
+/>

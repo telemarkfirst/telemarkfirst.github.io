@@ -1,0 +1,298 @@
+---
+id: robot-class
+title: "Lesson 13.5: Architecting a Modular Robot Class with Nested Subsystems"
+sidebar_label: "13.5 · Robot Class"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit13Simulator from '@site/src/components/Unit13Simulator';
+
+# Lesson 13.5: Architecting a Modular Robot Class with Nested Subsystems
+
+---
+
+## Moving Beyond Mechanism Classes
+
+Units 13.1 through 13.4 taught how to move individual mechanisms into their own classes. The next architectural step is to give the entire robot a class of its own. A master `CompetitionRobot` class holds references to every subsystem as member variables and exposes a single `init(HardwareMap hwMap)` method that initializes all of them in the correct order.
+
+The benefit is visible immediately at the OpMode level. Instead of declaring six separate mechanism objects and calling six separate `init()` methods, an OpMode declares one `CompetitionRobot robot` and calls one `robot.init(hardwareMap)`. When a new mechanism is added to the robot, it is added once inside `CompetitionRobot.java`, and every OpMode that uses the robot class gains access to it automatically.
+
+---
+
+## Composition: The "Has-A" Relationship
+
+The robot class uses composition, not inheritance. The `CompetitionRobot` does not extend `Drivetrain`. It has a `Drivetrain`. This is the correct choice when the relationship is one of ownership rather than specialization. The robot owns a drivetrain, owns an intake, and owns a lift. Each of those subsystems is a member variable of type equal to its mechanism class.
+
+Because the subsystem objects are declared as `public` members of the robot class, OpMode code can access them with dot notation: `robot.lift.extend()`, `robot.intake.collect()`, `robot.drive.setWeights(...)`. Alternatively, the robot class can expose wrapper methods that delegate to its subsystems, which keeps the OpMode even cleaner at the cost of slightly more code in the robot class.
+
+---
+
+## Initialization Order
+
+The order in which subsystems are initialized inside `CompetitionRobot.init()` matters when one subsystem depends on another at startup. A team may initialize the drivetrain first, followed by mechanisms and sensors, but order does not make a failed initialization safe: an uncaught hardware-mapping exception can stop the OpMode before it becomes runnable. Required devices should fail clearly during initialization. Handle a missing device only when the design genuinely treats that device as optional.
+
+---
+
+## Annotated Code
+
+<AnnotatedCode
+  title="One robot object owns its subsystems"
+  java={String.raw`public class RobotHardware {
+    public final Intake intake = new Intake();
+    public final Lift lift = new Lift();
+
+    public void update() {
+        lift.update();
+    }
+}`}
+  python={String.raw`class RobotHardware:
+    def __init__(self):
+        self.intake = Intake()
+        self.lift = Lift()
+
+    def update(self):
+        self.lift.update()`}
+/>
+
+Each robot object owns one intake object and one lift object. This is composition in either language.
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.hardware.HardwareMap;
+
+/**
+ * Master robot class. Holds every subsystem as a public member so that
+ * OpModes can access them through this single object.
+ *
+ * Usage in an OpMode:
+ *   private CompetitionRobot robot = new CompetitionRobot();
+ *
+ *   @Override public void init() {
+ *       robot.init(hardwareMap);
+ *   }
+ */
+public class CompetitionRobot {
+
+    // Subsystem objects are public so OpModes can call their methods directly
+    public MecanumDrivetrain drive  = new MecanumDrivetrain();
+    public LiftMechanism     lift   = new LiftMechanism();
+    public IntakeMechanism   intake = new IntakeMechanism();
+
+    /**
+     * Initializes every subsystem in priority order.
+     * Call this inside the OpMode's init() method.
+     */
+    public void init(HardwareMap hwMap) {
+        drive.init(hwMap);
+        lift.init(hwMap);
+        intake.init(hwMap);
+    }
+
+    /**
+     * Convenience method: stops all mechanisms simultaneously.
+     * Useful in the OpMode's stop() lifecycle method.
+     */
+    public void stopAll() {
+        drive.stop();
+        lift.stop();
+        intake.stop();
+    }
+}
+```
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+@TeleOp(name="Modular_TeleOp")
+public class ModularTeleOp extends OpMode {
+
+    // One declaration instead of six
+    private CompetitionRobot robot = new CompetitionRobot();
+
+    @Override
+    public void init() {
+        // One call instead of six
+        robot.init(hardwareMap);
+        telemetry.addData("Status", "All systems ready");
+    }
+
+    @Override
+    public void loop() {
+        // Drivetrain: field-centric control delegated to the subsystem
+        robot.drive.driveFieldCentric(
+            -gamepad1.left_stick_y,
+             gamepad1.left_stick_x,
+             gamepad1.right_stick_x
+        );
+
+        // Lift: OpMode describes intent, subsystem handles hardware
+        if      (gamepad1.dpad_up)   robot.lift.extend();
+        else if (gamepad1.dpad_down) robot.lift.retract();
+        else                         robot.lift.stop();
+
+        // Intake: single-button control
+        if      (gamepad1.right_bumper) robot.intake.collect();
+        else if (gamepad1.left_bumper)  robot.intake.eject();
+        else                            robot.intake.stop();
+
+        telemetry.addData("At Bottom", robot.lift.isAtBottom());
+        telemetry.update();
+    }
+
+    @Override
+    public void stop() {
+        // One call stops everything safely
+        robot.stopAll();
+    }
+}
+```
+
+## Robot Composition in Titan's Framework
+
+Titan Robotics Club's central `Robot` class owns the drive, sensors, indicators, and vision references, then constructs the drive-base layer before the optional subsystems that depend on it:
+
+```java
+public FtcRobotBase.RobotInfo robotInfo;
+public FtcRobotBase robotBase;
+public FtcRobotBattery battery;
+public LEDIndicator ledIndicator;
+public Vision vision;
+
+public Robot(TrcRobot.RunMode runMode) {
+    opMode = FtcOpMode.getInstance();
+    globalTracer = TrcDbgTrace.getGlobalTracer();
+    dashboard = FtcDashboard.getInstance();
+
+    robotDriveBase = new DriveBase();
+    robotInfo = robotDriveBase.getRobotInfo();
+    robotBase = robotDriveBase.getRobotBase();
+    battery = RobotParams.Preferences.useBatteryMonitor
+        ? new FtcRobotBattery() : null;
+}
+```
+
+The types are specific to Titan's framework, but the composition pattern transfers directly: one robot object creates and exposes subsystem objects in dependency order. Excerpted from [Team 3543 Titan Robotics Club's `Robot.java` at a pinned commit](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/TeamCode/src/main/java/teamcode/Robot.java) under the [MIT License](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/LICENSE).
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. When one class contains instances of other classes as member variables (the "has-a" relationship), the design pattern is called `__________`.
+2. To create a new instance of a subsystem object and assign it to a member variable, use the `__________` keyword.
+3. If required hardware mapping throws an uncaught exception during initialization, the OpMode initialization `__________`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **composition**
+2. **`new`**
+3. **fails** (the OpMode does not become runnable)
+
+</details>
+
+---
+
+## Simulator Practice
+
+Complete the simulator's `ClawMechanism`, `WristMechanism`, and `MyRobot` classes. The claw should map the `"claw"` servo and expose `open()`, `close()`, and `stop()` methods. The wrist should map the `"wrist"` motor, brake when stopped, and expose `move()` and `stop()`. `MyRobot` should compose both subsystems, initialize them together, and provide one `stopAll()` cleanup method that the OpMode calls.
+
+<SimulatorRunGuide />
+
+<Unit13Simulator lesson="robot-class" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+class ClawMechanism {
+    private Servo claw;
+
+    public void init(HardwareMap hwMap) {
+        claw = hwMap.get(Servo.class, "claw");
+    }
+
+    public void open() {
+        claw.setPosition(0.1);
+    }
+
+    public void close() {
+        claw.setPosition(0.9);
+    }
+
+    public void stop() {
+        // Servos hold position.
+    }
+}
+
+class WristMechanism {
+    private DcMotor wrist;
+
+    public void init(HardwareMap hwMap) {
+        wrist = hwMap.get(DcMotor.class, "wrist");
+        wrist.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+    }
+
+    public void move(double power) {
+        wrist.setPower(power);
+    }
+
+    public void stop() {
+        wrist.setPower(0.0);
+    }
+}
+```
+
+```java
+class MyRobot {
+    public ClawMechanism  claw  = new ClawMechanism();
+    public WristMechanism wrist = new WristMechanism();
+
+    public void init(HardwareMap hwMap) {
+        claw.init(hwMap);
+        wrist.init(hwMap);
+    }
+
+    public void stopAll() {
+        claw.stop();
+        wrist.stop();
+    }
+}
+```
+
+```java
+MyRobot robot = new MyRobot();
+
+@Override
+public void init() {
+    robot.init(hardwareMap);
+    telemetry.addData("Status", "Initialized");
+}
+
+@Override
+public void loop() {
+    if (gamepad1.a) {
+        robot.claw.open();
+        telemetry.addData("Claw", "Open");
+    } else {
+        telemetry.addData("Claw", "Idle");
+    }
+    telemetry.update();
+}
+
+@Override
+public void stop() {
+    robot.stopAll();
+}
+```
+
+</details>
+
+<MarkComplete
+  lessonId="unit-13/robot-class"
+  nextUnit="/docs/unit-13/build-intake"
+  nextUnitName="Lesson 13.6: Build RobotConfig.java and Intake.java"
+/>

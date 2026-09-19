@@ -1,0 +1,165 @@
+---
+id: arcade-drive-challenge
+title: "Lesson 4.5: Build a Complete Arcade Drive"
+sidebar_label: "4.5 · Arcade Drive"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit4Simulator from '@site/src/components/Unit4Simulator';
+
+# Lesson 4.5: Build a Complete Arcade Drive
+
+---
+
+## Technical Context
+
+An **arcade drive** controls a differential drivetrain with one forward command and one turn command. The program mixes those two commands into separate left and right motor powers:
+
+```text
+left power  = forward + turn
+right power = forward - turn
+```
+
+Forward input raises both sides together. Turn input raises one side while lowering the other. Unlike sensitivity shaping, this mixing step is what actually makes the robot steer.
+
+---
+
+## How to Build an Arcade Drive That Feels Good
+
+A competition-ready arcade drive combines every Unit 4 input technique in a deliberate order:
+
+1. Read forward and turn axes.
+2. Apply a deadzone to prevent joystick drift.
+3. Toggle precision mode on the **press edge**, not during every loop that the button remains held.
+4. Shape the inputs when precision mode is active.
+5. Mix forward and turn into left and right power.
+6. Apply the trigger speed limit and clip both results to the legal `-1.0` to `1.0` motor range.
+7. Command the motors and report the final values.
+
+The press edge requires the current and previous button values. `gamepad1.a && !previousA` is true for only the first loop after A is pressed. At the end of the loop, save `gamepad1.a` into `previousA` for the next comparison.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.util.Range;
+
+@TeleOp(name="Arcade_Drive_System", group="Practice")
+public class ArcadeDrive extends OpMode {
+
+    private DcMotor leftDrive;
+    private DcMotor rightDrive;
+    private boolean precisionMode = true;
+    private boolean previousA = false;
+
+    private static final double DEADZONE = 0.10;
+
+    @Override
+    public void init() {
+        leftDrive  = hardwareMap.get(DcMotor.class, "left_drive");
+        rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
+        leftDrive.setPower(0.0);
+        rightDrive.setPower(0.0);
+    }
+
+    double squareInputWithSign(double input) {
+        return input * input * Math.signum(input);
+    }
+
+    @Override
+    public void loop() {
+        double forward = -gamepad1.left_stick_y;
+        double turn = gamepad1.right_stick_x;
+
+        if (Math.abs(forward) < DEADZONE) forward = 0.0;
+        if (Math.abs(turn) < DEADZONE) turn = 0.0;
+
+        // Toggle once per press. Holding A does not keep flipping the mode.
+        if (gamepad1.a && !previousA) {
+            precisionMode = !precisionMode;
+        }
+        previousA = gamepad1.a;
+
+        if (precisionMode) {
+            forward = squareInputWithSign(forward);
+            turn = squareInputWithSign(turn);
+        }
+
+        // Right trigger progressively limits top speed from 100% to 30%.
+        double speedLimit = 1.0 - (0.70 * gamepad1.right_trigger);
+
+        double leftPower  = Range.clip((forward + turn) * speedLimit, -1.0, 1.0);
+        double rightPower = Range.clip((forward - turn) * speedLimit, -1.0, 1.0);
+
+        leftDrive.setPower(leftPower);
+        rightDrive.setPower(rightPower);
+
+        telemetry.addData("Precision Mode", precisionMode);
+        telemetry.addData("Left Power", leftPower);
+        telemetry.addData("Right Power", rightPower);
+        telemetry.update();
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Arcade drive calculates left power with `forward ______ turn` and right power with `forward ______ turn`.
+2. A button toggle must compare the current button value with the `__________` value so it changes only once per press.
+3. `Range.__________()` keeps calculated motor power between the minimum and maximum legal values.
+
+<details>
+<summary>Show answers</summary>
+
+1. **plus, minus**
+2. **previous**
+3. **`clip`**
+
+</details>
+
+---
+
+## Simulator Practice
+
+**Robot Scenario:** Finish the two-motor arcade drive. Apply deadzones, toggle precision mode only on the A-button press edge, mix forward and turn into separate left and right powers, limit both with the right trigger, and send the final values to the motors and telemetry.
+
+<SimulatorRunGuide />
+
+<Unit4Simulator lesson="arcade-drive-challenge" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+// Use the complete annotated implementation above to compare each stage:
+// input -> deadzone -> press-edge mode -> curve -> arcade mix -> clip -> motors.
+```
+
+</details>
+
+## A Team Delegates the Finished Drive Command
+
+Titan Robotics Club calculates its driver inputs before choosing holonomic or arcade drive. This lesson uses the arcade branch directly:
+
+```java
+double forward = shapeInput(-gamepad1.left_stick_y);
+double turn = shapeInput(gamepad1.right_stick_x);
+robot.drive.arcadeDrive(forward, turn);
+```
+
+The source's input array, scaling arguments, and framework object names were shortened. The order remains the same: shape the inputs, then send one drive command. Adapted from [Team 3543 Titan Robotics Club's `FtcTeleOp.java` at a pinned commit](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/TeamCode/src/main/java/teamcode/FtcTeleOp.java) under the [MIT License](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/LICENSE).
+
+<MarkComplete
+  lessonId="unit-04/arcade-drive-challenge"
+  nextUnit="/docs/unit-04/mastery-coding-challenge"
+  nextUnitName="Unit 4 Comprehensive Coding Challenge"
+/>

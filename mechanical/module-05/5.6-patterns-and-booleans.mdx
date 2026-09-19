@@ -1,0 +1,121 @@
+---
+id: patterns-and-booleans
+title: "Lesson 5.6: Patterns, Booleans, Transform, and Mirror"
+sidebar_label: "5.6 · Patterns & Booleans"
+sidebar_position: 6
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 5.6: Patterns, Booleans, Transform, and Mirror
+
+---
+
+## Technical Context
+
+These features repeat, combine, and reposition existing geometry. Use them to encode repeated relationships once instead of rebuilding the same geometry by hand.
+
+---
+
+## Patterns
+
+A **pattern** repeats a feature, a face, or a whole part at regular intervals.
+
+| Pattern | Repeats along | FTC use |
+| --- | --- | --- |
+| Linear | One or two straight directions | Extrusion mounting holes, tread lugs |
+| Circular | Around an axis | Bolt circles, sprocket teeth, spool slots |
+| Curve | Along a sketched path | Holes following a curved rail |
+
+The reason to pattern rather than copy is **one edit**. Change the seed feature and every instance updates. Copy the hole eleven times and you will change eleven holes, or more likely ten.
+
+FTC extrusion is patterned by definition. A 15 mm rail has holes every 15 mm, so model one hole and pattern it with the spacing as a variable. When the rail gets longer, change the instance count.
+
+:::tip Pattern the feature, not the face
+Patterning a feature carries its full definition, including hole specification. Patterning a face copies geometry only, and the copies forget what they were.
+:::
+
+---
+
+## Boolean Operations
+
+**Booleans** combine solids. There are three, and they are the same three everywhere in CAD.
+
+**Union** merges solids into one. Use it when several modelled lumps are really one manufactured part.
+
+**Subtract** removes one solid from another. This is the most useful of the three in FTC, because it lets you model a clearance volume and cut it out. Model the space the motor occupies, subtract it from the plate, and the pocket is exactly right and stays right when the motor moves.
+
+**Intersect** keeps only the overlap. Its main use is checking: intersect two parts and if the result has volume, they collide.
+
+:::tip Subtract is how you guarantee clearance
+Rather than measuring a servo and cutting a pocket to match, model the servo's envelope, add the clearance you want to it, and subtract. Now the pocket cannot be wrong, and if the servo changes the pocket follows.
+:::
+
+---
+
+## Mirror
+
+**Mirror** reflects geometry about a plane. Half of a robot is usually the mirror of the other half, and modelling it that way halves both the work and the number of mistakes.
+
+Mirror about a **datum plane**, not about a face. A mid-plane created between two faces is the correct base, because it stays in the middle when the part changes width.
+
+The trap is handedness. A mirrored bracket is not the same part as the original; it is its mirror image. Two left brackets do not make a robot. Mirror in CAD, then check the bill of materials says one left and one right.
+
+---
+
+## Transform
+
+**Transform** moves or copies whole bodies: translate by a distance, rotate about an axis, or copy to a new location.
+
+Use it for positioning a finished part, not for building one. A part whose correct location depends on a transform at the end of its feature list is fragile, because nothing in the model explains why that number is what it is. Position parts with mates in the assembly instead, where the relationship is stated rather than typed.
+
+The legitimate uses are duplicating a body to modify into a variant, and moving imported geometry that arrived at the wrong origin.
+
+---
+
+## Move Face
+
+**Move face** pushes, pulls, or rotates a face directly, without editing the sketch that made it.
+
+This is the bridge to direct editing, which is Lesson 5.7. It is the right tool when the geometry has no usable history: an imported STEP file, or a feature buried so deep in a tree that editing the sketch would break twenty features downstream.
+
+It is the wrong tool on your own parametric model. Moving a face to fix a dimension leaves the original sketch stating the old, wrong number, and the next person to read the model believes the sketch.
+
+:::warning Move face hides the truth
+On a model you own, fix the dimension. Move face is for geometry whose dimensions you cannot reach.
+:::
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Repeating a feature around an axis, as for a bolt circle, is a `__________` pattern.
+2. The boolean that keeps only the overlapping volume of two solids, and so detects collisions, is `__________`.
+3. Modelling a motor's envelope and cutting it out of a plate uses the `__________` boolean.
+4. Reflecting geometry should be done about a datum `__________` rather than a model face.
+5. Pushing a face directly without editing its sketch is done with `__________` `__________`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **circular**
+2. **intersect**
+3. **subtract**
+4. **plane**
+5. **move face**
+
+</details>
+
+---
+
+## Exercise
+
+Take a plate on your robot that mounts a motor. Model the motor's envelope as a simple solid, add 1 mm of clearance around it, and subtract it from the plate.
+
+Then move the motor 10 mm. If the pocket followed, the model is doing the work. If you had to redraw the pocket, find out why and fix it.
+
+<MarkComplete
+  lessonId="module-05/patterns-and-booleans"
+  nextUnit="/mechanical/module-05/imported-and-surface-geometry"
+  nextUnitName="Lesson 5.7: Direct Editing, Imported Geometry, Surfaces, and Mesh"
+/>

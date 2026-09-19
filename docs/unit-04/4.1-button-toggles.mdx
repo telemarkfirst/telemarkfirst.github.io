@@ -1,0 +1,104 @@
+---
+id: button-toggles
+title: "Lesson 4.1: Mapping gamepad Buttons to Simple Mechanism Toggles"
+sidebar_label: "4.1 · Button Toggles"
+sidebar_position: 1
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit4Simulator from '@site/src/components/Unit4Simulator';
+
+# Lesson 4.1: Mapping gamepad Buttons to Simple Mechanism Toggles
+
+---
+
+## Technical Context
+
+Binary inputs from the gamepad buttons provide repeatable, discrete commands for mechanisms that only require two states, such as a Servo-driven claw or a DC Motor intake toggle. Utilizing these "digital" gamepad states prevents the imprecise positioning common with analog stick manipulation, ensuring the hardware reaches its physical limit without straining the internal gears.
+
+---
+
+## Why Button Toggles Feel So Natural for Drivers
+
+The `gamepad1` and `gamepad2` objects are automatically instantiated by the SDK and represent the human interface devices connected to the Driver Station. These objects contain `boolean` member variables for every physical button (e.g., `a`, `b`, `x`, `y`, `left_bumper`). In the Java JVM, these variables are updated with current hardware states precisely between each execution of the `loop()` method. Accessing these members via dot notation (e.g., `gamepad1.a`) allows the programmer to execute conditional logic based on human interaction.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode.opmodes;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+
+@TeleOp(name="Button_Logic_Test", group="Unit4")
+public class ButtonLogicTest extends OpMode {
+
+    @Override
+    public void init() {
+        telemetry.addData("Status", "Gamepads Initialized. Press Start+A.");
+    }
+
+    @Override
+    public void loop() {
+        // Reading the boolean state of the 'a' button on Gamepad 1
+        if (gamepad1.a) {
+            telemetry.addData("Mechanism", "Claw Closing");
+        } else if (gamepad1.b) {
+            telemetry.addData("Mechanism", "Claw Opening");
+        } else {
+            telemetry.addData("Mechanism", "Stationary");
+        }
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Buttons on the gamepad, such as `gamepad1.x`, return a/an `__________` datatype indicating if they are pressed.
+2. To have the Driver Station recognize a specific controller as `gamepad2`, the driver must simultaneously press Start and `__________`.
+3. Gamepad state variables are updated by the SDK only `__________` calls to the `loop()` method.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`boolean`**
+2. **B** (Start + B assigns the controller as gamepad2)
+3. **between** (states are refreshed once per loop cycle, not mid-execution)
+
+</details>
+
+---
+
+## Simulator Challenge
+
+**Robot Scenario:** Your team needs to verify if the Driver Station is receiving signals from the bumpers. Create an OpMode that displays `"Left Bumper Pressed"` on the screen only when that physical button is active.
+
+<SimulatorRunGuide />
+
+<Unit4Simulator lesson="button-toggles" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+@Override
+public void loop() {
+    boolean isPressed = gamepad1.left_bumper;
+
+    if (isPressed) {
+        telemetry.addData("Bumper", "Left Bumper Pressed");
+    }
+}
+```
+
+</details>
+
+<MarkComplete
+  lessonId="unit-04/button-toggles"
+  nextUnit="/docs/unit-04/joystick-scaling"
+  nextUnitName="Lesson 4.2: Scaling Joystick X/Y Analog Values for Differential Drive"
+/>

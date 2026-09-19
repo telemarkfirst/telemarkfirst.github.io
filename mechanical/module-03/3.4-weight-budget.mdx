@@ -1,0 +1,128 @@
+---
+id: weight-budget
+title: "Lesson 3.4: Holding the Robot to a Weight Budget"
+sidebar_label: "3.4 · Weight Budget"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import LessonTool from '@site/src/components/mechanical/LessonTool';
+import WeightBudgetCalculator from '@site/src/components/mechanical/WeightBudgetCalculator';
+
+# Lesson 3.4: Holding the Robot to a Weight Budget
+
+---
+
+## Technical Context
+
+FTC may not impose a robot weight limit, but mass still affects the design.
+
+Added mass reduces acceleration, raises the torque required by lifting mechanisms, increases joint loads, and uses more battery energy. Mass placed high on the robot also raises the center of gravity. Track it by subsystem so small additions do not accumulate without review.
+
+---
+
+## What Weight Actually Costs
+
+**Acceleration.** In a short field, a robot spends most of its driving time accelerating and decelerating, not at top speed. Acceleration is force divided by mass, and the force available is capped by traction, which itself depends on weight. Adding weight adds traction proportionally, so pushing force scales but acceleration does not improve, because the same weight you gained is the mass you now have to accelerate.
+
+**Mechanism loads.** Every pound added to an arm at 18 in from the pivot adds directly to the torque the arm motor must produce, at every angle, for the whole match.
+
+**Battery demand.** More mass requires more force for the same acceleration, which increases motor current during repeated starts and direction changes.
+
+**Tipping.** Weight added high raises the center of gravity. Weight added low has less effect on stability, though it still affects acceleration and mechanism loads.
+
+:::tip Not all pounds are equal
+A pound at the bottom of the drivetrain is close to free. A pound at the end of an extended arm is expensive in torque, in tipping, and in the structure needed to carry it. When cutting weight, start at the top and at the ends.
+:::
+
+---
+
+## Setting the Budget
+
+The budget is a team decision, derived from strategy. A reasonable process:
+
+1. Estimate the weight of the drivetrain and frame from a previous robot or a rough CAD estimate.
+2. Decide what the scoring mechanisms need to do, and estimate them generously.
+3. Add the fixed items: battery, Control Hub, wiring, fasteners.
+4. Reserve roughly 10% for fasteners, wiring, guards, and later revisions that are not yet in the estimate.
+5. Write the total down and post it where the build team can see it.
+
+Then assign each subsystem a share and have its lead update the estimate as the design changes. Review any subsystem that exceeds its allocation before the extra mass becomes part of the full assembly.
+
+---
+
+## Track It
+
+<LessonTool
+  toolId="weight"
+  bring="Subsystems weighed on a kitchen scale, not estimated."
+  change="The target, and see which subsystem dominates."
+  read="The heaviest band. Cut there first, and hold back roughly 10%."
+>
+  <WeightBudgetCalculator />
+</LessonTool>
+
+Replace the default rows with your robot's actual subsystems, and replace the estimates with measured weights as parts get built. A kitchen scale is entirely adequate and costs less than a single motor.
+
+:::warning Include what the early estimate omits
+Early estimates often leave out fasteners, wiring, brackets, guards, and later revisions. Keep the 10% reserve intact until those items have been measured.
+:::
+
+---
+
+## Where the Weight Actually Is
+
+When you weigh the robot by subsystem, check these common sources of untracked mass:
+
+- **Fasteners and hardware** add up across the robot. Weigh screws, nuts, spacers, and standoffs as part of each subsystem.
+- **Wiring** is heavier than it looks, especially heavy gauge power wire and the connectors on it.
+- **Over-built brackets** add mass without a measured stiffness requirement. Calculate or test the load before removing material.
+- **Redundant structure** happens when two subsystems each add their own support for the same load.
+
+The remedy for all four is the same: measure, then look at the largest number first. A 10% cut on the heaviest subsystem saves more than removing a small part entirely.
+
+---
+
+## Cutting Weight Without Losing Stiffness
+
+Recall from Lesson 3.3 that material near the neutral axis of a beam contributes little stiffness. That is what lightening holes exploit: removing material from the middle of a plate or the web of a beam reduces weight substantially while costing relatively little stiffness.
+
+Rules for doing it safely:
+
+- Round every hole and every internal corner, since sharp corners concentrate stress
+- Leave material around fastener locations and at edges
+- Do not lighten a part until you know it is stiffer than it needs to be, which means measuring it first
+- Never lighten a part that is already the flexible one
+
+:::info Official references
+- Confirm current-season rules on robot size, weight, and materials before designing to any target: [FIRST Tech Challenge Game and Season Info](https://www.firstinspires.org/resource-library/ftc/game-and-season-info)
+:::
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Weight added at the end of an extended arm is expensive because it directly increases the `__________` the arm motor must produce.
+2. A weight budget should reserve roughly `__________` percent for unpredicted additions.
+3. Lightening holes work because material near the `__________` axis of a beam contributes little to stiffness.
+
+<details>
+<summary>Show answers</summary>
+
+1. **torque**
+2. **10**
+3. **neutral**
+
+</details>
+
+---
+
+## Exercise
+
+Weigh your robot's subsystems individually on a kitchen scale and enter the real numbers into the calculator above. Compare against whatever the team estimated. The gap between estimate and measurement is the number worth writing in the notebook.
+
+<MarkComplete
+  lessonId="module-03/weight-budget"
+  nextUnit="/mechanical/module-03/mastery-quiz"
+  nextUnitName="Module 3 Mastery Quiz: Materials and Structure"
+/>

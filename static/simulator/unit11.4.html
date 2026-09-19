@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>Telemark Unit 11.4 Simulator</title>
+
+<script src="simulator_base.js"></script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+
+<style>
+html,body{
+    margin:0;
+    background:#081018;
+    color:#fff;
+    font-family:Inter,sans-serif;
+    overflow:hidden;
+}
+
+#root{
+    display:flex;
+    flex-direction:column;
+    height:100vh;
+}
+
+#viewer{
+    position:relative;
+    height:58vh;
+    background:#0b1118;
+}
+
+#hud{
+    flex:0 0 270px;
+    background:#0f172a;
+    border-top:1px solid rgba(255,255,255,.08);
+    overflow:auto;
+    padding:16px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:16px;
+}
+
+.card{
+    background:#111827;
+    border-radius:16px;
+    border:1px solid rgba(255,255,255,.08);
+    padding:18px;
+}
+
+.big{
+    font-size:36px;
+    font-weight:900;
+}
+
+.green{
+    color:#22c55e;
+}
+
+.yellow{
+    color:#facc15;
+}
+
+.red{
+    color:#ef4444;
+}
+
+.label{
+    font-size:13px;
+    opacity:.7;
+    margin-bottom:6px;
+}
+
+.bar{
+    height:18px;
+    border-radius:999px;
+    overflow:hidden;
+    background:#1e293b;
+}
+
+.fill{
+    height:100%;
+    transition:.08s linear;
+}
+
+.fill.motor{
+    background:#22c55e;
+}
+
+.logic{
+    margin-top:10px;
+    font-family:monospace;
+    font-size:14px;
+}
+
+.distanceScale{
+    position:relative;
+    margin-top:16px;
+    height:22px;
+    border-radius:999px;
+    background:linear-gradient(
+        to right,
+        #ef4444 0%,
+        #facc15 20%,
+        #22c55e 40%
+    );
+}
+
+.threshold{
+    position:absolute;
+    top:-5px;
+    width:2px;
+    height:32px;
+    background:white;
+    left:12%;
+}
+
+.marker{
+    position:absolute;
+    top:-4px;
+    width:10px;
+    height:30px;
+    border-radius:4px;
+    background:#fff;
+    transform:translateX(-50%);
+}
+
+#warning{
+    position:absolute;
+    top:18px;
+    left:18px;
+    padding:12px 18px;
+    border-radius:12px;
+    font-weight:800;
+    display:none;
+    z-index:50;
+}
+
+#warning.show{
+    display:block;
+}
+
+#success{
+    position:absolute;
+    top:18px;
+    right:18px;
+    background:#052e16;
+    border:1px solid #166534;
+    color:#86efac;
+    padding:12px 16px;
+    border-radius:12px;
+    display:none;
+    font-weight:800;
+    z-index:50;
+}
+
+#success.show{
+    display:block;
+}
+
+#hud button{
+    border:none;
+    background:#2563eb;
+    color:white;
+    padding:10px 14px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:700;
+}
+</style>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+
+<body>
+
+<div id="root">
+
+    <div id="viewer">
+        <div id="warning"></div>
+        <div id="success">
+            Challenge Complete! Distance-based motor cutoff is working correctly.
+        </div>
+    </div>
+
+    <div id="hud">
+        <div class="grid">
+            <div class="card">
+                <div class="label">DISTANCE SENSOR</div>
+                <div id="distanceText" class="big green">100.0 cm</div>
+                <div id="validity" style="margin-top:10px;font-weight:800;">VALID</div>
+                <div class="distanceScale">
+                    <div class="threshold"></div>
+                    <div id="distanceMarker" class="marker"></div>
+                </div>
+                <div class="logic" id="logic1"></div>
+                <div class="logic" id="logic2"></div>
+                <div class="logic" id="logic3"></div>
+            </div>
+
+            <div class="card">
+                <div class="label">MOTOR POWER</div>
+                <div id="effectivePower" class="big">0.00</div>
+                <div class="bar" style="margin-top:12px;">
+                    <div id="motorFill" class="fill motor"></div>
+                </div>
+                <div style="margin-top:14px;">
+                    Stick: <span id="stickVal">0.00</span>
+                </div>
+                <div style="margin-top:8px;">
+                    Effective Power: <span id="effectiveVal">0.00</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="label">SENSOR TESTING</div>
+                <button onclick="toggleInvalidReading()">Toggle Invalid Reading</button>
+                <button onclick="resetRobotPosition()" style="margin-left:8px;">
+                    <i class="fa-solid fa-rotate-left"></i> Reset Robot
+                </button>
+                <div style="margin-top:12px;font-size:14px;opacity:.8;">
+                    Invalid mode returns Double.MAX_VALUE
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+(() => {
+"use strict";
+
+const starterCode = `@TeleOp(name="Distance_Cutoff")
+public class DistanceCutoff extends OpMode {
+
+    DcMotor drive;
+    DistanceSensor front_range;
+
+    @Override
+    public void init() {
+        drive       = hardwareMap.get(DcMotor.class,       "drive");
+        front_range = hardwareMap.get(DistanceSensor.class, "front_range");
+        telemetry.addData("Status", "Initialized");
+    }
+
+    @Override
+    public void loop() {
+        double distance  = 999.0;
+        double drivePower = -gamepad1.left_stick_y;
+
+        // TODO: read distance in centimeters.
+        // TODO: stop when the reading is valid and under 12.0 cm.
+        drive.setPower(drivePower);
+        telemetry.addData("Status",   "Driving");
+
+        telemetry.addData("Distance", distance);
+        telemetry.addData("Power",    drivePower);
+        telemetry.update();
+    }
+}`;
+
+const sim = {
+    running:false,
+    distance:100,
+    robotX:-45,
+    obstacleX:45,
+    invalid:false,
+    stick:0,
+    motorPower:0,
+    effectivePower:0,
+    validations:{
+        mapDrive:false,
+        mapDistance:false,
+        getDistance:false,
+        cutoff:false,
+        invalidCheck:false,
+        allowDriving:false,
+        ignoreInvalid:false,
+        telemetry:false
+    }
+};
+
+let scene;
+let camera;
+let renderer;
+let robot;
+let beam;
+let wall;
+let sceneRoot;
+let animationId = null;
+
+function clamp(v,min,max){
+    return Math.max(min,Math.min(max,v));
+}
+
+function createHud(){
+    const right = document.getElementById("sim-right-panel");
+
+    if(!right || document.getElementById("hud")){
+        return;
+    }
+
+    const hud = document.createElement("div");
+    hud.id = "hud";
+    hud.innerHTML = `
+        <div class="grid">
+            <div class="card">
+                <div class="label">DISTANCE SENSOR</div>
+                <div id="distanceText" class="big green">100.0 cm</div>
+                <div id="validity" style="margin-top:10px;font-weight:800;">VALID</div>
+                <div class="distanceScale">
+                    <div class="threshold"></div>
+                    <div id="distanceMarker" class="marker"></div>
+                </div>
+                <div class="logic" id="logic1"></div>
+                <div class="logic" id="logic2"></div>
+                <div class="logic" id="logic3"></div>
+            </div>
+
+            <div class="card">
+                <div class="label">MOTOR POWER</div>
+                <div id="effectivePower" class="big">0.00</div>
+                <div class="bar" style="margin-top:12px;">
+                    <div id="motorFill" class="fill motor"></div>
+                </div>
+                <div style="margin-top:14px;">
+                    Stick: <span id="stickVal">0.00</span>
+                </div>
+                <div style="margin-top:8px;">
+                    Effective Power: <span id="effectiveVal">0.00</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="label">SENSOR TESTING</div>
+                <button onclick="toggleInvalidReading()">Toggle Invalid Reading</button>
+                <div style="margin-top:12px;font-size:14px;opacity:.8;">
+                    Invalid mode returns Double.MAX_VALUE
+                </div>
+            </div>
+        </div>
+    `;
+
+    right.appendChild(hud);
+
+    const sceneContainer = document.getElementById("sim-scene-container");
+
+    if(sceneContainer && !document.getElementById("warning")){
+        const warning = document.createElement("div");
+        warning.id = "warning";
+        sceneContainer.appendChild(warning);
+    }
+
+    if(sceneContainer && !document.getElementById("success")){
+        const success = document.createElement("div");
+        success.id = "success";
+        success.textContent =
+            "Challenge Complete! Distance-based motor cutoff is working correctly.";
+        sceneContainer.appendChild(success);
+    }
+}
+
+function buildScene() {
+    if (!window.THREE || !window.scene) {
+        console.error("THREE missing");
+        return;
+    }
+
+    const THREE = window.THREE;
+    scene = window.scene;
+    renderer = window.renderer;
+
+    const oldRoot = scene.getObjectByName("distance-cutoff-root");
+    if(oldRoot){
+        scene.remove(oldRoot);
+    }
+
+    sceneRoot = new THREE.Group();
+    sceneRoot.name = "distance-cutoff-root";
+    sceneRoot.scale.set(.1,.1,.1);
+    scene.background = new THREE.Color(0x020202);
+
+    const sceneContainer =
+        document.getElementById("sim-scene-container");
+
+    if(sceneContainer){
+        sceneContainer.style.background = "#020202";
+    }
+
+    if(renderer){
+        renderer.setClearColor(0x020202,1);
+    }
+
+    if(window.setFieldVisible){
+        window.setFieldVisible(false);
+    }
+
+    camera = window.camera;
+    if(camera){
+        camera.far = 1000;
+        camera.updateProjectionMatrix();
+    }
+
+    if(window.setCameraOrbit){
+        window.setCameraOrbit({
+            theta:.05,
+            phi:.9,
+            radius:12,
+            target:{x:0,y:0,z:0}
+        });
+    }
+
+    const hemi = new THREE.HemisphereLight(
+        0xf8fafc,
+        0x030303,
+        1.15
+    );
+    sceneRoot.add(hemi);
+
+    const dir = new THREE.DirectionalLight(
+        0xffffff,
+        2.2
+    );
+    dir.position.set(-35, 70, 45);
+    dir.castShadow = true;
+    sceneRoot.add(dir);
+
+    const rim = new THREE.PointLight(
+        0x38bdf8,
+        1.4,
+        150
+    );
+    rim.position.set(-50, 18, -24);
+    sceneRoot.add(rim);
+
+    const warm = new THREE.PointLight(
+        0xff9f45,
+        .9,
+        110
+    );
+    warm.position.set(52, 14, 22);
+    sceneRoot.add(warm);
+
+    const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(160, 60),
+        new THREE.MeshStandardMaterial({
+            color: 0x050505,
+            metalness: 0.45,
+            roughness: 0.32
+        })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    sceneRoot.add(floor);
+
+    const lane = new THREE.Mesh(
+        new THREE.PlaneGeometry(150, 2.4),
+        new THREE.MeshStandardMaterial({
+            color: 0x111827,
+            metalness: 0.35,
+            roughness: 0.42,
+            emissive: 0x020617
+        })
+    );
+    lane.rotation.x = -Math.PI / 2;
+    lane.position.y = .02;
+    sceneRoot.add(lane);
+
+    createRobot();
+    createWall();
+    scene.add(sceneRoot);
+}
+
+function createRobot() {
+    const THREE = window.THREE;
+    robot = new THREE.Group();
+
+    const body = new THREE.Mesh(
+        new THREE.BoxGeometry(10, 3, 8),
+        new THREE.MeshStandardMaterial({
+            color: 0x111111,
+            metalness: 0.82,
+            roughness: 0.22,
+            emissive: 0x050505
+        })
+    );
+    body.castShadow = true;
+    robot.add(body);
+
+    const marker = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 0.5, 8),
+        new THREE.MeshStandardMaterial({
+            color: 0xff7a1a,
+            metalness: 0.25,
+            roughness: 0.18,
+            emissive: 0x2a0d00
+        })
+    );
+    marker.position.x = 5.5;
+    robot.add(marker);
+
+    beam = new THREE.Mesh(
+        new THREE.BoxGeometry(20, 0.15, 0.3),
+        new THREE.MeshBasicMaterial({
+            color: 0x22c55e,
+            transparent: true,
+            opacity: 0.9
+        })
+    );
+    beam.position.set(10, 0.6, 0);
+    robot.add(beam);
+
+    robot.position.set(-45, 1.5, 0);
+    sceneRoot.add(robot);
+}
+
+function createWall() {
+    const THREE = window.THREE;
+    wall = new THREE.Mesh(
+        new THREE.BoxGeometry(3, 8, 20),
+        new THREE.MeshStandardMaterial({
+            color: 0x1f2937,
+            metalness: 0.78,
+            roughness: 0.26,
+            emissive: 0x030712
+        })
+    );
+    wall.position.set(45, 4, 0);
+    wall.castShadow = true;
+    sceneRoot.add(wall);
+}
+
+function animate(){
+    requestAnimationFrame(animate);
+    updatePhysics();
+    if(renderer){
+        renderer.render(scene, camera);
+    }
+}
+
+function updatePhysics(){
+    if(!sim.running) return;
+
+    sim.distance = sim.invalid ? Number.MAX_VALUE : clamp(sim.obstacleX - (sim.robotX + 4), 2, 255);
+    sim.robotX += sim.effectivePower * .45;
+
+    if(!sim.invalid && sim.distance <= 0.5){
+        sim.robotX -= 2;
+        collision();
+    }
+
+    if(robot){
+        robot.position.x = sim.robotX;
+
+        const visualDistance = sim.invalid ? 55 : clamp(sim.distance, 2, 55);
+        beam.scale.x = visualDistance;
+        beam.position.x = 5 + visualDistance / 2;
+
+        if(sim.distance < 12){
+            beam.material.color.set(0xef4444);
+        } else if(sim.distance < 20){
+            beam.material.color.set(0xfacc15);
+        } else {
+            beam.material.color.set(0x22c55e);
+        }
+    }
+    updateUI();
+}
+
+function collision(){
+    const warning = document.getElementById("warning");
+    if(!warning){
+        return;
+    }
+
+    warning.className = "show";
+    warning.style.background = "#450a0a";
+    warning.style.border = "1px solid #7f1d1d";
+    warning.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> COLLISION';
+    setTimeout(() => {
+        warning.className = "";
+    }, 1500);
+}
+
+function updateUI(){
+    const distanceText = document.getElementById("distanceText");
+    const validity = document.getElementById("validity");
+    const motorFill = document.getElementById("motorFill");
+    const stickVal = document.getElementById("stickVal");
+    const effectiveVal = document.getElementById("effectiveVal");
+    const effectivePower = document.getElementById("effectivePower");
+    const logic1 = document.getElementById("logic1");
+    const logic2 = document.getElementById("logic2");
+    const logic3 = document.getElementById("logic3");
+    const marker = document.getElementById("distanceMarker");
+
+    if(
+        !distanceText ||
+        !validity ||
+        !motorFill ||
+        !stickVal ||
+        !effectiveVal ||
+        !effectivePower ||
+        !logic1 ||
+        !logic2 ||
+        !logic3 ||
+        !marker
+    ){
+        return;
+    }
+
+    if(sim.invalid){
+        distanceText.textContent = "MAX_VALUE";
+        distanceText.className = "big red";
+    } else {
+        distanceText.textContent = `${sim.distance.toFixed(1)} cm`;
+        distanceText.className = sim.distance < 12 ? "big red" : sim.distance < 20 ? "big yellow" : "big green";
+    }
+
+    validity.innerHTML = sim.invalid ? '<span class="red">INVALID - MAX_VALUE</span>' : '<span class="green">VALID</span>';
+    motorFill.style.width = `${Math.abs(sim.effectivePower) * 100}%`;
+    stickVal.textContent = sim.stick.toFixed(2);
+    effectiveVal.textContent = sim.effectivePower.toFixed(2);
+    effectivePower.textContent = sim.effectivePower.toFixed(2);
+
+    logic1.textContent = `distance < 12.0 -> ${!sim.invalid && sim.distance < 12}`;
+    logic2.textContent = `distance != Double.MAX_VALUE -> ${!sim.invalid}`;
+    logic3.textContent = `valid AND within range -> ${!sim.invalid && sim.distance < 12}`;
+
+    const normalized = sim.invalid ? 100 : clamp(sim.distance / 100, 0, 1) * 100;
+    marker.style.left = `${normalized}%`;
+
+    const success = Object.values(sim.validations).every(Boolean);
+    const successEl = document.getElementById("success");
+    if(successEl){
+        successEl.classList.toggle("show", success);
+    }
+
+    if(window.setRequirement){
+        [
+            sim.validations.mapDrive,
+            sim.validations.mapDistance,
+            sim.validations.getDistance,
+            sim.validations.invalidCheck,
+            sim.validations.cutoff,
+            sim.validations.allowDriving,
+            sim.validations.ignoreInvalid,
+            sim.validations.telemetry
+        ].forEach((passed,index)=>setRequirement(index,passed));
+    }
+}
+
+function toggleInvalidReading(){
+    sim.invalid = !sim.invalid;
+    updateUI();
+}
+window.toggleInvalidReading = toggleInvalidReading;
+
+function resetRobotPosition(){
+    sim.robotX = -45;
+    sim.distance = sim.invalid
+        ? Number.MAX_VALUE
+        : 100;
+    sim.motorPower = 0;
+    sim.effectivePower = 0;
+
+    if(robot){
+        robot.position.x = sim.robotX;
+    }
+
+    if(beam){
+        beam.scale.x = 55;
+        beam.position.x = 32.5;
+        beam.material.color.set(0x22c55e);
+    }
+
+    updateUI();
+}
+
+window.resetRobotPosition =
+    resetRobotPosition;
+
+function installMocks(){
+    if(!window.gamepad){
+        window.gamepad = {};
+    }
+
+    if(typeof window.gamepad.left_stick_y !== "number"){
+        window.gamepad.left_stick_y = 0;
+    }
+
+    window.runtimeGamepad = {
+        left_stick_y:0
+    };
+
+    window.getDistance = () => sim.invalid ? Number.MAX_VALUE : sim.distance;
+    window.setMotorPower = (_,value) => {
+        sim.motorPower = value;
+        sim.effectivePower = value;
+    };
+}
+
+function transpile(code){
+    return code
+        .replace(/\b(double|int|boolean|String|float|long|byte|short|char)\s+(?=[A-Za-z_$])/g, "let ")
+        .replace(/\b(DcMotor|DcMotorEx|DistanceSensor)\s+(?=[A-Za-z_$])/g, "let ")
+        .replace(/\bhardwareMap\s*\.\s*get\s*\(\s*(\w+)\.class\s*,/g, 'hardwareMap.get("$1",')
+        .replace(/\bfront_range\s*\.\s*getDistance\s*\(\s*DistanceUnit\s*\.\s*CM\s*\)/g, 'getDistance("front_range")')
+        .replace(/\bdrive\s*\.\s*setPower\s*\(/g, 'setMotorPower("drive",')
+        .replace(/\bgamepad1\./g, "runtimeGamepad.")
+        .replace(/\bDouble\s*\.\s*MAX_VALUE\b/g, "Number.MAX_VALUE")
+        .replace(/\btelemetry\s*\.\s*addData\s*\(/g, "addTelemetry(")
+        .replace(/\btelemetry\s*\.\s*update\s*\(\s*\)/g, "updateTelemetry()")
+        .replace(/\btelemetry\s*\.\s*clear\s*\(\s*\)/g, "clearTelemetry()");
+}
+
+function extractLoop(code){
+    const match =
+        /(?:public\s+|private\s+|protected\s+)?void\s+loop\s*\([^)]*\)\s*\{/.exec(code);
+
+    if(!match) return "";
+
+    const start = match.index + match[0].length - 1;
+    let depth = 1;
+    let i = start + 1;
+
+    while(i < code.length && depth > 0){
+        if(code[i] === "{") depth++;
+        if(code[i] === "}") depth--;
+        i++;
+    }
+    return code.slice(start + 1, i - 1);
+}
+
+window.onSimulatorReady = function(){
+    setCode(starterCode);
+
+    setChallenge(
+        "Automatic Motor Cutoff with Distance Sensor",
+        "Stop the robot automatically when a valid distance reading is below 12cm.",
+        [
+            "Map drive motor",
+            "Map distance sensor",
+            "Read sensor distance",
+            "Check validity",
+            "Cut power under 12cm",
+            "Allow normal driving when safe",
+            "Ignore invalid readings",
+            "Show telemetry"
+        ]
+    );
+
+    setHeader(
+        "Telemark Unit 11.4 Simulator",
+        "Automatic Motor Cutoff with Distance Sensor"
+    );
+
+    setBadges([
+        { iconClass:"fa-solid fa-ruler", label:"DistanceSensor", active:true },
+        { iconClass:"fa-solid fa-microchip", label:"DcMotor", active:true },
+        { iconClass:"fa-solid fa-display", label:"Telemetry", active:true },
+        { iconClass:"fa-solid fa-gamepad", label:"Gamepad", active:true }
+    ]);
+
+    setActiveInputs(["left_stick_y"]);
+
+    if(window.hardwareMap?.registerMotor){
+        hardwareMap.registerMotor("drive");
+    }
+
+    createHud();
+    buildScene();
+    updateUI();
+
+    if(animationId === null && window.addAnimationCallback){
+        animationId = window.addAnimationCallback(updatePhysics);
+    }
+};
+
+let executionGeneration = 0;
+let preparedLoopRunner = null;
+
+window.onInit = function(){
+    const generation = ++executionGeneration;
+    sim.running = false;
+    preparedLoopRunner = null;
+    installMocks();
+
+    if(window.clearTelemetry){
+        clearTelemetry();
+    }
+
+    const editor = document.getElementById("sim-code-editor");
+    const source = editor?.value || starterCode;
+    const js = transpile(source);
+
+    sim.validations.mapDrive =
+        /hardwareMap\s*\.\s*get\s*\(\s*DcMotor\s*\.\s*class\s*,\s*"drive"\s*\)/.test(source);
+
+    sim.validations.mapDistance =
+        /hardwareMap\s*\.\s*get\s*\(\s*DistanceSensor\s*\.\s*class\s*,\s*"front_range"\s*\)/.test(source);
+
+    sim.validations.getDistance = js.includes('getDistance("front_range")');
+    sim.validations.invalidCheck =
+        /Double\s*\.\s*MAX_VALUE|Number\s*\.\s*MAX_VALUE/.test(source + js);
+    sim.validations.cutoff = js.includes("< 12.0");
+    sim.validations.allowDriving =
+        /else\s*\{[\s\S]*setMotorPower\("drive",\s*drivePower\)/.test(js);
+    sim.validations.ignoreInvalid =
+        sim.validations.invalidCheck &&
+        /distance\s*!=\s*Number\.MAX_VALUE|Number\.MAX_VALUE\s*!=\s*distance/.test(js);
+    sim.validations.telemetry =
+        /telemetry\s*\.\s*addData\s*\(/.test(source) &&
+        /telemetry\s*\.\s*update\s*\(\s*\)/.test(source);
+
+    updateUI();
+
+    const loopBody = transpile(extractLoop(source));
+
+    try{
+        if(!loopBody){
+            throw new Error("Missing loop() method");
+        }
+
+        const loopFn = new Function(loopBody);
+
+        preparedLoopRunner = function tick(){
+            if(!sim.running || generation !== executionGeneration) return;
+
+            sim.stick =
+                Number(window.gamepad?.left_stick_y) || 0;
+
+            runtimeGamepad.left_stick_y =
+                -sim.stick;
+
+            try{
+                if(window.clearTelemetry){
+                    clearTelemetry();
+                }
+
+                loopFn();
+            }catch(err){
+                console.error(err);
+                if(window._simShowTelemetryError){
+                    _simShowTelemetryError("Runtime error: " + err.message);
+                }
+                sim.running = false;
+                if(window.stopExecution){
+                    stopExecution();
+                }
+            }
+            setTimeout(tick, 50);
+        };
+
+    }catch(err){
+        console.error(err);
+        const warning = document.getElementById("warning");
+        if(warning){
+            warning.className = "show";
+            warning.style.background = "#450a0a";
+            warning.innerHTML = "ERROR: " + err.message;
+        }
+        if(window._simShowTelemetryError){
+            _simShowTelemetryError("ERROR: " + err.message);
+        }
+        if(window.stopExecution){
+            stopExecution();
+        }
+    }
+};
+
+window.onStart = function(){
+    if(!preparedLoopRunner) return;
+
+    sim.running = true;
+    preparedLoopRunner();
+};
+
+window.onStop = function(){
+    executionGeneration++;
+    sim.running = false;
+    preparedLoopRunner = null;
+    sim.motorPower = 0;
+    sim.effectivePower = 0;
+};
+
+window.onReset = function(){
+    sim.running = false;
+    sim.invalid = false;
+    resetRobotPosition();
+};
+
+window.addEventListener("resize", () => {
+    if (!renderer || !camera) return;
+
+    const viewer = renderer.domElement.parentElement;
+    const width = viewer.clientWidth;
+    const height = viewer.clientHeight;
+
+    renderer.setSize(width, height);
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+});
+
+})();
+</script>
+
+</body>
+</html>

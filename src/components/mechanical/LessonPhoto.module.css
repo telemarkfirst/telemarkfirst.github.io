@@ -1,0 +1,62 @@
+.figure {
+  margin: 1.5rem 0;
+  padding: 0;
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-hand);
+  background: var(--tm-surface-3);
+  overflow: hidden;
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.caption {
+  padding: 0.7rem 0.9rem;
+  color: var(--tm-text);
+  font-size: var(--tm-fs-sm);
+  line-height: 1.55;
+}
+
+.credit {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--tm-text-muted);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Placeholder shown until a real photograph is supplied. */
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1.1rem 1.1rem 1rem;
+  border-bottom: 1px dashed rgba(251, 191, 36, 0.3);
+  background: var(--tm-surface-2);
+}
+
+.placeholderLabel {
+  color: var(--tm-warn);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.shot {
+  color: var(--tm-text);
+  font-size: var(--tm-fs-base);
+  line-height: 1.6;
+}
+
+.shotMeta {
+  color: var(--tm-text-muted);
+  font-size: var(--tm-fs-xs);
+  line-height: 1.5;
+}

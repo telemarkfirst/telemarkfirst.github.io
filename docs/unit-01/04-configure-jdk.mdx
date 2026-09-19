@@ -1,0 +1,53 @@
+---
+id: configure-jdk
+title: "Section 4: Checking Android Studio's Gradle JDK"
+sidebar_label: "4 · Check Gradle JDK"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Section 4: Checking Android Studio's Gradle JDK
+
+:::info Use the project default first
+The current FTC project can build with Android Studio's bundled JDK. Do not force JDK 17 or change the project's Java compatibility settings unless the current official README or your team's repository requires it.
+:::
+
+---
+
+## Step 4.1: Find the Gradle JDK
+
+After opening the FTC project, go to:
+
+**Settings → Build, Execution, Deployment → Build Tools → Gradle**
+
+---
+
+## Step 4.2: Check the Selection
+
+Start with the bundled or project-recommended JDK shown in the dropdown. Run a Gradle sync before changing it. If the build succeeds, the selection is correct.
+
+If Gradle reports an unsupported Java runtime, compare your project with the current official `FtcRobotController` release and your team's setup notes. Select a different installed JDK only when those sources specify one.
+
+## Keep Team Code Compatible
+
+The official SDK currently uses:
+
+```groovy
+compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+}
+```
+
+Do not raise those values just because the Gradle runtime uses a newer JDK. The Java 8 language target keeps team code compatible with OnBot Java.
+
+:::caution Keep SDK build files together
+Do not accept automatic Android Gradle Plugin or Gradle upgrades in an FTC competition project without checking the current SDK release notes. Upgrade the FTC SDK as a complete project instead of changing one build component by itself.
+:::
+
+<MarkComplete
+  lessonId="unit-01/configure-jdk"
+  nextUnit="/docs/unit-01/get-ftc-sdk"
+  nextUnitName="Section 5: Getting the FTC SDK"
+/>

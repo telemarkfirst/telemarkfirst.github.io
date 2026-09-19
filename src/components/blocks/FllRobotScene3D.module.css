@@ -1,0 +1,11 @@
+.card { border: 1px solid var(--tm-border); border-radius: var(--tm-r-md); overflow: hidden; background: var(--tm-surface-2); }
+.header { display: flex; justify-content: space-between; gap: 1rem; padding: .8rem 1rem; align-items: center; }
+.header h3, .header p { margin: 0; }
+.header p, .header span { color: var(--tm-text-muted); font-size: var(--tm-fs-xs); }
+.viewport { position: relative; min-height: 380px; background: #07111a; }
+.viewport canvas { display: block; width: 100%; height: 100%; min-height: 380px; touch-action: none; }
+.fallback { position: absolute; inset: 1rem; display: grid; place-items: center; color: #eef8ff; text-align: center; }
+.readout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .45rem 1rem; padding: .85rem 1rem; font-size: var(--tm-fs-xs); }
+.readout span { min-width: 0; }
+@media (max-width: 700px) { .viewport, .viewport canvas { min-height: 300px; } .readout { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .viewport canvas { scroll-behavior: auto; } }

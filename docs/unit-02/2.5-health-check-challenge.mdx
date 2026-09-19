@@ -1,0 +1,106 @@
+---
+id: health-check-challenge
+title: "Lesson 2.5: Build a Robot Health-Check OpMode with Telemetry"
+sidebar_label: "2.5 · Robot Health-Check"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit2Simulator from '@site/src/components/Unit2Simulator';
+
+# Lesson 2.5: Build a Robot Health-Check OpMode with Telemetry
+
+---
+
+## Technical Context
+
+A "Health-Check" routine prevents match-start failures by providing the drive team with real-time feedback on sensor readiness. By utilizing the full OpMode lifecycle, you can verify that the IMU is calibrated and the Control Hub is communicating before the match begins, reducing the likelihood of a dead robot on the field.
+
+---
+
+## Robot Checks
+
+This lesson integrates `init()`, `init_loop()`, and `loop()`. The `init_loop()` method is particularly powerful for teams because it runs repeatedly after "Init" but **before** "Play". This is where hardware-heavy tasks like IMU calibration or computer vision stream processing should occur. By using telemetry in `init_loop()`, the driver can wait for a "System Ready" message before starting the match.
+
+---
+
+## Annotated Code
+
+```java
+@TeleOp(name="Health_Check", group="Practice")
+public class HealthCheck extends OpMode {
+
+    @Override
+    public void init() {
+        // Setup initial software flags
+        telemetry.addData("Hub", "Initializing Sensors...");
+    }
+
+    @Override
+    public void init_loop() {
+        // This logic runs repeatedly while waiting for the match to start
+        // Ideal for checking if an IMU is finished calibrating
+        telemetry.addData("Pre-Match", "Check Battery and Gyro");
+    }
+
+    @Override
+    public void start() {
+        telemetry.addData("Match", "Running");
+    }
+
+    @Override
+    public void loop() {
+        // Standard match execution
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The method `__________` is useful for checking sensor values while the robot is stationary before the match starts.
+2. Providing data to the Driver Station screen is called `__________`.
+3. All methods in this unit come from the `__________` parent class in the SDK.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`init_loop()`**
+2. **telemetry**
+3. **`OpMode`**
+
+</details>
+
+---
+
+## Simulator Practice
+
+Create a master health-check program. Use `init_loop()` to show the driver the current runtime while they are waiting to press start, and use `stop()` to print "Robot Powering Down".
+
+<SimulatorRunGuide />
+
+<Unit2Simulator lesson="health-check-challenge" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+@Override
+public void init_loop() {
+    telemetry.addData("Waiting... Runtime", getRuntime());
+}
+
+@Override
+public void stop() {
+    telemetry.addData("System", "Robot Powering Down");
+}
+```
+
+</details>
+
+<MarkComplete
+  lessonId="unit-02/health-check-challenge"
+  nextUnit="/docs/unit-02/choosing-opmode-type"
+  nextUnitName="Lesson 2.6: Choosing Your OpMode Type"
+/>

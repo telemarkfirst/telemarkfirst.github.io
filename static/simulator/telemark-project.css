@@ -1,0 +1,368 @@
+/* Shared project chrome follows the simulator's light and dark theme tokens. */
+.telemark-project {
+  --project-accent: var(--active, var(--accent-2, #22d3ee));
+  --project-text: var(--text-primary, var(--text, #eaf8ff));
+  --project-muted: var(--text-secondary, #94a3b8);
+  --project-danger: var(--danger, #ef4444);
+  flex: 0 0 auto;
+  min-width: 0;
+  border-bottom: 1px solid var(--border, #243746);
+  background: var(--panel, #0b1118);
+  color: var(--project-text);
+  font: 500 12px/1.4 var(--font-ui, 'Segoe UI', sans-serif);
+}
+.telemark-project-tabs {
+  display: flex;
+  min-width: 0;
+  gap: 3px;
+  overflow-x: auto;
+  padding: 8px 10px 0;
+  background: color-mix(in srgb, var(--panel, #0b1118) 88%, var(--code-bg, #05080d));
+  scrollbar-width: thin;
+  scrollbar-color: var(--border, #243746) transparent;
+}
+.telemark-project button {
+  appearance: none;
+  margin: 0;
+  cursor: pointer;
+  font: inherit;
+  transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease, opacity 140ms ease, transform 140ms ease;
+}
+.telemark-project-tab-shell {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+  min-width: 0;
+  cursor: grab;
+}
+.telemark-project-tab-shell[data-dragging] {
+  opacity: .55;
+}
+.telemark-project-tab-shell[data-drop-position='before'] {
+  box-shadow: none;
+}
+.telemark-project-tab-shell[data-drop-position='after'] {
+  box-shadow: none;
+}
+.telemark-project-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  max-width: 220px;
+  padding: 8px 60px 10px 12px;
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  background: transparent;
+  color: var(--project-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.telemark-project-tab-shell:not([data-deletable]) .telemark-project-tab { padding-right: 34px; }
+.telemark-project-tab::before {
+  content: '{}';
+  flex: 0 0 auto;
+  color: var(--project-muted);
+  font: 600 10px var(--font-code, monospace);
+}
+.telemark-project-tab:hover {
+  background: var(--panel-soft, #0e1924);
+  color: var(--project-text);
+}
+.telemark-project-tab[aria-pressed='true'] {
+  border-color: var(--border, #243746);
+  background: var(--code-bg, var(--bg, #05080d));
+  color: var(--project-text);
+}
+.telemark-project-tab[aria-pressed='true']::before { color: var(--project-accent); }
+.telemark-project-tab[aria-pressed='true']::after {
+  content: '';
+  position: absolute;
+  right: 12px;
+  bottom: 0;
+  left: 12px;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--project-accent);
+}
+.telemark-project-tab-rename,
+.telemark-project-tab-delete {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  display: grid;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  place-items: center;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--project-muted);
+  font-size: 18px;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+}
+.telemark-project-tab-rename {
+  right: 31px;
+  font-size: 14px;
+}
+.telemark-project-tab-shell:not([data-deletable]) .telemark-project-tab-rename { right: 7px; }
+.telemark-project-tab-delete {
+  right: 7px;
+  font-size: 18px;
+}
+.telemark-project-tab-shell:hover .telemark-project-tab-rename,
+.telemark-project-tab-shell:focus-within .telemark-project-tab-rename,
+.telemark-project-tab-shell:hover .telemark-project-tab-delete,
+.telemark-project-tab-shell:focus-within .telemark-project-tab-delete {
+  opacity: 1;
+  pointer-events: auto;
+}
+.telemark-project-tab-rename:hover {
+  background: color-mix(in srgb, var(--project-accent) 15%, transparent);
+  color: var(--project-accent);
+}
+.telemark-project-tab-delete:hover {
+  background: color-mix(in srgb, var(--project-danger) 15%, transparent);
+  color: var(--project-danger);
+}
+.telemark-project-new-zone {
+  display: flex;
+  flex: 1 0 48px;
+  align-items: center;
+  min-width: 40px;
+  min-height: 38px;
+  padding: 0 4px 2px;
+}
+.telemark-project-new {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--project-muted);
+  font-size: 20px;
+  line-height: 1;
+  opacity: 0;
+}
+.telemark-project-new-zone:hover .telemark-project-new,
+.telemark-project-tabs:focus-within .telemark-project-new {
+  border-color: var(--border, #243746);
+  background: var(--panel-soft, #0e1924);
+  color: var(--project-accent);
+  opacity: 1;
+}
+.telemark-project-new:hover { transform: translateY(-1px); }
+.telemark-project-utility {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 6px 10px 4px;
+  background: var(--code-bg, var(--bg, #05080d));
+}
+.telemark-project-tool {
+  flex: 0 0 auto;
+  min-height: 30px;
+  padding: 5px 11px;
+  border: 1px solid var(--border, #243746);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--project-muted);
+  white-space: nowrap;
+}
+.telemark-project-tool:hover {
+  border-color: color-mix(in srgb, var(--project-accent) 55%, var(--border, #243746));
+  background: var(--panel-soft, #0e1924);
+  color: var(--project-text);
+}
+.telemark-project select {
+  min-width: 0;
+  max-width: 100%;
+  padding: 6px 9px;
+  border: 1px solid var(--border, #243746);
+  border-radius: 7px;
+  background: var(--panel, #0b1118);
+  color: var(--project-text);
+  font: inherit;
+}
+.telemark-project-note,
+.telemark-project-status {
+  margin: 0;
+  padding: 0 12px 7px;
+  background: var(--code-bg, var(--bg, #05080d));
+  color: var(--project-muted);
+  font-size: 11px;
+}
+.telemark-project-status:empty { display: none; }
+.telemark-project button:focus-visible,
+.telemark-project input:focus-visible,
+.telemark-project select:focus-visible {
+  outline: 2px solid var(--project-accent);
+  outline-offset: 2px;
+}
+.telemark-project-dialog {
+  width: min(560px, calc(100vw - 32px));
+  max-height: min(80vh, 680px);
+  overflow: auto;
+  padding: 24px;
+  border: 1px solid var(--border, #243746);
+  border-radius: 14px;
+  box-shadow: 0 24px 80px #000a, 0 0 0 1px color-mix(in srgb, var(--active, #22d3ee) 10%, transparent);
+  color: var(--text-primary, var(--text, #eaf8ff));
+  background: var(--panel, #0b1118);
+  font: 14px/1.5 var(--font-ui, 'Segoe UI', sans-serif);
+}
+.telemark-project-dialog::backdrop {
+  background: #000a;
+  backdrop-filter: blur(5px);
+}
+.telemark-project-dialog h3 {
+  margin: 0 0 8px;
+  color: var(--text-primary, var(--text, #eaf8ff));
+  font-size: 18px;
+  line-height: 1.3;
+}
+.telemark-project-dialog h3 + p {
+  margin: 0 0 16px;
+  color: var(--text-secondary, #94a3b8);
+}
+.telemark-project-dialog label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  overflow-wrap: anywhere;
+}
+.telemark-project-dialog-field {
+  flex-direction: column;
+  align-items: stretch !important;
+  margin-top: 14px;
+  color: var(--text-secondary, #94a3b8);
+  font-size: 12px;
+  font-weight: 700;
+}
+.telemark-project-dialog input:not([type='checkbox']),
+.telemark-project-dialog select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 9px 11px;
+  border: 1px solid var(--border, #243746);
+  border-radius: 7px;
+  background: var(--code-bg, #05080d);
+  color: inherit;
+  font: 500 13px/1.4 var(--font-code, monospace);
+}
+.telemark-project-dialog input[type='checkbox'] { accent-color: var(--active, #22d3ee); }
+.telemark-project-package-badge {
+  display: block;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--active, #22d3ee) 30%, var(--border, #243746));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--active, #22d3ee) 7%, var(--code-bg, #05080d));
+  color: var(--active, #22d3ee);
+  font: 500 12px/1.4 var(--font-code, monospace);
+}
+.telemark-project-dialog-error {
+  min-height: 21px;
+  margin: 5px 0 0;
+  color: var(--danger, #ef4444);
+  font-size: 12px;
+}
+.telemark-project-dialog-actions,
+.telemark-project-dialog-reuse {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.telemark-project-dialog-actions { margin-top: 14px; }
+.telemark-project-dialog-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0 12px;
+  color: var(--text-secondary, #94a3b8);
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.telemark-project-dialog-divider::before,
+.telemark-project-dialog-divider::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: var(--border, #243746);
+}
+.telemark-project-dialog button {
+  min-height: 36px;
+  padding: 7px 13px;
+  border: 1px solid var(--border, #243746);
+  border-radius: 7px;
+  background: var(--panel-soft, #0e1924);
+  color: var(--text-primary, #eaf8ff);
+  cursor: pointer;
+  font: 600 13px/1.3 var(--font-ui, 'Segoe UI', sans-serif);
+}
+.telemark-project-dialog .telemark-project-dialog-primary {
+  border-color: var(--active, #22d3ee);
+  background: var(--active, #22d3ee);
+  color: var(--bg, #05080d);
+}
+.telemark-project-dialog .telemark-project-dialog-danger {
+  border-color: var(--danger, #ef4444);
+  background: var(--danger, #ef4444);
+  color: #fff;
+}
+.telemark-project-dialog button:hover { filter: brightness(1.12); }
+.telemark-project-dialog-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  margin-bottom: 14px;
+  place-items: center;
+  border-radius: 10px;
+  font-size: 24px;
+}
+.telemark-project-dialog-icon-danger {
+  background: color-mix(in srgb, var(--danger, #ef4444) 14%, transparent);
+  color: var(--danger, #ef4444);
+}
+.telemark-project-dialog pre {
+  max-height: 220px;
+  overflow: auto;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--code-bg, #05080d);
+  font-size: 12px;
+}
+.telemark-project-snapshot-preview {
+  min-height: 180px;
+  white-space: pre;
+}
+.telemark-project-snapshot-status {
+  min-height: 21px;
+  margin: 5px 0 0;
+  color: var(--text-secondary, #94a3b8);
+  font-size: 12px;
+}
+@media (hover: none) {
+  .telemark-project-new { opacity: .6; }
+  .telemark-project-tab-rename,
+  .telemark-project-tab-delete { opacity: .65; pointer-events: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .telemark-project button { transition: none; }
+}

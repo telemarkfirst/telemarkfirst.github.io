@@ -1,0 +1,153 @@
+---
+id: mastery-quiz
+title: "Module 11 Mastery Quiz: Fabrication and Competition Readiness"
+sidebar_label: "Module 11 · Mastery Quiz"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import ScoredQuiz from '@site/src/components/mechanical/ScoredQuiz';
+import {MASTERY_QUESTIONS} from '@site/src/telemark/mechanicalQuizzes';
+
+# Module 11 Mastery Quiz: Fabrication and Competition Readiness
+
+---
+
+## I. Conceptual Questions
+
+**1. Tolerance Cost:** A student specifies every dimension on a bracket to plus or minus 0.001 in, reasoning that tighter is safer. Explain why this is a poor decision.
+
+<details>
+<summary>Show answer</summary>
+
+Tolerance is a cost. Holding a thousandth of an inch requires reaming or boring rather than drilling, careful setup, and measurement of every feature, which multiplies the time to make the part. Applying it to every dimension means the person making the part cannot tell which dimensions actually matter, so they either spend that effort everywhere or guess.
+
+Tolerance should follow function. The bore that locates a bearing may genuinely need a tight tolerance; the outside profile of the same bracket usually does not need better than a hundredth of an inch. Specifying both the same way hides the real requirement.
+
+</details>
+
+---
+
+**2. Process Bias:** Explain why a drilled hole and an FDM printed hole of the same nominal size need different design compensation.
+
+<details>
+<summary>Show answer</summary>
+
+They err in opposite directions. A drill bit cuts oversize, typically by a few thousandths of an inch, because of runout, bit sharpness, and how the hole is started. An FDM printed hole comes out undersize, because of the extrusion path around the perimeter and the way material spreads on the first layers.
+
+So a drilled hole intended as a close fit should be drilled undersize and reamed to final dimension, while a printed hole should be modeled oversize or drilled after printing. Designing both to nominal produces a drilled hole that is too loose and a printed hole the shaft will not enter.
+
+</details>
+
+---
+
+**3. Print Orientation:** A printed bracket fails at a load well below what the same geometry in aluminum would carry, and the plastic itself is not obviously inadequate. Explain the likely cause.
+
+<details>
+<summary>Show answer</summary>
+
+FDM parts are anisotropic: the bond between layers is substantially weaker than the material within a layer. If the bracket was printed so that the working load pulls the layers apart or peels them, the part fails at the layer bond rather than at the material's actual strength, which is a small fraction of its apparent capacity.
+
+The fix is orientation: print the part so the load runs across layers rather than trying to separate them. Because this is a design decision rather than a printer setting, the intended orientation should be recorded on the drawing or in the notebook rather than left to whoever runs the print.
+
+</details>
+
+---
+
+**4. Sizing Failures:** Why do teams that measured their robot in the shop still fail sizing at inspection?
+
+<details>
+<summary>Show answer</summary>
+
+Three reasons, and usually more than one at once. First, the robot was measured in a tidy configuration rather than the starting configuration the rules specify, with a mechanism not quite stowed as it will be at match start. Second, something was added between the shop measurement and the event: a bracket, a guard, a thicker cable, a battery strap, or zip tie tails, all of which count. Third, the robot measured exactly at the limit, and measurement is not perfectly repeatable, so parts shifting in transit push it over.
+
+The preventions are a sizing fixture built to the current season's dimensions, measuring in the true starting configuration with everything included, leaving deliberate margin, and measuring again in the pit before queueing rather than trusting the shop measurement.
+
+</details>
+
+---
+
+**5. Triage:** A mechanism breaks with two matches until yours. Explain why attempting the proper repair immediately is usually the wrong choice.
+
+<details>
+<summary>Show answer</summary>
+
+A proper repair takes longer than the window between matches, and a half completed repair is worse than either alternative: the robot is disassembled, it cannot play, and the team misses the match entirely rather than playing at reduced capability.
+
+The correct sequence is to ask whether the robot can play safely without the mechanism, in which case disable it in software and play; then whether a spare exists, in which case swap rather than repair; then whether a temporary fix will last one match, which zip ties and tape often will if it is safe and legal. The proper repair happens later, in a longer gap, and gets recorded in the notebook. In every case the robot must be run through the affected mechanism's range before returning to the field, since incorrect reassembly is common.
+
+</details>
+
+---
+
+## II. Review the Competition Preparation
+
+A team describes its event preparation. **Identify the 2 errors and state the fix.**
+
+```text
+The robot was measured in the shop on Tuesday and fit the
+starting size with about 1/8 in to spare. On Wednesday a guard
+was added over the intake and a thicker cable was run to the
+drive motors.
+
+On Thursday evening a slide bearing was replaced. The robot
+was reassembled and packed without being run, since it was
+late and the repair was straightforward.
+
+The pit box contains a full tool set, spare fasteners, and two
+batteries. Spares of the compliant wheels and the printed slide
+brackets were not packed, since those had only broken twice
+during the season.
+```
+
+<details>
+<summary>Show answers</summary>
+
+**Error 1 - The robot was modified after its last size measurement, with no margin to absorb it.**
+An eighth of an inch of clearance is inside the repeatability of the measurement itself, so the robot was effectively at the limit on Tuesday. A guard and a thicker cable were then added, and neither was accounted for. Both add material in exactly the places that count toward the envelope.
+
+```text
+Fix: re-measure after any change, in the true starting
+configuration with every mechanism stowed and everything
+included. Design to a deliberate margin rather than to the
+limit, and measure again in the pit before queueing rather
+than relying on a shop measurement from days earlier.
+```
+
+**Error 2 - A repaired robot was packed without being run, and known wear items were not packed as spares.**
+Reassembly errors are common, and a bearing replacement involves a stack-up that can go back in a different order. The failure will be discovered on the field instead of in the shop where it costs a minute. Separately, parts that broke twice during the season are the definition of a wear item: the failure history is the packing list, and choosing not to pack those spares removes the fastest triage option, which is to swap rather than repair.
+
+```text
+Fix: after any repair, run the affected mechanism through its
+full range and drive the robot briefly before packing. Pack a
+spare of everything that has broken before, plus consumables:
+compliant wheels, tubing, chain or belt, slide string, and one
+of each printed part on the robot.
+```
+
+</details>
+
+---
+
+## Finishing the Track
+
+That is the end of the mechanical track. You have gone from reading a game manual to sizing a transmission to running a pit, which is the same path a real engineering organization follows from requirements to delivery.
+
+Two things are worth doing now. Go back to the requirements you wrote in Module 0 and check whether the robot you built satisfies them, honestly, with measurements. And read the software track if you have not, because the robot you designed is only half of the machine.
+
+---
+
+## III. Scored Check
+
+The questions above are for working something through. These are graded, so you can find out whether it stuck. Everything is scored in your browser.
+
+<ScoredQuiz
+  lessonId="module-11/mastery-quiz"
+  questions={MASTERY_QUESTIONS['module-11']}
+/>
+
+<MarkComplete
+  lessonId="module-11/mastery-quiz"
+  nextUnit="/mechanical"
+  nextUnitName="the Mechanical Track Overview"
+/>

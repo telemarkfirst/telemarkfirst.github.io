@@ -1,0 +1,55 @@
+.dialog {
+  width: min(430px, calc(100vw - 32px));
+  padding: var(--tm-sp-5);
+  border: 1px solid var(--tm-border-strong);
+  border-radius: var(--tm-r-lg);
+  box-shadow: var(--tm-shadow-md);
+  color: var(--tm-text);
+  background: var(--tm-surface-2);
+}
+
+.dialog::backdrop {
+  background: rgb(0 0 0 / 68%);
+  backdrop-filter: blur(5px);
+}
+
+.dialog h2 { margin: 0 0 var(--tm-sp-2); font-size: var(--tm-fs-lg); }
+.dialog p { margin: 0; color: var(--tm-text-soft); line-height: 1.55; }
+
+.icon,
+.dangerIcon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  margin-bottom: var(--tm-sp-3);
+  place-items: center;
+  border-radius: var(--tm-r-sm);
+  font-size: var(--tm-fs-lg);
+  font-weight: 800;
+}
+
+.icon { color: var(--tm-warn); background: var(--tm-warn-wash); }
+.dangerIcon { color: var(--tm-danger); background: var(--tm-danger-wash); }
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--tm-sp-2);
+  margin-top: var(--tm-sp-5);
+}
+
+.actions button {
+  min-height: 38px;
+  padding: var(--tm-sp-2) var(--tm-sp-4);
+  border: 1px solid var(--tm-border-strong);
+  border-radius: var(--tm-r-pill);
+  color: var(--tm-text);
+  background: transparent;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.actions .confirm { border-color: var(--tm-accent); color: var(--tm-text-on-accent); background: var(--tm-accent); }
+.actions .danger { border-color: var(--tm-danger); color: white; background: var(--tm-danger); }
+.actions button:focus-visible { outline: 2px solid var(--tm-accent); outline-offset: 2px; }

@@ -1,0 +1,115 @@
+---
+id: linkages
+title: "Lesson 13.3: Four-Bars, Virtual Four-Bars, and Keeping Things Level"
+sidebar_label: "13.3 · Linkage Geometry"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 13.3: Four-Bars, Virtual Four-Bars, and Keeping Things Level
+
+---
+
+## Technical Context
+
+Put a claw on the end of an arm and swing the arm up. The claw tips over as it goes, because it is rigidly attached to a rotating member. Whatever it was holding is now at an angle, and if the arm swings far enough the element falls out.
+
+A second motor can rotate the claw as the arm rises, but it adds mass, wiring, a controller port, and another control loop. A linkage can produce the required orientation mechanically when its motion matches the task.
+
+---
+
+## The parallelogram result
+
+A four-bar linkage is four members and four pivots. The case that matters here is the **parallelogram** four-bar: opposite members equal in length and parallel.
+
+The result worth memorising: **in a parallelogram linkage, the far member stays parallel to the fixed member through the entire range of motion.** Not approximately. Exactly, as long as the lengths are equal and the linkage does not pass through a singular position where all four pivots line up.
+
+So if the fixed member is bolted level to the chassis, the end effector mounted on the opposite member stays level. At every angle. With no sensor, no second motor, and no code.
+
+A parallelogram four-bar keeps the coupler orientation fixed relative to the frame throughout its motion. Teams use it when the end effector must remain level without a second actuator.
+
+---
+
+## What a four-bar costs
+
+It is not free, it is just cheap:
+
+| Cost | Detail |
+| --- | --- |
+| Four pivots | Every one needs a bearing standard, per [Lesson 12.3](/mechanical/module-12/rotating-standards) |
+| Backlash accumulates | Slop at four pivots stacks up at the end effector |
+| Swept volume | The second bar sweeps its own arc, which must not hit the chassis or the lift |
+| A singular position | Fully extended or fully folded, the linkage loses its ability to be driven |
+
+The swept volume catches teams out most. The linkage needs room **behind** the pivot as well as in front of it, and that space usually contains the drivetrain.
+
+---
+
+## The virtual four-bar
+
+A virtual four-bar reaches the same result without the second bar. Instead of a physical parallel member, a **belt or chain** ties the end effector pulley to a pulley fixed to the chassis, at a 1:1 ratio.
+
+The reasoning is direct. If the end effector's pulley cannot rotate relative to a pulley that is bolted to the frame, and the ratio between them is 1:1, then the end effector cannot rotate relative to the frame either. The arm swings; the end effector's absolute angle does not change.
+
+| | Physical four-bar | Virtual four-bar |
+| --- | --- | --- |
+| Parts | Second bar, two more pivots | Belt or chain, two pulleys |
+| Swept volume | Needs room for the second bar | Only the arm sweeps |
+| Failure mode | Bent bar, worn pivots | Belt skips a tooth and the angle is lost permanently |
+| Adjustability | Fixed by geometry | Change the ratio to tilt deliberately |
+
+That last row is the interesting one. Because the relationship is a ratio rather than a shape, a virtual four-bar can be rigged **off** 1:1 on purpose. Rig it 1:1.2 and the end effector tilts progressively as the arm rises, which is exactly what you want if the element should be presented at an angle at the top of travel.
+
+:::warning A skipped tooth is silent and permanent
+A physical four-bar that is bent still holds its geometry approximately. A virtual four-bar that skips one tooth is wrong by that tooth for the rest of the match, and nothing on the robot will tell you. Tension the belt properly and keep the wrap.
+:::
+
+---
+
+## Dual four-bars and why they stack
+
+One four-bar's reach is limited by its bar length, and a long bar sweeps a large arc through space you may not have. A **dual four-bar** stacks a second linkage on the output of the first. Reach adds; the parallel guarantee still holds through both stages, because each stage independently preserves orientation.
+
+The cost is that backlash now accumulates through eight pivots, and the whole assembly is a cantilever whose deflection grows with the cube of its length. Dual four-bars are a real answer to a real reach problem and a bad answer to "I want it a bit longer".
+
+---
+
+## Choosing
+
+- **The end effector must stay level and there is room behind the pivot.** Physical four-bar. Simplest and most robust.
+- **Room is tight, or the arm is long.** Virtual four-bar. Fewer members in the swept volume.
+- **The element should be presented at a changing angle.** Virtual four-bar rigged deliberately off 1:1.
+- **Reach exceeds what one bar can sweep.** Dual four-bar, and budget for the deflection.
+- **The element does not care about angle.** A plain arm. Do not pay for a guarantee you do not need.
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. In a parallelogram four-bar, the far member stays \_\_\_\_\_\_\_\_ to the fixed member throughout the motion.
+2. A virtual four-bar replaces the second bar with a \_\_\_\_\_\_\_\_ at a 1:1 ratio.
+3. Rigging a virtual four-bar away from 1:1 makes the end effector \_\_\_\_\_\_\_\_ as the arm moves.
+4. The silent failure of a virtual four-bar is the belt \_\_\_\_\_\_\_\_.
+
+<details>
+<summary>Show answers</summary>
+
+1. parallel
+2. belt or chain
+3. tilt (rotate progressively)
+4. skipping a tooth
+
+</details>
+
+---
+
+## Exercise
+
+Sketch an arm for your game that must keep an element level from 0 to 120 degrees. Draw it twice: once as a physical four-bar and once as a virtual four-bar. Mark on each sketch the space it sweeps behind the pivot, then say which one fits your chassis and why.
+
+<MarkComplete
+  lessonId="module-13/linkages"
+  nextUnit="/mechanical/module-13/drivetrains"
+  nextUnitName="Lesson 13.4: Traction, Weight Transfer, and Dead Wheels"
+/>

@@ -1,0 +1,165 @@
+---
+id: arms-and-pivots
+title: "Lesson 8.3: Arm Gravity Torque and Choosing a Reduction"
+sidebar_label: "8.3 · Arms & Pivots"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import LessonTool from '@site/src/components/mechanical/LessonTool';
+import ArmTorqueCalculator from '@site/src/components/mechanical/ArmTorqueCalculator';
+import ArmSimulator from '@site/src/components/mechanical/sims/ArmSimulator';
+
+# Lesson 8.3: Arm Gravity Torque and Choosing a Reduction
+
+---
+
+## Technical Context
+
+An arm is a lever, and the torque required to hold it changes with angle. Calculate the worst-case horizontal position as well as the stowed and scoring positions.
+
+---
+
+## The Relationship
+
+Static torque from a mass on an arm is:
+
+```text
+torque = m * g * L * cos(theta)
+```
+
+Where `m` is the mass, `L` is the distance from the pivot to that mass, and `theta` is the angle from horizontal.
+
+The cosine term is the whole story. At horizontal, theta is 0 and cosine is 1, so torque is at its maximum. At vertical, cosine is 0 and the arm requires no holding torque at all.
+
+**The worst case is always horizontal.** An arm that lifts fine from a stowed vertical position may stall on its way through horizontal, which is a failure mode that only appears when the arm has to move through its full range with a load.
+
+---
+
+## Adding the Contributions
+
+An arm has at least two masses to account for: the arm structure itself and the payload at the end.
+
+```text
+total_torque = (m_arm * g * L_cg + m_payload * g * L_payload) * cos(theta)
+```
+
+`L_cg` is the distance from the pivot to the arm's own center of gravity, which for a uniform arm is about half its length. `L_payload` is the full distance to the payload.
+
+The payload usually dominates because it sits at the far end, but the arm's own weight is not negligible, and teams that ignore it undersize the drive.
+
+:::tip Measure the center of gravity rather than assuming
+Balance the arm on a ruler edge and note where it sits. For an arm with a motor or gearbox mounted partway along, the center of gravity is nowhere near the middle, and assuming half the length gives the wrong answer.
+:::
+
+---
+
+## Try It
+
+<LessonTool
+  toolId="arm-torque"
+  bring="Weighed arm and payload, and the distance from the pivot to each."
+  change="The angle, and watch the demand bar fill as the arm reaches horizontal."
+  read="Safety factor at horizontal. Below 2 the arm has no real margin."
+>
+  <ArmTorqueCalculator />
+</LessonTool>
+
+---
+
+## Run It
+
+The calculator above answers whether the design works. This runs it, which is a
+different question: the arm accelerates, slows as gravity rises toward
+horizontal, and either reaches the top or gives out on the way.
+
+Start with the defaults and watch the demand climb as the arm approaches
+horizontal. Then drop the reduction to 30:1 and add payload until it stalls,
+and notice what the current does when it stops moving.
+
+<ArmSimulator />
+
+:::tip What the counterbalance slider is really showing
+Raise it and watch the demand fall at every angle, not just at the top. That is
+the whole argument for Lesson 8.4: a spring holds the load for free, and the
+motor only has to supply the difference.
+:::
+
+---
+
+## Choosing the Reduction
+
+1. Compute the worst case torque, at horizontal, with the payload included.
+2. Apply a safety factor of at least 2. Static torque only holds the arm still. Acceleration, impacts, and contact with another robot demand more.
+3. Divide by the motor's stall torque and the transmission efficiency to get the minimum ratio.
+4. **Check the resulting speed against the cycle time requirement.** This is the step teams skip, and it is where an over-safe reduction produces an arm that takes six seconds to raise.
+
+A safety factor of 2 is prudent. A safety factor of 6, chosen because more felt safer, buys torque you cannot use at the cost of speed you need.
+
+:::warning Holding at stall cooks motors
+An arm held at a raised position by motor power alone draws current continuously and produces no motion. Over a two minute match this heats the motor substantially, and over a tournament day it degrades it. If the arm must hold position for extended periods, the design needs either a non-back-drivable reduction, a mechanical brake, or a counterbalance, which is Lesson 8.4.
+:::
+
+---
+
+## Reducing the Torque Instead of Adding Reduction
+
+Before adding gear stages, check whether the torque itself can be reduced. Every option below is usually cheaper than more reduction, because none of them costs speed.
+
+**Shorten the payload distance.** Torque scales linearly with length. Moving the end effector 20% closer to the pivot cuts torque by 20%.
+
+**Lighten the arm, especially at the far end.** A pound removed from the tip is worth several pounds removed near the pivot.
+
+**Move the pivot.** Some geometries let the pivot sit closer to the arm's center of mass, dramatically reducing the moment.
+
+**Counterbalance.** Covered next lesson. A spring or elastic element can cancel most of the gravity torque across the range.
+
+**Use a different mechanism.** A linear slide with a short wrist is often a better answer than a long arm, because it does not have the cosine problem at all.
+
+---
+
+## The Pivot Itself
+
+The pivot carries the full reaction load and it is a common failure point.
+
+- Support the pivot shaft in two bearings, per Lesson 4.3, spaced as far apart as the design allows
+- Do not cantilever the arm off one side of a single bearing
+- The pivot shaft sees the full torque, so check that the hub connection can transmit it, and use a clamping hub rather than a set screw on a round shaft
+- Add hard stops at both ends of travel, so that a software failure does not drive the arm into the robot
+
+---
+
+:::info Connects to the software track
+Whether the arm holds its position when power is removed is partly mechanical and partly a motor mode the code selects.
+
+See [Lesson 8.3: ZeroPowerBehavior](/docs/unit-08/zero-power-behavior).
+:::
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Arm holding torque is proportional to the `__________` of the angle from horizontal, so the worst case is at horizontal.
+2. A recommended minimum safety factor over the calculated worst case static torque is `__________`.
+3. Torque scales linearly with length, so moving the payload closer to the `__________` reduces it proportionally.
+
+<details>
+<summary>Show answers</summary>
+
+1. **cosine**
+2. **2** (two times)
+3. **pivot**
+
+</details>
+
+---
+
+## Exercise
+
+Weigh your arm and its payload, and measure the distance from the pivot to the arm's balance point and to the payload. Enter them into the calculator and compare the worst case torque against what your current reduction supplies. Then time the arm through its full range and check that against the cycle time requirement.
+
+<MarkComplete
+  lessonId="module-08/arms-and-pivots"
+  nextUnit="/mechanical/module-08/counterbalance"
+  nextUnitName="Lesson 8.4: Springs, Tubing, and Counterbalancing Static Loads"
+/>

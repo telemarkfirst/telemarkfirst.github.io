@@ -1,0 +1,109 @@
+---
+id: sketching-and-annotation
+title: "Lesson 1.3: Sketching and Annotating Mechanisms by Hand"
+sidebar_label: "1.3 · Sketching"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 1.3: Sketching and Annotating Mechanisms by Hand
+
+---
+
+## Technical Context
+
+A quick sketch gives the team a shared picture of an idea before anyone commits to a CAD model. It shows geometry and motion that a verbal description can leave ambiguous.
+
+The sketch does not need to look polished. It needs to communicate clearly.
+
+---
+
+## The Rules That Make a Sketch Useful
+
+**Use more than one view.** Draw the mechanism from the side and from the top so width, reach, and clearance are all visible.
+
+**Label everything that moves.** An arrow showing direction of travel, with a label, removes the most common ambiguity in a mechanical sketch.
+
+**Put numbers on it.** Even approximate ones. "About 6 in" is far more useful than nothing, because it tells the reader the scale you are imagining. A sketch with no dimensions can be read as any size.
+
+**Show the game element.** Draw it at roughly the right scale and in the position where the interaction happens. This exposes reach, clearance, and alignment problems that a mechanism-only sketch can hide.
+
+**Mark what is fixed.** Hatching or a ground symbol on the parts that do not move tells the reader which side of a joint is anchored, which is otherwise a guess.
+
+---
+
+## A Worked Example
+
+Consider sketching a linear slide with an arm on the end.
+
+A poor sketch shows a rectangle with a line coming out of it. It communicates almost nothing: the reader cannot tell how far it extends, what drives it, where it mounts, or what it is reaching for.
+
+A useful sketch of the same mechanism shows:
+
+- The side view with the slide at its retracted and extended positions, one drawn in solid lines and one in dashed
+- The extension distance labeled, "24 in travel"
+- The motor and spool drawn where they actually sit, with an arrow showing string direction
+- The scoring target drawn at the height it needs to reach, "34 in"
+- The pivot at the arm base marked with a circle and an arc showing its range, "0 to 110 deg"
+- Hatching on the chassis rail where the slide mounts
+
+The added labels and views take little time, but they give a teammate enough information to discuss or begin building the mechanism.
+
+:::tip Draw the extremes, not the middle
+Sketch the mechanism fully retracted, where packaging is tightest, and fully extended, where reach and loads are greatest. Check intermediate positions too if the path may cross the frame or another mechanism.
+:::
+
+---
+
+## Annotating for the Reader Who Is Not There
+
+The person reading your sketch may be a teammate next week or a judge in February. Annotate as though the reader cannot ask you a question.
+
+Useful annotations:
+
+- **Dimensions** on anything that had to be chosen: travel, reach, mounting spacing, wheel diameter
+- **Materials** where they were a decision: "1/8 in polycarbonate," "goBILDA 1120 series channel"
+- **Callouts on the hard parts**, with a leader line and a short note: "bearing here, otherwise the shaft walks"
+- **Questions you have not resolved**, written in the margin: "does this clear the frame at 90 deg?" These notes tell the team what to check next
+
+:::warning Do not erase old sketches
+When a design changes, draw a new sketch on a new page and date it. Keep the old version so the notebook shows what changed and why.
+:::
+
+---
+
+## Sketching as a Design Tool, Not Just Documentation
+
+Sketching is especially useful when two students are describing different concepts with the same words. Have each person draw the intake with the game element in place. The drawings make the geometry specific enough to compare.
+
+This is also why sketching precedes CAD. CAD makes you commit to exact numbers before you know which numbers matter. A sketch lets you find out which numbers matter first.
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Drawing the mechanism at both its retracted and extended positions catches problems that are invisible in the `__________` of the travel.
+2. Hatching or a ground symbol on a part tells the reader that the part is `__________`.
+3. Including the game element in the sketch at roughly correct scale exposes `__________` problems that a mechanism-only drawing hides.
+
+<details>
+<summary>Show answers</summary>
+
+1. **middle**
+2. **fixed** (anchored, does not move)
+3. **geometry** (interaction, clearance, or reach problems)
+
+</details>
+
+---
+
+## Exercise
+
+Sketch one mechanism from your robot in side and top view, with the game element drawn in, at least four dimensions labeled, and the moving parts arrowed. Then hand it to a teammate who did not build it and ask them to describe what it does. Every question they ask marks something your sketch needs to annotate.
+
+<MarkComplete
+  lessonId="module-01/sketching-and-annotation"
+  nextUnit="/mechanical/module-01/decision-matrices"
+  nextUnitName="Lesson 1.4: Choosing Between Designs With a Weighted Decision Matrix"
+/>

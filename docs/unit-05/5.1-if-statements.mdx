@@ -1,0 +1,107 @@
+---
+id: if-statements
+title: "Lesson 5.1: Using if Statements to Decide When a Motor Should Run"
+sidebar_label: "5.1 · if Statements"
+sidebar_position: 1
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit5Simulator from '@site/src/components/Unit5Simulator';
+
+# Lesson 5.1: Using if Statements to Decide When a Motor Should Run
+
+---
+
+## Technical Context
+
+An `if` statement lets the program send a hardware command only when a condition is true, such as a driver pressing a button or a sensor reporting a safe state. The condition does not make a mechanism safe by itself, but it is the basic tool used to build limits, interlocks, and driver controls.
+
+---
+
+## How if Statements Turn Inputs into Actions
+
+In the Java JVM, an `if` statement evaluates a boolean expression found within the parentheses. If the expression evaluates to `true`, the code block encapsulated by curly braces `{}` is executed. In FTC, this is typically used to poll the state of a gamepad button (e.g., `gamepad1.a`) or a digital sensor. Because the `loop()` method executes approximately 50 times per second, the `if` statement allows the robot to make real-time decisions based on the current state of the hardware registry.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode.opmodes;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+
+@TeleOp(name="Basic_Logic_Test")
+public class BasicLogic extends OpMode {
+
+    private DcMotor intake;
+
+    @Override
+    public void init() {
+        // Hardware instantiation via the HardwareMap
+        intake = hardwareMap.get(DcMotor.class, "intake");
+    }
+
+    @Override
+    public void loop() {
+        // Foundational if statement for hardware activation
+        if (gamepad1.a) {
+            // Command is only sent to the Control Hub if 'a' is true
+            intake.setPower(1.0);
+        }
+        // Technical note: Without an 'else', the motor will never stop
+        // once 'a' has been pressed.
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. A foundational decision-making structure in Java starts with the `__________` keyword followed by a conditional expression in parentheses.
+2. The code following a conditional statement should be encapsulated in `__________` to prevent logic errors and ensure multiple statements execute together.
+3. In a sensing-thinking-acting machine, the `if` statement represents the `__________` phase of the cycle.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`if`**
+2. **curly braces `{}`**
+3. **thinking**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+**Robot Scenario:** Your team needs a safety switch. The DC Motor named `"flywheel"` should only run at full power if the driver is holding `gamepad1.right_bumper`.
+
+<SimulatorRunGuide />
+
+<Unit5Simulator lesson="if-statements" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+@Override
+public void loop() {
+    if (gamepad1.right_bumper) {
+        flywheel.setPower(1.0);
+    } else {
+        flywheel.setPower(0.0);
+    }
+}
+```
+
+</details>
+
+<MarkComplete
+  lessonId="unit-05/if-statements"
+  nextUnit="/docs/unit-05/else-if-chaining"
+  nextUnitName="Lesson 5.2: Handling Mutually Exclusive Hardware States with else if Chaining"
+/>

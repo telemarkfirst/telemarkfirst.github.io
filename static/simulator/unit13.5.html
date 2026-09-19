@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Telemark Unit 13.5 Simulator</title>
+<style>
+  #sim-right-panel .u135-panel {
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: clamp(230px, 42vh, 420px);
+    overflow-y: auto;
+    margin: 10px;
+    padding: 12px;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #0d0d10;
+    color: #e0e0e0;
+    font-family: var(--font-ui, Arial, sans-serif);
+  }
+
+  #sim-right-panel #sim-scene-container {
+    flex: 1 0 clamp(340px, 50vh, 560px);
+    min-height: 340px;
+  }
+
+  #sim-scene-container .u135-scene-badge,
+  #sim-scene-container .u135-call-badge,
+  #sim-scene-container .u135-label {
+    position: absolute;
+    z-index: 5;
+    pointer-events: none;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: rgba(7, 7, 10, 0.88);
+    color: #f3ead7;
+    font-weight: 700;
+  }
+
+  #sim-scene-container .u135-scene-badge {
+    top: 12px;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+  }
+
+  #sim-scene-container .u135-call-badge {
+    right: 12px;
+    bottom: 12px;
+    display: none;
+    padding: 9px 12px;
+    color: #c4b5fd;
+    border-color: #6d5aa8;
+  }
+
+  #sim-scene-container .u135-label {
+    padding: 6px 9px;
+    color: #22d3ee;
+    font-size: 0.76rem;
+    transform: translate(-50%, -115%);
+    white-space: nowrap;
+    box-shadow: 0 5px 16px rgba(0, 0, 0, 0.42);
+  }
+
+  #sim-scene-container #u135-claw-label {
+    border-color: #22d3ee;
+  }
+
+  #sim-scene-container #u135-wrist-label {
+    color: #fde68a;
+    border-color: #a87818;
+  }
+
+  #sim-right-panel .u135-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    margin: 10px 0 8px;
+  }
+
+  #sim-right-panel .u135-title:first-child {
+    margin-top: 0;
+  }
+
+  #sim-right-panel .u135-diagram {
+    display: grid;
+    gap: 8px;
+    justify-items: center;
+  }
+
+  #sim-right-panel .u135-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    width: 100%;
+  }
+
+  #sim-right-panel .u135-class {
+    width: min(100%, 360px);
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #09090d;
+  }
+
+  #sim-right-panel .u135-class.valid,
+  #sim-right-panel .u135-item.valid {
+    border-color: #22cc66;
+    color: #bbf7d0;
+  }
+
+  #sim-right-panel .u135-class.pulse {
+    animation: u135-pulse 0.42s ease-out;
+  }
+
+  @keyframes u135-pulse {
+    0% { box-shadow: 0 0 0 rgba(34, 204, 102, 0); }
+    50% { box-shadow: 0 0 18px rgba(34, 204, 102, 0.45); }
+    100% { box-shadow: 0 0 0 rgba(34, 204, 102, 0); }
+  }
+
+  #sim-right-panel .u135-class-header {
+    padding: 8px 10px;
+    border-bottom: 1px solid #2a2a3a;
+    background: #15151c;
+    font-weight: 700;
+  }
+
+  #sim-right-panel .u135-section {
+    padding: 8px 10px;
+    border-bottom: 1px solid #20202b;
+  }
+
+  #sim-right-panel .u135-section:last-child {
+    border-bottom: 0;
+  }
+
+  #sim-right-panel .u135-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 3px 0;
+    color: #888;
+    font-size: 0.8rem;
+  }
+
+  #sim-right-panel .u135-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    color: #f3ead7;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  #sim-right-panel .u135-cascade {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  #sim-right-panel .u135-step,
+  #sim-right-panel .u135-status {
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #09090d;
+    color: #888;
+    padding: 8px;
+    font-size: 0.8rem;
+  }
+
+  #sim-right-panel .u135-step.active,
+  #sim-right-panel .u135-status.good {
+    color: #bbf7d0;
+    border-color: #22cc66;
+    box-shadow: 0 0 12px rgba(34, 204, 102, 0.18);
+  }
+
+  #sim-right-panel .u135-status-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  #sim-right-panel .u135-callout {
+    margin-top: 10px;
+    border: 1px solid #3b3b2a;
+    border-radius: 8px;
+    background: rgba(243, 234, 215, 0.06);
+    color: #f3ead7;
+    padding: 9px;
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  #sim-right-panel .u135-warning {
+    display: none;
+    margin-top: 10px;
+    border: 1px solid #55421d;
+    border-radius: 8px;
+    padding: 8px;
+    background: rgba(255, 204, 102, 0.08);
+    color: #ffcc66;
+    font-size: 0.82rem;
+  }
+
+  #sim-right-panel .u135-warning.error {
+    border-color: #5f2323;
+    background: rgba(239, 68, 68, 0.1);
+    color: #fecaca;
+  }
+
+  #sim-right-panel .u135-success {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    border: 1px solid #22cc66;
+    border-radius: 8px;
+    background: rgba(34, 204, 102, 0.1);
+    color: #22cc66;
+    padding: 9px;
+    font-weight: 700;
+    font-size: 0.84rem;
+  }
+
+  @media (max-width: 1100px) {
+    body {
+      flex-direction: column !important;
+    }
+
+    #sim-left-panel {
+      width: 100% !important;
+      height: 57% !important;
+      min-height: 0 !important;
+      border-right: 0 !important;
+      border-bottom: 1px solid var(--border) !important;
+    }
+
+    #sim-resizer {
+      display: none !important;
+    }
+
+    #sim-right-panel {
+      flex: 1 1 auto !important;
+      width: 100% !important;
+      height: 43% !important;
+      min-width: 0 !important;
+      min-height: 300px !important;
+    }
+
+    #sim-right-panel .u135-panel {
+      display: none;
+    }
+
+    #sim-right-panel #sim-scene-container {
+      flex: 1 1 auto !important;
+      width: calc(100% - 16px) !important;
+      min-height: 260px !important;
+      margin: 8px !important;
+      aspect-ratio: auto !important;
+    }
+  }
+</style>
+<script src="./simulator_base.js"></script>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+<script>
+window.onSimulatorReady = function () {
+  "use strict";
+
+  const starterCode = `import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
+
+// Claw subsystem
+class ClawMechanism {
+    private Servo claw;
+
+    public void init(HardwareMap hwMap) {
+        // TODO: Map the "claw" servo
+    }
+
+    public void open() {
+        // TODO: Set the claw open position
+    }
+
+    public void close() {
+        // TODO: Set the claw closed position
+    }
+
+    public void stop() {
+        // Servos hold position — nothing needed
+    }
+}
+
+// Wrist subsystem
+class WristMechanism {
+    private DcMotor wrist;
+
+    public void init(HardwareMap hwMap) {
+        // TODO: Map the "wrist" motor
+        // TODO: Set zero power behavior to BRAKE
+    }
+
+    public void move(double power) {
+        // TODO: Send power to the wrist motor
+    }
+
+    public void stop() {
+        // TODO: Stop the wrist motor
+    }
+}
+
+// Robot class composing both subsystems
+class MyRobot {
+    public ClawMechanism  claw  = new ClawMechanism();
+    public WristMechanism wrist = new WristMechanism();
+
+    public void init(HardwareMap hwMap) {
+        // TODO: Initialize claw and wrist
+    }
+
+    public void stopAll() {
+        // TODO: Stop claw and wrist through one cleanup method
+    }
+}
+
+// OpMode using MyRobot
+@TeleOp(name="Robot_Composition")
+public class RobotComposition extends OpMode {
+
+    MyRobot robot = new MyRobot();
+
+    @Override
+    public void init() {
+        robot.init(hardwareMap);
+        telemetry.addData("Status", "Initialized");
+    }
+
+    @Override
+    public void loop() {
+        if (gamepad1.a) {
+            robot.claw.open();
+            telemetry.addData("Claw", "Open");
+        } else {
+            telemetry.addData("Claw", "Idle");
+        }
+        telemetry.update();
+    }
+
+    @Override
+    public void stop() {
+        robot.stopAll();
+    }
+}`;
+
+  const requirements = [
+    "Create ClawMechanism with init() and stop()",
+    "Create WristMechanism with init() and stop()",
+    "Declare class MyRobot",
+    "Add ClawMechanism claw field in MyRobot",
+    "Add WristMechanism wrist field in MyRobot",
+    "MyRobot.init() initializes claw and wrist",
+    "MyRobot.stopAll() stops claw and wrist",
+    "Declare MyRobot robot in the OpMode",
+    "Call robot.init(hardwareMap) in OpMode init()",
+    "Call robot.claw.open() when gamepad1.a is pressed",
+    "Call robot.stopAll() in OpMode stop()"
+  ];
+
+  const state = {
+    clawInitialized: false,
+    wristInitialized: false,
+    clawState: "STOPPED",
+    wristPower: 0,
+    readyText: "NOT INITIALIZED",
+    lastChain: "None",
+    chainTimer: 0,
+    initStep: -1,
+    stopStep: -1,
+    pulse: { robot: 0, claw: 0, wrist: 0, stop: 0 },
+    sphereFree: false,
+    running: false,
+    prevA: false
+  };
+
+  let servoDevice;
+  let wristDevice;
+  let sceneRoot;
+  let wristGroup;
+  let clawGroup;
+  let leftFinger;
+  let rightFinger;
+  let sphere;
+  let clawMaterial;
+  let wristMaterial;
+  let robotMaterial;
+  let sphereMaterial;
+  let animationRegistered = false;
+  let aButtonWired = false;
+  let subsystemBehavior = { clawOpen: 0.1, clawClose: 0.9 };
+
+  function el(id) {
+    return document.getElementById(id);
+  }
+
+  function safeCall(fn) {
+    if (typeof fn !== "function") return undefined;
+    const args = Array.prototype.slice.call(arguments, 1);
+    return fn.apply(null, args);
+  }
+
+  setCode(starterCode);
+  setChallenge(
+    "Telemark Unit 13.5 Simulator",
+    "Robot Class Composition",
+    requirements
+  );
+  setBadges([
+    { iconClass: "fa-solid fa-puzzle-piece", label: "Composition", active: true },
+    { iconClass: "fa-solid fa-layer-group", label: "Subsystems", active: true },
+    { iconClass: "fa-solid fa-display", label: "Telemetry", active: true },
+    { iconClass: "fa-solid fa-gamepad", label: "Gamepad", active: true }
+  ]);
+  setActiveInputs(["a"]);
+  compactEmbeddedControls();
+  wireAButtonFallback();
+  window.setTimeout(wireAButtonFallback, 0);
+
+  servoDevice = hardwareMap.registerServo("claw");
+  wristDevice = hardwareMap.registerMotor("wrist");
+  hardwareMap.onServoPosition(function (name, value) {
+    updateClawVisual(name, value);
+  });
+  hardwareMap.onMotorPower(function (name, value) {
+    updateWristVisual(name, value);
+  });
+
+  createPanel();
+  setupScene();
+  validateCode();
+  updatePanel();
+  compileSubsystemBehavior();
+  setServoPosition(subsystemBehavior.clawClose);
+
+  window.onInit = function () {
+    state.running = false;
+    state.prevA = false;
+    compileSubsystemBehavior();
+    runStudentInitOnly();
+    validateCode();
+    updatePanel();
+  };
+
+  window.onStart = function () {
+    state.running = true;
+    state.prevA = !!(window.gamepad && window.gamepad.a);
+    compileSubsystemBehavior();
+    validateCode();
+    startTeleOp(false);
+  };
+
+  window.onRun = window.onInit;
+
+  window.onStop = function () {
+    state.running = false;
+    state.prevA = false;
+    runStudentStop();
+    updatePanel();
+  };
+
+  window.onReset = function () {
+    compileSubsystemBehavior();
+    state.clawInitialized = false;
+    state.wristInitialized = false;
+    state.clawState = "STOPPED";
+    state.wristPower = 0;
+    state.readyText = "NOT INITIALIZED";
+    state.lastChain = "None";
+    state.chainTimer = 0;
+    state.initStep = -1;
+    state.stopStep = -1;
+    state.pulse.robot = 0;
+    state.pulse.claw = 0;
+    state.pulse.wrist = 0;
+    state.pulse.stop = 0;
+    state.sphereFree = false;
+    state.running = false;
+    state.prevA = false;
+    setServoPosition(subsystemBehavior.clawClose);
+    setWristPower(0);
+    validateCode();
+    updatePanel();
+  };
+
+  if (!animationRegistered && typeof addAnimationCallback === "function") {
+    addAnimationCallback(tick);
+    animationRegistered = true;
+  }
+
+  window.callRobotInit = callRobotInit;
+  window.callRobotStopAll = callRobotStopAll;
+  window.callClawOpen = callClawOpen;
+  window.callClawClose = callClawClose;
+  window.callWristMove = callWristMove;
+
+  function compactEmbeddedControls() {
+    if (window.innerWidth > 1100) return;
+    window.setTimeout(function () {
+      const challengeHeader = el("sim-challenge-header");
+      if (challengeHeader && challengeHeader.classList.contains("open")) challengeHeader.click();
+      const gamepadCollapse = el("sim-gp-collapse-btn");
+      if (gamepadCollapse && gamepadCollapse.getAttribute("aria-expanded") !== "false") gamepadCollapse.click();
+    }, 0);
+  }
+
+  function createPanel() {
+    const rightPanel = el("sim-right-panel");
+    const sceneContainer = el("sim-scene-container");
+    if (!rightPanel || !sceneContainer) return;
+
+    ["u135-panel", "u135-scene-state", "u135-call-badge", "u135-claw-label", "u135-wrist-label"].forEach(function (id) {
+      const old = el(id);
+      if (old) old.remove();
+    });
+
+    const stateBadge = document.createElement("div");
+    stateBadge.id = "u135-scene-state";
+    stateBadge.className = "u135-scene-badge";
+    stateBadge.innerHTML = '<i class="fa-solid fa-circle-pause"></i> NOT INITIALIZED';
+    sceneContainer.appendChild(stateBadge);
+
+    const callBadge = document.createElement("div");
+    callBadge.id = "u135-call-badge";
+    callBadge.className = "u135-call-badge";
+    callBadge.innerHTML = 'OpMode <i class="fa-solid fa-arrow-right"></i> robot <i class="fa-solid fa-arrow-right"></i> claw <i class="fa-solid fa-arrow-right"></i> open()';
+    sceneContainer.appendChild(callBadge);
+
+    const clawLabel = document.createElement("div");
+    clawLabel.id = "u135-claw-label";
+    clawLabel.className = "u135-label";
+    clawLabel.textContent = "ClawMechanism";
+    sceneContainer.appendChild(clawLabel);
+
+    const wristLabel = document.createElement("div");
+    wristLabel.id = "u135-wrist-label";
+    wristLabel.className = "u135-label";
+    wristLabel.textContent = "WristMechanism";
+    sceneContainer.appendChild(wristLabel);
+
+    const panel = document.createElement("div");
+    panel.id = "u135-panel";
+    panel.className = "u135-panel";
+    panel.innerHTML = `
+      <div class="u135-title"><i class="fa-solid fa-diagram-project"></i> Composition Diagram</div>
+      <div class="u135-diagram">
+        <div class="u135-class" id="u135-opmode-box">
+          <div class="u135-class-header">RobotComposition OpMode</div>
+          <div class="u135-section">
+            <div class="u135-item" id="u135-opmode-field"><i class="fa-solid fa-plus"></i> robot : MyRobot</div>
+            <div class="u135-item" id="u135-opmode-init"><i class="fa-solid fa-plus"></i> robot.init(hardwareMap)</div>
+            <div class="u135-item" id="u135-opmode-loop"><i class="fa-solid fa-plus"></i> gamepad1.a calls robot.claw.open()</div>
+            <div class="u135-item" id="u135-opmode-stop"><i class="fa-solid fa-plus"></i> stop() calls robot.stopAll()</div>
+          </div>
+        </div>
+        <div class="u135-arrow"><i class="fa-solid fa-diamond"></i> has a</div>
+        <div class="u135-class" id="u135-robot-box">
+          <div class="u135-class-header">MyRobot</div>
+          <div class="u135-section">
+            <div class="u135-item" id="u135-robot-class"><i class="fa-solid fa-cube"></i> class MyRobot</div>
+            <div class="u135-item" id="u135-robot-claw"><i class="fa-solid fa-plus"></i> claw : ClawMechanism</div>
+            <div class="u135-item" id="u135-robot-wrist"><i class="fa-solid fa-plus"></i> wrist : WristMechanism</div>
+          </div>
+          <div class="u135-section">
+            <div class="u135-item" id="u135-robot-init"><i class="fa-solid fa-plus"></i> init(hwMap) : void</div>
+            <div class="u135-item" id="u135-robot-stop"><i class="fa-solid fa-plus"></i> stopAll() : void</div>
+          </div>
+        </div>
+        <div class="u135-arrow"><i class="fa-solid fa-diamond"></i> has a</div>
+        <div class="u135-row">
+          <div class="u135-class" id="u135-claw-box">
+            <div class="u135-class-header">ClawMechanism</div>
+            <div class="u135-section">
+              <div class="u135-item" id="u135-claw-class"><i class="fa-solid fa-cube"></i> class ClawMechanism</div>
+              <div class="u135-item" id="u135-claw-init"><i class="fa-solid fa-plus"></i> init(hwMap) : void</div>
+              <div class="u135-item" id="u135-claw-open"><i class="fa-solid fa-plus"></i> open() : void</div>
+              <div class="u135-item" id="u135-claw-close"><i class="fa-solid fa-plus"></i> close() : void</div>
+              <div class="u135-item" id="u135-claw-stop"><i class="fa-solid fa-plus"></i> stop() : void</div>
+            </div>
+          </div>
+          <div class="u135-class" id="u135-wrist-box">
+            <div class="u135-class-header">WristMechanism</div>
+            <div class="u135-section">
+              <div class="u135-item" id="u135-wrist-class"><i class="fa-solid fa-cube"></i> class WristMechanism</div>
+              <div class="u135-item" id="u135-wrist-init"><i class="fa-solid fa-plus"></i> init(hwMap) : void</div>
+              <div class="u135-item" id="u135-wrist-move"><i class="fa-solid fa-plus"></i> move(power) : void</div>
+              <div class="u135-item" id="u135-wrist-stop"><i class="fa-solid fa-plus"></i> stop() : void</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="u135-title"><i class="fa-solid fa-route"></i> Initialization Cascade</div>
+      <div class="u135-cascade">
+        <div class="u135-step" id="u135-init-0">OpMode.init()</div>
+        <i class="fa-solid fa-arrow-right"></i>
+        <div class="u135-step" id="u135-init-1">robot.init(hardwareMap)</div>
+        <i class="fa-solid fa-arrow-right"></i>
+        <div class="u135-step" id="u135-init-2">claw.init(hwMap)</div>
+        <div class="u135-step" id="u135-init-3">wrist.init(hwMap)</div>
+      </div>
+
+      <div class="u135-title"><i class="fa-solid fa-shield-halved"></i> stopAll Cascade</div>
+      <div class="u135-cascade">
+        <div class="u135-step" id="u135-stop-0">OpMode.stop()</div>
+        <i class="fa-solid fa-arrow-right"></i>
+        <div class="u135-step" id="u135-stop-1">robot.stopAll()</div>
+        <i class="fa-solid fa-arrow-right"></i>
+        <div class="u135-step" id="u135-stop-2">claw.stop()</div>
+        <div class="u135-step" id="u135-stop-3">wrist.stop()</div>
+      </div>
+
+      <div class="u135-title"><i class="fa-solid fa-table-cells"></i> Subsystem Status</div>
+      <div class="u135-status-grid">
+        <div class="u135-status" id="u135-claw-status">ClawMechanism: not initialized</div>
+        <div class="u135-status" id="u135-wrist-status">WristMechanism: not initialized</div>
+      </div>
+      <div class="u135-callout">
+        <i class="fa-solid fa-lightbulb"></i>
+        OpMode only needs to call robot.init() and robot.stopAll() - it does not manage individual subsystems directly.
+      </div>
+      <div class="u135-callout" id="u135-last-chain">
+        <i class="fa-solid fa-code-branch"></i> Last call chain: None
+      </div>
+      <div class="u135-success" id="u135-success"><i class="fa-solid fa-circle-check"></i> Challenge Complete! MyRobot correctly composes ClawMechanism and WristMechanism.</div>
+      <div class="u135-warning" id="u135-warning"></div>
+    `;
+    rightPanel.appendChild(panel);
+  }
+
+  function setupScene() {
+    if (!window.THREE || !window.scene) return;
+    if (sceneRoot) window.scene.remove(sceneRoot);
+
+    sceneRoot = new THREE.Group();
+    sceneRoot.name = "unit13_5_scene";
+    window.scene.add(sceneRoot);
+    window.scene.background = new THREE.Color(0x000000);
+    safeCall(setFieldVisible, false);
+    safeCall(setCameraOrbit, {
+      theta: -0.68,
+      phi: 0.92,
+      radius: 7.2,
+      target: { x: 0, y: 0.9, z: -1.4 }
+    });
+
+    const ambient = new THREE.AmbientLight(0xffffff, 1.15);
+    sceneRoot.add(ambient);
+    const dir = new THREE.DirectionalLight(0xf6efe1, 1.08);
+    dir.position.set(4, 8, 6);
+    sceneRoot.add(dir);
+
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(10, 10),
+      new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.92, metalness: 0.02 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.04;
+    sceneRoot.add(floor);
+    const grid = new THREE.GridHelper(10, 10, 0xf3ead7, 0x1f1f1f);
+    grid.position.y = -0.02;
+    sceneRoot.add(grid);
+
+    robotMaterial = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.68, metalness: 0.12, emissive: 0x000000 });
+    wristMaterial = new THREE.MeshStandardMaterial({ color: 0xf3ead7, roughness: 0.54, metalness: 0.18, emissive: 0x000000 });
+    clawMaterial = new THREE.MeshStandardMaterial({ color: 0x8f8778, roughness: 0.62, metalness: 0.1, emissive: 0x000000 });
+    sphereMaterial = new THREE.MeshStandardMaterial({ color: 0x8b5cf6, roughness: 0.48, metalness: 0.04, emissive: 0x000000 });
+
+    const body = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.85, 2.5), robotMaterial);
+    body.position.set(0, 0.45, 0);
+    sceneRoot.add(body);
+
+    wristGroup = new THREE.Group();
+    wristGroup.position.set(0, 0.78, -1.35);
+    sceneRoot.add(wristGroup);
+
+    const wristJoint = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.6, 32), wristMaterial);
+    wristJoint.rotation.z = Math.PI / 2;
+    wristGroup.add(wristJoint);
+
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.26, 1.55), wristMaterial);
+    arm.position.z = -0.78;
+    wristGroup.add(arm);
+
+    clawGroup = new THREE.Group();
+    clawGroup.position.set(0, 0, -1.58);
+    wristGroup.add(clawGroup);
+
+    leftFinger = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.24, 1.0), clawMaterial);
+    rightFinger = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.24, 1.0), clawMaterial);
+    leftFinger.position.set(-0.32, 0, -0.4);
+    rightFinger.position.set(0.32, 0, -0.4);
+    clawGroup.add(leftFinger);
+    clawGroup.add(rightFinger);
+
+    sphere = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 24), sphereMaterial);
+    sphere.position.set(0, 0, -0.64);
+    clawGroup.add(sphere);
+  }
+
+  function tick() {
+    handleGamepadEdge();
+
+    state.pulse.robot = Math.max(0, state.pulse.robot - 0.016);
+    state.pulse.claw = Math.max(0, state.pulse.claw - 0.016);
+    state.pulse.wrist = Math.max(0, state.pulse.wrist - 0.016);
+    state.pulse.stop = Math.max(0, state.pulse.stop - 0.016);
+    state.chainTimer = Math.max(0, state.chainTimer - 0.016);
+
+    const targetAngle = state.wristPower * 0.8;
+    if (wristGroup) wristGroup.rotation.x += (targetAngle - wristGroup.rotation.x) * 0.14;
+
+    const openAmount = state.clawState === "OPEN" ? 1 : 0;
+    const spread = 0.32 + openAmount * 0.34;
+    if (leftFinger && rightFinger) {
+      leftFinger.position.x += (-spread - leftFinger.position.x) * 0.2;
+      rightFinger.position.x += (spread - rightFinger.position.x) * 0.2;
+      leftFinger.rotation.y += ((-0.08 - openAmount * 0.26) - leftFinger.rotation.y) * 0.2;
+      rightFinger.rotation.y += ((0.08 + openAmount * 0.26) - rightFinger.rotation.y) * 0.2;
+    }
+
+    if (sphere) {
+      if (state.sphereFree) {
+        sphere.position.z += (-1.05 - sphere.position.z) * 0.08;
+        sphere.position.y = 0.06 + Math.sin(Date.now() * 0.004) * 0.04;
+      } else {
+        sphere.position.z += (-0.64 - sphere.position.z) * 0.12;
+        sphere.position.y += (0 - sphere.position.y) * 0.12;
+      }
+    }
+
+    positionMechanismLabels();
+
+    if (robotMaterial) robotMaterial.emissive.setHex(state.pulse.robot > 0 ? 0x0b3d1d : state.pulse.stop > 0 ? 0x222222 : 0x000000);
+    if (clawMaterial) clawMaterial.emissive.setHex(state.pulse.claw > 0 ? 0x0b3d1d : state.pulse.stop > 0 ? 0x222222 : 0x000000);
+    if (wristMaterial) wristMaterial.emissive.setHex(state.pulse.wrist > 0 ? 0x0b3d1d : state.pulse.stop > 0 ? 0x222222 : 0x000000);
+
+    updatePanel();
+  }
+
+  function positionMechanismLabels() {
+    if (!window.THREE || !window.camera || !window.scene) return;
+    const container = el("sim-scene-container");
+    if (!container) return;
+    window.scene.updateMatrixWorld(true);
+    placeMechanismLabel("u135-claw-label", clawGroup, 0, -18);
+    placeMechanismLabel("u135-wrist-label", wristGroup, -38, 22);
+  }
+
+  function placeMechanismLabel(id, object, offsetX, offsetY) {
+    const label = el(id);
+    if (!label || !object) return;
+    const point = new THREE.Vector3();
+    object.getWorldPosition(point);
+    point.project(window.camera);
+    const width = Math.max(1, el("sim-scene-container").clientWidth);
+    const height = Math.max(1, el("sim-scene-container").clientHeight);
+    const x = (point.x * 0.5 + 0.5) * width + offsetX;
+    const y = (-point.y * 0.5 + 0.5) * height + offsetY;
+    label.style.left = Math.max(78, Math.min(width - 78, x)) + "px";
+    label.style.top = Math.max(46, Math.min(height - 24, y)) + "px";
+    label.style.display = point.z >= -1 && point.z <= 1 ? "block" : "none";
+  }
+
+  function handleGamepadEdge() {
+    const pressed = !!(window.gamepad && window.gamepad.a);
+    if (state.running && pressed && !state.prevA && codeAllowsClawOpen()) {
+      triggerClawOpenFromGamepad();
+    }
+    state.prevA = pressed;
+  }
+
+  function wireAButtonFallback(attempt) {
+    if (aButtonWired) return;
+    const button = document.querySelector('[data-gp-input="a"]');
+    if (!button) {
+      if ((attempt || 0) < 10) {
+        window.setTimeout(function () {
+          wireAButtonFallback((attempt || 0) + 1);
+        }, 100);
+      }
+      return;
+    }
+
+    aButtonWired = true;
+    button.addEventListener("pointerdown", function () {
+      triggerClawOpenFromGamepad();
+    });
+  }
+
+  function simulatorIsRunning() {
+    if (typeof _simIsRunning === "function") return _simIsRunning();
+    return state.running;
+  }
+
+  function triggerClawOpenFromGamepad() {
+    if (!simulatorIsRunning() || !codeAllowsClawOpen()) return;
+    callClawOpen();
+    state.prevA = true;
+    publishClawOpenTelemetry();
+  }
+
+  function publishClawOpenTelemetry() {
+    if (typeof clearTelemetry === "function" &&
+        typeof addTelemetry === "function" &&
+        typeof updateTelemetry === "function") {
+      clearTelemetry();
+      addTelemetry("Claw", "Open");
+      addTelemetry("Call Chain", "OpMode -> robot -> claw -> open()");
+      updateTelemetry();
+    }
+  }
+
+  function setServoPosition(value) {
+    if (servoDevice && typeof servoDevice.setPosition === "function") servoDevice.setPosition(value);
+  }
+
+  function setWristPower(value) {
+    if (wristDevice && typeof wristDevice.setPower === "function") wristDevice.setPower(value);
+  }
+
+  function callRobotInit() {
+    state.readyText = "INITIALIZING...";
+    state.lastChain = "OpMode.init() -> robot.init(hardwareMap) -> claw.init(hwMap) -> wrist.init(hwMap)";
+    state.chainTimer = 1.8;
+    state.initStep = 0;
+    state.pulse.robot = 0.55;
+    window.setTimeout(function () {
+      state.initStep = 1;
+      state.pulse.robot = 0.45;
+    }, 120);
+    window.setTimeout(function () {
+      state.initStep = 2;
+      state.clawInitialized = true;
+      state.pulse.claw = 0.55;
+    }, 320);
+    window.setTimeout(function () {
+      state.initStep = 3;
+      state.wristInitialized = true;
+      state.pulse.wrist = 0.55;
+      state.readyText = "READY";
+    }, 560);
+  }
+
+  function callRobotStopAll() {
+    state.lastChain = "OpMode.stop() -> robot.stopAll() -> claw.stop() + wrist.stop()";
+    state.readyText = "ALL STOPPED";
+    state.stopStep = 0;
+    state.chainTimer = 1.2;
+    state.pulse.stop = 0.6;
+    callClawStop();
+    callWristMove(0);
+    window.setTimeout(function () { state.stopStep = 1; }, 100);
+    window.setTimeout(function () { state.stopStep = 2; }, 240);
+    window.setTimeout(function () { state.stopStep = 3; }, 360);
+  }
+
+  function callClawOpen() {
+    state.clawState = "OPEN";
+    state.sphereFree = true;
+    state.lastChain = "OpMode -> robot -> claw -> open()";
+    state.chainTimer = 1.1;
+    state.pulse.claw = 0.35;
+    setServoPosition(subsystemBehavior.clawOpen);
+  }
+
+  function callClawClose() {
+    state.clawState = "CLOSED";
+    state.sphereFree = false;
+    state.lastChain = "OpMode -> robot -> claw -> close()";
+    state.chainTimer = 0.8;
+    state.pulse.claw = 0.3;
+    setServoPosition(subsystemBehavior.clawClose);
+  }
+
+  function callClawStop() {
+    state.clawState = "STOPPED";
+    state.pulse.claw = 0.2;
+  }
+
+  function callWristMove(power) {
+    const value = Number(power) || 0;
+    state.wristPower = Math.max(-1, Math.min(1, value));
+    state.pulse.wrist = Math.abs(state.wristPower) > 0.01 ? 0.2 : state.pulse.wrist;
+    setWristPower(state.wristPower);
+  }
+
+  function updateClawVisual(name, value) {
+    if (name !== "claw") return;
+    if (value <= 0.2) {
+      state.clawState = "OPEN";
+      state.sphereFree = true;
+    } else if (value >= 0.8 && state.clawState !== "STOPPED") {
+      state.clawState = "CLOSED";
+      state.sphereFree = false;
+    }
+    updatePanel();
+  }
+
+  function updateWristVisual(name, value) {
+    if (name !== "wrist") return;
+    state.wristPower = Number(value) || 0;
+    updatePanel();
+  }
+
+  function updatePanel() {
+    const clawLabel = el("u135-claw-label");
+    if (clawLabel) clawLabel.textContent = "ClawMechanism · " + state.clawState;
+    const wristLabel = el("u135-wrist-label");
+    if (wristLabel) wristLabel.textContent = "WristMechanism · " + (Math.abs(state.wristPower) > 0.01 ? state.wristPower.toFixed(2) : "stopped");
+
+    const sceneBadge = el("u135-scene-state");
+    if (sceneBadge) {
+      const icon = state.readyText === "READY" ? "fa-circle-check" : state.readyText === "ALL STOPPED" ? "fa-circle-stop" : "fa-circle-pause";
+      sceneBadge.innerHTML = '<i class="fa-solid ' + icon + '"></i> ' + state.readyText;
+      sceneBadge.style.color = state.readyText === "READY" ? "#22cc66" : state.readyText === "ALL STOPPED" ? "#cbd5e1" : "#f3ead7";
+    }
+
+    const callBadge = el("u135-call-badge");
+    if (callBadge) {
+      callBadge.style.display = state.chainTimer > 0 && /open/.test(state.lastChain) ? "block" : "none";
+    }
+
+    const clawStatus = el("u135-claw-status");
+    if (clawStatus) {
+      clawStatus.classList.toggle("good", state.clawInitialized);
+      clawStatus.textContent = "ClawMechanism: " + (state.clawInitialized ? "initialized" : "not initialized") + ", " + state.clawState;
+    }
+
+    const wristStatus = el("u135-wrist-status");
+    if (wristStatus) {
+      wristStatus.classList.toggle("good", state.wristInitialized);
+      const wristText = Math.abs(state.wristPower) > 0.01 ? "POWER: " + state.wristPower.toFixed(2) : "STOPPED";
+      wristStatus.textContent = "WristMechanism: " + (state.wristInitialized ? "initialized" : "not initialized") + ", " + wristText;
+    }
+
+    const chain = el("u135-last-chain");
+    if (chain) chain.innerHTML = '<i class="fa-solid fa-code-branch"></i> Last call chain: ' + escapeHTML(state.lastChain);
+
+    for (let i = 0; i < 4; i++) {
+      const initStep = el("u135-init-" + i);
+      if (initStep) initStep.classList.toggle("active", state.initStep === i || (state.chainTimer > 0 && state.initStep >= i && /init/.test(state.lastChain)));
+      const stopStep = el("u135-stop-" + i);
+      if (stopStep) stopStep.classList.toggle("active", state.stopStep === i || (state.chainTimer > 0 && state.stopStep >= i && /stopAll/.test(state.lastChain)));
+    }
+
+    [["u135-robot-box", state.pulse.robot], ["u135-claw-box", state.pulse.claw], ["u135-wrist-box", state.pulse.wrist]].forEach(function (pair) {
+      const box = el(pair[0]);
+      if (box) box.classList.toggle("pulse", pair[1] > 0);
+    });
+  }
+
+  function startTeleOp(runInitFirst) {
+    compileSubsystemBehavior();
+    const code = getCodeSafe();
+    const opBody = extractOpModeBody(code);
+    const initBody = extractMethodBody(opBody, "init");
+    const loopBody = extractMethodBody(opBody, "loop");
+    if (!loopBody) {
+      failStudentExecution("loop() was not found.");
+      return;
+    }
+
+    const initJS = transpileStudentBody(initBody || "");
+    const loopJS = transpileStudentBody(loopBody);
+    let initFn;
+    let loopFn;
+
+    try {
+      initFn = new Function(
+        "gamepad",
+        "hardwareMap",
+        "addTelemetry",
+        "updateTelemetry",
+        "callRobotInit",
+        "callRobotStopAll",
+        "callClawOpen",
+        "callClawClose",
+        "callWristMove",
+        '"use strict";\n' + initJS
+      );
+      loopFn = new Function(
+        "gamepad",
+        "hardwareMap",
+        "addTelemetry",
+        "updateTelemetry",
+        "callRobotInit",
+        "callRobotStopAll",
+        "callClawOpen",
+        "callClawClose",
+        "callWristMove",
+        '"use strict";\n' + loopJS
+      );
+    } catch (err) {
+      failStudentExecution("compile error: " + err.message);
+      return;
+    }
+
+    if (runInitFirst !== false) {
+      try {
+        clearTelemetry();
+        initFn(
+          window.gamepad,
+          hardwareMap,
+          addTelemetry,
+          updateTelemetry,
+          callRobotInit,
+          callRobotStopAll,
+          callClawOpen,
+          callClawClose,
+          callWristMove
+        );
+        updateTelemetry();
+      } catch (err) {
+        failStudentExecution("init() runtime error: " + err.message);
+        return;
+      }
+    }
+
+    const runFrame = function () {
+      try {
+        clearTelemetry();
+        loopFn(
+          window.gamepad,
+          hardwareMap,
+          addTelemetry,
+          updateTelemetry,
+          callRobotInit,
+          callRobotStopAll,
+          callClawOpen,
+          callClawClose,
+          callWristMove
+        );
+        updateTelemetry();
+        validateCode();
+      } catch (err) {
+        failStudentExecution("loop() runtime error: " + err.message);
+      }
+    };
+
+    if (typeof _simStartLoop === "function") _simStartLoop(runFrame);
+    else setInterval(runFrame, 50);
+  }
+
+  function runStudentInitOnly() {
+    compileSubsystemBehavior();
+    const code = getCodeSafe();
+    const opBody = extractOpModeBody(code);
+    const initBody = extractMethodBody(opBody, "init");
+    if (!initBody) return;
+    let initFn;
+    try {
+      initFn = new Function(
+        "gamepad",
+        "hardwareMap",
+        "addTelemetry",
+        "updateTelemetry",
+        "callRobotInit",
+        "callRobotStopAll",
+        "callClawOpen",
+        "callClawClose",
+        "callWristMove",
+        '"use strict";\n' + transpileStudentBody(initBody)
+      );
+      clearTelemetry();
+      initFn(
+        window.gamepad,
+        hardwareMap,
+        addTelemetry,
+        updateTelemetry,
+        callRobotInit,
+        callRobotStopAll,
+        callClawOpen,
+        callClawClose,
+        callWristMove
+      );
+      updateTelemetry();
+    } catch (err) {
+      failStudentExecution("init() runtime error: " + err.message);
+    }
+  }
+
+  function compileSubsystemBehavior() {
+    const code = getCodeSafe();
+    const clawBody = extractClassBody(code, "ClawMechanism");
+    subsystemBehavior = {
+      clawOpen: extractServoPosition(clawBody, "open", 0.1),
+      clawClose: extractServoPosition(clawBody, "close", 0.9)
+    };
+  }
+
+  function extractServoPosition(classBody, methodName, fallback) {
+    const body = extractMethodBody(classBody || "", methodName);
+    const match = /\bclaw\s*\.\s*setPosition\s*\(\s*([-+]?\d+(?:\.\d+)?)\s*\)/.exec(body);
+    return match ? Number(match[1]) : fallback;
+  }
+
+  function runStudentStop() {
+    const code = getCodeSafe();
+    const opBody = extractOpModeBody(code);
+    const stopBody = extractMethodBody(opBody, "stop");
+    if (!stopBody) {
+      callRobotStopAll();
+      return;
+    }
+
+    let stopFn;
+    try {
+      stopFn = new Function(
+        "gamepad",
+        "hardwareMap",
+        "addTelemetry",
+        "updateTelemetry",
+        "callRobotInit",
+        "callRobotStopAll",
+        "callClawOpen",
+        "callClawClose",
+        "callWristMove",
+        '"use strict";\n' + transpileStudentBody(stopBody)
+      );
+      stopFn(
+        window.gamepad,
+        hardwareMap,
+        addTelemetry,
+        updateTelemetry,
+        callRobotInit,
+        callRobotStopAll,
+        callClawOpen,
+        callClawClose,
+        callWristMove
+      );
+    } catch (err) {
+      showStudentError("stop() runtime error: " + err.message);
+      callRobotStopAll();
+    }
+  }
+
+  function transpileStudentBody(body) {
+    let js = body || "";
+    js = js
+      .replace(/\brobot\s*\.\s*init\s*\(/g, "callRobotInit(")
+      .replace(/\brobot\s*\.\s*stopAll\s*\(\s*\)/g, "callRobotStopAll()")
+      .replace(/\brobot\s*\.\s*claw\s*\.\s*open\s*\(\s*\)/g, "callClawOpen()")
+      .replace(/\brobot\s*\.\s*claw\s*\.\s*close\s*\(\s*\)/g, "callClawClose()")
+      .replace(/\brobot\s*\.\s*wrist\s*\.\s*move\s*\(/g, "callWristMove(")
+      .replace(/\bgamepad1\s*\.\s*a\b/g, "gamepad.a")
+      .replace(/\btelemetry\s*\.\s*addData\s*\(/g, "addTelemetry(")
+      .replace(/\btelemetry\s*\.\s*update\s*\(\s*\)/g, "updateTelemetry()");
+    if (typeof _simTranspile === "function") js = _simTranspile(js);
+    return js;
+  }
+
+  function validateCode() {
+    const code = getCodeSafe();
+    const clawBody = extractClassBody(code, "ClawMechanism");
+    const wristBody = extractClassBody(code, "WristMechanism");
+    const robotBody = extractClassBody(code, "MyRobot");
+    const opBody = extractOpModeBody(code);
+    const robotInitBody = extractMethodBody(robotBody, "init");
+    const robotStopBody = extractMethodBody(robotBody, "stopAll");
+    const opInitBody = extractMethodBody(opBody, "init");
+    const opLoopBody = extractMethodBody(opBody, "loop");
+    const opStopBody = extractMethodBody(opBody, "stop");
+
+    const checks = [
+      /class\s+ClawMechanism\b/.test(code) && methodExists(clawBody, "init") && methodExists(clawBody, "stop"),
+      /class\s+WristMechanism\b/.test(code) && methodExists(wristBody, "init") && methodExists(wristBody, "stop"),
+      /class\s+MyRobot\b/.test(code),
+      /ClawMechanism\s+claw\b/.test(robotBody),
+      /WristMechanism\s+wrist\b/.test(robotBody),
+      methodExists(robotBody, "init") && /claw\s*\.\s*init\s*\(\s*hwMap\s*\)/.test(robotInitBody) && /wrist\s*\.\s*init\s*\(\s*hwMap\s*\)/.test(robotInitBody),
+      methodExists(robotBody, "stopAll") && /claw\s*\.\s*stop\s*\(\s*\)/.test(robotStopBody) && /wrist\s*\.\s*stop\s*\(\s*\)/.test(robotStopBody),
+      /MyRobot\s+robot\b/.test(opBody),
+      /robot\s*\.\s*init\s*\(\s*hardwareMap\s*\)/.test(opInitBody),
+      /gamepad1\s*\.\s*a/.test(opLoopBody) && /robot\s*\.\s*claw\s*\.\s*open\s*\(\s*\)/.test(opLoopBody),
+      /robot\s*\.\s*stopAll\s*\(\s*\)/.test(opStopBody)
+    ];
+
+    checks.forEach(function (passed, index) {
+      safeCall(setRequirement, index, !!passed);
+    });
+
+    const ids = [
+      "u135-claw-class",
+      "u135-wrist-class",
+      "u135-robot-class",
+      "u135-robot-claw",
+      "u135-robot-wrist",
+      "u135-robot-init",
+      "u135-robot-stop",
+      "u135-opmode-field",
+      "u135-opmode-init",
+      "u135-opmode-loop",
+      "u135-opmode-stop"
+    ];
+    ids.forEach(function (id, index) {
+      const item = el(id);
+      if (item) item.classList.toggle("valid", !!checks[index]);
+    });
+
+    const clawInit = el("u135-claw-init");
+    if (clawInit) clawInit.classList.toggle("valid", methodExists(clawBody, "init"));
+    const clawOpen = el("u135-claw-open");
+    if (clawOpen) clawOpen.classList.toggle("valid", methodExists(clawBody, "open"));
+    const clawClose = el("u135-claw-close");
+    if (clawClose) clawClose.classList.toggle("valid", methodExists(clawBody, "close"));
+    const clawStop = el("u135-claw-stop");
+    if (clawStop) clawStop.classList.toggle("valid", methodExists(clawBody, "stop"));
+    const wristInit = el("u135-wrist-init");
+    if (wristInit) wristInit.classList.toggle("valid", methodExists(wristBody, "init"));
+    const wristMove = el("u135-wrist-move");
+    if (wristMove) wristMove.classList.toggle("valid", methodExists(wristBody, "move"));
+    const wristStop = el("u135-wrist-stop");
+    if (wristStop) wristStop.classList.toggle("valid", methodExists(wristBody, "stop"));
+
+    ["u135-opmode-box", "u135-robot-box", "u135-claw-box", "u135-wrist-box"].forEach(function (id) {
+      const box = el(id);
+      if (box) box.classList.toggle("valid", checks.every(Boolean));
+    });
+
+    const success = el("u135-success");
+    if (success) success.style.display = checks.every(Boolean) ? "flex" : "none";
+    updateWarning(code, clawBody, wristBody, robotBody, robotInitBody, robotStopBody, opInitBody, opLoopBody, opStopBody);
+    return checks;
+  }
+
+  function codeAllowsClawOpen() {
+    const code = getCodeSafe();
+    const opLoopBody = extractMethodBody(extractOpModeBody(code), "loop");
+    return /gamepad1\s*\.\s*a/.test(opLoopBody) && /robot\s*\.\s*claw\s*\.\s*open\s*\(\s*\)/.test(opLoopBody);
+  }
+
+  function updateWarning(code, clawBody, wristBody, robotBody, robotInitBody, robotStopBody, opInitBody, opLoopBody, opStopBody) {
+    const warning = el("u135-warning");
+    if (!warning) return;
+
+    let message = "";
+    let type = "warn";
+    const opWithoutMyRobot = code.replace(robotBody, "");
+
+    if (!methodExists(robotBody, "stopAll")) {
+      message = "Add stopAll() to MyRobot that calls claw.stop() and wrist.stop() - always provide a single cleanup method";
+      type = "error";
+    } else if (!/claw\s*\.\s*stop\s*\(\s*\)/.test(robotStopBody) || !/wrist\s*\.\s*stop\s*\(\s*\)/.test(robotStopBody)) {
+      message = "Add stopAll() to MyRobot that calls claw.stop() and wrist.stop() - always provide a single cleanup method";
+      type = "error";
+    } else if (methodExists(robotBody, "init") && (!/claw\s*\.\s*init\s*\(\s*hwMap\s*\)/.test(robotInitBody) || !/wrist\s*\.\s*init\s*\(\s*hwMap\s*\)/.test(robotInitBody))) {
+      message = "MyRobot.init() must initialize both claw and wrist - call claw.init(hwMap) and wrist.init(hwMap)";
+      type = "error";
+    } else if (!methodExists(clawBody, "stop")) {
+      message = "ClawMechanism needs a stop() method so MyRobot.stopAll() can call it";
+      type = "error";
+    } else if (!methodExists(wristBody, "stop")) {
+      message = "WristMechanism needs a stop() method so MyRobot.stopAll() can call it";
+      type = "error";
+    } else if (/claw\s*\.\s*init\s*\(\s*hardwareMap\s*\)/.test(opWithoutMyRobot) || /wrist\s*\.\s*init\s*\(\s*hardwareMap\s*\)/.test(opWithoutMyRobot)) {
+      message = "Let robot.init() handle subsystem initialization - the OpMode should only talk to MyRobot";
+    } else if (!/robot\s*\.\s*stopAll\s*\(\s*\)/.test(opStopBody)) {
+      message = "Call robot.stopAll() in the OpMode stop() method to ensure all mechanisms stop when the OpMode ends";
+    } else if (!/gamepad1\s*\.\s*a/.test(opLoopBody) || !/robot\s*\.\s*claw\s*\.\s*open\s*\(\s*\)/.test(opLoopBody)) {
+      message = "Call robot.claw.open() inside the gamepad1.a condition in loop()";
+    } else if (!/telemetry\s*\.\s*update\s*\(\s*\)/.test(code)) {
+      message = "Call telemetry.update() to send data to the Driver Station";
+    }
+
+    warning.classList.toggle("error", type === "error");
+    warning.style.display = message ? "block" : "none";
+    warning.innerHTML = message ? '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(message) : "";
+  }
+
+  function getCodeSafe() {
+    if (typeof getCode !== "function") return starterCode;
+    try {
+      return getCode();
+    } catch (err) {
+      return starterCode;
+    }
+  }
+
+  function extractOpModeBody(code) {
+    const opModeMatch = /\bclass\s+([A-Za-z_$][\w$]*)\s+extends\s+OpMode\b/.exec(code);
+    if (opModeMatch) return extractClassBody(code, opModeMatch[1]);
+    return extractClassBody(code, "RobotComposition");
+  }
+
+  function extractMethodBody(scope, name) {
+    if (!scope) return "";
+    const re = new RegExp("\\b(?:public\\s+|private\\s+|protected\\s+)?(?:void|boolean|double|int|String)\\s+" + name + "\\s*\\([^)]*\\)\\s*\\{");
+    const match = re.exec(scope);
+    if (!match) return "";
+    let index = match.index + match[0].length;
+    let depth = 1;
+    for (; index < scope.length; index++) {
+      if (scope[index] === "{") depth++;
+      if (scope[index] === "}") {
+        depth--;
+        if (depth === 0) return scope.slice(match.index + match[0].length, index);
+      }
+    }
+    return "";
+  }
+
+  function extractClassBody(code, name) {
+    const re = new RegExp("\\bclass\\s+" + name + "\\b[^{]*\\{");
+    const match = re.exec(code);
+    if (!match) return "";
+    let index = match.index + match[0].length;
+    let depth = 1;
+    for (; index < code.length; index++) {
+      if (code[index] === "{") depth++;
+      if (code[index] === "}") {
+        depth--;
+        if (depth === 0) return code.slice(match.index + match[0].length, index);
+      }
+    }
+    return "";
+  }
+
+  function methodExists(scope, name) {
+    return !!extractMethodBody(scope, name);
+  }
+
+  function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, function (ch) {
+      return {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[ch];
+    });
+  }
+
+  function showStudentError(message) {
+    if (typeof _simShowTelemetryError === "function") {
+      _simShowTelemetryError(message);
+    } else {
+      addTelemetry("ERROR", message);
+      updateTelemetry();
+    }
+  }
+
+  function failStudentExecution(message) {
+    if (typeof stopExecution === "function") stopExecution();
+    showStudentError(message);
+  }
+};
+</script>
+</body>
+</html>

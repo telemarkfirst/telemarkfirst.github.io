@@ -1,0 +1,128 @@
+---
+id: variables-and-equations
+title: "Lesson 5.8: Variables, Expressions, and Equations"
+sidebar_label: "5.8 · Variables"
+sidebar_position: 8
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 5.8: Variables, Expressions, and Equations
+
+---
+
+## Technical Context
+
+An isolated dimension records a value but not the relationship that produced it. The model also has no way to know which other dimensions should change with that value.
+
+Variables and equations record those relationships so one intentional change can update the dependent geometry.
+
+---
+
+## Variables
+
+A **variable** is a named value defined once and used everywhere.
+
+Instead of typing 3.2 into eleven holes, define `#clearanceM3 = 3.2 mm` and use `#clearanceM3` in all eleven. When you discover the printer runs tight and you need 3.4, you change one line.
+
+Name variables for what they mean, not what they equal. `#plateThickness` survives a change from 3 mm to 4 mm. `#three_mm` becomes a lie.
+
+The variables worth defining in nearly every FTC part:
+
+| Variable | Why |
+| --- | --- |
+| `#plateThickness` | Appears in extrudes, ribs, fillets, and every mating part |
+| `#clearanceM3` | Every clearance hole, changed in one place when tolerance shifts |
+| `#railPitch` | 15 mm on 15 mm extrusion; drives every pattern spacing |
+| `#motorBoltCircle` | Vendor-defined; a variable stops it being remembered wrongly |
+
+---
+
+## Expressions
+
+An **expression** is a calculation in a dimension field rather than a typed result.
+
+Onshape evaluates arithmetic wherever a number is accepted, so `#plateThickness * 2` is a valid entry. This matters because the expression records the *relationship*. A pocket depth entered as `#plateThickness - 1 mm` stays 1 mm from breaking through when the plate changes thickness. Entered as `2 mm`, it breaks through the moment the plate becomes 2 mm.
+
+Units are part of the value. `#railPitch` is `15 mm`, not `15`. Onshape will refuse to add a length to a bare number, which is a feature, not an obstacle: it is catching the unit error before the part is made.
+
+:::tip Type the reason, not the answer
+If you find yourself doing arithmetic on paper before typing a dimension, type the arithmetic instead. The number is the same today and it stays correct tomorrow.
+:::
+
+---
+
+## Equations Between Dimensions
+
+An **equation** links dimensions so one drives another. This is where a model starts encoding design rules rather than a single design.
+
+Useful relationships in FTC:
+
+- Hole edge distance `= #holeDiameter * 1.5`, so holes never end up too close to an edge to hold
+- Rib thickness `= #wallThickness * 0.6`, a standard ratio that avoids sink and keeps the rib printable
+- Pattern instance count `= floor(#railLength / #railPitch)`, so the hole count follows the length automatically
+
+The last one is worth dwelling on. A rail that gets 60 mm longer should gain four holes. With an equation it does. With a typed count of 12 it does not, and nobody notices until the rail is cut.
+
+---
+
+## A Worked Example
+
+A gearbox plate, driven properly:
+
+```text
+#plateThickness  = 3 mm
+#clearanceM3     = 3.4 mm
+#boltCircle      = 31 mm          // vendor spec for the motor face
+#edgeMargin      = #clearanceM3 * 1.5
+```
+
+- The plate extrudes `#plateThickness` symmetric about the mid-plane
+- The motor bolt holes are a circular pattern on `#boltCircle`
+- The holes are hole features of `#clearanceM3`
+- The plate outline is `#boltCircle / 2 + #edgeMargin` from the centre
+
+Change the motor and you change `#boltCircle`. The pattern moves, the outline grows to keep the edge margin, and the plate is still correct. Nothing else is touched.
+
+:::warning A model with no variables is a drawing
+If changing one number requires visiting eleven features, the model has recorded a single design rather than the rule that produced it. That is fine for a part that will never change, and no FTC part never changes.
+:::
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. A named value defined once and reused throughout a model is a `__________`.
+2. Entering `#plateThickness - 1 mm` in a depth field rather than a typed number records the `__________` between the two dimensions.
+3. In Onshape a length variable must carry its `__________`, so `15 mm` rather than `15`.
+4. Making a pattern's instance count follow the length of a rail requires an `__________` rather than a typed count.
+
+<details>
+<summary>Show answers</summary>
+
+1. **variable**
+2. **relationship**
+3. **units**
+4. **equation**
+
+</details>
+
+---
+
+:::tip Practice
+Graded exercises with hard numbers and self-checks are in [CAD Practice Exercises](/mechanical/cad-practice).
+:::
+
+---
+
+## Exercise
+
+Take a plate you have already modelled and replace every typed number with a variable or an expression. You should end with three or four variables at the top and no bare numbers below them.
+
+Then change `#plateThickness` by 1 mm. Everything that should have moved should have moved, and nothing else.
+
+<MarkComplete
+  lessonId="module-05/variables-and-equations"
+  nextUnit="/mechanical/module-05/assemblies-and-mates"
+  nextUnitName="Lesson 5.9: Assemblies, Mates, and Checking Range of Motion"
+/>

@@ -1,0 +1,136 @@
+---
+id: set-direction
+title: "Lesson 8.2: Configure Mecanum Motor Direction and Wheel Mixing"
+sidebar_label: "8.2 · Mecanum Direction"
+sidebar_position: 2
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit8Simulator from '@site/src/components/Unit8Simulator';
+
+# Lesson 8.2: Configure Mecanum Motor Direction and Wheel Mixing
+
+---
+
+## Technical Context
+
+Most FTC teams use a four-motor mecanum drivetrain because it can drive forward, strafe sideways, and rotate without changing wheel modules. Mecanum is not a differential or tank drive: each wheel needs its own power calculated from forward, strafe, and rotate commands.
+
+The motors are still mounted in mirror-image orientations. Before applying mecanum math, use `setDirection(REVERSE)` in `init()` on the side that is physically opposed. The team CAD and simulator configuration in this lesson use reversed left-side motors. After that correction, positive power has one consistent physical meaning on all four wheels.
+
+---
+
+## When setDirection() Fixes the Real Problem
+
+The `setDirection()` method flips the **logical orientation** of a `DcMotor` object. By passing `DcMotorSimple.Direction.REVERSE`, all subsequent positive power commands and encoder tick counts are inverted by the SDK before the signal reaches the Control Hub port.
+
+This is technically superior to negating joystick values manually in `loop()` because:
+- It applies universally. Every `setPower()` call everywhere in the codebase behaves correctly without needing manual adjustment.
+- It also inverts the **encoder direction**, so `getCurrentPosition()` increments in the expected direction.
+- It documents intent. A teammate reading the code immediately understands the motor is physically reversed.
+
+The default direction for all motors is `DcMotorSimple.Direction.FORWARD`.
+
+Once motor direction is consistent, standard robot-centric mecanum mixing is:
+
+```text
+leftFront  = forward + strafe + rotate
+rightFront = forward - strafe - rotate
+leftBack   = forward - strafe + rotate
+rightBack  = forward + strafe - rotate
+```
+
+Dividing all four values by the largest magnitude, or by `1.0` when none exceeds it, preserves their ratio while keeping every command inside the legal motor range.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+
+@TeleOp(name="Direction_Demo")
+public class DirectionDemo extends OpMode {
+
+    private DcMotor leftFront, rightFront, leftBack, rightBack;
+
+    @Override
+    public void init() {
+        leftFront  = hardwareMap.get(DcMotor.class, "leftFront");
+        rightFront = hardwareMap.get(DcMotor.class, "rightFront");
+        leftBack   = hardwareMap.get(DcMotor.class, "leftBack");
+        rightBack  = hardwareMap.get(DcMotor.class, "rightBack");
+
+        // Match the physical mounting used by this robot and its CAD model.
+        leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        telemetry.addData("Status", "Mecanum drivetrain ready");
+    }
+
+    @Override
+    public void loop() {
+        double forward = -gamepad1.left_stick_y;
+        double strafe = gamepad1.left_stick_x;
+        double rotate = gamepad1.right_stick_x;
+
+        double fl = forward + strafe + rotate;
+        double fr = forward - strafe - rotate;
+        double bl = forward - strafe + rotate;
+        double br = forward + strafe - rotate;
+
+        double denominator = Math.max(
+            1.0,
+            Math.max(Math.abs(fl), Math.max(Math.abs(fr),
+                Math.max(Math.abs(bl), Math.abs(br))))
+        );
+
+        leftFront.setPower(fl / denominator);
+        rightFront.setPower(fr / denominator);
+        leftBack.setPower(bl / denominator);
+        rightBack.setPower(br / denominator);
+
+        telemetry.addData("Forward / Strafe / Rotate", "%.2f / %.2f / %.2f",
+            forward, strafe, rotate);
+        telemetry.update();
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Mecanum mixing calculates four separate wheel powers from forward, `__________`, and rotate commands.
+2. The `setDirection()` method is typically called during the `__________` phase of the OpMode lifecycle.
+3. Dividing all four powers by their largest magnitude preserves their `__________` while keeping every value within range.
+
+<details>
+<summary>Show answers</summary>
+
+1. **strafe**
+2. **`init()`**
+3. **ratio** (relative magnitude)
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Use the simulator below to practice fixing left-side motor direction on a mecanum drivetrain with lesson-specific starter code.
+
+<SimulatorRunGuide />
+
+<Unit8Simulator lesson="set-direction" />
+
+<MarkComplete
+  lessonId="unit-08/set-direction"
+  nextUnit="/docs/unit-08/zero-power-behavior"
+  nextUnitName="Lesson 8.3: Managing Backlash with ZeroPowerBehavior.BRAKE"
+/>

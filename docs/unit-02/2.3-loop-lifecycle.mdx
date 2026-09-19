@@ -1,0 +1,124 @@
+---
+id: loop-lifecycle
+title: "Lesson 2.3: Running Real-Time Robot Logic Inside loop()"
+sidebar_label: "2.3 · loop() Lifecycle"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit2Simulator from '@site/src/components/Unit2Simulator';
+import {LifecycleDiagram} from '@site/src/components/DocDiagrams';
+
+# Lesson 2.3: Running Real-Time Robot Logic Inside loop()
+
+---
+
+## Technical Context
+
+The `loop()` method controls the robot's performance during the match. Because it runs at a high frequency (approximately **50 times per second**), it allows for smooth movement and rapid sensor polling. Efficiency in this method is critical, any "blocking" code (like a sleep command) will freeze the robot and could cause a communication timeout with the Driver Station.
+
+---
+
+## The loop() Lifecycle
+
+In an `OpMode`, the `loop()` method is executed repeatedly after the driver presses the "Play" button and until they press "Stop". It usually follows a **sensing → thinking → acting** cycle: it reads the latest values from the Gamepads or sensors, calculates the necessary power adjustments, and commands the Control Hub's motor controllers to update voltage outputs.
+
+Since `loop()` is non-blocking, it is ideal for TeleOp where driver inputs are changing in real-time.
+
+<LifecycleDiagram />
+
+:::info Official reference
+Use the FTC SDK Javadocs when you want to confirm the exact method names and inheritance chain for OpModes: [FTC RobotCore Javadocs](https://javadoc.io/doc/org.firstinspires.ftc/RobotCore/latest/index.html).
+:::
+
+:::tip Mentor note: debugging lifecycle bugs
+If telemetry says the OpMode is "Initialized" but robot controls do nothing, ask which lifecycle method owns the code. Hardware mapping belongs in `init()`, live driver logic belongs in `loop()`, and one-time cleanup belongs in `stop()`.
+:::
+
+:::warning Do not make match autonomous depend on gamepad input
+The SDK exposes gamepad objects to either OpMode style, but an Autonomous routine is expected to run from its programmed logic after Start. Use sensors, timers, and state transitions for match autonomous behavior rather than requiring driver input.
+:::
+
+---
+
+## Annotated Code
+
+```java
+@TeleOp(name="Loop_Demo")
+public class LoopDemo extends OpMode {
+
+    @Override
+    public void init() {
+        telemetry.addData("Status", "Ready to Play");
+    }
+
+    @Override
+    public void loop() {
+        // This logic runs ~50x a second to check for driver input
+        double drivePower = -gamepad1.left_stick_y;
+
+        // Streaming hardware data back to the DS for real-time monitoring
+        telemetry.addData("Motor Command", drivePower);
+        telemetry.addData("Cycle Time", getRuntime());
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The `loop()` method runs repeatedly at a frequency of approximately `__________` times per second.
+2. If you put a long delay inside `loop()`, you risk losing connection to the `__________` Station.
+3. The robot stops executing the `loop()` method once the driver presses the `__________` button.
+
+<details>
+<summary>Show answers</summary>
+
+1. **50**
+2. **Driver** Station
+3. **Stop**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+You need to create a simple diagnostic that shows the status of the "A" button on `gamepad1` during the entire match.
+
+<SimulatorRunGuide />
+
+<Unit2Simulator lesson="loop-lifecycle" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+@Override
+public void loop() {
+    telemetry.addData("Button A", gamepad1.a);
+    telemetry.update();
+}
+```
+
+</details>
+
+## A Team Loop Keeps Coordination Short
+
+Titan Robotics Club's TeleOp passes driver input to its robot layer during each periodic call. Here is that pattern renamed to match this lesson:
+
+```java
+public void loop() {
+    robot.driveWith(gamepad1);
+    robot.updateStatus();
+}
+```
+
+The framework callback and dashboard details were removed. The two remaining calls show the lesson's point: read controls and update the robot once per loop. Adapted from [Team 3543 Titan Robotics Club's `FtcTeleOp.java` at a pinned commit](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/TeamCode/src/main/java/teamcode/FtcTeleOp.java) under the [MIT License](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/LICENSE).
+
+<MarkComplete
+  lessonId="unit-02/loop-lifecycle"
+  nextUnit="/docs/unit-02/start-and-stop"
+  nextUnitName="Lesson 2.4: Utilizing start() and stop() for One-time Hardware Transitions"
+/>

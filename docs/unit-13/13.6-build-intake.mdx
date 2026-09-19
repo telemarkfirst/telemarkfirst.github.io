@@ -1,0 +1,122 @@
+---
+id: build-intake
+title: "Lesson 13.6: Build RobotConfig.java and Intake.java"
+sidebar_label: "13.6 · Build Intake"
+sidebar_position: 6
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 13.6: Build `RobotConfig.java` and `Intake.java`
+
+The first five lessons gave you the design rules. You will now use them to build a project that survives beyond one OpMode.
+
+Start with two files. `RobotConfig.java` owns shared configuration. `Intake.java` owns the intake hardware and behavior.
+
+## `RobotConfig.java`
+
+<AnnotatedCode
+  title="RobotConfig.java"
+  java={String.raw`package org.firstinspires.ftc.teamcode;
+
+public final class RobotConfig {
+    public static final String INTAKE_NAME = "intake";
+    public static final String LIFT_NAME = "lift";
+    public static final double INTAKE_POWER = 0.8;
+    public static final int LIFT_SCORE_TICKS = 1200;
+    public static final double LIFT_POWER = 0.75;
+
+    private RobotConfig() {}
+}`}
+  python={String.raw`class RobotConfig:
+    INTAKE_NAME = "intake"
+    LIFT_NAME = "lift"
+    INTAKE_POWER = 0.8
+    LIFT_SCORE_TICKS = 1200
+    LIFT_POWER = 0.75`}
+/>
+
+The private constructor prevents accidental `new RobotConfig()` calls. The program reads these values through the class name.
+
+## `Intake.java`
+
+<AnnotatedCode
+  title="Intake.java"
+  java={String.raw`package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+
+public class Intake {
+    private CRServo motor;
+
+    public void init(HardwareMap hardwareMap) {
+        motor = hardwareMap.get(
+            CRServo.class, RobotConfig.INTAKE_NAME);
+        stop();
+    }
+
+    public void collect() {
+        motor.setPower(RobotConfig.INTAKE_POWER);
+    }
+
+    public void eject() {
+        motor.setPower(-RobotConfig.INTAKE_POWER);
+    }
+
+    public void stop() {
+        motor.setPower(0.0);
+    }
+}`}
+  python={String.raw`class Intake:
+    def __init__(self):
+        self.motor = None
+
+    def initialize(self, hardware):
+        self.motor = hardware[RobotConfig.INTAKE_NAME]
+        self.stop()
+
+    def collect(self):
+        self.motor.set_power(RobotConfig.INTAKE_POWER)
+
+    def eject(self):
+        self.motor.set_power(-RobotConfig.INTAKE_POWER)
+
+    def stop(self):
+        self.motor.set_power(0.0)`}
+/>
+
+The Python view shows the class structure only. FTC does not provide this Python hardware API.
+
+The OpMode will not touch the `CRServo` field. It will state intent by calling `collect()`, `eject()`, or `stop()`.
+
+## A Competition Team Uses the Same Boundary
+
+Titan Robotics Club's subsystem guide constructs a slide in its own class, stores configuration in `RobotParams`, and exposes the finished motor to the robot layer. This lesson uses the same boundary with direct FTC SDK types:
+
+```java
+public class Lift {
+    private final TrcMotor liftMotor;
+
+    public Lift() {
+        liftMotor = new FtcMotorActuator(
+            RobotParams.HWNAME_LIFT,
+            liftParameters
+        ).getActuator();
+    }
+}
+```
+
+The names and omitted setup were shortened to match this lesson. The ownership pattern is unchanged: the mechanism class creates its hardware from centralized configuration. Adapted from [Team 3543 Titan Robotics Club's subsystem guide at a pinned commit](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/README.md) under the [MIT License](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/LICENSE).
+
+## Project Practice
+
+Complete the intake methods in the project below. Every tab is a separate file in the same TeamCode package.
+
+<Unit13BuildSimulator lesson="intake" />
+
+<MarkComplete
+  lessonId="unit-13/build-intake"
+  nextUnit="/docs/unit-13/build-lift"
+  nextUnitName="Lesson 13.7: Build MotorMechanism.java and Lift.java"
+/>

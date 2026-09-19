@@ -1,0 +1,105 @@
+---
+id: coast-vs-stop
+title: "Lesson 8.4: Choosing Between Coasting and Stopping with setPower(0.0)"
+sidebar_label: "8.4 · Coast vs. Stop"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit8Simulator from '@site/src/components/Unit8Simulator';
+
+# Lesson 8.4: Choosing Between Coasting and Stopping with setPower(0.0)
+
+---
+
+## Technical Context
+
+Precision in autonomous and TeleOp benefits from **predictable stops**. If a programmer relies on mechanical friction alone to stop a robot, the stopping distance can vary with field tile material, mechanism load, and the robot's speed when power is cut. Using `setPower(0.0)` with an intentional `ZeroPowerBehavior` makes the response more repeatable, but it does not eliminate mechanical variation.
+
+---
+
+## How Zero Power Changes the Way a Mechanism Settles
+
+`setPower(0.0)` is a deliberate command that tells the Control Hub to cease applying voltage to the motor port. Its physical effect is entirely determined by the `ZeroPowerBehavior` established in Lesson 8.3:
+
+| `ZeroPowerBehavior` | Effect of `setPower(0.0)` |
+|---|---|
+| `FLOAT` (default) | Motor terminals disconnected, so the robot coasts to a stop via friction |
+| `BRAKE` | Motor terminals electrically brake rotation, so the mechanism usually decelerates faster; this is not active position holding |
+
+In a high-speed drivetrain, switching to `0.0` power with `FLOAT` behavior can let the robot travel beyond its target. `BRAKE` often reduces that coast distance, although the result still depends on mass, speed, traction, gearing, and motor-controller behavior.
+
+A common pattern is to set `BRAKE` on drive motors in `init()`, then send `setPower(0.0)` at the end of an autonomous step. Closed-loop position or velocity control is needed when the robot must settle to a measured target rather than merely resist coasting.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.hardware.DcMotor;
+
+@Autonomous(name="Coast_vs_Stop_Demo")
+public class CoastVsStopDemo extends LinearOpMode {
+
+    private DcMotor driveMotor;
+
+    @Override
+    public void runOpMode() {
+        driveMotor = hardwareMap.get(DcMotor.class, "drive");
+
+        // BRAKE resists coasting after setPower(0.0); it is not position hold.
+        driveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        waitForStart();
+
+        // Drive forward for 2 seconds
+        driveMotor.setPower(0.6);
+        sleep(2000);
+
+        // Command zero power; BRAKE resists continued rotation.
+        driveMotor.setPower(0.0);
+
+        telemetry.addData("Status", "Stopped at target position");
+        telemetry.update();
+
+        sleep(1000); // Hold stopped state briefly for visibility
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Sending a power value of `__________` is the standard way to stop a motor in the SDK.
+2. Relying on `__________` alone to stop a robot is inconsistent because it varies with the battery voltage and field surface material.
+3. To stop a motor currently running at full reverse speed, you would change its power from `-1.0` to `__________`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`0.0`**
+2. **mechanical friction** (or coasting / `FLOAT` behavior)
+3. **`0.0`**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Use the simulator below to practice an emergency stop that combines `BRAKE` mode with an immediate `setPower(0.0)` cut.
+
+<SimulatorRunGuide />
+
+<Unit8Simulator lesson="coast-vs-stop" />
+
+<MarkComplete
+  lessonId="unit-08/coast-vs-stop"
+  nextUnit="/docs/unit-08/linear-slide-challenge"
+  nextUnitName="Lesson 8.5: Build a Two-Way Linear Slide with Software Limits"
+/>

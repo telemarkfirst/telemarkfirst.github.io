@@ -1,0 +1,130 @@
+---
+id: potentiometer
+title: "Lesson 11.2: Scaling Analog Voltage from Potentiometers using Range.scale"
+sidebar_label: "11.2 · Potentiometer"
+sidebar_position: 2
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit11Simulator from '@site/src/components/Unit11Simulator';
+
+# Lesson 11.2: Scaling Analog Voltage from Potentiometers using Range.scale
+
+---
+
+## Why Potentiometers Have an Advantage Over Encoders for Certain Mechanisms
+
+An encoder counts rotation relative to where it was the last time it was reset. If the robot powers off with an arm partially extended, the encoder resets to zero at the next power-on and the code no longer knows where the arm actually is. Before any controlled movement can happen, the robot must perform a "homing" sequence, driving the arm to a known physical stop to re-establish a reference point.
+
+A potentiometer bypasses this problem entirely. It is a variable resistor whose electrical resistance changes as the output shaft rotates. The Control Hub converts that resistance into a measurable voltage, and because the voltage is a direct function of the physical angle, the sensor reports the correct position the instant the robot turns on, with no homing required. For mechanisms like an arm that could be in any position when the drive team picks the robot up between matches, this reliability is highly valuable.
+
+---
+
+## From Voltage to Engineering Units
+
+The `AnalogInput` class in the SDK reads the current voltage on the port and returns it as a `double` from `getVoltage()`. The maximum voltage the port can measure is available through `getMaxVoltage()`. On the REV Control Hub, this is typically 3.3V, though using the method instead of a hardcoded constant ensures your code works correctly on any Hub revision.
+
+Raw voltage alone is not useful for writing control logic like "stop the arm if it exceeds 90 degrees." You need to translate the voltage into meaningful engineering units. The SDK provides a static utility method for exactly this purpose: `Range.scale(input, minInput, maxInput, minOutput, maxOutput)`.
+
+For a 270-degree potentiometer, the call looks like this:
+
+```java
+double angle = Range.scale(armPot.getVoltage(), 0, armPot.getMaxVoltage(), 0, 270);
+```
+
+This maps the raw voltage proportionally onto the 0-to-270 degree range. When the voltage is at zero, the angle reads 0. When the voltage is at the maximum, the angle reads 270. Every voltage in between maps linearly to the corresponding degree value.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.AnalogInput;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.util.Range;
+
+@TeleOp(name="Potentiometer_Demo")
+public class PotentiometerDemo extends OpMode {
+
+    private AnalogInput armPot;
+    private DcMotor     armMotor;
+
+    // Physical travel of this particular potentiometer in degrees
+    private static final double POT_MAX_DEGREES = 270.0;
+
+    // Software safe-zone limits in degrees
+    private static final double MIN_SAFE_ANGLE  = 10.0;
+    private static final double MAX_SAFE_ANGLE  = 200.0;
+
+    @Override
+    public void init() {
+        // Analog sensors are functional immediately upon mapping. No mode call is needed.
+        armPot   = hardwareMap.get(AnalogInput.class, "arm_pot");
+        armMotor = hardwareMap.get(DcMotor.class,     "arm_motor");
+        armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        telemetry.addData("Status", "Potentiometer ready");
+    }
+
+    @Override
+    public void loop() {
+        // Convert raw voltage to degrees using the SDK's Range utility
+        double armAngle = Range.scale(
+            armPot.getVoltage(), 0, armPot.getMaxVoltage(), 0, POT_MAX_DEGREES
+        );
+
+        double power = -gamepad1.left_stick_y;
+
+        // Block movement that would drive the arm outside the safe zone
+        if (armAngle >= MAX_SAFE_ANGLE && power > 0) {
+            power = 0.0;
+            telemetry.addData("Safety", "MAX ANGLE REACHED");
+        } else if (armAngle <= MIN_SAFE_ANGLE && power < 0) {
+            power = 0.0;
+            telemetry.addData("Safety", "MIN ANGLE REACHED");
+        }
+
+        armMotor.setPower(power);
+        telemetry.addData("Arm Angle (deg)", "%.1f", armAngle);
+        telemetry.addData("Raw Voltage",     "%.3f V", armPot.getVoltage());
+        telemetry.update();
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The method used to retrieve the current voltage from an analog sensor is `pot.__________()`.
+2. The maximum voltage of a Control Hub analog port, retrieved without hardcoding a constant, is found by calling `pot.__________()`.
+3. To map an input value from one numeric range to another, the SDK provides the static utility method `Range.__________()`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`getVoltage()`**
+2. **`getMaxVoltage()`**
+3. **`scale()`**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Use the simulator below to complete the wrist potentiometer safety check. The editor starts with incomplete starter code, so fill in the voltage-to-angle conversion and `isSafe()` logic before testing the wrist movement.
+
+<SimulatorRunGuide />
+
+<Unit11Simulator lesson="potentiometer" />
+
+<MarkComplete
+  lessonId="unit-11/potentiometer"
+  nextUnit="/docs/unit-11/color-sensor"
+  nextUnitName="Lesson 11.3: Sampling Alliance Colors with the REV Color Sensor"
+/>

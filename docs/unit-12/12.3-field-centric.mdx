@@ -1,0 +1,175 @@
+---
+id: field-centric
+title: "Lesson 12.3: Normalizing Angular Values for Field-Centric Driving"
+sidebar_label: "12.3 · Field-Centric Drive"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit12Simulator from '@site/src/components/Unit12Simulator';
+
+# Lesson 12.3: Normalizing Angular Values for Field-Centric Driving
+
+---
+
+## The Problem with Robot-Centric Control
+
+In a standard robot-centric drive scheme, pushing the left joystick forward always drives the robot toward whatever direction the front of the robot is facing at that moment. If the robot has spun 90 degrees during a defensive maneuver, pushing "forward" on the joystick now drives the robot sideways from the driver's point of view. The driver must mentally account for the robot's rotation and compensate with stick inputs to achieve the intended field direction. Under match pressure, this mental overhead causes errors.
+
+Field-centric control can reduce this burden. With a correctly initialized heading and coordinate convention, pushing the joystick forward commands motion in a consistent field direction even as the robot turns. The code compensates for the measured robot rotation before calculating motor commands.
+
+---
+
+## The Vector Rotation Calculation
+
+Field-centric control works by rotating the driver's joystick input vector by the robot's current heading angle. If the robot is facing 90 degrees to the right, a "forward" joystick input needs to be rotated 90 degrees to produce a motion command that is actually field-forward.
+
+The calculation uses two standard trigonometric functions from `java.lang.Math`:
+
+- `Math.atan2(y, x)` converts a Cartesian (x, y) coordinate into a polar angle (theta).
+- `Math.hypot(x, y)` computes the magnitude (length) of the vector.
+
+The robot's current heading in radians is subtracted from the joystick's polar angle. This difference, `correctedTheta`, represents the direction the robot should actually move to achieve the driver's intended field direction. The corrected angle is then converted back to Cartesian coordinates to produce the final motor commands.
+
+---
+
+## Angle Wraparound and `AngleUnit.normalizeRadians()`
+
+Subtracting the robot's heading from the joystick angle can produce a result outside the -π to π range. For example, `2.8 - (-2.8)` is `5.6` radians. That value is **not** a problem for `Math.sin()` or `Math.cos()`: both functions are periodic, so adding or subtracting a whole turn produces the same Cartesian vector.
+
+The SDK's `AngleUnit.normalizeRadians(angle)` wraps any radian value into a canonical range around -π to π. Normalization is useful for readable telemetry, comparisons, interpolation, and shortest-path heading error calculations. The example below normalizes for clarity, but the trigonometric conversion would produce the same motor vector without that step.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+
+@TeleOp(name="Field_Centric_Demo")
+public class FieldCentricDemo extends OpMode {
+
+    private DcMotor leftFront, rightFront, leftBack, rightBack;
+    private IMU     imu;
+
+    @Override
+    public void init() {
+        leftFront  = hardwareMap.get(DcMotor.class, "left_front");
+        rightFront = hardwareMap.get(DcMotor.class, "right_front");
+        leftBack   = hardwareMap.get(DcMotor.class, "left_back");
+        rightBack  = hardwareMap.get(DcMotor.class, "right_back");
+
+        rightFront.setDirection(DcMotor.Direction.REVERSE);
+        rightBack.setDirection(DcMotor.Direction.REVERSE);
+
+        imu = hardwareMap.get(IMU.class, "imu");
+        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
+            RevHubOrientationOnRobot.LogoFacingDirection.UP,
+            RevHubOrientationOnRobot.UsbFacingDirection.FORWARD
+        )));
+    }
+
+    @Override
+    public void loop() {
+        double forward = -gamepad1.left_stick_y;
+        double strafe  =  gamepad1.left_stick_x;
+        double rotate  =  gamepad1.right_stick_x;
+
+        // Get the robot's current heading in radians for the rotation calculation
+        double robotHeading = imu.getRobotYawPitchRollAngles()
+                                 .getYaw(AngleUnit.RADIANS);
+
+        // Convert the joystick Cartesian coordinates to a polar angle and magnitude
+        double joystickAngle = Math.atan2(forward, strafe);
+        double magnitude     = Math.hypot(strafe, forward);
+
+        // Normalize to a canonical angle; sin/cos would also accept the raw difference
+        double correctedAngle = AngleUnit.normalizeRadians(joystickAngle - robotHeading);
+
+        // Convert the corrected polar angle back to Cartesian for motor math
+        double correctedStrafe  = Math.cos(correctedAngle) * magnitude;
+        double correctedForward = Math.sin(correctedAngle) * magnitude;
+
+        // Standard mecanum wheel mixing formula
+        double lf = correctedForward + correctedStrafe + rotate;
+        double rf = correctedForward - correctedStrafe - rotate;
+        double lb = correctedForward - correctedStrafe + rotate;
+        double rb = correctedForward + correctedStrafe - rotate;
+
+        // Normalize if any value exceeds 1.0
+        double max = Math.max(1.0, Math.max(Math.abs(lf),
+                     Math.max(Math.abs(rf), Math.max(Math.abs(lb), Math.abs(rb)))));
+
+        leftFront.setPower(lf  / max);
+        rightFront.setPower(rf / max);
+        leftBack.setPower(lb   / max);
+        rightBack.setPower(rb  / max);
+
+        telemetry.addData("Heading (deg)", "%.1f",
+            imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+        telemetry.update();
+    }
+}
+```
+
+## The Same Rotation in BunyipsLib
+
+BunyipsLib represents heading and velocity with Road Runner geometry types, but the transformation is the same inverse-heading rotation developed above:
+
+```java
+protected PoseVelocity2d applyOrientation(PoseVelocity2d robotFrameVel) {
+    if (fieldCentricEnabled.getAsBoolean()) {
+        Pose2d currentPose = Objects.requireNonNull(
+            drive.getPose(),
+            "A heading localizer must be attached to the drive instance " +
+            "to allow for Field-Centric driving!"
+        );
+        return currentPose.heading.inverse()
+            .times(fcOffset)
+            .times(robotFrameVel);
+    }
+    return robotFrameVel;
+}
+```
+
+`heading.inverse()` rotates the requested field-frame velocity into the robot frame. `fcOffset` provides a driver-selected zero direction. Excerpted from [BunyipsLib's `FieldOrientableDriveTask.java` at a pinned commit](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/src/main/java/au/edu/sa/mbhs/studentrobotics/bunyipslib/tasks/FieldOrientableDriveTask.java) under the [MIT License](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/LICENSE).
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The SDK utility method that wraps a radian value into the -π to π range is `AngleUnit.__________()`.
+2. To compute the polar magnitude of a joystick input vector, use the Java math method `Math.__________(x, y)`.
+3. In field-centric control, the robot's current heading is `__________` from the joystick's polar angle before the corrected motor commands are calculated.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`normalizeRadians`**
+2. **`hypot`**
+3. **subtracted**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Use the simulator below to complete the field-relative strafe helper. The editor starts with incomplete starter code, so fill in the vector-rotation math and compare the live output against the test cases.
+
+<SimulatorRunGuide />
+
+<Unit12Simulator lesson="field-centric" />
+
+<MarkComplete
+  lessonId="unit-12/field-centric"
+  nextUnit="/docs/unit-12/pitch-roll"
+  nextUnitName="Lesson 12.4: Monitoring Pitch and Roll for Robot Tip Detection"
+/>

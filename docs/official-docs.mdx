@@ -1,0 +1,92 @@
+---
+id: official-docs
+title: "Official FTC Documentation"
+sidebar_label: "Official Docs"
+sidebar_position: -0.4
+slug: /official-docs
+---
+
+# Official FTC Documentation
+
+Telemark teaches practice. It is not the rules, and it is not the vendor
+documentation. Both change between seasons, and an inspector, a referee, and a
+support engineer all work from the official source rather than from us.
+
+This page is the shortcut to those sources. When a decision touches legality,
+sizing, the control system, or a specific part, read the primary document.
+
+:::warning Season matters
+Every rule document is season specific. A manual, checklist, or forum answer
+from a previous season may no longer apply. Check the season and revision date
+before relying on it.
+:::
+
+## Rules and the game
+
+| Source | Use it for |
+| --- | --- |
+| [Game and Season Info](https://www.firstinspires.org/resource-library/ftc/game-and-season-info) | Game manuals, team updates, field drawings, and the season's official documents |
+| [Game Manual Part 1](https://www.firstinspires.org/resource-library/ftc/game-and-season-info) | Competition structure, awards, conduct, and event rules |
+| [Game Manual Part 2](https://www.firstinspires.org/resource-library/ftc/game-and-season-info) | Robot rules, the size envelope, legal parts, and inspection |
+| [Robot Inspection Checklist](https://www.firstinspires.org/resource-library/ftc/game-and-season-info) | The exact list an inspector works through at your event |
+| [Q and A System](https://ftc-qa.firstinspires.org/) | Binding official answers on rule interpretation |
+
+FIRST publishes Team Updates throughout the season. They can change scoring or
+affect whether a strategy is legal. Assign someone to read each update when it
+appears and report any change that affects the robot.
+
+## Control system and electronics
+
+| Source | Use it for |
+| --- | --- |
+| [REV DUO Control System](https://docs.revrobotics.com/duo-control) | Control Hub and Expansion Hub wiring, ports, firmware, and troubleshooting |
+| [REV Robotics documentation](https://docs.revrobotics.com/) | Motors, servos, sensors, and build system reference |
+| [goBILDA documentation](https://www.gobilda.com/) | Part dimensions, motor specifications, and hole patterns |
+| [Limelight FTC guide](https://docs.limelightvision.io/docs/docs-limelight/apis/ftc-programming) | Vision pipeline setup and the FTC API |
+
+Motor specifications matter more than any other vendor number on this page.
+Free speed, stall torque, and stall current drive every calculation in
+[Module 6](/mechanical/module-06/motor-curves), and they are revised between
+production runs. Read them off the page for the exact part number you ordered.
+
+## Software
+
+| Source | Use it for |
+| --- | --- |
+| [FTC SDK on GitHub](https://github.com/FIRST-Tech-Challenge/FtcRobotController) | The SDK itself, release notes, and sample OpModes |
+| [RobotCore Javadocs](https://javadoc.io/doc/org.firstinspires.ftc/RobotCore/latest/index.html) | The API reference for every SDK class |
+| [FTC Docs](https://ftc-docs.firstinspires.org/) | Official guides for the control system and programming |
+| [Pedro Pathing](https://pedropathing.com/docs/pathing) | Path following, tuning, and follower configuration |
+
+Use the sample OpModes included with the SDK when you need a working reference.
+They are maintained with the SDK and updated as its APIs change.
+
+## Community references
+
+These are not official. They are good, and they are wrong sometimes.
+
+| Source | Use it for |
+| --- | --- |
+| [Game Manual 0](https://gm0.org/) | Community written guides on design, build, and programming |
+| [FTC Discord and forums](https://ftc-community.firstinspires.org/) | Asking questions and reading how other teams solved something |
+
+:::tip How to use a community source
+Use community guides to understand an approach. Confirm rule-dependent claims
+against the current manual and part specifications against the vendor's current
+documentation before you build around them.
+:::
+
+## What to check before an event
+
+1. The current Game Manual Part 2 sections on the size envelope and legal parts.
+2. Every Team Update released so far this season.
+3. The official inspection checklist, run on your own robot twice, as in
+   [Module 11.3](/mechanical/module-11/inspection-checklist).
+4. The REV documentation for any control system component you replaced.
+
+## Citing sources in your notebook
+
+When a design decision follows from a rule or a specification, write down
+which document and which section. Judges ask where a number came from, and
+"the manual" is a weaker answer than a rule number. It also gives the team a
+source to check when members remember a rule differently later in the season.

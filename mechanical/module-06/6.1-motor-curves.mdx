@@ -1,0 +1,134 @@
+---
+id: motor-curves
+title: "Lesson 6.1: Reading Motor Curves, Free Speed, and Stall Torque"
+sidebar_label: "6.1 · Motor Curves"
+sidebar_position: 1
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import LessonTool from '@site/src/components/mechanical/LessonTool';
+import MotorCurveExplorer from '@site/src/components/mechanical/MotorCurveExplorer';
+
+# Lesson 6.1: Reading Motor Curves, Free Speed, and Stall Torque
+
+---
+
+## Technical Context
+
+A motor specification lists free speed and stall torque, but neither value describes normal operation. A mechanism under load runs below free speed and above zero torque.
+
+Estimate the motor's operating point under the expected load before using its speed to predict a cycle time.
+
+---
+
+## The Two Endpoints
+
+A brushed DC motor at a fixed voltage behaves, to a good approximation, like a straight line between two extremes.
+
+**Free speed** is the speed with no load at all. Torque output is zero, current draw is small, and no useful work is being done.
+
+**Stall torque** is the torque at zero speed, when the motor cannot turn. Torque is at maximum, current is at maximum, and no useful work is being done here either, because power is torque times speed and the speed is zero.
+
+Everything useful happens between them, on the line connecting the two:
+
+```text
+torque(speed) = stall_torque * (1 - speed / free_speed)
+```
+
+---
+
+## Where the Power Is
+
+Mechanical power is torque times angular speed. Multiply the linear torque-speed relationship by speed and you get a parabola that peaks exactly in the middle:
+
+```text
+peak power occurs at   speed = free_speed / 2
+                       torque = stall_torque / 2
+
+peak power = stall_torque * free_speed / 4    (with speed in rad/s)
+```
+
+This is a useful design anchor. A mechanism designed to operate near half of free speed is extracting close to the maximum work per second the motor can deliver.
+
+:::tip Design for the loaded speed, not the free speed
+If a mechanism must lift a load requiring half the available stall torque, it will run at roughly half of free speed. Cycle time calculations based on free speed will be about twice as optimistic as reality.
+:::
+
+---
+
+## Current and Heat
+
+Current tracks torque almost linearly:
+
+```text
+current(torque) = free_current + (stall_current - free_current) * (torque / stall_torque)
+```
+
+Two consequences matter on a robot.
+
+**Stall current is large.** A motor held against a hard stop draws its full stall current continuously, produces no motion, and converts all of that electrical power into heat. Motors fail this way, and so do batteries, which sag under the load and can brown out the Control Hub.
+
+**Sustained operation near stall cooks motors.** The published stall torque is an instantaneous rating, not a continuous one. A general working rule for FTC design is to keep steady-state operation under about half of stall torque, and to treat anything past roughly 60% as a design that needs revisiting.
+
+:::warning Battery voltage moves both endpoints
+Published values assume a nominal 12 V. A battery at 11.5 V under load produces lower free speed and lower stall torque proportionally. Late in a tournament day, a mechanism sized with no margin stops working, and the cause looks intermittent because it depends on which battery is in the robot.
+:::
+
+---
+
+## Gearboxes Move the Endpoints
+
+A reduction of ratio R divides speed by R and multiplies torque by R, minus efficiency losses:
+
+```text
+output_free_speed  = motor_free_speed / R
+output_stall_torque = motor_stall_torque * R * efficiency
+```
+
+The shape of the curve does not change; the axes rescale. This is the whole business of power transmission, and Lesson 6.2 covers how to compute R.
+
+Note that vendors often publish the **output** ratings of a geared motor directly, with gearbox efficiency already included. When you use those numbers, set the external reduction to 1 unless you are adding gears or belts after the gearbox.
+
+---
+
+## Try It
+
+Set a load torque and watch where the motor actually runs, what it draws, and how close it is to stalling.
+
+<LessonTool
+  toolId="motor-curve"
+  bring="The free speed, stall torque, and stall current from the vendor page for your exact part number."
+  change="The load torque, and watch the operating point walk down the line."
+  read="Loaded speed and current. Past 60% of stall torque the motor is slow and hot."
+>
+  <MotorCurveExplorer />
+</LessonTool>
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Peak mechanical power occurs at half of free speed and half of `__________` torque.
+2. A motor held against a hard stop draws its full `__________` current and converts that power entirely into heat.
+3. A gear reduction of ratio R divides output speed by R and multiplies output torque by R, reduced by the transmission's `__________`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **stall**
+2. **stall**
+3. **efficiency**
+
+</details>
+
+---
+
+## Exercise
+
+Find the published free speed and stall torque for the exact motor part number on your robot. Estimate the load torque on one mechanism, enter both into the calculator, and compare the loaded speed against the free speed your team assumed when estimating cycle time.
+
+<MarkComplete
+  lessonId="module-06/motor-curves"
+  nextUnit="/mechanical/module-06/gear-ratios"
+  nextUnitName="Lesson 6.2: Calculating Gear Ratios Across Multiple Stages"
+/>

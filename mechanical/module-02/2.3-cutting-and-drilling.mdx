@@ -1,0 +1,111 @@
+---
+id: cutting-and-drilling
+title: "Lesson 2.3: Cutting and Drilling Aluminum and Polycarbonate"
+sidebar_label: "2.3 · Cutting & Drilling"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 2.3: Cutting and Drilling Aluminum and Polycarbonate
+
+---
+
+## Technical Context
+
+Aluminum and polycarbonate are the two materials most FTC teams cut, and they fail in opposite ways. Aluminum gums up and welds itself to the tool when run too fast. Polycarbonate cracks when run too slow or drilled with the wrong bit geometry.
+
+Knowing which failure you are risking tells you what to change.
+
+---
+
+## Cutting Aluminum
+
+**Bandsaw** is the default for cutting extrusion and plate. Use a blade with enough teeth that at least three teeth are in the cut at all times: too few teeth and the blade catches, too many and the chips cannot clear.
+
+**Chop saw with a non-ferrous blade** cuts extrusion quickly and squarely. A wood blade in a chop saw will cut aluminum, and it will also throw chips violently and dull instantly. Use the right blade.
+
+**Hacksaw** works fine and is the safest option for a team without shop tools. Slow, square, and it teaches feel.
+
+The universal aluminum rule: **let the tool cut**. Forcing the feed generates heat, and hot aluminum sticks to the cutting edge, which makes the tool cut worse, which makes people push harder. Back off, and use cutting fluid or even a wax stick if the chips are coming off blue.
+
+:::tip Chip color tells you what is happening
+Bright, curled chips mean the cut is going well. Fine powder means the tool is rubbing rather than cutting, which is usually too high a speed or a dull edge. Blue or brown chips mean it is too hot, so slow down and add lubricant.
+:::
+
+---
+
+## Cutting Polycarbonate
+
+Polycarbonate is tough but notch sensitive. It tolerates enormous impact and then splits from a tiny crack at a sharp corner.
+
+- **Score and snap** works for thin sheet up to about 1/8 in, but leaves a rough edge that can start a crack.
+- **Bandsaw** works well with a fine tooth blade and a moderate feed.
+- **Laser cutting** is clean but leaves a stressed edge, which is why laser cut polycarbonate sometimes cracks around holes weeks later.
+
+The rules that matter:
+
+**Round every internal corner.** A square internal corner in polycarbonate is a crack starter. A radius of even 1/8 in dramatically improves it.
+
+**Leave the protective film on** while cutting and drilling. It reduces scratching and slightly reduces chipping.
+
+**Do not overtighten fasteners through polycarbonate.** It creeps under sustained load, so a bolt torqued hard into a polycarbonate plate will be loose in a month and cracked around the hole soon after. Use a large washer to spread the load.
+
+:::warning Acrylic is not polycarbonate
+Acrylic looks identical and is much cheaper. It also shatters. If a plate on your robot is going to take impact, it must be polycarbonate. Test a scrap piece: acrylic snaps cleanly, polycarbonate bends and resists.
+:::
+
+---
+
+## Drilling
+
+**Mark and center punch.** A drill bit wanders from where you wanted the hole unless there is a dimple to start it. On aluminum, a center punch. On polycarbonate, a light punch only, since a hard punch can crack it.
+
+**Speed by bit size.** Larger bits run slower. A small bit at low speed rubs instead of cutting; a large bit at high speed overheats and grabs. As a rough guide for aluminum on a drill press:
+
+| Bit diameter | Approximate speed |
+| --- | --- |
+| Under 1/8 in | 2500 to 3000 RPM |
+| 1/8 to 1/4 in | 1500 to 2000 RPM |
+| 1/4 to 1/2 in | 800 to 1200 RPM |
+
+**Peck drill deep holes.** Withdraw the bit periodically to clear chips. A hole packed with chips overheats and the bit binds.
+
+**Ease off at breakthrough.** The grab happens when the bit exits the far side. Reduce feed pressure in the last fraction of an inch.
+
+**Back thin material with wood.** A sacrificial backer supports the far side, prevents the grab, and gives a clean exit hole.
+
+**Deburr both sides.** A burr on the back face holds parts apart, which throws off every stack-up dimension in the assembly. A larger drill bit spun by hand in the hole, or a proper deburring tool, takes two seconds.
+
+:::tip Step drills for sheet
+A step drill bit cuts much cleaner holes in thin sheet and polycarbonate than a twist bit, because it does not grab at breakthrough. If your team drills a lot of sheet, one step drill is the best small purchase you can make.
+:::
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Blue or brown chips coming off an aluminum cut indicate the cut is too `__________`.
+2. Internal corners in polycarbonate should be `__________` because sharp corners start cracks.
+3. Drilling thin sheet is safer and cleaner when the material is backed with a sacrificial piece of `__________`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **hot** (slow down, add lubricant)
+2. **rounded** (given a radius)
+3. **wood**
+
+</details>
+
+---
+
+## Exercise
+
+Drill three 1/4 in holes in scrap aluminum: one with no center punch, one with a punch but no backer, and one punched and backed with wood. Measure how far each hole is from the intended mark, and compare the exit burr. Record the three numbers in the notebook.
+
+<MarkComplete
+  lessonId="module-02/cutting-and-drilling"
+  nextUnit="/mechanical/module-02/tapping-and-threads"
+  nextUnitName="Lesson 2.4: Tapping Holes and Choosing the Correct Tap Drill"
+/>

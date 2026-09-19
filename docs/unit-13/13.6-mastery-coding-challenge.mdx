@@ -1,0 +1,56 @@
+---
+id: mastery-coding-challenge
+title: "Unit 13 Project Stage: Complete Modular TeleOp"
+sidebar_label: "Unit 13 · Coding Challenge"
+sidebar_position: 10
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import MasterySimulator from '@site/src/components/MasterySimulator';
+
+# Stage 12: Complete Modular TeleOp
+
+The shared project adds `PoweredMechanism.java` and `RobotHardware.java`. This stage composes Drivetrain, Intake, Transfer, Launcher, and ArtifactSensors into the runnable DECODE TeleOp. Lift remains in the general lesson examples and is not part of this robot.
+
+## Your Task
+
+1. Put shared motor state, setup, `setPower()`, and `stop()` behavior in `PoweredMechanism`.
+2. Reuse it from powered subsystem classes with `extends` and `@Override` where behavior differs.
+3. Compose every subsystem in `RobotHardware`.
+4. Initialize all subsystems through `robot.init(hardwareMap)` and update non-blocking state through `robot.update()`.
+5. Stop every subsystem through `robot.stopAll()`.
+6. Finish `CompetitionTeleOp` using only the RobotHardware public interface, with no raw motor, servo, or IMU access.
+
+The OpMode should read like coordination code. A passing snapshot becomes the reference that the advanced autonomous stage reuses.
+
+## Coding Challenge Simulator
+
+The simulator turns the completed project into a DECODE competition-robot driver-control challenge. Start in **Practice** to see the predicted artifact trajectory and use a replenishing supply. Switch to **Match** for a deterministic 120-second run with 18 alliance-side artifacts and no trajectory preview.
+
+The three-artifact robot capacity and two-minute TeleOp clock follow the [DECODE Competition Manual](https://ftc-resources.firstinspires.org/ftc/archive/2026/game/cm-html/DECODE_Competition_Manual_TU32.htm).
+
+The visible wheels, all three intake stages, anti-jam transfer spinner, flywheel, and servo trigger follow measured hardware output from your code. Artifacts also follow the physical route through the robot, so a stopped intake, an empty magazine, a trigger pulse that is too short, or a slow flywheel is visible in the simulation. A fixed open-loop launcher power will lose speed and change the shot arc as the virtual battery drains; a reachable `setVelocity()` target with PIDF stays much more consistent.
+
+### Successful practice-shot hardware sequence
+
+Your project decides which gamepad inputs request these actions. The simulator watches the resulting hardware state, not any particular button:
+
+1. Run the intake motor forward for about one second at full power. Its three roller stages carry the artifact all the way into the horizontal three-artifact magazine automatically.
+2. Position the robot so the cyan Practice trajectory passes through the raised goal opening.
+3. Command the launcher flywheel near `1900` ticks per second and wait until its measured velocity is close to the target.
+4. Move the positional `launcher_trigger` servo from your configured rest position to your configured fire position for at least `0.10` seconds, then return it to rest. The visible pusher must lift the staged artifact into the flywheel before it can launch. Servo positions are normalized from `0.0` to `1.0`; `1900` is the flywheel motor velocity, not a servo position.
+
+The transfer motor is not a normal magazine stage. It drives the small spinner beside the flywheel to help clear a blockage; running it is not required for an artifact that is flowing normally.
+
+In Practice, either field goal counts. The scoring detector intentionally allows a little more room than the strict opening: an artifact also scores when it reaches the goal's back wall from above or passes through the invisible triangular catch region directly in front of the goal. After a hit or miss, its replacement returns to the same initial field side rather than appearing across the field.
+
+FTC gamepad Y follows the SDK convention: pushing a stick up reports `-1`. Convert it to positive forward once in your Java drive code. The simulator does not apply another gamepad-axis negation.
+
+<MasterySimulator unit={13} project />
+
+<MarkComplete
+  lessonId="unit-13/mastery-coding-challenge"
+  completesUnit="unit-13"
+  nextUnit="/docs/unit-14"
+  nextUnitName="Unit 14: Computer Vision"
+/>

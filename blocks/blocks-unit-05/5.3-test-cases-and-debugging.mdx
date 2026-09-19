@@ -1,0 +1,34 @@
+---
+id: test-cases-and-debugging
+title: "Lesson 5.3: Test Cases and Debugging"
+sidebar_label: "5.3 · Test Cases and Debugging"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 5.3: Test Cases and Debugging
+
+A **test case** is one set of inputs and the expected result. Good testing checks more than the easiest input.
+
+- A normal case represents common input.
+- A boundary case is exactly at the edge of a rule.
+- An unexpected case checks an empty list, zero, a negative number, or another input that needs a clear response.
+
+Write the expected result before running the test. Otherwise, seeing any output can feel correct even when it does not meet the rule.
+
+When a test fails, reduce the problem. Find the first wrong state with Step. Check the input type, variable assignment, branch condition, loop boundary, function argument, return value, and list index in that order when they apply.
+
+## Guided practice
+
+Build a function that returns `true` when a number is at least 10. Create tests for 12, 10, and 9. Record the expected Boolean result for each.
+
+Then place those inputs in a list and run all three with a loop. Change the condition to `> 10`, observe the failed boundary test, and repair it.
+
+<BlockPractice lessonId="blocks-unit-05/test-cases-and-debugging" />
+
+<MarkComplete
+  lessonId="blocks-unit-05/test-cases-and-debugging"
+  nextUnit="/blocks/blocks-unit-05/blocks-beside-java"
+  nextUnitName="Lesson 5.4: Read Blocks Beside Java-Shaped Code"
+/>

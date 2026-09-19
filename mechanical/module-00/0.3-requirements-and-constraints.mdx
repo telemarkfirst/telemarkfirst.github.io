@@ -1,0 +1,156 @@
+---
+id: requirements-and-constraints
+title: "Lesson 0.3: Writing Requirements and Separating Them From Constraints"
+sidebar_label: "0.3 · Requirements"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import LessonTool from '@site/src/components/mechanical/LessonTool';
+import RequirementsTable from '@site/src/components/mechanical/RequirementsTable';
+
+# Lesson 0.3: Writing Requirements and Separating Them From Constraints
+
+---
+
+## Technical Context
+
+"The intake should be fast" gives the team nothing to test. Two people can agree with it while expecting very different cycle times. A useful requirement states an outcome clearly enough that a test can pass or fail it.
+
+This lesson covers how to turn strategy into statements that a mechanism either satisfies or does not.
+
+---
+
+## What Makes a Requirement Usable
+
+A usable requirement has three properties.
+
+**It is measurable.** There is a number and a unit, or a clear yes and no.
+
+**It is testable.** You can describe, in one sentence, the test that would prove it.
+
+**It is about the robot, not the solution.** "The intake must use compliant wheels" is a design decision disguised as a requirement. It rules out every other approach before anyone has compared them.
+
+| Wish | Requirement |
+| --- | --- |
+| The intake should be fast | The intake acquires one game element in 1.5 s or less, measured from contact to secured |
+| The robot should be strong | The robot resists being pushed by a 30 lb opponent without losing its scoring position |
+| The arm should reach high | The end effector reaches 34 in above the tile surface with the robot frame fully inside the field perimeter |
+| The drivetrain should be reliable | The drivetrain completes 50 full field traversals with no fastener loosening or wheel slip on the driven axle |
+
+Notice that every requirement on the right implies a specific test.
+
+---
+
+## Requirements Versus Constraints
+
+Keep requirements and constraints separate because you respond to them differently.
+
+A **constraint** is a limit you did not choose and cannot negotiate. The starting size limit is a constraint. The list of legal motors is a constraint. The height of a field barrier is a constraint.
+
+A **requirement** is something you decided the robot must do, derived from your strategy. Scoring in the high goal is a requirement, and it is one you could choose to drop.
+
+When a design misses a requirement, the team can revise the design, the requirement, or the strategy behind it. When a design violates a constraint, it cannot be used as proposed.
+
+:::warning Check the source of every constraint
+Teams sometimes record a preference as though it were fixed. "We have to use mecanum" is a design choice unless a real requirement forces it. Write a source next to every constraint, such as a rule number, field measurement, or budget figure. If you cannot identify the source, review the statement with the team before it limits the design.
+:::
+
+---
+
+## Deriving Requirements From the Scoring Table
+
+Work backward from the points per second table you built in Lesson 0.2.
+
+Suppose the table says the high goal is worth 6 points and you estimate a 9 second cycle. In a 120 second TeleOp with 20 seconds reserved for endgame, you have 100 seconds of scoring time, which is about 11 cycles, which is 66 points.
+
+Turn that estimate into timed requirements for each part of the cycle:
+
+- The robot must acquire an element from the floor in 2 s or less
+- The robot must travel from the acquisition zone to the scoring zone in 3 s or less
+- The scoring mechanism must reach 34 in and release the element in 2 s or less
+- The robot must return in 2 s or less
+
+If any one of these cannot be met, the 9 second cycle estimate was wrong, and the whole strategy needs rechecking. That is the loop from Lesson 0.1 doing its job before anything was built.
+
+:::tip Use requirements to compare concepts
+If two students prefer different intake designs, compare both against the same requirement. "Which concept acquires an element in under 2 seconds?" can be answered with a prototype and a stopwatch.
+:::
+
+---
+
+## Four Things Every Requirement Needs
+
+A requirement needs enough context for the team to use and verify it. Record
+these four fields with every statement.
+
+| Field | Why it exists |
+| --- | --- |
+| **An id** | So a notebook entry, a design review, and a test result can all cite the same thing. "R2 failed" is precise; "the drive requirement" is not. |
+| **A number and a unit** | Without one, nothing can pass or fail. |
+| **A verification method** | How you will know. Test means run it repeatedly and count. Measure means one instrument reading. Inspect means check against a list. Demonstrate means show it once, end to end. |
+| **An owner** | The subsystem responsible for meeting and verifying it. |
+
+Plus a source, so a rule can be told from a preference.
+
+<LessonTool
+  toolId="requirements"
+  bring="Your scoring table from Lesson 0.2 and this season's manual."
+  change="A row's verification method, and ask yourself who would run it."
+  read="The warnings. A row with no number or no owner is not yet a requirement."
+>
+  <RequirementsTable />
+</LessonTool>
+
+:::tip Use the id everywhere
+Once R2 exists, a mechanism can be described as "satisfies R2," a test result
+can be recorded against R2, and a design review can ask for evidence tied to R2.
+The shared id keeps the decision, design, and test record connected.
+:::
+
+---
+
+## Write Them Down Where People Will See Them
+
+A requirements list stored in someone's notes does nothing. Put it on a whiteboard or a printed sheet in the build space, in this format:
+
+```text
+R1  Acquire element from floor           <= 2.0 s     [strategy]
+R2  Traverse field, acquire to score     <= 3.0 s     [strategy]
+R3  Deliver to high goal                 <= 2.0 s     [strategy]
+R4  Reach height at end effector         >= 34 in     [field measurement]
+C1  Starting envelope                    per manual   [rule reference]
+C2  Legal motors only                    per manual   [rule reference]
+C3  Total robot weight target            <= 28 lb     [team decision]
+```
+
+The bracket at the end is the source. C3 is marked as a team decision, which tells everyone it can be revisited if the reason is good enough.
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. A requirement that cannot be tested is really a `__________`.
+2. A limit imposed by the game manual that your team cannot negotiate is a `__________`.
+3. "The intake must use compliant wheels" is not a requirement because it specifies a `__________` rather than a needed outcome.
+
+<details>
+<summary>Show answers</summary>
+
+1. **wish** (or preference)
+2. **constraint**
+3. **solution** (a specific design choice)
+
+</details>
+
+---
+
+## Exercise
+
+Take three statements your team has made about this season's robot. Rewrite each one as a testable requirement with a number and a unit, then mark whether it is actually a requirement or a constraint, and write the source.
+
+<MarkComplete
+  lessonId="module-00/requirements-and-constraints"
+  nextUnit="/mechanical/module-00/concept-generation"
+  nextUnitName="Lesson 0.4: Generating and Narrowing Robot Concepts"
+/>

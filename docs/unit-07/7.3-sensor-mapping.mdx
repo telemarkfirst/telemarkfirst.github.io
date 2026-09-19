@@ -1,0 +1,101 @@
+---
+id: sensor-mapping
+title: "Lesson 7.3: Mapping Digital and Analog Sensors into Java Objects"
+sidebar_label: "7.3 · Sensor Mapping"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit7Simulator from '@site/src/components/Unit7Simulator';
+
+# Lesson 7.3: Mapping Digital and Analog Sensors into Java Objects
+
+---
+
+## Technical Context
+
+Sensors are mapped to different hardware buses: Digital, Analog, or I2C. Mapping a `DigitalChannel` (like a touch sensor) using the `AnalogInput` class, or vice versa, will result in incorrect voltage readings or hardware errors. The SDK uses distinct classes for each sensor type to enforce this separation and prevent silent logic failures.
+
+---
+
+## How Sensor Mapping Stays Organized
+
+The SDK differentiates between two common sensor categories:
+
+**Digital sensors** (e.g., REV Touch Sensor, magnetic limit switches) operate on a binary signal: the pin is either HIGH or LOW. They are instantiated with the `DigitalChannel` class and return a `boolean` via `getState()`. One critical step: you must explicitly call `setMode(DigitalChannel.Mode.INPUT)` to configure the pin to receive data rather than send it.
+
+**Analog sensors** (e.g., potentiometers, analog distance sensors) return a continuous voltage between 0V and the maximum port voltage. They are instantiated with the `AnalogInput` class and return a `double` via `getVoltage()`. Analog input ports do not require a mode to be set.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.AnalogInput;
+
+@TeleOp(name="Sensor_Mapping_Demo")
+public class SensorMappingDemo extends OpMode {
+
+    private DigitalChannel touch;
+    private AnalogInput    pot;
+
+    @Override
+    public void init() {
+        // Mapping to a Digital port: requires INPUT mode to be set
+        touch = hardwareMap.get(DigitalChannel.class, "limit_switch");
+        touch.setMode(DigitalChannel.Mode.INPUT);
+
+        // Mapping to an Analog port: functional immediately upon registration
+        pot = hardwareMap.get(AnalogInput.class, "arm_pot");
+
+        telemetry.addData("Status", "Sensors mapped");
+    }
+
+    @Override
+    public void loop() {
+        boolean isPressed  = !touch.getState(); // Active-low: false = pressed
+        double  armVoltage = pot.getVoltage();
+
+        telemetry.addData("Limit Switch Pressed", isPressed);
+        telemetry.addData("Arm Pot Voltage",      armVoltage);
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. A touch sensor is mapped using the `__________` class in the SDK.
+2. To configure a digital sensor port to receive data, you must set its mode to `DigitalChannel.Mode.__________`.
+3. A potentiometer is instantiated using the `__________` class, and its value is read with `getVoltage()`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`DigitalChannel`**
+2. **`INPUT`**
+3. **`AnalogInput`**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Use the simulator below to practice mapping digital and analog sensors with the correct SDK classes and setup steps.
+
+<SimulatorRunGuide />
+
+<Unit7Simulator lesson="sensor-mapping" />
+
+<MarkComplete
+  lessonId="unit-07/sensor-mapping"
+  nextUnit="/docs/unit-07/name-mismatches"
+  nextUnitName="Lesson 7.4: Troubleshooting Name Mismatches and Configuration Overlays"
+/>

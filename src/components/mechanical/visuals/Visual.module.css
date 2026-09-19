@@ -1,0 +1,86 @@
+/* Shared styling for the engineering track's visualizations. */
+
+.figure {
+  margin: 1rem 0 0;
+  padding: 0.9rem 0.9rem 0.7rem;
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-hand);
+  background: var(--tm-surface-3);
+}
+
+.caption {
+  margin: 0 0 0.6rem;
+  color: var(--tm-accent);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-top: 0.6rem;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--tm-text-muted);
+  font-size: var(--tm-fs-xs);
+}
+
+.swatch {
+  width: 14px;
+  height: 3px;
+  border-radius: var(--tm-r-sm);
+}
+
+.note {
+  margin: 0.55rem 0 0;
+  color: var(--tm-text-muted);
+  font-size: var(--tm-fs-xs);
+  line-height: 1.5;
+}
+
+/* Axis and plot primitives */
+.axis {
+  stroke: var(--tm-border-strong);
+  stroke-width: 1;
+}
+
+.grid {
+  stroke: var(--tm-accent-a12);
+  stroke-width: 1;
+}
+
+.axisLabel {
+  fill: var(--tm-text-muted);
+  font-family: var(--tm-font-label);
+  /* Sized so labels stay legible when the viewBox scales down on a phone. */
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+}
+
+.tickLabel {
+  fill: var(--tm-text-muted);
+  font-family: var(--tm-font-mono);
+  font-size: 10px;
+}
+
+.pointLabel {
+  fill: var(--tm-text-strong);
+  font-family: var(--tm-font-mono);
+  font-size: var(--tm-fs-2xs);
+  font-weight: 600;
+}

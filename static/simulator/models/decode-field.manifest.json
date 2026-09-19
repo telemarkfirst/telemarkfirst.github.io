@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "asset": {
+    "primarySource": "robot-cad-sources/DECODE™ presented by RTX Full Field - am-5700_Full.glb",
+    "alternateSource": "robot-cad-sources/decode-field.obj",
+    "browserAsset": "decode-field-optimized.glb",
+    "status": "uploaded-glb",
+    "provenance": "robot-cad-sources/DECODE™ presented by RTX Full Field - am-5700_Full.glb"
+  },
+  "scale": 2,
+  "rotation": {
+    "x": -1.5707963267948966,
+    "y": 0,
+    "z": 0
+  },
+  "origin": {
+    "x": 0,
+    "y": 0.04,
+    "z": 0
+  },
+  "boundaries": {
+    "minX": -3.6,
+    "maxX": 3.6,
+    "minZ": -3.6,
+    "maxZ": 3.6
+  },
+  "goalOpening": {
+    "planeZ": -3.28,
+    "minX": 2.18,
+    "maxX": 3.58,
+    "minY": 0.72,
+    "maxY": 1.72
+  },
+  "goalOpenings": [
+    {
+      "id": "blue-goal",
+      "planeZ": -3.28,
+      "minX": 2.18,
+      "maxX": 3.58,
+      "minY": 0.72,
+      "maxY": 1.72
+    },
+    {
+      "id": "red-goal",
+      "planeZ": -3.28,
+      "minX": -3.58,
+      "maxX": -2.18,
+      "minY": 0.72,
+      "maxY": 1.72
+    }
+  ],
+  "collisionAreas": [
+    {
+      "id": "goal-left",
+      "minX": 1.92,
+      "maxX": 2.18,
+      "minZ": -3.48,
+      "maxZ": -3.12
+    },
+    {
+      "id": "goal-right",
+      "minX": 3.58,
+      "maxX": 3.7,
+      "minZ": -3.48,
+      "maxZ": -3.12
+    }
+  ],
+  "artifactSpawnPoints": [
+    {
+      "x": -2.48,
+      "y": 0.13,
+      "z": -0.6
+    },
+    {
+      "x": -2.225,
+      "y": 0.13,
+      "z": -0.6
+    },
+    {
+      "x": -1.97,
+      "y": 0.13,
+      "z": -0.6
+    },
+    {
+      "x": -2.48,
+      "y": 0.13,
+      "z": 0.6
+    },
+    {
+      "x": -2.225,
+      "y": 0.13,
+      "z": 0.6
+    },
+    {
+      "x": -1.97,
+      "y": 0.13,
+      "z": 0.6
+    },
+    {
+      "x": -2.48,
+      "y": 0.13,
+      "z": 1.8
+    },
+    {
+      "x": -2.225,
+      "y": 0.13,
+      "z": 1.8
+    },
+    {
+      "x": -1.97,
+      "y": 0.13,
+      "z": 1.8
+    },
+    {
+      "x": 2.48,
+      "y": 0.13,
+      "z": -0.6
+    },
+    {
+      "x": 2.225,
+      "y": 0.13,
+      "z": -0.6
+    },
+    {
+      "x": 1.97,
+      "y": 0.13,
+      "z": -0.6
+    },
+    {
+      "x": 2.48,
+      "y": 0.13,
+      "z": 0.6
+    },
+    {
+      "x": 2.225,
+      "y": 0.13,
+      "z": 0.6
+    },
+    {
+      "x": 1.97,
+      "y": 0.13,
+      "z": 0.6
+    },
+    {
+      "x": 2.48,
+      "y": 0.13,
+      "z": 1.8
+    },
+    {
+      "x": 2.225,
+      "y": 0.13,
+      "z": 1.8
+    },
+    {
+      "x": 1.97,
+      "y": 0.13,
+      "z": 1.8
+    }
+  ]
+}

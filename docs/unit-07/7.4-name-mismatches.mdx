@@ -1,0 +1,117 @@
+---
+id: name-mismatches
+title: "Lesson 7.4: Debugging Name Mismatches and Configuration Problems"
+sidebar_label: "7.4 · Name Mismatches"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit7Simulator from '@site/src/components/Unit7Simulator';
+
+# Lesson 7.4: Debugging Name Mismatches and Configuration Problems
+
+---
+
+## Technical Context
+
+The string literal used in `hardwareMap.get()` must match the configuration name on the Hub **character-for-character**. A single typo, including a capitalization difference such as `"LeftMotor"` versus `"left_motor"`, causes `get()` to throw during initialization. If the error is not corrected before Start, the OpMode cannot run.
+
+---
+
+## How to Track Down Mapping Errors Quickly
+
+When the SDK encounters a name mismatch, `HardwareMap.get(Class, String)` throws an exception; it does not return `null`. Because the assignment does not finish, a field may retain its earlier value, but the lookup itself failed by throwing. A later `NullPointerException` is possible only if code catches or bypasses that lookup failure and then dereferences a `null` variable. `HardwareMap.tryGet(...)` is the API that returns `null` for a missing optional device.
+
+A useful approach is to store shared configuration names as `static final String` constants. If a name changes in the Robot Controller configuration, you update the matching constant instead of searching through every OpMode.
+
+Common mismatch causes to watch for:
+- Capitalization differences (`"Arm"` vs `"arm"`)
+- Spaces vs underscores (`"left drive"` vs `"left_drive"`)
+- Trailing spaces that are easy to overlook in the configuration app
+- Using the Java variable name instead of the Hub config name
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.hardware.DcMotor;
+
+// A dedicated class storing all hardware configuration names as constants
+// This is the single source of truth for every OpMode on the robot
+public class RobotConfig {
+    public static final String LEFT_DRIVE   = "left_drive";
+    public static final String RIGHT_DRIVE  = "right_drive";
+    public static final String LIFT_MOTOR   = "lift_motor";
+    public static final String LIMIT_SWITCH = "limit_switch";
+}
+```
+
+```java
+// Inside an OpMode's init() method: using the constants instead of literals
+import org.firstinspires.ftc.teamcode.RobotConfig;
+
+leftDrive  = hardwareMap.get(DcMotor.class, RobotConfig.LEFT_DRIVE);
+rightDrive = hardwareMap.get(DcMotor.class, RobotConfig.RIGHT_DRIVE);
+```
+
+## How a Library Makes Optional Hardware Explicit
+
+The SDK's `HardwareMap.get(...)` throws when a configured name or type cannot be found. BunyipsLib deliberately catches that failure inside a nullable helper and records the bad name:
+
+```kotlin
+var hardwareDevice: T? = null
+var ok = false
+try {
+    if (Storage.memory().hardwareErrors.contains(name)) return null
+    hardwareDevice = getAndDynamicCast(name, device)
+    if (hardwareDevice == null)
+        throw NullPointerException(
+            "An error occurred configuring '$name' of type ${device.simpleName}."
+        )
+    ok = true
+} catch (e: Exception) {
+    Storage.memory().hardwareErrors.add(name)
+    e.localizedMessage?.let { Dbg.error(it) }
+}
+if (ok)
+    onSuccess.accept(hardwareDevice!!)
+return hardwareDevice
+```
+
+That `null` result is behavior created by this wrapper, not by `HardwareMap.get(...)`. In ordinary SDK code, use `tryGet(...)` when a missing device should return `null`, or let `get(...)` fail during initialization for hardware the robot requires. Excerpted from [BunyipsLib's `RobotConfig.kt` at a pinned commit](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/src/main/java/au/edu/sa/mbhs/studentrobotics/bunyipslib/RobotConfig.kt) under the [MIT License](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/LICENSE).
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Hardware lookup strings in the `get()` method are `__________`-sensitive, meaning `"Motor"` and `"motor"` are different configuration names.
+2. If `HardwareMap.get(...)` cannot find the requested device, it throws an `__________`.
+3. To avoid mismatch errors across multiple files, programmers store configuration names as `static final __________` variables in a shared class.
+
+<details>
+<summary>Show answers</summary>
+
+1. **case**
+2. **exception**
+3. **`String`**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Use the simulator below to track down a name mismatch, then refactor the correct hardware name into a shared constant.
+
+<SimulatorRunGuide />
+
+<Unit7Simulator lesson="name-mismatches" />
+
+<MarkComplete
+  lessonId="unit-07/name-mismatches"
+  nextUnit="/docs/unit-07/mechanism-classes"
+  nextUnitName="Lesson 7.5: Synchronizing Hardware Classes Across Multiple OpModes"
+/>

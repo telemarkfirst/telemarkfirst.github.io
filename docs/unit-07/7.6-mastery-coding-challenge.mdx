@@ -1,0 +1,35 @@
+---
+id: mastery-coding-challenge
+title: "Unit 7 Project Stage: Subsystem Hardware Mapping"
+sidebar_label: "Unit 7 · Coding Challenge"
+sidebar_position: 6
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import MasterySimulator from '@site/src/components/MasterySimulator';
+
+# Stage 6: Subsystem Hardware Mapping
+
+The project adds `Launcher.java` and `ArtifactSensors.java`. This is also the point where every device lookup moves out of the OpMode and into the class that owns that hardware.
+
+## Your Task
+
+1. Give Drivetrain, Intake, Transfer, Launcher, and ArtifactSensors an `init(HardwareMap)` method.
+2. Map each device inside its owning subsystem with names from `RobotConfig`.
+3. Keep the launcher flywheel private.
+4. Track artifact storage state inside ArtifactSensors.
+5. Initialize the subsystem objects from `CompetitionTeleOp.init()` and delegate driver commands from `loop()`.
+6. Remove all `hardwareMap.get()` calls from `CompetitionTeleOp`.
+
+The OpMode should coordinate the mechanism, not repeat its mapping details.
+
+## Coding Challenge Simulator
+
+<MasterySimulator unit={7} project />
+
+<MarkComplete
+  lessonId="unit-07/mastery-coding-challenge"
+  completesUnit="unit-07"
+  nextUnit="/docs/unit-08"
+  nextUnitName="Unit 8: DC Motor Control"
+/>

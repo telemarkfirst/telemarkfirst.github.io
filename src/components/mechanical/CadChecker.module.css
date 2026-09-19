@@ -1,0 +1,179 @@
+.drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tm-sp-3);
+  padding: var(--tm-sp-6) var(--tm-sp-4);
+  border: 1px dashed var(--tm-accent-a35);
+  border-radius: var(--tm-r-lg);
+  margin-top: var(--tm-sp-4);
+  background: var(--tm-accent-a08);
+  text-align: center;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.dropActive {
+  border-color: var(--tm-accent);
+  background: var(--tm-accent-a12);
+}
+
+.dropText {
+  margin: 0;
+  color: var(--tm-text-muted);
+  font-size: var(--tm-fs-sm);
+}
+
+.hiddenInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  margin: -1px;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.report {
+  margin-top: var(--tm-sp-5);
+}
+
+.reportHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--tm-sp-2);
+  margin: 0 0 var(--tm-sp-3);
+}
+
+.fileName {
+  color: var(--tm-text-strong);
+  font-family: var(--tm-font-mono);
+  font-size: var(--tm-fs-sm);
+}
+
+.kind {
+  color: var(--tm-text-muted);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.findings {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.finding {
+  display: flex;
+  gap: var(--tm-sp-3);
+  padding: var(--tm-sp-3) 0;
+  border-top: 1px solid var(--tm-accent-a12);
+}
+
+/* Fixed width keeps the wall of detail text on one left edge, so the eye reads
+   a column of outcomes rather than a ragged list. */
+.badge {
+  flex: none;
+  width: 3.4rem;
+  padding: 0.15rem 0;
+  border-radius: var(--tm-r-sm);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.pass {
+  background: var(--tm-success-wash);
+  color: var(--tm-success);
+}
+
+.warn {
+  background: var(--tm-warn-wash);
+  color: var(--tm-warn);
+}
+
+.fail {
+  background: var(--tm-danger-wash);
+  color: var(--tm-danger);
+}
+
+.info {
+  background: var(--tm-accent-a12);
+  color: var(--tm-accent);
+}
+
+.findingBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.findingLabel {
+  color: var(--tm-text-strong);
+  font-size: var(--tm-fs-sm);
+}
+
+.findingDetail {
+  color: var(--tm-text-muted);
+  font-size: var(--tm-fs-xs);
+  line-height: 1.5;
+}
+
+.holeList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-bottom: var(--tm-sp-4);
+}
+
+.hole {
+  display: flex;
+  align-items: baseline;
+  gap: var(--tm-sp-3);
+  margin: 0;
+  font-size: var(--tm-fs-xs);
+}
+
+.holeSize {
+  min-width: 5rem;
+  color: var(--tm-text-strong);
+  font-family: var(--tm-font-mono);
+}
+
+.holeCount {
+  min-width: 2rem;
+  color: var(--tm-text-muted);
+  font-family: var(--tm-font-mono);
+}
+
+.holeNote {
+  color: var(--tm-text-muted);
+}
+
+.limitsLabel {
+  margin: var(--tm-sp-4) 0 var(--tm-sp-2);
+  color: var(--tm-text-muted);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.notes {
+  padding-left: var(--tm-sp-4);
+  margin: 0;
+  color: var(--tm-text-muted);
+  font-size: var(--tm-fs-xs);
+  line-height: 1.6;
+}
+
+.notes li + li {
+  margin-top: var(--tm-sp-2);
+}

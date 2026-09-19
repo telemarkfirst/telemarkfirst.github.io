@@ -1,0 +1,48 @@
+---
+id: blocks-beside-java
+title: "Lesson 5.4: Read Blocks Beside Java-Shaped Code"
+sidebar_label: "5.4 · Blocks Beside Java"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 5.4: Read Blocks Beside Java-Shaped Code
+
+Blocks and text code can express the same programming ideas. Text code uses typed words, punctuation, and braces where blocks use shapes and connections.
+
+This block plan:
+
+1. Set `score` to 0.
+2. Repeat 3 times and change `score` by 2.
+3. If `score >= 6`, print `ready`.
+
+has the same flow as this Java-shaped code:
+
+```java
+int score = 0;
+
+for (int count = 0; count < 3; count++) {
+    score = score + 2;
+}
+
+if (score >= 6) {
+    System.out.println("ready");
+}
+```
+
+`int` states that `score` stores a whole number. Semicolons end statements. Braces group the loop and condition bodies. The variable, repeated assignment, comparison, and branch still have the same roles.
+
+## Guided practice
+
+Build the block version and trace `score` through 0, 2, 4, and 6. Point to the Java line that matches each block.
+
+Change both versions so the loop adds 3 twice. Predict the final value and condition result. You do not need to write a full Java program yet. The goal is to recognize structure you already understand.
+
+<BlockPractice lessonId="blocks-unit-05/blocks-beside-java" />
+
+<MarkComplete
+  lessonId="blocks-unit-05/blocks-beside-java"
+  nextUnit="/blocks/blocks-unit-05/delivery-controller-challenge"
+  nextUnitName="Lesson 5.5: Delivery Controller Challenge"
+/>

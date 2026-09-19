@@ -1,0 +1,122 @@
+---
+id: intakes
+title: "Lesson 8.1: Intake Geometry, Compliance, and Element Handoff"
+sidebar_label: "8.1 · Intakes"
+sidebar_position: 1
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import {IntakeGeometryDiagram} from '@site/src/components/mechanical/EngineeringDiagrams';
+
+# Lesson 8.1: Intake Geometry, Compliance, and Element Handoff
+
+---
+
+## Technical Context
+
+Intake reliability has a direct effect on cycle time. A scoring mechanism that becomes 0.5 seconds faster saves 0.5 seconds per cycle, while a missed acquisition can require the driver to reposition and repeat the whole attempt.
+
+Measure acquisition reliability alongside raw intake speed.
+
+---
+
+## Intake Families
+
+**Active roller.** One or more powered wheels that pull the element in. Fast and forgiving of approach angle when the geometry is right. Needs a motor and a place for the element to go.
+
+**Passive wedge or funnel.** A shaped surface that captures the element as the robot drives into it. No motor, no failure mode, but it requires the robot to drive at the element and it only works with certain element shapes.
+
+**Claw or gripper.** Grabs a single element deliberately. Precise, holds securely, and usually slow because it requires alignment before closing.
+
+**Sweeper.** A rotating brush or paddle that moves elements across the floor into a channel. Good for collecting many elements, poor for precise single acquisition.
+
+The choice follows from the element's shape and from what the strategy needs, which is the Module 0 process applied to one subsystem.
+
+---
+
+## Compliance Is What Makes Intakes Work
+
+A rigid intake must be positioned accurately. A compliant intake conforms to the element and tolerates positioning error, which is why nearly every reliable FTC intake has compliance somewhere.
+
+Sources of compliance:
+
+- Compliant wheels, which deform around the element
+- Surgical tubing or rubber flaps, which flex out of the way and spring back
+- Sprung mounts that let the whole intake move
+- Deliberate slop in a pivot that lets the mechanism find the element
+
+The relevant question is not "how tightly does it grip" but "how far off can the element be and still be acquired." That is the number to measure, and it is what Lesson 1.2's test format is built to record.
+
+:::tip Design for the worst arrival, not the best
+Test with the element off center, rotated, against a wall, and partly under another element. The intake that works only when the element is presented perfectly will work in the pit and fail in matches.
+:::
+
+---
+
+## Approach Geometry
+
+Three geometric relationships determine whether an intake works.
+
+**Height relative to the element.** The intake must contact the element in a place that pulls it in rather than pushing it away. Contacting a round element above its center pushes it away. Contacting below the center rolls it in.
+
+<IntakeGeometryDiagram />
+
+**Angle of the entry.** A funnel that is too shallow deflects the element sideways instead of guiding it in. A funnel that is too steep stops it. The correction is usually to increase the angle so the wall pushes the element inward and downward at once.
+
+**Clearance above the floor.** Too high and the element passes underneath. Too low and the intake drags on the tile, wears, and can lift the drive wheels. This is a small dimension with a narrow acceptable range, and it is worth making adjustable.
+
+---
+
+## Handoff
+
+Getting the element into the robot is half the job. Getting it to the scoring mechanism is the other half, and it is where teams underestimate the difficulty.
+
+Design questions to answer explicitly:
+
+- Where does the element sit once acquired, and what holds it there while the robot drives?
+- How does it transfer to the scoring mechanism, and does that require the robot to stop?
+- What happens if two elements arrive, when the rules only allow possession of one?
+- Can the element jam at the transition, and if it jams, can the driver clear it without a technician?
+
+:::warning The transition is where jams live
+An element that moves smoothly through the intake and smoothly through the scoring mechanism can still jam at the point where they meet, because that is where the geometry changes. Prototype the handoff specifically, not just the two mechanisms it connects.
+:::
+
+---
+
+## Deployment and the Starting Envelope
+
+Intakes are frequently the reason a robot does not fit its starting envelope, because the geometry that works well tends to extend past the frame.
+
+Common approaches: a hinged intake that folds up at start and drops on a spring at match start, a sliding intake that extends, or a design constrained to fit inside the frame from the beginning.
+
+Whichever you choose, deployment is a mechanism with its own failure modes. It must deploy reliably every match, and it must not deploy during inspection or before the match starts.
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Contacting a round game element above its center tends to `__________` it away rather than draw it in.
+2. Nearly every reliable intake includes `__________` so it conforms to the element and tolerates positioning error.
+3. The point where the intake passes the element to the scoring mechanism, called the `__________`, is where jams most often occur.
+
+<details>
+<summary>Show answers</summary>
+
+1. **push**
+2. **compliance**
+3. **handoff** (transition)
+
+</details>
+
+---
+
+## Exercise
+
+Measure your intake's acquisition window: place the element at increasing offsets from center and record the success rate at each offset over ten trials. The offset where the success rate falls below 90% is your effective window, and it is the number that determines how accurately the driver has to align.
+
+<MarkComplete
+  lessonId="module-08/intakes"
+  nextUnit="/mechanical/module-08/linear-slides"
+  nextUnitName="Lesson 8.2: Sizing Linear Slides, Spools, and Extension Speed"
+/>

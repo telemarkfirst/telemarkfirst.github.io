@@ -1,0 +1,88 @@
+---
+id: margin-standards
+title: "Lesson 12.4: The Design Margins That Survive a Tournament"
+sidebar_label: "12.4 · Margin Standards"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 12.4: The Design Margins That Survive a Tournament
+
+---
+
+## Technical Context
+
+Margin allows the robot to keep working as battery voltage, game elements, alignment, temperature, and wear vary during an event.
+
+The standards below turn that margin into values the team can check during design and testing.
+
+---
+
+## The standards
+
+| Standard | Value | What it protects against |
+| --- | --- | --- |
+| Static safety factor on a load bearing mechanism | **at least 2x** | Acceleration, impact, a heavier element, a low battery |
+| Sustained motor load | **under 60% of stall torque** | Heat; past 60% it is slow and cooking |
+| Drivetrain limit | **traction limited, not motor limited** | Stalled motors draw full current and overheat |
+| Voltage drop on a run | **under 3%** | Motors weakening exactly when working hardest |
+| Weight budget reserve | **10%** | Fasteners, wiring, and the second version of a part |
+| Trials before calling something reliable | **25 or more** | Intermittent failures invisible in three tries |
+| Stage overlap on a slide at full extension | at least 60 mm | Binding and deflection at the worst position |
+| Spares in the pit | one of anything that has broken before | Your own failure history is the packing list |
+
+---
+
+## Why 2x and not 1.2x
+
+Static torque is only what holds the mechanism still. Everything real adds to it:
+
+- Accelerating the mechanism rather than holding it
+- Catching it after a collision
+- A game element heavier than the one on your bench
+- A battery at 11.5 V instead of 12.6 V
+- Friction that was not there when the mechanism was new
+
+A safety factor of 2 covers those. A factor of 1.2 covers none of them, and it is exactly the number a spreadsheet produces when someone wants the answer to be yes.
+
+:::warning Margin is not the same as over-building
+A safety factor of 6 is not caution, it is a different mistake. Every unit of extra reduction slows the mechanism proportionally, so an arm with enormous margin takes seven seconds to raise and costs you the cycle. Aim for 2 to 3 and spend the rest on speed.
+:::
+
+---
+
+## Schedule margin
+
+**Time.** A mechanism finished the night before an event has never been tested at match weight, on a fresh battery, by the actual driver, twenty-five times.
+
+The design margins above are worthless if the schedule has no margin. Finishing a week early and spending that week testing is worth more than any factor of safety.
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Aim for a static safety factor of at least `__________`.
+2. Sustained motor load should stay under `__________` percent of stall torque.
+3. Reserve about `__________` percent of the weight budget for unmodeled hardware and later revisions.
+
+<details>
+<summary>Show answers</summary>
+
+1. **2** (two times)
+2. **60**
+3. **10**
+
+</details>
+
+---
+
+## Exercise
+
+Take your most loaded mechanism and compute its actual safety factor at the worst case. Then check its sustained load against 60% of stall. Write both numbers in the notebook, whatever they say.
+
+<MarkComplete
+  lessonId="module-12/margin-standards"
+  nextUnit="/mechanical/module-12/mastery-quiz"
+  nextUnitName="Module 12 Mastery Quiz: Shop Standards and Non-Negotiables"
+/>

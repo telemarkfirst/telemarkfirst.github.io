@@ -1,0 +1,126 @@
+---
+id: distance-sensor
+title: "Lesson 11.4: Integration of Time-of-Flight Distance Sensors for Obstacle Detection"
+sidebar_label: "11.4 · Distance Sensor"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit11Simulator from '@site/src/components/Unit11Simulator';
+
+# Lesson 11.4: Integration of Time-of-Flight Distance Sensors for Obstacle Detection
+
+---
+
+## How Time-of-Flight Ranging Works
+
+A time-of-flight sensor emits a laser pulse and measures how long the pulse takes to return after bouncing off a surface. Because light travels at a fixed and known speed, the elapsed time maps directly and precisely to a distance. The sensor does not need to be calibrated for different materials the way an ultrasonic sensor does, and it is far less susceptible to ambient sound than ultrasonic alternatives.
+
+The REV Color/Distance Sensor integrates this ranging capability alongside the color sensor covered in Lesson 11.3. One physical device, one I2C connection, and one configuration name in the Robot Controller app provide both capabilities at the same time. This is one of the most cost-effective sensor combinations available in FTC.
+
+---
+
+## The DistanceSensor Interface and Unit Handling
+
+In the SDK, distance sensing functionality is accessed through the `DistanceSensor` interface. The method `getDistance(DistanceUnit unit)` returns the measured distance as a `double`. The `DistanceUnit` parameter is an enum with values including `CM`, `MM`, `INCH`, and `METER`. Passing the unit directly into the method means the SDK performs all conversion math internally, and the value you receive is already in the unit you requested.
+
+Because the REV sensor is one physical device that satisfies two different Java interfaces, you can retrieve it from the `hardwareMap` using the same configuration name for both `ColorSensor` and `DistanceSensor`. The SDK resolves both references to the same underlying hardware object transparently.
+
+```java
+ColorSensor    colorSensor = hardwareMap.get(ColorSensor.class,    "front_sensor");
+DistanceSensor rangeSensor = hardwareMap.get(DistanceSensor.class, "front_sensor");
+```
+
+Both variables now reference the same physical device, and you can use them independently throughout your code.
+
+---
+
+## Practical Limits and Validation
+
+The time-of-flight sensor on the REV module is accurate roughly between 1 cm and 200 cm. Objects that are very close, very far away, or made of dark matte materials that absorb the laser rather than reflect it can produce unreliable readings. The SDK returns `Double.MAX_VALUE` when the sensor cannot obtain a valid measurement. Checking for this before using a distance value in control logic prevents erratic motor behavior caused by a stray bad reading.
+
+```java
+double dist = rangeSensor.getDistance(DistanceUnit.CM);
+if (dist < 200.0) { // Only act on readings within a believable range
+    // control logic here
+}
+```
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+
+@TeleOp(name="Distance_Sensor_Demo")
+public class DistanceSensorDemo extends LinearOpMode {
+
+    @Override
+    public void runOpMode() {
+        DcMotor        driveMotor = hardwareMap.get(DcMotor.class,     "left_drive");
+        DistanceSensor frontRange = hardwareMap.get(DistanceSensor.class, "front_sensor");
+
+        driveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        waitForStart();
+
+        while (opModeIsActive()) {
+            double distCm = frontRange.getDistance(DistanceUnit.CM);
+
+            double power = -gamepad1.left_stick_y;
+
+            // Validate the reading before using it to make a safety decision
+            if (distCm < 200.0 && distCm < 15.0 && power > 0) {
+                // Robot is within 15 cm of an obstacle. Block forward movement.
+                power = 0.0;
+                telemetry.addData("Warning", "OBSTACLE DETECTED");
+            }
+
+            driveMotor.setPower(power);
+            telemetry.addData("Distance (cm)", "%.1f", distCm);
+            telemetry.addData("Power",         power);
+            telemetry.update();
+        }
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. To retrieve a distance reading in centimeters, pass `DistanceUnit.__________` as the argument to `getDistance()`.
+2. The Java interface used for laser-based distance measurement in the FTC SDK is `__________`.
+3. When the REV distance sensor cannot obtain a valid measurement, it returns the value `Double.__________`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`CM`**
+2. **`DistanceSensor`**
+3. **`MAX_VALUE`**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Use the simulator below to complete the obstacle cutoff routine. The editor starts with incomplete starter code, so fill in the distance read, validity check, and safe motor cutoff before driving toward the obstacle.
+
+<SimulatorRunGuide />
+
+<Unit11Simulator lesson="distance-sensor" />
+
+<MarkComplete
+  lessonId="unit-11/distance-sensor"
+  nextUnit="/docs/unit-11/sensor-gated-intake"
+  nextUnitName="Lesson 11.5: Creating an Automated Sensor-Gated Intake System"
+/>

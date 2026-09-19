@@ -1,0 +1,31 @@
+---
+id: hub-heading
+title: "Lesson F1.3: Hub Heading and Yaw Reset"
+slug: /fll/unit-01/hub-heading
+sidebar_label: "F1.3 · Hub Heading"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson F1.3: Hub Heading and Yaw Reset
+
+The Prime Hub contains a motion sensor that can report yaw. Resetting yaw defines the current direction as zero; it does not physically rotate the robot. A later reading tells how far the Hub has turned relative to that chosen zero.
+
+A simple correction compares target heading with measured heading, then makes a small turn in the error's direction. Avoid rapid full-power corrections around zero because they can cause oscillation.
+
+## Official hardware activity
+
+Use the SPIKE App motion-sensor tutorial, then compare its yaw value with the turn work from [Competition Ready](https://education.lego.com/en-us/lessons/prime-competition-ready/).
+
+## Simulator practice
+
+Reset yaw, turn 70 degrees, and store the yaw reporter in a variable. Add an if statement that makes a small correction when the value is below 85 degrees.
+
+<FllPractice lessonId="fll-unit-01/hub-heading" />
+
+## Try it in the SPIKE App
+
+Keep the Hub level and still during startup. Test the correction at two speeds and record whether it overshoots.
+
+<MarkComplete lessonId="fll-unit-01/hub-heading" nextUnit="/blocks/fll/unit-01/attachment-motors" nextUnitName="Lesson F1.4: Attachment Motors and Objects" />

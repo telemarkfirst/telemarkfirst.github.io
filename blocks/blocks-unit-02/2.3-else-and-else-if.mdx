@@ -1,0 +1,34 @@
+---
+id: else-and-else-if
+title: "Lesson 2.3: Use Else and Else If"
+sidebar_label: "2.3 · Else and Else If"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 2.3: Use Else and Else If
+
+An `else` branch runs when the matching `if` condition is false. An `if` with `else` chooses exactly one of two branches.
+
+Use `else if` when there are more than two cases. Conditions are checked from top to bottom. The first true branch runs, then the rest of that chain is skipped. An ending `else` handles any value that did not match an earlier condition.
+
+Branch order matters. Suppose a program checks `score >= 50` before `score >= 100`. A score of 120 matches the first rule, so the later rule never gets a turn. The more specific `score >= 100` rule should come first.
+
+## Guided practice
+
+Create a variable named `size`. Build these ordered branches:
+
+- If `size >= 10`, print `large`.
+- Else if `size >= 5`, print `medium`.
+- Else, print `small`.
+
+Test 12, 7, and 3. Then test the boundary values 10 and 5. Record which branch runs for each input and explain why only one branch runs.
+
+<BlockPractice lessonId="blocks-unit-02/else-and-else-if" />
+
+<MarkComplete
+  lessonId="blocks-unit-02/else-and-else-if"
+  nextUnit="/blocks/blocks-unit-02/and-or-not"
+  nextUnitName="Lesson 2.4: Combine Rules with And, Or, and Not"
+/>

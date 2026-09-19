@@ -1,0 +1,36 @@
+---
+id: mastery-coding-challenge
+title: "Unit 6 Project Stage: Arrays and Non-Blocking Timing"
+sidebar_label: "Unit 6 · Coding Challenge"
+sidebar_position: 6
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import MasterySimulator from '@site/src/components/MasterySimulator';
+
+# Stage 5: Arrays and Non-Blocking Timing
+
+This stage keeps `CompetitionTeleOp.java` and improves it in place. Use the existing project files and earlier snapshots as references; no disposable autonomous file is created.
+
+## Your Task
+
+Reduce repeated motor work and prepare a responsive launch sequence:
+
+1. Put the four drive motors in an array.
+2. Use a counted or for-each loop for repeated configuration or shutdown.
+3. Detect the rising edge of the A button.
+4. Store a deadline based on `getRuntime()` and advance the launch state from later `loop()` calls.
+5. Keep `stop()` responsible for safe shutdown.
+
+Do not use `sleep()` or `while(true)`. The program must stay responsive to Stop.
+
+## Coding Challenge Simulator
+
+<MasterySimulator unit={6} project />
+
+<MarkComplete
+  lessonId="unit-06/mastery-coding-challenge"
+  completesUnit="unit-06"
+  nextUnit="/docs/unit-07"
+  nextUnitName="Unit 7: Hardware Mapping"
+/>

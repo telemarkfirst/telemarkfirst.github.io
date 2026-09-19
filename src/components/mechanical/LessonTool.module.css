@@ -1,0 +1,74 @@
+/* Framing for a tool embedded in a lesson, matching what SimulatorRunGuide
+   does for the Java simulators: say what to bring and what to read before
+   handing over the controls. */
+
+.wrap {
+  margin: var(--tm-sp-5) 0;
+}
+
+.guide {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--tm-sp-3);
+  padding: var(--tm-sp-4);
+  border: 1px solid var(--tm-border-hair);
+  border-radius: var(--tm-r-md) var(--tm-r-md) 0 0;
+  border-bottom: none;
+  background: var(--tm-surface-1);
+}
+
+.step {
+  display: flex;
+  gap: var(--tm-sp-3);
+  align-items: flex-start;
+}
+
+.stepNum {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--tm-accent-a55);
+  border-radius: var(--tm-r-sm);
+  color: var(--tm-accent);
+  font-family: var(--tm-font-mono);
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+}
+
+.stepBody {
+  min-width: 0;
+  color: var(--tm-text-soft);
+  font-size: var(--tm-fs-xs);
+  line-height: 1.5;
+}
+
+.stepTitle {
+  display: block;
+  color: var(--tm-text-strong);
+  font-weight: 600;
+}
+
+.tool > section {
+  margin-top: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.footerRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tm-sp-3);
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--tm-sp-2);
+  color: var(--tm-text-faint);
+  font-size: var(--tm-fs-2xs);
+}
+
+.footerRow a {
+  color: var(--tm-accent);
+  font-family: var(--tm-font-label);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}

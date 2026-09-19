@@ -1,0 +1,137 @@
+---
+id: routing-and-strain-relief
+title: "Lesson 9.3: Routing, Strain Relief, and Surviving Robot Motion"
+sidebar_label: "9.3 · Routing"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import LessonPhoto from '@site/src/components/mechanical/LessonPhoto';
+import StrainRelief from '@site/src/components/mechanical/visuals/StrainRelief';
+import {StrainReliefDiagram} from '@site/src/components/mechanical/EngineeringDiagrams';
+
+# Lesson 9.3: Routing, Strain Relief, and Surviving Robot Motion
+
+---
+
+## Technical Context
+
+Robot wiring sees repeated bending, vibration, and impact. Failures tend to develop near connectors, sharp bends, and unsupported transitions between moving and fixed parts.
+
+Plan wire routes before installation so each cable has room to move, adequate support, and accessible connectors.
+
+---
+
+## Where Wires Fail
+
+Three locations account for nearly all of it.
+
+**At the connector.** Cable movement transfers into the connector body and the conductor flexes right where it is soldered or crimped. It fatigues and breaks internally, so the wire looks fine and the circuit is intermittent.
+
+**Where the cable crosses a moving joint.** A cable that must bend as a mechanism moves does so thousands of times per season.
+
+**Where a cable rubs on an edge.** Any cable in contact with a frame edge, a rotating part, or a moving mechanism wears through its insulation, then shorts.
+
+Every one is preventable at design time and expensive to fix at a competition.
+
+---
+
+## Strain Relief
+
+Strain relief means the cable is anchored so that any pull is taken by the anchor, not by the connector.
+
+Practical implementation:
+
+- Secure the cable to structure within a few inches of every connector
+- Leave a **service loop**, a small amount of slack between the anchor and the connector, so the connector is never under tension
+- Anchor with a proper clamp or a zip tie against a smooth surface, not against a sharp frame edge
+- Do not zip tie so tightly that the tie deforms the insulation, since a compressed cable is a stress concentration of its own
+
+<StrainReliefDiagram />
+
+:::tip Pull test the routing, not just the crimp
+With the robot assembled, give each cable a gentle tug at several points along its route. Nothing should move at a connector. If a pull anywhere reaches the connector, the strain relief is not doing its job.
+:::
+
+---
+
+## Cables That Cross Moving Joints
+
+Wherever a cable must move with a mechanism, design the movement rather than allowing it.
+
+**Give it a defined bend location and a generous radius.** A cable bending in a controlled loop of a few inches radius lasts far longer than one folding sharply at a fixed point.
+
+**Do not put the bend at the connector.** Anchor on both sides of the moving section so the flex happens in the middle of a free span.
+
+**Use a cable carrier or a spiral wrap** on long travels such as a linear slide. This constrains the path so the cable cannot be caught by the mechanism.
+
+**Check the full range.** Extend and retract the mechanism completely and watch the cable through the whole motion, looking for the position where it goes taut, gets pinched, or contacts something moving. That position exists more often than teams expect and only shows up at one point in the travel.
+
+:::warning A cable that is taut at full extension will fail
+It may survive the first hundred cycles. It will not survive a season. If a cable goes tight anywhere in the range of motion, add length and re-route before running the mechanism further.
+:::
+
+---
+
+## Protecting From Abrasion
+
+- **Grommets or edge protection** wherever a cable passes through a hole in a plate. A drilled hole in aluminum has a sharp edge that will cut insulation.
+- **Deburr every pass-through**, which is the same habit from Lesson 2.3 applied to wiring.
+- **Sleeving or spiral wrap** on any cable near a moving mechanism.
+- **Keep cables away from rotating parts.** A cable near a spinning shaft eventually gets wrapped around it, which destroys the cable and can damage the mechanism.
+
+---
+
+## Bundling and Serviceability
+
+Bundling makes wiring tidy, which helps, but a bundle so tight that no single wire can be removed is a problem of its own. At a competition, replacing one motor cable should not require cutting twenty zip ties.
+
+Practical balance:
+
+- Bundle wires that go to the same place and stop there
+- Use reusable ties or hook and loop wrap on bundles that need service access
+- Keep the battery lead and main power path separate and clearly identifiable
+- Leave enough slack that a connector can be reached and unplugged without disassembly
+
+:::tip Route before you build, not after
+Decide where the wire runs go while the robot is still in CAD, and reserve the space. Wiring squeezed into whatever gaps remain after mechanisms are built is how cables end up crossing joints and rubbing on edges.
+:::
+
+---
+
+<LessonPhoto
+  drawing={<StrainRelief />}
+  alt="A motor cable pulled taut into its connector with no slack or anchor nearby."
+  caption="A cable under tension at the connector. Every motion of the mechanism is transferred into the conductor where it is crimped, which fatigues it until the circuit becomes intermittent while the insulation still looks perfect."
+  shot="A motor or encoder cable pulled tight into its connector on a moving mechanism at full travel, with no anchor within reach."
+  framing="Close on the connector with the mechanism at the extreme of its travel, enough context to show there is no strain relief."
+/>
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. A small amount of slack left between the cable anchor and the connector is called a `__________` loop.
+2. Where a cable passes through a hole in a plate, it should be protected by a `__________` or a deburred and radiused edge.
+3. A cable crossing a moving joint should bend in a controlled loop with a generous `__________` rather than folding sharply at a fixed point.
+
+<details>
+<summary>Show answers</summary>
+
+1. **service**
+2. **grommet**
+3. **radius**
+
+</details>
+
+---
+
+## Exercise
+
+Run every mechanism on your robot through its full range while watching the cables. Mark with tape any point where a cable goes taut, is pinched, rubs on an edge, or moves at a connector. Each mark is a scheduled failure, and fixing them now takes minutes.
+
+<MarkComplete
+  lessonId="module-09/routing-and-strain-relief"
+  nextUnit="/mechanical/module-09/inspection-legal-wiring"
+  nextUnitName="Lesson 9.4: Wiring That Passes Electrical Inspection"
+/>

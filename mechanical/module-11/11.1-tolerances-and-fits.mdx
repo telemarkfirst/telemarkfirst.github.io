@@ -1,0 +1,125 @@
+---
+id: tolerances-and-fits
+title: "Lesson 11.1: Tolerances, Clearance Fits, and Press Fits"
+sidebar_label: "11.1 · Tolerances & Fits"
+sidebar_position: 1
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import LessonTool from '@site/src/components/mechanical/LessonTool';
+import FitCalculator from '@site/src/components/mechanical/FitCalculator';
+
+# Lesson 11.1: Tolerances, Clearance Fits, and Press Fits
+
+---
+
+## Technical Context
+
+No part is exactly the dimension on the drawing. A tolerance states how far off it may be and still work, and choosing it is a design decision with real cost: tighter tolerances take longer to make and cost more, and a tolerance tighter than the function requires is money spent on nothing.
+
+---
+
+## A Fit Is a Clearance
+
+When a shaft goes into a hole, the difference between the two diameters is the clearance.
+
+- **Positive clearance** means the hole is larger and the shaft moves freely.
+- **Zero or near zero** means the parts locate precisely and assemble with light force.
+- **Negative clearance**, called interference, means the hole is smaller and the parts must be forced together. This is what holds a press fit.
+
+Practical fit classes for FTC work:
+
+| Fit | Clearance | Use for |
+| --- | --- | --- |
+| Free running | Larger | Shafts that spin easily and tolerate misalignment |
+| Close running | Small | Rotating shafts where slop must be minimal |
+| Transition | Near zero | Parts that must locate precisely, held by a screw |
+| Press | Negative | Bearings pressed into a bore |
+
+---
+
+## Choose the Fit From the Function
+
+Work from what the joint must do:
+
+**Does it rotate?** It needs clearance. How much depends on how well aligned the supports are: a well aligned pair of bores can use a close running fit, while a shaft passing through two independently made plates needs free running clearance to accommodate the misalignment.
+
+**Does it need to locate precisely?** Transition fit, with a fastener carrying the load. The fit locates, the screw holds.
+
+**Is it held by interference alone?** Press fit, and only in a material that will not creep.
+
+<LessonTool
+  toolId="fit"
+  bring="The shaft diameter and how the hole will be made."
+  change="The fit class, and see the clearance change."
+  read="The hole to draw in CAD, and the tolerance band the fit allows."
+>
+  <FitCalculator />
+</LessonTool>
+
+:::warning A tighter fit is not a safer fit
+An overly tight rotating fit binds, generates heat, and wears. Interference where a clearance was needed makes the mechanism stiff and can crack the surrounding material. Tolerance is chosen from function, not from a general preference for precision.
+:::
+
+---
+
+## Where the Tolerance Comes From
+
+The process determines what tolerance is achievable, which is why the calculator asks how the hole is made.
+
+**A drilled hole cuts oversize**, typically by a few thousandths of an inch, and the amount varies with bit sharpness, feed, and whether the hole was center punched. A drilled hole is not a precision feature. When a bore must be accurate, ream it or bore it.
+
+**FDM printed holes come out undersize**, because of the extrusion path and the way the first layer spreads. Design printed holes oversize deliberately or plan to drill them after printing.
+
+**Laser cut edges** are moved by the kerf and by the heat affected zone. Cut a test coupon in the same material and thickness before committing a full plate.
+
+Knowing the direction each process errs in is what lets you compensate at design time rather than at assembly.
+
+---
+
+## Tolerance Stack-Up, Again
+
+Lesson 4.4 covered stack-ups along a shaft. The same accumulation applies to fits: a shaft that must pass through three plates accumulates the position tolerance of all three, and if the total exceeds the clearance in the fit, the shaft binds even though every individual hole is within tolerance.
+
+Two remedies, both from Lesson 4.4: reduce the number of parts in the chain, and put a deliberate adjustment in one place so the accumulated error is absorbed rather than predicted.
+
+---
+
+## Specifying It On a Drawing
+
+For an FTC drawing, three things are usually enough:
+
+- The nominal dimension
+- The tolerance, either as plus and minus or as a named fit
+- A note where the fit matters, such as "ream to size for bearing press"
+
+A drawing with no tolerance implicitly says every dimension is equally important, which means whoever makes the part guesses which ones actually are.
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Negative clearance, where the hole is smaller than the shaft, is called `__________`.
+2. A drilled hole typically comes out `__________` its nominal size, which is why a precision bore should be reamed.
+3. FDM printed holes typically come out `__________`, so they should be designed oversize or drilled after printing.
+
+<details>
+<summary>Show answers</summary>
+
+1. **interference**
+2. **oversize** (larger than)
+3. **undersize** (smaller than)
+
+</details>
+
+---
+
+## Exercise
+
+Drill a 8 mm hole in scrap aluminum and measure it with a caliper. Print an 8 mm hole and measure that. Record both deviations from nominal. Those two numbers are your shop's process bias, and you can design around them from now on.
+
+<MarkComplete
+  lessonId="module-11/tolerances-and-fits"
+  nextUnit="/mechanical/module-11/printed-parts"
+  nextUnitName="Lesson 11.2: Designing 3D Printed Parts That Survive FTC Loads"
+/>

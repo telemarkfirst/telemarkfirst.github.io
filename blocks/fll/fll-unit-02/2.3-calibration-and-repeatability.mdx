@@ -1,0 +1,31 @@
+---
+id: calibration-and-repeatability
+title: "Lesson F2.3: Calibration and Repeatability"
+slug: /fll/unit-02/calibration-and-repeatability
+sidebar_label: "F2.3 · Repeatability"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson F2.3: Calibration and Repeatability
+
+Calibration connects a programmed value with what the robot actually does. Measure the error, change one constant, and test again. Do not tune several distances and turns at once because the cause of improvement will be unclear.
+
+Telemark runs every program against ideal wheels and fixed minus-two-percent and plus-two-percent wheel profiles. These are deterministic teaching cases, not random physics. A robust return route should tolerate more than one profile.
+
+## Official hardware activity
+
+Use the systematic testing approach in [Mission Ready](https://education.lego.com/en-us/lessons/prime-competition-ready/mission-ready/). Record expected and actual results rather than only pass or fail.
+
+## Simulator practice
+
+Build a route that leaves home and returns. Read `repeatabilityPasses` in telemetry and adjust the route until at least two profiles return home.
+
+<FllPractice lessonId="fll-unit-02/calibration-and-repeatability" />
+
+## Try it in the SPIKE App
+
+Run a route at least three times from the same alignment. Record end-position error, battery state, surface condition, and any mechanical change.
+
+<MarkComplete lessonId="fll-unit-02/calibration-and-repeatability" nextUnit="/blocks/fll/unit-02/mission-order-and-time" nextUnitName="Lesson F2.4: Mission Order, Recovery, and Time" />

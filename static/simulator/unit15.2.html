@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Telemark Unit 15.2 Simulator</title>
+<style>
+  #sim-right-panel #sim-scene-container {
+    flex: 1 0 clamp(390px, 56vh, 640px);
+    min-height: 390px;
+    background: #020204;
+  }
+
+  #sim-right-panel .u152-panel {
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: clamp(285px, 40vh, 480px);
+    overflow-y: auto;
+    margin: 10px;
+    padding: 12px;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #0b0b0f;
+    color: #e5e7eb;
+    font-family: var(--font-ui, Arial, sans-serif);
+  }
+
+  #sim-scene-container .u152-scene-badge,
+  #sim-scene-container .u152-pose-badge,
+  #sim-scene-container .u152-phase-badge {
+    position: absolute;
+    z-index: 5;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: rgba(4, 4, 7, 0.9);
+    color: #f4f4f5;
+    pointer-events: none;
+    font-weight: 800;
+  }
+
+  #sim-scene-container .u152-scene-badge {
+    top: 12px;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 11px;
+  }
+
+  #sim-scene-container .u152-pose-badge {
+    right: 12px;
+    bottom: 12px;
+    padding: 10px 13px;
+    font-size: 1rem;
+  }
+
+  #sim-scene-container .u152-phase-badge {
+    left: 12px;
+    bottom: 12px;
+    padding: 9px 12px;
+  }
+
+  #sim-right-panel .u152-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0 8px;
+    font-weight: 800;
+  }
+
+  #sim-right-panel .u152-title:first-child {
+    margin-top: 0;
+  }
+
+  #sim-right-panel .u152-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  #sim-right-panel .u152-card,
+  #sim-right-panel .u152-step {
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #08080c;
+    color: #9ca3af;
+    padding: 9px;
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  #sim-right-panel .u152-card strong {
+    color: #f4f4f5;
+    font-size: 1.1rem;
+  }
+
+  #sim-right-panel .u152-card.large strong {
+    font-size: 1.35rem;
+  }
+
+  #sim-right-panel .u152-card.good,
+  #sim-right-panel .u152-step.good {
+    border-color: #22cc66;
+    color: #bbf7d0;
+    box-shadow: 0 0 12px rgba(34, 204, 102, 0.12);
+  }
+
+  #sim-right-panel .u152-card.warn,
+  #sim-right-panel .u152-step.active {
+    border-color: #8a6a20;
+    color: #fde68a;
+  }
+
+  #sim-right-panel .u152-card.bad {
+    border-color: #7f1d1d;
+    color: #fecaca;
+  }
+
+  #sim-right-panel .u152-timeline {
+    display: grid;
+    gap: 7px;
+  }
+
+  #sim-right-panel .u152-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  #sim-right-panel .u152-button {
+    border: 1px solid #f3ead7;
+    border-radius: 8px;
+    background: rgba(243, 234, 215, 0.1);
+    color: #f3ead7;
+    padding: 8px 10px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  #sim-right-panel .u152-button:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  #sim-right-panel .u152-callout,
+  #sim-right-panel .u152-warning,
+  #sim-right-panel .u152-success {
+    margin-top: 10px;
+    border-radius: 8px;
+    padding: 9px;
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  #sim-right-panel .u152-callout {
+    border: 1px solid #374151;
+    background: rgba(244, 244, 245, 0.05);
+    color: #e5e7eb;
+  }
+
+  #sim-right-panel .u152-warning {
+    display: none;
+    border: 1px solid #8a6a20;
+    background: rgba(255, 204, 102, 0.08);
+    color: #fde68a;
+  }
+
+  #sim-right-panel .u152-warning.error {
+    border-color: #7f1d1d;
+    background: rgba(239, 68, 68, 0.1);
+    color: #fecaca;
+  }
+
+  #sim-right-panel .u152-success {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #22cc66;
+    background: rgba(34, 204, 102, 0.1);
+    color: #22cc66;
+    font-weight: 800;
+  }
+</style>
+<script src="./simulator_base.js"></script>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+<script>
+window.onSimulatorReady = function () {
+  "use strict";
+
+  const starterCode = `@Autonomous(name="Pedro_Lifecycle")
+public class PedroLifecycle extends LinearOpMode {
+
+    Follower follower;
+
+    @Override
+    public void runOpMode() {
+
+        PoseFactory poseFactory = PoseFactory.degrees();
+
+        // Create the configured Pedro 3 Follower
+        follower = Constants.create(hardwareMap);
+
+        // TODO: Set the pose to x=8, y=60, heading=0 degrees
+        // TODO: Prime the localizer with one follower.update() call
+
+        telemetry.addData("Status",  "Follower Ready");
+        telemetry.addData("Start X", 8);
+        telemetry.addData("Start Y", 60);
+        telemetry.update();
+
+        waitForStart();
+
+        // Pedro 3 must be updated throughout the active OpMode.
+        while (opModeIsActive()) {
+            // TODO: Update the follower each loop
+
+            // TODO: Get the current pose and display X, Y, and Heading
+            telemetry.update();
+        }
+
+        telemetry.addData("Status", "Follower Lifecycle Complete");
+        telemetry.update();
+    }
+}`;
+
+  const requirements = [
+    "Create a degree-based PoseFactory",
+    "Create the Follower with Constants.create(hardwareMap)",
+    "Call follower.setPose(poseFactory.of(8, 60, 0))",
+    "Starting x is 8 inches",
+    "Starting y is 60 inches",
+    "Starting heading is 0 degrees",
+    "Prime the Follower with update() before Start",
+    "Call waitForStart()",
+    "Call follower.update() inside the while loop",
+    "Use opModeIsActive() in the while condition",
+    "Use follower.pose() for telemetry",
+    "Report X, Y, and heading through telemetry"
+  ];
+
+  const FIELD_INCHES = 144;
+  const FIELD_SCALE = 0.045;
+  const START_POSE = { x: 8, y: 60, heading: 0 };
+
+  const state = {
+    active: false,
+    stopRequested: false,
+    waitingForStart: false,
+    startRequested: false,
+    phase: "IDLE",
+    runToken: 0,
+    followerCreated: false,
+    poseSet: false,
+    updateCount: 0,
+    busyChecks: 0,
+    loopComplete: false,
+    pose: { x: 0, y: 0, heading: 0 },
+    lifecycle: {
+      created: false,
+      pose: false,
+      wait: false,
+      update: false,
+      complete: false
+    }
+  };
+
+  let followerDevice;
+  let sceneRoot;
+  let robotGroup;
+  let startMarker;
+  let headingLine;
+  let poseLabel;
+  let phaseLabel;
+  let animationRegistered = false;
+  const followerCallbacks = [];
+
+  function el(id) {
+    return document.getElementById(id);
+  }
+
+  function safeCall(fn) {
+    if (typeof fn !== "function") return undefined;
+    const args = Array.prototype.slice.call(arguments, 1);
+    return fn.apply(null, args);
+  }
+
+  ensureFollowerHardware();
+
+  setCode(starterCode);
+  setChallenge(
+    "Telemark Unit 15.2 Simulator",
+    "Pedro Pathing Follower Lifecycle",
+    requirements
+  );
+  setBadges([
+    { icon: "fa-route", iconClass: "fa-solid fa-route", label: "PedroPathing", active: true },
+    { icon: "fa-location-dot", iconClass: "fa-solid fa-location-dot", label: "Pose", active: true },
+    { icon: "fa-display", iconClass: "fa-solid fa-display", label: "Telemetry", active: true }
+  ]);
+  setActiveInputs([]);
+
+  const banner = el("sim-success-banner");
+  if (banner) {
+    banner.innerHTML = '<i class="fa-solid fa-circle-check"></i> Challenge Complete! Pedro Pathing Follower lifecycle correctly implemented.';
+  }
+
+  followerDevice = hardwareMap.registerFollower("follower");
+  hardwareMap.onFollowerUpdate(function (x, y, heading) {
+    updateRobotPose(x, y, heading);
+  });
+
+  createPanel();
+  setupScene();
+  resetRuntimeState();
+  validateCode();
+  updatePanel();
+
+  window.onInit = function () {
+    state.runToken += 1;
+    state.active = true;
+    state.stopRequested = false;
+    state.waitingForStart = false;
+    state.startRequested = false;
+    state.phase = "INIT";
+    state.followerCreated = false;
+    state.poseSet = false;
+    state.updateCount = 0;
+    state.busyChecks = 0;
+    state.loopComplete = false;
+    state.lifecycle = { created: false, pose: false, wait: false, update: false, complete: false };
+    safeCall(clearTelemetry);
+    validateCode();
+    updatePanel();
+    runLinearOpMode(state.runToken);
+  };
+
+  window.onStart = function () {
+    state.startRequested = true;
+    releaseWaitForStart();
+  };
+
+  window.onStop = function () {
+    state.stopRequested = true;
+    state.active = false;
+    state.waitingForStart = false;
+    state.startRequested = false;
+    state.phase = "STOPPED";
+    releaseWaitForStart();
+    updatePanel();
+  };
+
+  window.onReset = function () {
+    state.runToken += 1;
+    state.active = false;
+    state.stopRequested = false;
+    state.waitingForStart = false;
+    state.startRequested = false;
+    releaseWaitForStart();
+    safeCall(clearTelemetry);
+    resetRuntimeState();
+    validateCode();
+    updatePanel();
+  };
+
+  if (!animationRegistered && typeof addAnimationCallback === "function") {
+    addAnimationCallback(tick);
+    animationRegistered = true;
+  }
+
+  function ensureFollowerHardware() {
+    if (typeof hardwareMap.registerFollower !== "function") {
+      hardwareMap.registerFollower = function (name) {
+        const device = {
+          _name: name,
+          setPose: function (pose) { setFollowerStartPose(pose); },
+          update: function () { updateFollower(); },
+          isBusy: function () { return isFollowerBusy(); },
+          pose: function () { return getFollowerPose(); }
+        };
+        hardwareMap._devices[name] = device;
+        return device;
+      };
+    }
+
+    if (typeof hardwareMap.onFollowerUpdate !== "function") {
+      hardwareMap.onFollowerUpdate = function (cb) { followerCallbacks.push(cb); };
+    } else {
+      const original = hardwareMap.onFollowerUpdate.bind(hardwareMap);
+      hardwareMap.onFollowerUpdate = function (cb) {
+        followerCallbacks.push(cb);
+        original(cb);
+      };
+    }
+  }
+
+  function createPanel() {
+    const rightPanel = el("sim-right-panel");
+    const sceneContainer = el("sim-scene-container");
+    if (!rightPanel || !sceneContainer) return;
+
+    ["u152-panel", "u152-scene-badge", "u152-pose-badge", "u152-phase-badge"].forEach(function (id) {
+      const old = el(id);
+      if (old) old.remove();
+    });
+
+    const sceneBadge = document.createElement("div");
+    sceneBadge.id = "u152-scene-badge";
+    sceneBadge.className = "u152-scene-badge";
+    sceneContainer.appendChild(sceneBadge);
+
+    const poseBadge = document.createElement("div");
+    poseBadge.id = "u152-pose-badge";
+    poseBadge.className = "u152-pose-badge";
+    sceneContainer.appendChild(poseBadge);
+
+    const phaseBadge = document.createElement("div");
+    phaseBadge.id = "u152-phase-badge";
+    phaseBadge.className = "u152-phase-badge";
+    sceneContainer.appendChild(phaseBadge);
+
+    const panel = document.createElement("div");
+    panel.id = "u152-panel";
+    panel.className = "u152-panel";
+    panel.innerHTML = `
+      <div class="u152-title"><i class="fa-solid fa-route"></i> Follower Lifecycle</div>
+      <div class="u152-timeline">
+        <div class="u152-step" id="u152-step-created">1. Constants.create(hardwareMap)</div>
+        <div class="u152-step" id="u152-step-pose">2. follower.setPose(8, 60, 0°)</div>
+        <div class="u152-step" id="u152-step-wait">3. Prime, then waitForStart()</div>
+        <div class="u152-step" id="u152-step-update">4. follower.update() every active loop</div>
+        <div class="u152-step" id="u152-step-complete">5. Stop safely from Driver Station</div>
+      </div>
+
+      <div class="u152-title"><i class="fa-solid fa-location-dot"></i> Current Pose</div>
+      <div class="u152-grid">
+        <div class="u152-card large" id="u152-x-card"></div>
+        <div class="u152-card large" id="u152-y-card"></div>
+        <div class="u152-card large" id="u152-heading-card"></div>
+        <div class="u152-card" id="u152-busy-card"></div>
+        <div class="u152-card" id="u152-update-card"></div>
+        <div class="u152-card" id="u152-order-card"></div>
+      </div>
+
+      <div class="u152-callout">
+        <i class="fa-solid fa-circle-info"></i>
+        Pedro Pathing uses inches. The starting pose (8, 60, 0) means 8 inches from the left wall, 60 inches from the bottom wall, facing positive X.
+      </div>
+      <div class="u152-success" id="u152-success"><i class="fa-solid fa-circle-check"></i> Challenge Complete! Pedro Pathing Follower lifecycle correctly implemented.</div>
+      <div class="u152-warning" id="u152-warning"></div>
+    `;
+    rightPanel.appendChild(panel);
+
+  }
+
+  function setupScene() {
+    if (!window.THREE || !window.scene) return;
+    if (sceneRoot) window.scene.remove(sceneRoot);
+
+    sceneRoot = new THREE.Group();
+    sceneRoot.name = "unit15_2_scene";
+    window.scene.add(sceneRoot);
+    window.scene.background = new THREE.Color(0x000000);
+    safeCall(setFieldVisible, false);
+    safeCall(setCameraOrbit, {
+      theta: -0.64,
+      phi: 0.82,
+      radius: 9.0,
+      target: { x: 0, y: 0.25, z: 0 }
+    });
+
+    const ambient = new THREE.AmbientLight(0xffffff, 0.84);
+    sceneRoot.add(ambient);
+    const key = new THREE.DirectionalLight(0xffffff, 1.1);
+    key.position.set(3.5, 6, 4);
+    sceneRoot.add(key);
+
+    const fieldSize = FIELD_INCHES * FIELD_SCALE;
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(fieldSize, fieldSize),
+      new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.92, metalness: 0.02 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.02;
+    sceneRoot.add(floor);
+
+    const grid = new THREE.GridHelper(fieldSize, 6, 0xf3ead7, 0x1f1f1f);
+    grid.position.y = 0.003;
+    sceneRoot.add(grid);
+
+    const boundary = makeFieldBoundary(fieldSize);
+    sceneRoot.add(boundary);
+    addAxis("X (inches)", 0xff6b6b, new THREE.Vector3(-fieldSize / 2, 0.03, -fieldSize / 2), new THREE.Vector3(fieldSize / 2, 0.03, -fieldSize / 2), 0);
+    addAxis("Y (inches)", 0x22cc66, new THREE.Vector3(-fieldSize / 2, 0.035, -fieldSize / 2), new THREE.Vector3(-fieldSize / 2, 0.035, fieldSize / 2), Math.PI / 2);
+    addTileLabels(fieldSize);
+
+    const origin = new THREE.Mesh(
+      new THREE.SphereGeometry(0.07, 24, 16),
+      new THREE.MeshBasicMaterial({ color: 0xf3ead7 })
+    );
+    origin.position.set(-fieldSize / 2, 0.09, -fieldSize / 2);
+    sceneRoot.add(origin);
+
+    startMarker = makeStartMarker();
+    const startPos = fieldToScene(START_POSE.x, START_POSE.y);
+    startMarker.position.set(startPos.x, 0.02, startPos.z);
+    sceneRoot.add(startMarker);
+
+    robotGroup = new THREE.Group();
+    sceneRoot.add(robotGroup);
+    buildRobot();
+
+    headingLine = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
+      new THREE.LineBasicMaterial({ color: 0xa5f3fc })
+    );
+    sceneRoot.add(headingLine);
+
+    poseLabel = makeTextSprite("Pose: 0, 0, 0", "#f3ead7");
+    sceneRoot.add(poseLabel);
+    phaseLabel = makeTextSprite("IDLE", "#fde68a");
+    phaseLabel.position.set(0, 0.62, -fieldSize / 2 - 0.3);
+    sceneRoot.add(phaseLabel);
+  }
+
+  function makeFieldBoundary(size) {
+    const points = [
+      new THREE.Vector3(-size / 2, 0.015, -size / 2),
+      new THREE.Vector3(size / 2, 0.015, -size / 2),
+      new THREE.Vector3(size / 2, 0.015, size / 2),
+      new THREE.Vector3(-size / 2, 0.015, size / 2),
+      new THREE.Vector3(-size / 2, 0.015, -size / 2)
+    ];
+    return new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), new THREE.LineBasicMaterial({ color: 0xf3ead7 }));
+  }
+
+  function addAxis(label, color, start, end, labelRotation) {
+    const line = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([start, end]),
+      new THREE.LineBasicMaterial({ color: color })
+    );
+    sceneRoot.add(line);
+
+    const direction = new THREE.Vector3().subVectors(end, start).normalize();
+    const cone = new THREE.Mesh(
+      new THREE.ConeGeometry(0.1, 0.28, 24),
+      new THREE.MeshBasicMaterial({ color: color })
+    );
+    cone.position.copy(end);
+    cone.position.addScaledVector(direction, -0.08);
+    cone.rotation.z = -Math.PI / 2;
+    if (Math.abs(direction.z) > Math.abs(direction.x)) cone.rotation.x = Math.PI / 2;
+    sceneRoot.add(cone);
+
+    const text = makeTextSprite(label, color === 0x22cc66 ? "#bbf7d0" : "#fecaca");
+    text.scale.set(1.0, 0.24, 1);
+    text.position.copy(end);
+    text.position.y = 0.35;
+    text.position.x += labelRotation === 0 ? -0.55 : 0.5;
+    text.position.z += labelRotation === 0 ? 0.25 : -0.45;
+    sceneRoot.add(text);
+  }
+
+  function addTileLabels(fieldSize) {
+    for (let value = 24; value <= 120; value += 24) {
+      const xPos = fieldToScene(value, 0);
+      const xLabel = makeTextSprite(String(value), "#9ca3af");
+      xLabel.scale.set(0.34, 0.16, 1);
+      xLabel.position.set(xPos.x, 0.19, -fieldSize / 2 - 0.16);
+      sceneRoot.add(xLabel);
+
+      const yPos = fieldToScene(0, value);
+      const yLabel = makeTextSprite(String(value), "#9ca3af");
+      yLabel.scale.set(0.34, 0.16, 1);
+      yLabel.position.set(-fieldSize / 2 - 0.18, 0.19, yPos.z);
+      sceneRoot.add(yLabel);
+    }
+  }
+
+  function makeStartMarker() {
+    const group = new THREE.Group();
+    const material = new THREE.LineBasicMaterial({ color: 0x22cc66 });
+    const size = 0.28;
+    group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-size, 0, 0),
+      new THREE.Vector3(size, 0, 0)
+    ]), material));
+    group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 0, -size),
+      new THREE.Vector3(0, 0, size)
+    ]), material));
+    const label = makeTextSprite("START (8, 60)", "#bbf7d0");
+    label.scale.set(0.9, 0.22, 1);
+    label.position.set(0.22, 0.34, 0.34);
+    group.add(label);
+    return group;
+  }
+
+  function buildRobot() {
+    const body = new THREE.Mesh(
+      new THREE.BoxGeometry(0.78, 0.38, 0.62),
+      new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.68, metalness: 0.08 })
+    );
+    body.position.y = 0.22;
+    robotGroup.add(body);
+
+    const front = new THREE.Mesh(
+      new THREE.BoxGeometry(0.12, 0.1, 0.42),
+      new THREE.MeshStandardMaterial({ color: 0xf3ead7, roughness: 0.52, metalness: 0.04 })
+    );
+    front.position.set(0.45, 0.44, 0);
+    robotGroup.add(front);
+
+    const arrow = new THREE.Mesh(
+      new THREE.ConeGeometry(0.12, 0.32, 28),
+      new THREE.MeshBasicMaterial({ color: 0xa5f3fc })
+    );
+    arrow.rotation.z = -Math.PI / 2;
+    arrow.position.set(0.67, 0.47, 0);
+    robotGroup.add(arrow);
+
+    const tireMaterial = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.84, metalness: 0.03 });
+    const hubMaterial = new THREE.MeshStandardMaterial({ color: 0xf3ead7, roughness: 0.58, metalness: 0.12 });
+    [
+      [-0.26, 0.15, -0.38],
+      [0.26, 0.15, -0.38],
+      [-0.26, 0.15, 0.38],
+      [0.26, 0.15, 0.38]
+    ].forEach(function (pos) {
+      const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.14, 28), tireMaterial);
+      tire.rotation.x = Math.PI / 2;
+      tire.position.set(pos[0], pos[1], pos[2]);
+      robotGroup.add(tire);
+
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.15, 20), hubMaterial);
+      hub.rotation.x = Math.PI / 2;
+      hub.position.set(pos[0], pos[1], pos[2]);
+      robotGroup.add(hub);
+    });
+  }
+
+  function tick() {
+    updateSceneVisuals();
+  }
+
+  function updateSceneVisuals() {
+    if (robotGroup) {
+      const pos = fieldToScene(state.pose.x, state.pose.y);
+      robotGroup.position.set(pos.x, 0, pos.z);
+      robotGroup.rotation.y = -state.pose.heading;
+    }
+    if (startMarker) {
+      const pulse = 1 + Math.sin(performance.now() * 0.006) * 0.04;
+      startMarker.scale.setScalar(state.poseSet ? pulse : 1);
+    }
+    if (headingLine) {
+      const pos = fieldToScene(state.pose.x, state.pose.y);
+      const length = 0.95;
+      const end = new THREE.Vector3(
+        pos.x + Math.cos(state.pose.heading) * length,
+        0.18,
+        pos.z - Math.sin(state.pose.heading) * length
+      );
+      headingLine.geometry.dispose();
+      headingLine.geometry = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(pos.x, 0.18, pos.z),
+        end
+      ]);
+    }
+    if (poseLabel) {
+      const pos = fieldToScene(state.pose.x, state.pose.y);
+      poseLabel.position.set(pos.x + 0.9, 0.8, pos.z + 0.34);
+      updateTextSprite(poseLabel, "X " + state.pose.x.toFixed(1) + "  Y " + state.pose.y.toFixed(1) + "  H " + state.pose.heading.toFixed(2), "#f3ead7");
+    }
+    if (phaseLabel) {
+      updateTextSprite(phaseLabel, phaseText(), phaseColor());
+    }
+  }
+
+  function createFollower() {
+    state.followerCreated = true;
+    state.lifecycle.created = true;
+    state.phase = "FOLLOWER CREATED";
+    validateCode();
+    updatePanel();
+    return followerDevice || hardwareMap.registerFollower("follower");
+  }
+
+  function createPose(x, y, heading) {
+    return { x: Number(x), y: Number(y), heading: Number(heading) };
+  }
+
+  function setFollowerStartPose(pose) {
+    state.poseSet = true;
+    state.lifecycle.pose = true;
+    state.phase = "POSE SET";
+    state.pose = {
+      x: Number(pose && pose.x) || 0,
+      y: Number(pose && pose.y) || 0,
+      heading: Number(pose && pose.heading) || 0
+    };
+    emitFollowerUpdate();
+    validateCode();
+    updatePanel();
+  }
+
+  function updateFollower() {
+    state.updateCount += 1;
+    state.lifecycle.update = true;
+    state.phase = "FOLLOWER RUNNING";
+    emitFollowerUpdate();
+    validateCode();
+    updatePanel();
+  }
+
+  function isFollowerBusy() {
+    state.busyChecks += 1;
+    const busy = state.active && !state.stopRequested && state.poseSet && state.updateCount === 0;
+    if (!busy && state.lifecycle.wait) {
+      state.lifecycle.complete = true;
+      state.loopComplete = true;
+      state.phase = "LOOP COMPLETE";
+    }
+    updatePanel();
+    return busy;
+  }
+
+  function getFollowerPose() {
+    return { x: state.pose.x, y: state.pose.y, heading: state.pose.heading };
+  }
+
+  function updateRobotPose(x, y, heading) {
+    state.pose.x = Number(x) || 0;
+    state.pose.y = Number(y) || 0;
+    state.pose.heading = Number(heading) || 0;
+    updateSceneVisuals();
+  }
+
+  function emitFollowerUpdate() {
+    followerCallbacks.forEach(function (cb) {
+      try {
+        cb(state.pose.x, state.pose.y, state.pose.heading);
+      } catch (err) {
+        console.error("[Follower callback error]", err);
+      }
+    });
+  }
+
+  function waitForStart() {
+    state.waitingForStart = true;
+    state.lifecycle.wait = true;
+    state.phase = "WAITING FOR START";
+    updatePanel();
+
+    return new Promise(function (resolve) {
+      state._resolveStart = function () {
+        if (!state.active || state.stopRequested) {
+          resolve();
+          return;
+        }
+        state.waitingForStart = false;
+        state.phase = "STARTED";
+        updatePanel();
+        resolve();
+      };
+      if (state.startRequested) releaseWaitForStart();
+    });
+  }
+
+  function releaseWaitForStart() {
+    if (typeof state._resolveStart === "function") {
+      const resolve = state._resolveStart;
+      state._resolveStart = null;
+      resolve();
+    }
+  }
+
+  function opModeIsActive() {
+    return state.active && !state.stopRequested;
+  }
+
+  function sleep(ms) {
+    return new Promise(function (resolve) {
+      window.setTimeout(resolve, Math.max(0, Number(ms) || 0));
+    });
+  }
+
+  function linearTick() {
+    validateCode();
+    updatePanel();
+    return sleep(50);
+  }
+
+  async function runLinearOpMode(token) {
+    const code = getCodeSafe();
+    const runBody = extractMethodBody(code, "runOpMode");
+    if (!runBody) {
+      failStudentExecution("runOpMode() was not found.");
+      return;
+    }
+
+    const js = transpileLinearBody(runBody);
+    let fn;
+    try {
+      fn = new Function(
+        "hardwareMap",
+        "createFollower",
+        "setFollowerStartPose",
+        "createPose",
+        "updateFollower",
+        "isFollowerBusy",
+        "getFollowerPose",
+        "waitForStart",
+        "opModeIsActive",
+        "sleep",
+        "linearTick",
+        "addTelemetry",
+        "updateTelemetry",
+        "clearTelemetry",
+        '"use strict"; let follower; return (async function(){\n' + js + '\n})();'
+      );
+    } catch (err) {
+      failStudentExecution("compile error: " + err.message);
+      return;
+    }
+
+    try {
+      safeCall(clearTelemetry);
+      await fn(
+        hardwareMap,
+        createFollower,
+        setFollowerStartPose,
+        createPose,
+        updateFollower,
+        isFollowerBusy,
+        getFollowerPose,
+        waitForStart,
+        opModeIsActive,
+        sleep,
+        linearTick,
+        addTelemetry,
+        updateTelemetry,
+        clearTelemetry
+      );
+      if (token === state.runToken && !state.stopRequested) {
+        state.lifecycle.complete = true;
+        state.loopComplete = true;
+        state.phase = "LOOP COMPLETE";
+        updatePanel();
+      }
+    } catch (err) {
+      if (token === state.runToken && !state.stopRequested) {
+        failStudentExecution("runOpMode() runtime error: " + err.message);
+      }
+    }
+  }
+
+  function transpileLinearBody(body) {
+    let js = body || "";
+    js = js
+      .replace(/\bConstants\s*\.\s*create\s*\(\s*hardwareMap\s*\)/g, "createFollower()")
+      .replace(/\bPoseFactory\s*\.\s*degrees\s*\(\s*\)/g, "({ of: createPose })")
+      .replace(/\bfollower\s*\.\s*setPose\s*\(/g, "setFollowerStartPose(")
+      .replace(/\bnew\s+Pose\s*\(/g, "createPose(")
+      .replace(/\bfollower\s*\.\s*update\s*\(\s*\)/g, "updateFollower()")
+      .replace(/\bfollower\s*\.\s*isBusy\s*\(\s*\)/g, "isFollowerBusy()")
+      .replace(/\bfollower\s*\.\s*pose\s*\(\s*\)/g, "getFollowerPose()")
+      .replace(/\.x\s*\(\s*\)/g, ".x")
+      .replace(/\.y\s*\(\s*\)/g, ".y")
+      .replace(/\.heading\s*\(\s*\)/g, ".heading")
+      .replace(/\.getX\s*\(\s*\)/g, ".x")
+      .replace(/\.getY\s*\(\s*\)/g, ".y")
+      .replace(/\.getHeading\s*\(\s*\)/g, ".heading")
+      .replace(/\btelemetry\s*\.\s*addData\s*\(/g, "addTelemetry(")
+      .replace(/\btelemetry\s*\.\s*update\s*\(\s*\)/g, "updateTelemetry()")
+      .replace(/\bwaitForStart\s*\(\s*\)\s*;/g, "await waitForStart(); if (!opModeIsActive()) return;")
+      .replace(/\bsleep\s*\(/g, "await sleep(")
+      .replace(/\bwhile\s*\(([^)]*(?:opModeIsActive|isFollowerBusy)[^)]*)\)\s*\{/g, "while ($1) { await linearTick();")
+      .replace(/(^|[;{}\n]\s*)(?:final\s+)?(?:double|int|boolean|String|float|long|byte|short|char|Follower|Pose|PoseFactory)\s+([A-Za-z_$])/gm, "$1let $2");
+    if (typeof _simTranspile === "function") js = _simTranspile(js);
+    return js;
+  }
+
+  function updatePanel() {
+    renderStep("u152-step-created", state.lifecycle.created, state.phase === "FOLLOWER CREATED");
+    renderStep("u152-step-pose", state.lifecycle.pose, state.phase === "POSE SET");
+    renderStep("u152-step-wait", state.lifecycle.wait, state.waitingForStart);
+    renderStep("u152-step-update", state.lifecycle.update, state.phase === "FOLLOWER RUNNING");
+    renderStep("u152-step-complete", state.lifecycle.complete, state.phase === "LOOP COMPLETE");
+
+    const xGood = Math.abs(state.pose.x - START_POSE.x) <= 1;
+    const yGood = Math.abs(state.pose.y - START_POSE.y) <= 1;
+    const hGood = Math.abs(state.pose.heading - START_POSE.heading) <= 0.001;
+    renderCard("u152-x-card", '<i class="fa-solid fa-arrows-left-right"></i> X<br><strong>' + state.pose.x.toFixed(2) + ' in</strong>', xGood && state.poseSet ? "good" : "warn");
+    renderCard("u152-y-card", '<i class="fa-solid fa-arrows-up-down"></i> Y<br><strong>' + state.pose.y.toFixed(2) + ' in</strong>', yGood && state.poseSet ? "good" : "warn");
+    renderCard("u152-heading-card", '<i class="fa-solid fa-location-arrow"></i> Heading<br><strong>' + state.pose.heading.toFixed(3) + ' rad</strong><br>' + radiansToDegrees(state.pose.heading).toFixed(1) + ' deg', hGood && state.poseSet ? "good" : "warn");
+    renderCard("u152-busy-card", '<i class="fa-solid fa-gauge"></i> follower.mode()<br><strong>IDLE</strong><br>No path is queued in this lifecycle exercise.', state.loopComplete ? "good" : "");
+    renderCard("u152-update-card", '<i class="fa-solid fa-rotate"></i> update() calls<br><strong>' + state.updateCount + '</strong><br>The robot should hold its starting pose.', state.updateCount > 0 || state.loopComplete ? "good" : "");
+    renderCard("u152-order-card", '<i class="fa-solid fa-list-ol"></i> Phase<br><strong>' + phaseText() + '</strong><br>Create, set pose, wait, then update.', state.loopComplete ? "good" : state.waitingForStart ? "warn" : "");
+
+    const sceneBadge = el("u152-scene-badge");
+    if (sceneBadge) {
+      sceneBadge.style.color = state.poseSet ? "#bbf7d0" : "#fde68a";
+      sceneBadge.innerHTML = '<i class="fa-solid fa-route"></i> ' + escapeHTML(phaseText());
+    }
+    const poseBadge = el("u152-pose-badge");
+    if (poseBadge) {
+      poseBadge.innerHTML = '<i class="fa-solid fa-location-dot"></i> X ' + state.pose.x.toFixed(1) + '  Y ' + state.pose.y.toFixed(1) + '  H ' + state.pose.heading.toFixed(2);
+    }
+    const phaseBadge = el("u152-phase-badge");
+    if (phaseBadge) {
+      phaseBadge.style.color = phaseColor();
+      phaseBadge.innerHTML = '<i class="fa-solid fa-clock"></i> ' + escapeHTML(phaseText());
+    }
+  }
+
+  function renderCard(id, html, status) {
+    const card = el(id);
+    if (!card) return;
+    card.classList.toggle("good", status === "good");
+    card.classList.toggle("bad", status === "bad");
+    card.classList.toggle("warn", status === "warn");
+    card.innerHTML = html;
+  }
+
+  function renderStep(id, done, active) {
+    const step = el(id);
+    if (!step) return;
+    step.classList.toggle("good", !!done);
+    step.classList.toggle("active", !!active && !done);
+  }
+
+  function validateCode() {
+    const rawCode = getCodeSafe();
+    const code = stripComments(rawCode);
+    const runBody = extractMethodBody(code, "runOpMode") || "";
+    const pose = parseStartingPose(code);
+    const whileBlocks = extractWhileBlocks(runBody);
+    const followerLoop = whileBlocks.find(function (block) {
+      return /opModeIsActive\s*\(\s*\)/.test(block.condition) && /follower\s*\.\s*update\s*\(\s*\)/.test(block.body);
+    }) || { condition: "", body: "" };
+
+    const waitIndex = runBody.search(/\bwaitForStart\s*\(\s*\)/);
+    const beforeStart = waitIndex >= 0 ? runBody.slice(0, waitIndex) : "";
+
+    const checks = [
+      /PoseFactory\s*\.\s*degrees\s*\(\s*\)/.test(code),
+      /Constants\s*\.\s*create\s*\(\s*hardwareMap\s*\)/.test(runBody),
+      /follower\s*\.\s*setPose\s*\(/.test(runBody) && !!pose,
+      !!pose && Math.abs(pose.x - 8) <= 1,
+      !!pose && Math.abs(pose.y - 60) <= 1,
+      !!pose && Math.abs(pose.heading) <= 0.001,
+      /follower\s*\.\s*update\s*\(\s*\)/.test(beforeStart),
+      /\bwaitForStart\s*\(\s*\)/.test(runBody),
+      /follower\s*\.\s*update\s*\(\s*\)/.test(followerLoop.body),
+      /opModeIsActive\s*\(\s*\)/.test(followerLoop.condition),
+      /follower\s*\.\s*pose\s*\(\s*\)/.test(runBody),
+      telemetryHasPose(runBody)
+    ];
+
+    checks.forEach(function (passed, index) {
+      safeCall(setRequirement, index, !!passed);
+    });
+
+    const success = el("u152-success");
+    if (success) success.style.display = checks.every(Boolean) ? "flex" : "none";
+    updateWarning(runBody, checks, pose);
+    return checks;
+  }
+
+  function parseStartingPose(code) {
+    const runBody = extractMethodBody(code, "runOpMode") || "";
+    const direct = /follower\s*\.\s*setPose\s*\(\s*(?:[A-Za-z_$][\w$]*\s*\.\s*of|new\s+Pose)\s*\(\s*([^,\)]+)\s*,\s*([^,\)]+)\s*,\s*([^,\)]+)\s*\)\s*\)/.exec(runBody);
+    if (direct) return numberPose(direct[1], direct[2], direct[3]);
+
+    const assigned = /(?:Pose\s+)?([A-Za-z_$][\w$]*)\s*=\s*(?:[A-Za-z_$][\w$]*\s*\.\s*of|new\s+Pose)\s*\(\s*([^,\)]+)\s*,\s*([^,\)]+)\s*,\s*([^,\)]+)\s*\)/.exec(runBody);
+    if (assigned) {
+      const name = assigned[1];
+      const usesName = new RegExp("follower\\s*\\.\\s*setPose\\s*\\(\\s*" + name + "\\s*\\)").test(runBody);
+      if (usesName) return numberPose(assigned[2], assigned[3], assigned[4]);
+    }
+    return null;
+  }
+
+  function numberPose(x, y, heading) {
+    const pose = { x: Number(x), y: Number(y), heading: Number(heading) };
+    return Number.isFinite(pose.x) && Number.isFinite(pose.y) && Number.isFinite(pose.heading) ? pose : null;
+  }
+
+  function telemetryHasPose(body) {
+    const hasX = /telemetry\s*\.\s*addData\s*\(\s*"[^"]*X[^"]*"\s*,[\s\S]*?\.x\s*\(\s*\)/.test(body);
+    const hasY = /telemetry\s*\.\s*addData\s*\(\s*"[^"]*Y[^"]*"\s*,[\s\S]*?\.y\s*\(\s*\)/.test(body);
+    const hasHeading = /telemetry\s*\.\s*addData\s*\(\s*"[^"]*Heading[^"]*"\s*,[\s\S]*?\.heading\s*\(\s*\)/.test(body);
+    return hasX && hasY && hasHeading;
+  }
+
+  function updateWarning(runBody, checks, pose) {
+    const warning = el("u152-warning");
+    if (!warning) return;
+    const newIndex = runBody.search(/Constants\s*\.\s*create\s*\(\s*hardwareMap\s*\)/);
+    const poseIndex = runBody.search(/follower\s*\.\s*setPose\s*\(/);
+    const waitIndex = runBody.search(/\bwaitForStart\s*\(\s*\)/);
+    let message = "";
+    let type = "warn";
+
+    if (!checks[0]) {
+      message = "Create a degree-based factory with PoseFactory.degrees().";
+      type = "error";
+    } else if (!checks[1]) {
+      message = "Create the Pedro 3 Follower with Constants.create(hardwareMap).";
+      type = "error";
+    } else if (poseIndex >= 0 && newIndex >= 0 && poseIndex < newIndex) {
+      message = "Create the Follower before setting the pose - Follower must exist before it can receive a pose";
+      type = "error";
+    } else if (!checks[2]) {
+      message = "Call follower.setPose(poseFactory.of(8, 60, 0)) before waitForStart().";
+      type = "error";
+    } else if (poseIndex >= 0 && waitIndex >= 0 && poseIndex > waitIndex) {
+      message = "Set the starting pose before waitForStart() - the pose must be established before the match begins";
+      type = "error";
+    } else if (pose && Math.abs(pose.heading) > 0.001) {
+      message = "Starting heading should be 0 radians - 0 means the robot faces the positive X direction";
+    } else if (!checks[6]) {
+      message = "Prime localization with follower.update() before waitForStart().";
+      type = "error";
+    } else if (!checks[8]) {
+      message = "Call follower.update() every iteration - this drives path following and pose estimation";
+      type = "error";
+    } else if (!checks[9]) {
+      message = "Include opModeIsActive() in the while condition for safety";
+    } else if (!checks[10]) {
+      message = "Use follower.pose().x(), .y(), and .heading() to report position to the Driver Station";
+    } else if (!/telemetry\s*\.\s*update\s*\(\s*\)/.test(runBody)) {
+      message = "Call telemetry.update() to send data to the Driver Station";
+    }
+
+    warning.classList.toggle("error", type === "error");
+    warning.style.display = message ? "block" : "none";
+    warning.innerHTML = message ? '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(message) : "";
+    safeCall(clearHints);
+    if (message) safeCall(addHint, warning.innerHTML, type === "error" ? "error" : "warn");
+  }
+
+  function resetRuntimeState() {
+    state.phase = "IDLE";
+    state.startRequested = false;
+    state.followerCreated = false;
+    state.poseSet = false;
+    state.updateCount = 0;
+    state.busyChecks = 0;
+    state.loopComplete = false;
+    state.pose = { x: 0, y: 0, heading: 0 };
+    state.lifecycle = { created: false, pose: false, wait: false, update: false, complete: false };
+    emitFollowerUpdate();
+  }
+
+  function fieldToScene(x, y) {
+    return {
+      x: (Number(x) - FIELD_INCHES / 2) * FIELD_SCALE,
+      z: (Number(y) - FIELD_INCHES / 2) * FIELD_SCALE
+    };
+  }
+
+  function radiansToDegrees(angle) {
+    return angle * 180 / Math.PI;
+  }
+
+  function phaseText() {
+    if (state.waitingForStart) return "WAITING FOR START";
+    return state.phase;
+  }
+
+  function phaseColor() {
+    if (state.phase === "LOOP COMPLETE") return "#bbf7d0";
+    if (state.waitingForStart) return "#fde68a";
+    if (state.phase === "STOPPED") return "#fecaca";
+    return "#f3ead7";
+  }
+
+  function makeTextSprite(text, color) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 512;
+    canvas.height = 128;
+    const ctx = canvas.getContext("2d");
+    drawSpriteText(ctx, text, color);
+    const texture = new THREE.CanvasTexture(canvas);
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false }));
+    sprite.scale.set(1.25, 0.32, 1);
+    return sprite;
+  }
+
+  function updateTextSprite(sprite, text, color) {
+    if (!sprite || !sprite.material || !sprite.material.map) return;
+    const ctx = sprite.material.map.image.getContext("2d");
+    drawSpriteText(ctx, text, color);
+    sprite.material.map.needsUpdate = true;
+  }
+
+  function drawSpriteText(ctx, text, color) {
+    ctx.clearRect(0, 0, 512, 128);
+    ctx.fillStyle = "rgba(0,0,0,0.72)";
+    roundRect(ctx, 10, 18, 492, 92, 18);
+    ctx.fill();
+    ctx.fillStyle = color || "#ffffff";
+    ctx.font = "bold 39px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, 256, 64);
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function extractWhileBlocks(scope) {
+    const blocks = [];
+    const re = /\bwhile\s*\(([^)]*(?:\([^)]*\)[^)]*)*)\)\s*\{/g;
+    let match;
+    while ((match = re.exec(scope)) !== null) {
+      let index = match.index + match[0].length;
+      let depth = 1;
+      for (; index < scope.length; index++) {
+        if (scope[index] === "{") depth++;
+        else if (scope[index] === "}") {
+          depth--;
+          if (depth === 0) {
+            blocks.push({ condition: match[1], body: scope.slice(match.index + match[0].length, index) });
+            re.lastIndex = index + 1;
+            break;
+          }
+        }
+      }
+    }
+    return blocks;
+  }
+
+  function extractMethodBody(code, name) {
+    if (!code) return "";
+    const re = new RegExp("\\b(?:public\\s+|private\\s+|protected\\s+)?(?:void|boolean|double|int|String)\\s+" + name + "\\s*\\([^)]*\\)\\s*\\{");
+    const match = re.exec(code);
+    if (!match) return "";
+    let index = match.index + match[0].length;
+    let depth = 1;
+    for (; index < code.length; index++) {
+      if (code[index] === "{") depth++;
+      else if (code[index] === "}") {
+        depth--;
+        if (depth === 0) return code.slice(match.index + match[0].length, index);
+      }
+    }
+    return "";
+  }
+
+  function stripComments(code) {
+    return String(code || "")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\/\/.*$/gm, "");
+  }
+
+  function showStudentError(message) {
+    const text = String(message || "Unknown simulator error");
+    const warning = el("u152-warning");
+    if (warning) {
+      warning.classList.add("error");
+      warning.style.display = "block";
+      warning.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(text);
+    }
+    if (typeof _simShowTelemetryError === "function") _simShowTelemetryError(text);
+    else {
+      safeCall(addTelemetry, "ERROR", text);
+      safeCall(updateTelemetry);
+    }
+  }
+
+  function failStudentExecution(message) {
+    if (typeof stopExecution === "function") stopExecution();
+    showStudentError(message);
+  }
+
+  function getCodeSafe() {
+    if (typeof getCode !== "function") return starterCode;
+    try {
+      return getCode();
+    } catch (err) {
+      return starterCode;
+    }
+  }
+
+  function escapeHTML(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+};
+</script>
+</body>
+</html>

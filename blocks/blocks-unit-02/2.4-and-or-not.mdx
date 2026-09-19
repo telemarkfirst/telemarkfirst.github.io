@@ -1,0 +1,34 @@
+---
+id: and-or-not
+title: "Lesson 2.4: Combine Rules with And, Or, and Not"
+sidebar_label: "2.4 · And, Or, and Not"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 2.4: Combine Rules with And, Or, and Not
+
+Boolean operators combine or change conditions.
+
+- `and` is true only when both conditions are true.
+- `or` is true when at least one condition is true.
+- `not` changes true to false and false to true.
+
+The condition `weight < 10 and ready = true` requires both rules. The condition `color = red or color = blue` accepts either listed color.
+
+Keep combined rules readable. If a condition becomes hard to explain, store part of it in a clearly named Boolean variable, such as `correctSize`.
+
+## Guided practice
+
+Set `weight` to 8 and `labelReady` to true. Print the result of `weight < 10 and labelReady`. Test again with weight 12, then with `labelReady` false.
+
+Build a second condition that accepts a package when its code is `A` or `B`. Use `not` to print whether a package is not accepted. Make a truth table with your inputs and outputs before running the tests.
+
+<BlockPractice lessonId="blocks-unit-02/and-or-not" />
+
+<MarkComplete
+  lessonId="blocks-unit-02/and-or-not"
+  nextUnit="/blocks/blocks-unit-02/package-sorter-challenge"
+  nextUnitName="Lesson 2.5: Package Sorter Challenge"
+/>

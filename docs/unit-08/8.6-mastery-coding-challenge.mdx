@@ -1,0 +1,33 @@
+---
+id: mastery-coding-challenge
+title: "Unit 8 Project Stage: Safe Motor Configuration"
+sidebar_label: "Unit 8 · Coding Challenge"
+sidebar_position: 6
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import MasterySimulator from '@site/src/components/MasterySimulator';
+
+# Stage 7: Safe Motor Configuration
+
+Continue in `Drivetrain.java` and apply the motor-safety techniques from this unit to the cumulative drivetrain, intake, transfer, and launcher. The standalone lift lessons remain available as examples, but DECODE does not add a lift subsystem.
+
+## Your Task
+
+1. Correct installed motor directions with `setDirection()`.
+2. Select `RUN_USING_ENCODER` where velocity feedback is needed.
+3. Select `BRAKE` where a mechanism must resist coasting.
+4. Make every subsystem's `stop()` method explicitly command zero power.
+
+No subsystem may retain an old nonzero command after Stop.
+
+## Coding Challenge Simulator
+
+<MasterySimulator unit={8} project />
+
+<MarkComplete
+  lessonId="unit-08/mastery-coding-challenge"
+  completesUnit="unit-08"
+  nextUnit="/docs/unit-09"
+  nextUnitName="Unit 9: Servo Control"
+/>

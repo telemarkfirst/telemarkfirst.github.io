@@ -1,0 +1,122 @@
+---
+id: references-and-identity
+title: "Lesson 0.3: References and Object Identity"
+sidebar_label: "0.3 · References & Identity"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 0.3: References and Object Identity
+
+A Java variable that holds an object does not contain the whole object. It contains a reference that lets Java find that object.
+
+In the house analogy, a reference works like a street address. Writing an address on two cards does not create two houses. Both cards lead to the same house. Java object variables behave the same way.
+
+## One Object, Two References
+
+<AnnotatedCode
+  title="Two names for one object"
+  java={String.raw`RobotArm firstName = new RobotArm("lift");
+RobotArm secondName = firstName;
+
+secondName.move(0.8);
+System.out.println(firstName.getPower()); // 0.8`}
+  python={String.raw`first_name = RobotArm("lift")
+second_name = first_name
+
+second_name.move(0.8)
+print(first_name.get_power())  # 0.8`}
+/>
+
+Java creates one object because `new` appears once. `firstName` and `secondName` both refer to it. A change made through either reference reaches the same object.
+
+## Two Separate Objects
+
+```java
+RobotArm firstArm = new RobotArm("front");
+RobotArm secondArm = new RobotArm("rear");
+
+firstArm.move(0.8);
+```
+
+Here `new` appears twice, so Java creates two objects. Moving `firstArm` does not change `secondArm`.
+
+Count object creation by counting the `new` expressions that run, not by counting variable names.
+
+## A Reference to No Object
+
+```java
+RobotArm arm = null;
+arm.move(0.8); // NullPointerException at run time
+```
+
+`null` means the variable does not currently refer to an object. Calling a method through that variable fails at run time.
+
+`null` is a Java keyword. It does not create an empty `RobotArm`, and it is not the number zero. It means "no object reference."
+
+FTC code often hits this error when an OpMode uses a mechanism or hardware field before `init()` assigns it. The declaration creates the variable. It does not create the object.
+
+## Follow the Objects
+
+```java
+RobotArm a = new RobotArm("A");
+RobotArm b = a;
+RobotArm c = new RobotArm("C");
+
+b.move(0.4);
+c.move(-0.2);
+a.stop();
+```
+
+Trace it in order:
+
+1. `a` refers to the first object.
+2. `b` receives the same reference.
+3. `c` refers to a second object.
+4. `b.move(0.4)` changes the first object.
+5. `c.move(-0.2)` changes the second object.
+6. `a.stop()` changes the first object back to zero.
+
+## Terms to Keep
+
+| Term | Meaning |
+|---|---|
+| Reference | A value that identifies an object. |
+| Identity | Which specific object a reference reaches. |
+| Assignment | Store a value or reference in a variable. |
+| `null` | A reference to no object. |
+| Run-time error | A failure that occurs after the program starts. |
+
+## Check Your Understanding
+
+<details>
+<summary>How many objects exist in the trace above?</summary>
+
+Two. The code evaluates `new RobotArm(...)` twice.
+
+</details>
+
+<details>
+<summary>Which variables refer to the same object?</summary>
+
+`a` and `b` refer to the first object. `c` refers to the second.
+
+</details>
+
+<details>
+<summary>What are the final power values?</summary>
+
+The first object ends at `0.0`. The second ends at `-0.2`.
+
+</details>
+
+## Where You Will Use This
+
+[Lesson 13.5](/docs/unit-13/robot-class) stores subsystem references inside one robot object.
+
+<MarkComplete
+  lessonId="unit-00/references-and-identity"
+  nextUnit="/docs/unit-00/objects-working-together"
+  nextUnitName="Lesson 0.4: How Objects Work Together"
+/>

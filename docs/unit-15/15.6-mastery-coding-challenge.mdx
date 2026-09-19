@@ -1,0 +1,40 @@
+---
+id: mastery-coding-challenge
+title: "Unit 15 Comprehensive Coding Challenge: Full Sensor-Fused Autonomous"
+sidebar_label: "Unit 15 · Coding Challenge"
+sidebar_position: 6
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import MasterySimulator from '@site/src/components/MasterySimulator';
+
+# Stage 14: Full Sensor-Fused Autonomous
+
+The project adds `FullAutonomous.java` and keeps every file built in the TeleOp stages. Earlier passing snapshots remain available for reference, copying, and export.
+
+Opening this stage loads the same browser project automatically, appends `FullAutonomous.java` only when it is missing, and selects it as the runnable entry point. `CompetitionTeleOp.java` remains in the project unchanged, so autonomous integration never costs you the working driver-controlled program.
+
+## Your Task
+
+1. Map Limelight 3A as `"limelight"`, select its pipeline, and start it.
+2. Create a Pedro Pathing `Follower` and establish a starting `Pose`.
+3. Build a compound Pedro 3 `Path` with both `line()` and `curve()`.
+4. Compose path and mechanism actions with an Ivy `Command` group.
+5. Call `follower.update()`, `robot.update()`, and `Scheduler.execute()` on every active loop.
+6. Validate each `LLResult` before using it, then fuse a valid global pose back into the Follower.
+7. Create and initialize one `RobotHardware` object. Call `robot.update()` every cycle and coordinate launcher, transfer, and intake through public subsystem methods.
+8. Keep raw mechanism hardware access inside subsystem files.
+9. Report path, state, and vision status, then call `robot.stopAll()`, close Vision, and stop the Limelight during cleanup.
+
+No command may block the loop. Use Ivy's `waitMs()` or `waitUntil()` instead of `sleep()`. Vision loss and an active follower must both be handled as expected operating conditions.
+
+## Coding Challenge Simulator
+
+<MasterySimulator unit={15} project />
+
+<MarkComplete
+  lessonId="unit-15/mastery-coding-challenge"
+  completesUnit="unit-15"
+  nextUnit="/dashboard"
+  nextUnitName="Dashboard"
+/>

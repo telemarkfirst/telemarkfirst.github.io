@@ -1,0 +1,799 @@
+.page {
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: var(--tm-bg);
+  color: var(--tm-text-strong);
+  font-family: 'Exo 2', system-ui, sans-serif;
+  scrollbar-color: var(--tm-accent) var(--tm-bg);
+  scrollbar-width: thin;
+}
+
+.page *,
+.page *::before,
+.page *::after {
+  box-sizing: border-box;
+}
+
+.page * {
+  scrollbar-color: var(--tm-accent) var(--tm-bg);
+  scrollbar-width: thin;
+}
+
+.page::-webkit-scrollbar,
+.page *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.page::-webkit-scrollbar-track,
+.page *::-webkit-scrollbar-track {
+  background: var(--tm-bg);
+}
+
+.page::-webkit-scrollbar-thumb,
+.page *::-webkit-scrollbar-thumb {
+  border: 2px solid var(--tm-bg);
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-accent);
+}
+
+.content {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 3.25rem 2rem 5rem;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.loadingText {
+  color: var(--tm-accent);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-sm);
+  letter-spacing: 1px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+  padding-bottom: 2rem;
+}
+
+.eyebrow,
+.listLabel {
+  margin: 0 0 0.65rem;
+  color: var(--tm-accent);
+  font-family: var(--tm-font-label);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  color: var(--tm-text-strong);
+  font-family: 'Exo 2', system-ui, sans-serif;
+  font-size: clamp(2.15rem, 6vw, 3.25rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.name {
+  color: var(--tm-blue-soft);
+}
+
+.storageNote {
+  max-width: 34rem;
+  margin: 0.8rem 0 0;
+  color: var(--tm-text-soft);
+  font-size: var(--tm-fs-sm);
+  line-height: 1.55;
+}
+
+.headerActions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+/* One row, so the account chores read as a set of small utilities under the
+   primary action rather than as a ladder of equal choices beside it. */
+.utilityRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@media (max-width: 720px) {
+  .headerActions {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .utilityRow {
+    justify-content: flex-start;
+  }
+
+  .resumeBtn {
+    text-align: center;
+  }
+}
+
+.resumeBtn {
+  padding: 12px 24px;
+  border: 1px solid var(--tm-blue-soft);
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-blue-soft);
+  color: var(--tm-text-on-accent) !important;
+  font-family: 'Exo 2', system-ui, sans-serif;
+  font-size: var(--tm-fs-sm);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.resumeBtn:hover {
+  border-color: var(--tm-accent);
+  background: var(--tm-accent);
+  color: var(--tm-text-on-accent) !important;
+  text-decoration: none;
+}
+
+.signOutBtn {
+  padding: 8px 16px;
+  border: 1px solid var(--tm-blue-a32);
+  border-radius: var(--tm-r-sm);
+  background: transparent;
+  color: var(--tm-text-soft);
+  cursor: pointer;
+  font-family: var(--tm-font-label);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+
+.signOutBtn:hover {
+  border-color: var(--tm-accent);
+  background: var(--tm-accent-a08);
+  color: var(--tm-text-strong);
+}
+
+.importInput {
+  display: none;
+}
+
+.transferMessage {
+  margin: -1.35rem 0 2rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--tm-accent-a20);
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-accent-a08);
+  color: var(--tm-text-soft);
+  font-size: var(--tm-fs-xs);
+}
+
+.resumeBtn:focus-visible,
+.signOutBtn:focus-visible,
+.unitToggle:focus-visible,
+.unitHeaderLink:focus-visible,
+.lessonRow:focus-visible,
+.actionMenuTrigger:focus-visible,
+.actionMenuItem:focus-visible {
+  outline: 3px solid var(--tm-accent-a55);
+  outline-offset: 3px;
+}
+
+.overviewGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.85rem;
+  margin-bottom: 2rem;
+}
+
+.statCard {
+  padding: 1.5rem;
+  text-align: left;
+  transition: border-color 150ms ease;
+}
+
+.statCard:nth-child(even) {
+  border-radius: var(--tm-r-sm);
+}
+
+.statCard:hover {
+  border-color: rgba(34, 211, 238, 0.36);
+}
+
+.statNum {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--tm-accent);
+  font-family: 'Exo 2', system-ui, sans-serif;
+  font-size: var(--tm-fs-2xl);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.statCard:nth-child(even) .statNum {
+  color: var(--tm-blue-soft);
+}
+
+.statLabel {
+  display: block;
+  color: var(--tm-text-soft);
+  font-family: var(--tm-font-label);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.progressSection {
+  margin: 0 0 2.5rem;
+  padding: 0.25rem 0.25rem 0;
+}
+
+.progressHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 9px;
+}
+
+.progressLabel {
+  color: var(--tm-text-soft);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: 0.08em;
+}
+
+.progressPct {
+  color: var(--tm-accent);
+  font-family: 'Exo 2', system-ui, sans-serif;
+  font-size: var(--tm-fs-sm);
+  font-weight: 700;
+}
+
+.progressTrack {
+  height: 7px;
+  overflow: hidden;
+  border-radius: var(--tm-r-sm);
+  background: rgba(96, 165, 250, 0.15);
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--tm-accent);
+  transition: width 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lessonList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.listLabel {
+  margin-bottom: 0;
+}
+
+.blocksSectionToggle {
+  display: flex;
+  align-items: center;
+  gap: var(--tm-sp-3);
+  width: 100%;
+  padding: var(--tm-sp-4) var(--tm-sp-5);
+  border: 1px solid var(--tm-accent-a35);
+  border-radius: var(--tm-r-md);
+  background: var(--tm-accent-a08);
+  color: var(--tm-text-strong);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.blocksSectionToggle > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tm-sp-1);
+}
+
+.blocksSectionToggle small {
+  color: var(--tm-text-soft);
+}
+
+.blocksSectionToggle:focus-visible {
+  outline: 3px solid var(--tm-accent-a55);
+  outline-offset: 2px;
+}
+
+/* A unit whose menu is open has to outrank the units below it, since they are
+   later siblings and would otherwise paint over the popover. */
+.unitGroup:has([role='menu']) {
+  z-index: 60;
+}
+
+.unitGroup {
+  margin-bottom: 1rem;
+  position: relative;
+  overflow: visible;
+  transition: border-color 150ms ease;
+}
+
+.unitGroup:nth-of-type(even) {
+  border-radius: var(--tm-r-sm);
+}
+
+.unitGroup:hover {
+  border-color: var(--tm-border-strong);
+}
+
+.unitSkipped {
+  border-color: var(--tm-blue-a32);
+}
+
+.unitReviewing {
+  border-color: rgba(96, 165, 250, 0.52);
+}
+
+.unitHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.05rem 1.15rem;
+  flex-wrap: wrap;
+}
+
+.unitToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.95rem;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.unitToggleIcon {
+  width: 1.8rem;
+  height: 1.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--tm-accent-a12);
+  color: var(--tm-accent);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-sm);
+}
+
+.unitHeaderInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.unitHeaderTitle {
+  color: var(--tm-text-strong);
+  font-family: 'Exo 2', system-ui, sans-serif;
+  font-size: var(--tm-fs-lg);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.unitHeaderMeta {
+  color: var(--tm-text-soft);
+  font-family: var(--tm-font-label);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+}
+
+.unitState {
+  color: var(--tm-accent);
+}
+
+.unitSkipped .unitState,
+.unitReviewing .unitState {
+  color: var(--tm-blue-soft);
+}
+
+.unitHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.unitHeaderLink {
+  padding: 0.52rem 0.85rem;
+  border: 1px solid rgba(96, 165, 250, 0.28);
+  border-radius: var(--tm-r-sm);
+  color: var(--tm-text-soft);
+  font-family: var(--tm-font-label);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+
+.unitHeaderLink:hover {
+  border-color: var(--tm-accent);
+  background: var(--tm-accent-a08);
+  color: var(--tm-text-strong);
+  text-decoration: none;
+}
+
+.actionMenu {
+  position: relative;
+  z-index: 5;
+}
+
+/* The popover's own z-index only competes inside this element's stacking
+   context, so a menu opened on unit 13 was painted under units 14 and 15. The
+   context itself has to rise while the menu is open. */
+.actionMenu:has([role='menu']) {
+  z-index: 60;
+}
+
+.actionMenuTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2rem;
+  padding: 0.52rem 0.8rem;
+  border: 1px solid var(--tm-border-strong);
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-accent-a08);
+  color: var(--tm-accent);
+  cursor: pointer;
+  font-family: var(--tm-font-label);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  transition: border-color 150ms ease, background 150ms ease, color 150ms ease;
+}
+
+.actionMenuTrigger:hover,
+.actionMenuTrigger[aria-expanded='true'] {
+  border-color: var(--tm-accent);
+  background: var(--tm-accent-a12);
+  color: var(--tm-text-strong);
+}
+
+.actionMenuTrigger:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.actionMenuPopover {
+  position: absolute;
+  top: calc(100% + 0.55rem);
+  right: 0;
+  z-index: 20;
+  width: min(310px, calc(100vw - 2rem));
+  padding: 0.55rem;
+  border: 1px solid rgba(34, 211, 238, 0.26);
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-surface-1);
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.48);
+}
+
+.actionMenuLabel {
+  margin: 0;
+  padding: 0.45rem 0.55rem 0.6rem;
+  color: var(--tm-text-muted);
+  font-family: var(--tm-font-label);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.actionMenuItem {
+  display: grid;
+  grid-template-columns: 1.8rem 1fr;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.72rem 0.65rem;
+  border: 0;
+  border-radius: var(--tm-r-sm);
+  background: transparent;
+  color: var(--tm-text-strong);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: background 150ms ease;
+}
+
+.actionMenuItem:hover {
+  background: var(--tm-accent-a08);
+}
+
+.actionMenuItem:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
+.actionMenuItem + .actionMenuItem {
+  margin-top: 2px;
+}
+
+.actionMenuItem strong,
+.actionMenuItem small {
+  display: block;
+}
+
+.actionMenuItem strong {
+  color: var(--tm-text-strong);
+  font-family: 'Exo 2', system-ui, sans-serif;
+  font-size: var(--tm-fs-sm);
+  line-height: 1.2;
+}
+
+.actionMenuItem small {
+  margin-top: 0.2rem;
+  color: var(--tm-text-soft);
+  font-family: 'Exo 2', system-ui, sans-serif;
+  font-size: var(--tm-fs-2xs);
+  line-height: 1.35;
+}
+
+.actionMenuIcon {
+  display: grid;
+  width: 1.65rem;
+  height: 1.65rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--tm-accent-a12);
+  color: var(--tm-accent);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-xs);
+}
+
+.skipIcon,
+.reviewIcon {
+  background: var(--tm-blue-a10);
+  color: var(--tm-blue-soft);
+}
+
+.unmarkItem {
+  border-top: 1px solid var(--tm-blue-a10);
+  border-radius: 0 0 10px 13px;
+}
+
+.unitProgressTrack {
+  height: 5px;
+  background: var(--tm-blue-a10);
+}
+
+.unitProgressFill {
+  height: 100%;
+  background: var(--tm-accent);
+  transition: width 150ms ease;
+}
+
+.unitProgressFill[data-skipped='true'] {
+  background: var(--tm-blue-soft);
+}
+
+.lessonRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  color: inherit;
+  text-decoration: none;
+  transition: background 150ms ease, padding-left 150ms ease;
+}
+
+.lessonRow:first-child {
+  border-top: 0;
+}
+
+.lessonRow:hover {
+  padding-left: 1.25rem;
+  background: var(--tm-surface-4);
+  color: inherit;
+  text-decoration: none;
+}
+
+.lessonDone {
+  border: 1px solid var(--tm-accent);
+  background: var(--tm-accent-a08);
+}
+
+.lessonSkipped {
+  border-left-color: var(--tm-blue-soft);
+  background: rgba(96, 165, 250, 0.045);
+}
+
+.lessonReviewing {
+  border: 1px solid rgba(96, 165, 250, 0.72);
+  background: var(--tm-blue-a10);
+}
+
+.lessonCheck {
+  width: 20px;
+  flex-shrink: 0;
+  color: var(--tm-accent);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-sm);
+  text-align: center;
+}
+
+.lessonInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lessonLabel {
+  color: var(--tm-text-strong);
+  font-family: 'Exo 2', system-ui, sans-serif;
+  font-size: var(--tm-fs-base);
+  font-weight: 600;
+}
+
+.lessonUnit,
+.lessonStatus {
+  color: var(--tm-text-soft);
+  font-family: var(--tm-font-label);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+}
+
+.lessonStatus {
+  text-align: right;
+}
+
+.lessonDone .lessonStatus {
+  color: var(--tm-accent);
+}
+
+.lessonSkipped .lessonCheck,
+.lessonSkipped .lessonStatus,
+.lessonReviewing .lessonCheck,
+.lessonReviewing .lessonStatus {
+  color: var(--tm-blue-soft);
+}
+
+.actionError {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--tm-blue-soft);
+  background: var(--tm-blue-a10);
+  border-radius: 10px;
+  background: var(--tm-blue-a10);
+  color: var(--tm-text-strong);
+  font-size: var(--tm-fs-sm);
+}
+
+@media (max-width: 800px) {
+  .overviewGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .content {
+    padding: 2rem 1rem 4rem;
+  }
+
+  .overviewGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .header {
+    flex-direction: column;
+  }
+
+  .headerActions {
+    align-items: flex-start;
+  }
+
+  .unitHeader {
+    align-items: flex-start;
+  }
+
+  .unitHeaderActions {
+    width: 100%;
+    padding-left: 2.75rem;
+  }
+
+  .actionMenuPopover {
+    right: auto;
+    left: 0;
+  }
+
+  .lessonStatus {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .resumeBtn,
+  .statCard,
+  .unitGroup,
+  .unitToggleIcon,
+  .lessonRow,
+  .progressFill,
+  .unitProgressFill {
+    transition: none;
+  }
+
+  .lessonRow:hover {
+    padding-left: 1.25rem;
+  }
+
+  .actionMenuTrigger,
+  .actionMenuItem {
+    transition: none;
+  }
+}
+
+.trackSwitcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.trackTab {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 140px;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--tm-accent-a20);
+  border-radius: var(--tm-r-sm);
+  background: transparent;
+  color: var(--tm-text-soft);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.trackTab:hover {
+  border-color: var(--tm-accent-a55);
+  color: var(--tm-text-strong);
+}
+
+.trackTabActive {
+  border-color: var(--tm-accent-a55);
+  background: var(--tm-accent-a12);
+  color: var(--tm-text-strong);
+}
+
+.trackTabName {
+  font-family: var(--tm-font-display);
+  font-size: var(--tm-fs-md);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.trackTabMeta {
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: 0.08em;
+  opacity: 0.75;
+}

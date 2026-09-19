@@ -1,0 +1,148 @@
+---
+id: mastery-quiz
+title: "Module 6 Mastery Quiz: Power Transmission"
+sidebar_label: "Module 6 · Mastery Quiz"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import ScoredQuiz from '@site/src/components/mechanical/ScoredQuiz';
+import {MASTERY_QUESTIONS} from '@site/src/telemark/mechanicalQuizzes';
+
+# Module 6 Mastery Quiz: Power Transmission
+
+---
+
+## I. Conceptual Questions
+
+**1. Free Speed:** A team calculates a cycle time using the motor's published free speed and finds the real mechanism takes nearly twice as long. Explain why, without assuming anything is broken.
+
+<details>
+<summary>Show answer</summary>
+
+Free speed is the speed at zero torque, meaning zero load. A mechanism doing work is producing torque, and on the motor's linear torque-speed line, speed falls in proportion to the fraction of stall torque being used. A mechanism demanding half of stall torque runs at roughly half of free speed.
+
+Add transmission efficiency losses, friction, and a battery below nominal voltage, and a factor of two between free-speed prediction and reality is entirely ordinary. Nothing is broken; the calculation used the wrong point on the curve.
+
+</details>
+
+---
+
+**2. Peak Power:** Where on the torque-speed curve does a motor deliver the most mechanical power, and why is this a useful design anchor?
+
+<details>
+<summary>Show answer</summary>
+
+At exactly half of free speed and half of stall torque. Power is torque times angular speed; since torque falls linearly as speed rises, the product is a parabola peaking in the middle. The value is `stall_torque * free_speed / 4` with speed in radians per second.
+
+It is a useful anchor because a mechanism designed to operate near that point extracts close to the maximum work per second the motor can deliver. Operating far below it wastes torque capacity; operating far above it, near stall, produces little motion and a great deal of heat.
+
+</details>
+
+---
+
+**3. Series Reductions:** A gearbox has three stages: 4:1, 3:1, and 5:1, each about 95% efficient. Compute the overall ratio and the overall efficiency, and explain why the efficiency figure is not 95%.
+
+<details>
+<summary>Show answer</summary>
+
+Ratio: reductions in series multiply, so `4 * 3 * 5 = 60:1`.
+
+Efficiency: each stage passes 95% of what it receives, so the losses compound rather than average. `0.95 * 0.95 * 0.95 = 0.857`, about 86%.
+
+The efficiency is not 95% because the second stage is only 95% efficient on the torque the first stage delivered, not on the original input. Each stage takes its cut of a progressively smaller quantity, which is why deep reductions built from many stages deliver noticeably less than a single-stage figure suggests.
+
+</details>
+
+---
+
+**4. Backlash and Encoders:** The software team reports that an arm does not stop in the same place twice, even though the encoder readings are consistent. Explain the mechanical cause.
+
+<details>
+<summary>Show answer</summary>
+
+The encoder is on the motor and measures the motor's position. Backlash between the motor and the arm, from gear tooth clearance, chain slack, and play in shaft-to-hub connections, means the arm can occupy a range of positions for a single motor position. The encoder is consistent and correct; it simply is not measuring the arm.
+
+The uncertainty is the total backlash referred to the output, which is the sum of the play contributed by every stage. Mechanical fixes include reducing the number of stages, eliminating slop in hub connections, and taking up chain slack. If the accuracy requirement remains, move the encoder closer to the output so it measures past the backlash.
+
+</details>
+
+---
+
+**5. Back-Driving:** Give one situation where a non-back-drivable transmission is an advantage and one where it is a liability.
+
+<details>
+<summary>Show answer</summary>
+
+Advantage: an arm or lift that must hold a raised position for much of a match. A non-back-drivable reduction holds the load mechanically, so the motor does not have to produce holding torque continuously, which avoids sustained current draw and heating.
+
+Liability: any mechanism likely to be struck by another robot, or any mechanism that must be repositioned by hand in the pit. A transmission that cannot yield transmits the impact into the gear train and structure, so something breaks instead of moving. It also means an arm stuck in the raised position cannot be lowered without disassembly.
+
+</details>
+
+---
+
+## II. Review the Transmission Design
+
+A team describes an arm gearbox. **Identify the 2 errors and state the fix.**
+
+```text
+The arm needs about 3.5 N-m at the pivot in the worst case.
+The motor has 0.105 N-m of stall torque.
+
+To be safe, the team chose a six stage reduction totalling
+240:1, computed as 0.105 * 240 = 25.2 N-m available, which
+they described as plenty of margin.
+
+The arm is driven through a chain from the gearbox output to
+the pivot. The chain was installed at exactly the correct
+length with no slot in the motor mount, since the calculation
+gave an exact center distance.
+
+In testing the arm takes 7 seconds to raise, and after two
+sessions the chain skips under load.
+```
+
+<details>
+<summary>Show answers</summary>
+
+**Error 1 - Massive over-reduction, with efficiency ignored and speed never checked.**
+Two problems compound here. First, six stages at roughly 95% each gives about 74% efficiency, so the real available torque is closer to `0.105 * 240 * 0.74 = 18.6 N-m`, not 25.2. Second, and more seriously, nobody checked the resulting speed. A 240:1 reduction against a requirement needing about 2 times 3.5, or 7 N-m, is roughly a factor of three more reduction than needed, and reduction slows the mechanism proportionally. That is the 7 second raise time.
+
+```text
+Fix: size the ratio from the requirement. For a safety factor
+of 2, the target is 7 N-m. At an assumed 80% efficiency for a
+multi-stage arm drive, ratio = 7 / (0.105 * 0.8) = about 84:1.
+Three stages instead of six also cuts efficiency loss and
+backlash. Then check the resulting speed against the cycle
+time requirement before building.
+```
+
+**Error 2 - The chain drive has no adjustment.**
+Chain stretches during its first hours of running. Installed at exactly the correct length with a fixed center distance, there is no way to take up the slack, so it goes slack and skips, which is precisely what happened. The calculation being exact does not help, because the chain does not stay the length it was.
+
+```text
+Fix: slot the motor mount so the center distance can be
+adjusted, or add an idler on the slack side. Design the
+adjustment in from the start; every chain and belt drive needs
+one.
+```
+
+</details>
+
+---
+
+## III. Scored Check
+
+The questions above are for working something through. These are graded, so you can find out whether it stuck. Everything is scored in your browser.
+
+<ScoredQuiz
+  lessonId="module-06/mastery-quiz"
+  questions={MASTERY_QUESTIONS['module-06']}
+/>
+
+<MarkComplete
+  lessonId="module-06/mastery-quiz"
+  nextUnit="/mechanical/module-07"
+  nextUnitName="Module 7: Drivetrains"
+/>

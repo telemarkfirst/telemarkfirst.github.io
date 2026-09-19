@@ -1,0 +1,124 @@
+---
+id: odometry-pods
+title: "Lesson 7.4: Mounting Odometry Pods for Reliable Localization"
+sidebar_label: "7.4 · Odometry Pods"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 7.4: Mounting Odometry Pods for Reliable Localization
+
+---
+
+## Technical Context
+
+Odometry pods are unpowered wheels with encoders that measure how far the robot has actually travelled, rather than how far the drive wheels turned. They exist because drive wheels slip, and a drive encoder counts the slip as distance.
+
+Pod preload, wheel contact, alignment, and encoder mounting all affect the position data used by autonomous code. Check those mechanical conditions when odometry drifts or becomes inconsistent.
+
+---
+
+## Why Dead Wheels Beat Drive Encoders
+
+A drive wheel under load slips, scrubs during turns, and compresses, so its effective rolling diameter changes with load. Each of those introduces error, and the errors accumulate over an autonomous routine.
+
+An odometry pod carries almost no load, does not drive, and is usually a hard narrow wheel that neither compresses nor scrubs much. It measures the ground going by.
+
+The software track covers how the pod readings become a position estimate. This lesson covers the mechanical conditions that estimate depends on.
+
+---
+
+## Constant Ground Contact Is Everything
+
+An odometry wheel that lifts, even briefly, stops counting while the robot keeps moving, and the position estimate is wrong from then on with no way to detect it.
+
+This is why pods are almost always **spring loaded**. The spring holds the wheel against the floor across field seams, over the small height variations between tiles, and while the robot pitches under acceleration.
+
+Getting the preload right:
+
+- **Too little** and the wheel skips over seams or lifts during acceleration.
+- **Too much** and the wheel deflects the mounting, adds drag, and can lift the drive wheels slightly on a light robot.
+- Enough that firm hand pressure on the robot does not lift the pod, and no more.
+
+:::warning A pod that lifts produces no error signal
+Nothing in the data says the wheel left the ground. The encoder simply reports fewer counts, and the software believes the robot travelled less than it did. Every subsequent position is offset, and it looks like a software problem.
+:::
+
+---
+
+## Rigid Mounting in the Measurement Direction
+
+The pod must be free to move vertically, to follow the floor, and rigid in every other direction.
+
+A pod on a flexible bracket moves relative to the robot as the robot accelerates and as it is hit. That movement is measured as robot motion, and it is indistinguishable from real travel.
+
+Practical guidance:
+
+- Mount to the frame, not to a plate that flexes
+- Use two fasteners spaced apart, since a single fastener lets the pod rotate
+- Keep the suspension travel purely vertical, using a parallel linkage or a well constrained pivot rather than a bracket that also twists
+- Verify by hand: push the pod fore and aft with the robot on blocks. It should not move measurably
+
+---
+
+## Geometry the Software Depends On
+
+The programmers need three things, and all three are mechanical properties you control.
+
+**Wheel diameter,** measured, not nominal. A 35 mm nominal wheel that measures 34.6 mm introduces a 1% distance error, which is roughly 1 in over an 8 ft traverse.
+
+**Pod positions relative to the tracking center,** measured accurately. These distances convert wheel readings into robot pose, and an error here shows up as heading drift that grows with every turn.
+
+**Perpendicularity.** A pod mounted a few degrees off from its intended axis reports a component of motion from the other axis. This error is proportional to travel and accumulates.
+
+:::tip Measure and record, then hand the numbers over
+Write the measured wheel diameter and pod offsets into the notebook and give them to the software team as measured values with units. The most common cause of an autonomous that works on one robot and not on its twin is that these numbers were assumed rather than measured.
+:::
+
+---
+
+## Protection and Serviceability
+
+Pods sit low, near the floor, at the edge of the robot, which is exactly where they get hit.
+
+- Keep them inboard of the frame perimeter or behind structure where possible
+- Route the encoder cable so nothing sweeps across it, with a service loop and strain relief, as covered in Module 9
+- Make the pod removable without disassembling the drivetrain, because it will need replacing
+
+---
+
+:::info Connects to the software track
+The measured wheel diameter and pod offsets from this lesson are configuration values the path follower depends on.
+
+See [Lesson 15.2: Interfacing with Pedro Pathing](/docs/unit-15/pedro-pathing).
+:::
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Odometry pods are spring loaded so the wheel maintains constant `__________` contact across field seams and during acceleration.
+2. A pod mounted on a flexible bracket reports the bracket's movement as robot `__________`.
+3. Pod wheel diameter should be `__________` rather than taken from the nominal specification.
+
+<details>
+<summary>Show answers</summary>
+
+1. **ground** (floor)
+2. **motion** (travel)
+3. **measured**
+
+</details>
+
+---
+
+## Exercise
+
+Measure each odometry wheel's actual diameter with a caliper and each pod's offset from the tracking center. Compare against the numbers currently in the software configuration. Then put the robot on blocks and push each pod fore and aft by hand, looking for any movement that is not vertical.
+
+<MarkComplete
+  lessonId="module-07/odometry-pods"
+  nextUnit="/mechanical/module-07/mastery-quiz"
+  nextUnitName="Module 7 Mastery Quiz: Drivetrains"
+/>

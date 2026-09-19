@@ -1,0 +1,96 @@
+---
+id: double-precision
+title: "Lesson 3.2: Using double for Motor Power and Precise Math"
+sidebar_label: "3.2 · double Precision"
+sidebar_position: 2
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit3Simulator from '@site/src/components/Unit3Simulator';
+
+# Lesson 3.2: Using double for Motor Power and Precise Math
+
+---
+
+## Technical Context
+
+Motor voltage control requires high-precision values to achieve smooth acceleration. Using the `double` datatype allows the robot to handle the fractional values (`-1.0` to `1.0`) required by the `setPower()` method, preventing the jerky movement or rounding errors associated with lower-precision types.
+
+---
+
+## Why FTC Code Uses double So Often
+
+The `double` is a 64-bit primitive datatype used for floating-point numbers. In the FTC SDK, methods such as `setPower()` accept a `double`, and Java treats decimal literals such as `0.5` as doubles by default. Using a `double` for joystick values, sensor measurements, and power calculations preserves fractional values that an `int` would discard.
+
+---
+
+## Annotated Code
+
+```java
+@TeleOp(name="Precision_Power")
+public class PrecisionPower extends OpMode {
+
+    DcMotor drive;
+
+    // Initializing a double variable for fine-grained speed control
+    double targetSpeed = 0.35;
+
+    @Override
+    public void init() {
+        drive = hardwareMap.get(DcMotor.class, "motor");
+    }
+
+    @Override
+    public void loop() {
+        // The SDK setPower method receives the double variable
+        drive.setPower(targetSpeed);
+        telemetry.addData("Current Power", targetSpeed);
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. To store a number with a decimal point for motor power, you should use the `__________` datatype.
+2. The `double` datatype occupies `__________` bits of memory, making it more accurate than a `float`.
+3. The valid range of values for a motor's `setPower()` method is from `__________` to `1.0`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`double`**
+2. **64**
+3. **-1.0**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+**Robot Scenario:** Your driver wants a specific "Auton Speed" of `0.45`. Create a `double` variable to store this and apply it to a motor.
+
+<SimulatorRunGuide />
+
+<Unit3Simulator lesson="double-precision" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+@Override
+public void loop() {
+    double autonSpeed = 0.45;
+    motor.setPower(autonSpeed);
+}
+```
+
+</details>
+
+<MarkComplete
+  lessonId="unit-03/double-precision"
+  nextUnit="/docs/unit-03/boolean-flags"
+  nextUnitName="Lesson 3.3: Managing Binary Sensor States using boolean Flags"
+/>

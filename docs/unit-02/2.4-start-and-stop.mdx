@@ -1,0 +1,133 @@
+---
+id: start-and-stop
+title: "Lesson 2.4: Using start() and stop() for One-Time Robot Actions"
+sidebar_label: "2.4 · start() & stop()"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit2Simulator from '@site/src/components/Unit2Simulator';
+
+# Lesson 2.4: Using start() and stop() for One-Time Robot Actions
+
+---
+
+## Technical Context
+
+`start()` and `stop()` improve robot reliability by handling transitions. `start()` is often used to reset the `getRuntime()` timer exactly when the match begins, ensuring autonomous timing is accurate. `stop()` acts as a fail-safe, allowing you to force motors to zero power or close files when the match ends, preventing hardware damage or data corruption.
+
+---
+
+## start() and stop() Functions
+
+While `init()` and `loop()` are required, `start()` and `stop()` are **optional** lifecycle methods.
+
+`start()` is called once the instant the "Play" button is pressed, making it more precise than `init()` for resetting counters.
+
+`stop()` is called once when the "Stop" button is hit or the match timer expires. This is a reliable way to handle cleanup logic, such as ensuring a high-speed flywheel is commanded to `setPower(0)` before the program terminates.
+
+---
+
+## Annotated Code
+
+```java
+@TeleOp(name="Transition_Demo")
+public class TransitionDemo extends OpMode {
+
+    @Override
+    public void init() {
+        telemetry.addData("Hub", "Standby");
+    }
+
+    @Override
+    public void start() {
+        // Resetting the internal clock the moment the match begins
+        resetRuntime();
+    }
+
+    @Override
+    public void loop() {
+        telemetry.addData("Match Time", getRuntime());
+    }
+
+    @Override
+    public void stop() {
+        // Cleanup: Ensures no logic persists after the program ends
+        telemetry.addData("Match", "Complete");
+    }
+}
+```
+
+## How an FTC Team Separates Lifecycle Work
+
+Titan Robotics Club keeps initialization, enable-time work, and cleanup in separate callbacks. This shortened excerpt leaves out logging and vision setup but preserves the calls that hand each phase to the robot object:
+
+```java
+@Override
+public void robotInit() {
+    robot = new Robot(TrcRobot.getRunMode());
+    // ... gamepad and drive setup ...
+}
+
+@Override
+public void startMode(TrcRobot.RunMode prevMode, TrcRobot.RunMode nextMode) {
+    robot.startMode(nextMode);
+}
+
+@Override
+public void stopMode(TrcRobot.RunMode prevMode, TrcRobot.RunMode nextMode) {
+    robot.stopMode(prevMode);
+}
+```
+
+The important design choice is the boundary: construction belongs to initialization, enabling sensors belongs to `startMode()`, and cleanup belongs to `stopMode()`. Adapt the idea to the SDK callbacks in this lesson rather than copying the team's framework types. Excerpted from [Team 3543 Titan Robotics Club's `FtcTeleOp.java` at a pinned commit](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/TeamCode/src/main/java/teamcode/FtcTeleOp.java) under the [MIT License](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/LICENSE).
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The `__________` method is called exactly once when the driver presses the "Play" button.
+2. To ensure all motors are deactivated at the end of a match, logic should be placed in the `__________` method.
+3. The method that runs repeatedly between the "Init" and "Play" buttons being pressed is `__________`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`start()`**
+2. **`stop()`**
+3. **`init_loop()`**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Your team needs to reset the robot's timer at the start of the match and display a "Robot Shutdown" message when the program is stopped.
+
+<SimulatorRunGuide />
+
+<Unit2Simulator lesson="start-and-stop" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+@Override
+public void start() {
+    resetRuntime();
+}
+
+@Override
+public void stop() {
+    telemetry.addData("Status", "Robot Shutdown");
+}
+```
+
+</details>
+
+<MarkComplete
+  lessonId="unit-02/start-and-stop"
+  nextUnit="/docs/unit-02/health-check-challenge"
+  nextUnitName="Lesson 2.5: Build a Robot Health-Check OpMode with Telemetry"
+/>

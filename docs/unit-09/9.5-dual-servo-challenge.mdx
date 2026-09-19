@@ -1,0 +1,130 @@
+---
+id: dual-servo-challenge
+title: "Lesson 9.5: Sync a Dual-Servo Gripper with Offset Tuning"
+sidebar_label: "9.5 · Dual-Servo Gripper"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit9Simulator from '@site/src/components/Unit9Simulator';
+
+# Lesson 9.5: Sync a Dual-Servo Gripper with Offset Tuning
+
+---
+
+## Technical Context
+
+Mechanical misalignment or "slop" in servo splines means two physically identical servos may reach their effective grip position at slightly different software values. Applying **position offsets** to each servo independently compensates for this, ensuring the gripper holds a game element securely without one side stalling against its physical stop while the other is still moving.
+
+---
+
+## How to Tune Two Servos So They Work Together
+
+This lesson combines `setDirection()` from Lesson 9.3 with `else if` chaining from Unit 5, and adds the concept of **per-servo offsets**. Rather than commanding both servos to the exact same value, you define named constants for each state (`OPEN`, `CLOSED`, `READY`) and apply a small offset to whichever servo needs mechanical compensation.
+
+Using `else if` chaining instead of multiple independent `if` blocks is critical here: it prevents **servo jitter**. If two `if` blocks both evaluate to `true` in the same loop cycle (for example, if two buttons are held simultaneously), the servo would receive two conflicting position commands within a single 50Hz update, causing rapid mechanical oscillation that can strip servo gears.
+
+A single `else if` chain guarantees the servo receives **exactly one** position command per loop cycle.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Servo;
+
+@TeleOp(name="Dual_Servo_Demo")
+public class DualServoDemo extends OpMode {
+
+    private Servo leftClaw;
+    private Servo rightClaw;
+
+    // Named constants for each gripper state
+    // Right servo has a +0.05 offset to compensate for mechanical slop
+    private static final double CLOSED_LEFT  = 1.0;
+    private static final double CLOSED_RIGHT = 0.95; // offset applied here
+    private static final double OPEN_LEFT    = 0.0;
+    private static final double OPEN_RIGHT   = 0.0;
+    private static final double READY_POS    = 0.5;
+
+    @Override
+    public void init() {
+        leftClaw  = hardwareMap.get(Servo.class, "left_claw");
+        rightClaw = hardwareMap.get(Servo.class, "right_claw");
+
+        rightClaw.setDirection(Servo.Direction.REVERSE);
+
+        leftClaw.setPosition(READY_POS);
+        rightClaw.setPosition(READY_POS);
+        telemetry.addData("Gripper", "Ready at center");
+    }
+
+    @Override
+    public void loop() {
+        // Mutually exclusive states: exactly one command sent per cycle
+        if (gamepad1.a) {
+            leftClaw.setPosition(CLOSED_LEFT);
+            rightClaw.setPosition(CLOSED_RIGHT);
+            telemetry.addData("Gripper", "Closed");
+        } else if (gamepad1.b) {
+            leftClaw.setPosition(OPEN_LEFT);
+            rightClaw.setPosition(OPEN_RIGHT);
+            telemetry.addData("Gripper", "Open");
+        } else {
+            leftClaw.setPosition(READY_POS);
+            rightClaw.setPosition(READY_POS);
+            telemetry.addData("Gripper", "Ready");
+        }
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Using `else if` statements instead of multiple independent `if` statements ensures the servo receives only `__________` position command(s) per loop cycle.
+2. Providing a `__________` state in the `else` clause ensures the servo returns to a predictable position when no buttons are pressed.
+3. Servos may exhibit `__________` if they receive multiple conflicting `setPosition()` commands within the same 50Hz loop update.
+
+<details>
+<summary>Show answers</summary>
+
+1. **one**
+2. **default** (or rest / ready)
+3. **jitter** (rapid mechanical oscillation)
+
+</details>
+
+---
+
+## Simulator Practice
+
+Use the simulator below to practice synchronizing `"servoL"` and `"servoR"` with a `0.05` mechanical offset on the right side.
+
+<SimulatorRunGuide />
+
+<Unit9Simulator lesson="dual-servo-challenge" />
+
+## A Team Stores Two Targets Together
+
+BunyipsLib's dual-servo subsystem stores a target for each side and writes both targets during its periodic update. Here is the same pattern with gripper names:
+
+```java
+void updateGripper() {
+    leftServo.setPosition(leftTarget);
+    rightServo.setPosition(rightTarget);
+}
+```
+
+Logging and framework lifecycle code were omitted. The target names were shortened so the two coordinated hardware writes are easy to compare. Adapted from [BunyipsLib's `DualServos.java` at a pinned commit](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/src/main/java/au/edu/sa/mbhs/studentrobotics/bunyipslib/subsystems/DualServos.java) under the [MIT License](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/LICENSE).
+
+<MarkComplete
+  lessonId="unit-09/dual-servo-challenge"
+  nextUnit="/docs/unit-09/mastery-coding-challenge"
+  nextUnitName="Unit 9 Comprehensive Coding Challenge"
+/>

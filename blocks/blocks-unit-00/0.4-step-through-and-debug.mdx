@@ -1,0 +1,39 @@
+---
+id: step-through-and-debug
+title: "Lesson 0.4: Step Through and Debug a Program"
+sidebar_label: "0.4 · Step Through and Debug"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 0.4: Step Through and Debug a Program
+
+A **bug** is a mistake in a program. **Debugging** is the careful work of finding the mistake, correcting it, and checking the result again.
+
+Start with evidence. First state what the program should do. Next run it and record what it actually does. Then use Step to find the first instruction where the actual state no longer matches the expected state.
+
+Do not change several blocks at once. One small change gives you useful evidence. After the change, run the same test again.
+
+## Trace a route
+
+Build this intended route:
+
+1. Move forward by 3.
+2. Turn right.
+3. Move forward by 2.
+4. Print `done`.
+
+Run it and watch the robot follow the route one movement at a time. Then use Step to control when each command runs. After each movement, check the robot's place on the grid and the direction it faces. The position readout gives the exact column and row when you need them.
+
+Now place the turn after the second move. Predict where the robot will finish before running it.
+
+Repair the order and run the original test one more time. The final state should match your first trace. This same process works later when the state contains variables, list items, or returned values.
+
+<BlockPractice lessonId="blocks-unit-00/step-through-and-debug" />
+
+<MarkComplete
+  lessonId="blocks-unit-00/step-through-and-debug"
+  nextUnit="/blocks/blocks-unit-00/route-runner-challenge"
+  nextUnitName="Lesson 0.5: Route Runner Challenge"
+/>

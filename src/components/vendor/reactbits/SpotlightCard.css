@@ -1,0 +1,49 @@
+/* From React Bits (MIT), adapted.
+   The stock styles hardcode a #111 card on a #222 border, which is invisible
+   on a light page, so the surface is taken from the theme tokens. The part
+   worth keeping is the mechanic: a highlight that follows the pointer, which
+   is feedback about where you are rather than decoration. */
+.card-spotlight {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-md);
+  background: var(--tm-surface-1);
+  --mouse-x: 50%;
+  --mouse-y: 50%;
+  --spotlight-color: var(--tm-accent-a12);
+  transition: border-color 180ms ease;
+}
+
+.card-spotlight::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at var(--mouse-x) var(--mouse-y),
+    var(--spotlight-color),
+    transparent 70%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 320ms ease;
+}
+
+.card-spotlight:hover,
+.card-spotlight:focus-within {
+  border-color: var(--tm-accent);
+}
+
+.card-spotlight:hover::before,
+.card-spotlight:focus-within::before {
+  opacity: 1;
+}
+
+/* The highlight tracks a pointer. There is nothing for it to say to someone
+   who is not using one, and it should not animate for anyone who asked it not
+   to. */
+@media (prefers-reduced-motion: reduce) {
+  .card-spotlight::before {
+    transition: none;
+  }
+}

@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Telemark Unit 9.2 Simulator</title>
+    <script src="simulator_base.js"></script>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+<script src="./telemark-project.js"></script>
+<link rel="stylesheet" href="./telemark-project.css"/>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+
+<script>
+/**
+ * Challenge: Servo Scale Range — Safe Arm Bounds
+ * Unit: Unit 9 — Servo Control, Challenge 2
+ */
+
+(function() {
+    // Shared state variables
+    let scaleMin = 0.0;
+    let scaleMax = 1.0;
+    const pivotY = 2.35;
+    const pivotZ = 0.05;
+    let currentAngle = 0.5 * Math.PI;
+    let targetAngle = 0.5 * Math.PI;
+    let collisionTriggered = false;
+    let lastCollisionZone = null;
+    let collisionFlashTimer = null;
+    let collisionWarningTimer = null;
+    let collisionWarningEl = null;
+    
+    // Scene objects
+    let armMesh, armBeam, lowerBar, upperBar, safeArc, fullArc;
+
+    // Define window.hardwareMap custom interactions
+    window.hardwareMap.onScaleRange = function(cb) {
+        window.hardwareMap._onScaleRangeCb = cb;
+    };
+
+    // Audio context for sound effects
+    function playCrunch() {
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.1);
+            
+            const gain = ctx.createGain();
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+            
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.15);
+        } catch(e) {}
+    }
+
+    // Transpiler mapping hooks
+    window.setServoScaleRange = function(name, min, max) {
+        if (min < 0.0 || max > 1.0) {
+            window.addHint("scaleRange values must be between 0.0 and 1.0", "error");
+            return;
+        }
+        if (min >= max) {
+            window.addHint("scaleRange takes (min, max) — the smaller value goes first", "error");
+            return;
+        }
+        if (window.hardwareMap._onScaleRangeCb) {
+            window.hardwareMap._onScaleRangeCb(name, min, max);
+        }
+    };
+
+    window.setServoPosition = function(name, pos) {
+        const servo = window.hardwareMap.get("Servo", name);
+        if (servo) {
+            servo.setPosition(pos);
+        }
+    };
+
+    function makeLabel(text, x, y, z, color) {
+        const canvas = document.createElement("canvas");
+        canvas.width = 256;
+        canvas.height = 64;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = color || "#ffffff";
+        ctx.font = "bold 28px monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, 128, 32);
+        const texture = new THREE.CanvasTexture(canvas);
+        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({map: texture, transparent: true}));
+        sprite.scale.set(1.15, 0.29, 1);
+        sprite.position.set(x, y, z);
+        return sprite;
+    }
+
+    function ensureCollisionWarning() {
+        if (collisionWarningEl) return collisionWarningEl;
+
+        const style = document.createElement("style");
+        style.textContent = `
+            .sim-scene-collision-warning {
+                position: absolute;
+                left: 50%;
+                top: 20px;
+                transform: translateX(-50%) scale(0.96);
+                background: rgba(255,60,60,.9);
+                color: #fff;
+                padding: 10px 20px;
+                border-radius: 8px;
+                font-weight: 800;
+                font-size: 1.1rem;
+                white-space: nowrap;
+                box-shadow: 0 0 30px rgba(255,0,0,.6);
+                opacity: 0;
+                visibility: hidden;
+                pointer-events: none;
+                transition: opacity .22s ease, transform .22s ease, visibility .22s ease;
+                z-index: 15;
+            }
+            .sim-scene-collision-warning.visible {
+                opacity: 1;
+                visibility: visible;
+                transform: translateX(-50%) scale(1);
+                animation: simCollisionPulse .35s alternate infinite;
+            }
+            @keyframes simCollisionPulse {
+                from { transform: translateX(-50%) scale(1); }
+                to { transform: translateX(-50%) scale(1.08); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        collisionWarningEl = document.createElement("div");
+        collisionWarningEl.className = "sim-scene-collision-warning";
+        collisionWarningEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> COLLISION! Hardware damage!';
+        const sceneContainer = document.getElementById("sim-scene-container");
+        if (sceneContainer) sceneContainer.appendChild(collisionWarningEl);
+        return collisionWarningEl;
+    }
+
+    function showCollisionWarning() {
+        const warning = ensureCollisionWarning();
+        if (!warning) return;
+
+        warning.classList.remove("visible");
+        void warning.offsetWidth;
+        warning.classList.add("visible");
+
+        if (collisionWarningTimer) clearTimeout(collisionWarningTimer);
+        collisionWarningTimer = setTimeout(() => {
+            warning.classList.remove("visible");
+            collisionWarningTimer = null;
+        }, 1000);
+    }
+
+    function applyBarSafetyColors() {
+        const safeMapped = Math.abs(scaleMin - 0.3) < 0.01 && Math.abs(scaleMax - 0.9) < 0.01;
+        if (safeArc) safeArc.material.opacity = safeMapped ? 0.8 : 0.2;
+        if (lowerBar) lowerBar.material.color.setHex(safeMapped ? 0x22cc66 : 0xff0000);
+        if (upperBar) upperBar.material.color.setHex(safeMapped ? 0x22cc66 : 0xff0000);
+    }
+
+    function resetCollisionMaterials() {
+        applyBarSafetyColors();
+        if (armBeam) armBeam.material.color.setHex(0xffaa00);
+    }
+
+    function clearCollisionEffect() {
+        collisionTriggered = false;
+        lastCollisionZone = null;
+        if (collisionFlashTimer) {
+            clearInterval(collisionFlashTimer);
+            collisionFlashTimer = null;
+        }
+        if (collisionWarningTimer) {
+            clearTimeout(collisionWarningTimer);
+            collisionWarningTimer = null;
+        }
+        if (collisionWarningEl) collisionWarningEl.classList.remove("visible");
+        resetCollisionMaterials();
+    }
+
+    function triggerCollision(rawPos) {
+        const hitLowerBar = rawPos < 0.295;
+        const zone = hitLowerBar ? "lower" : "upper";
+        if (zone === lastCollisionZone) return;
+
+        lastCollisionZone = zone;
+        collisionTriggered = true;
+        window.setRequirement(4, false);
+        window.addHint("COLLISION! Hardware damage! Add arm.scaleRange(0.3, 0.9) before commanding the servo to 0.0 or 1.0.", "error");
+        playCrunch();
+        showCollisionWarning();
+        
+        if (collisionFlashTimer) {
+            clearInterval(collisionFlashTimer);
+            collisionFlashTimer = null;
+        }
+        resetCollisionMaterials();
+        
+        const struckBar = hitLowerBar ? lowerBar : upperBar;
+        const otherBar = hitLowerBar ? upperBar : lowerBar;
+        let flashCount = 0;
+
+        collisionFlashTimer = setInterval(() => {
+            if (!struckBar || !armBeam) {
+                clearInterval(collisionFlashTimer);
+                collisionFlashTimer = null;
+                return;
+            }
+
+            const impactColor = flashCount % 2 === 0 ? 0xff3333 : 0xffaaaa;
+            struckBar.material.color.setHex(impactColor);
+            armBeam.material.color.setHex(impactColor);
+            if (otherBar) otherBar.material.color.setHex(0xff0000);
+            flashCount++;
+
+            if (flashCount > 8) {
+                clearInterval(collisionFlashTimer);
+                collisionFlashTimer = null;
+                struckBar.material.color.setHex(0xff0000);
+                armBeam.material.color.setHex(0xff3333);
+            }
+        }, 90);
+    }
+
+    function updateArmVisual(name, logicalPos, physicalPos) {
+        if (name !== "arm") return;
+
+        // Verify button mappings
+        if (window.gamepad.right_bumper && logicalPos < 0.5) {
+            window.addHint("Check your button mapping — right bumper should open, left bumper should close", "warn");
+        }
+        if (window.gamepad.left_bumper && logicalPos > 0.5) {
+            window.addHint("Check your button mapping — right bumper should open, left bumper should close", "warn");
+        }
+
+        const rawPos = typeof physicalPos === "number"
+            ? physicalPos
+            : scaleMin + logicalPos * (scaleMax - scaleMin);
+        targetAngle = rawPos * Math.PI;
+
+        // Physical collision check: raw travel past the hard stops causes damage.
+        if (rawPos < 0.295 || rawPos > 0.905) {
+            triggerCollision(rawPos);
+        } else if (lastCollisionZone) {
+            lastCollisionZone = null;
+            if (!collisionFlashTimer) resetCollisionMaterials();
+        }
+    }
+
+    function setArmBounds(name, min, max) {
+        if (name !== "arm") return;
+        scaleMin = min;
+        scaleMax = max;
+        
+        applyBarSafetyColors();
+    }
+
+    window.onSimulatorReady = function() {
+        const starterCode = `@TeleOp(name="Arm_Scale_Range")
+public class ArmScaleRange extends OpMode {
+    Servo arm;
+
+    @Override
+    public void init() {
+        arm = hardwareMap.get(Servo.class, "arm");
+        // TODO: Limit the physical range to 0.3 through 0.9
+        telemetry.addData("Status", "Initialized");
+    }
+
+    @Override
+    public void loop() {
+        if (gamepad1.right_bumper) {
+            // TODO: Move the arm to logical position 1.0
+        } else if (gamepad1.left_bumper) {
+            // TODO: Move the arm to logical position 0.0
+        }
+
+        // TODO: Report the arm position with telemetry
+        telemetry.update();
+    }
+}`;
+
+        window.setCode(starterCode);
+
+        window.setChallenge(
+            "Servo Scale Range — Safe Arm Bounds",
+            "Map a servo named arm, apply scaleRange, and use the gamepad to move safely between the hard stops.",
+            [
+                "Initialize arm servo",
+                "Apply scaleRange(0.3, 0.9)",
+                "Command position 1.0 with right_bumper",
+                "Command position 0.0 with left_bumper",
+                "Avoid collisions with metal bars",
+                "Update telemetry"
+            ]
+        );
+
+        window.setHeader(
+            "Telemark Unit 9.2 Simulator",
+            "Servo Scale Range · Map a servo · Limit travel"
+        );
+
+        window.setBadges([
+            {iconClass: "fa-solid fa-gear", label: "Servo", active: true},
+            {iconClass: "fa-solid fa-tower-broadcast", label: "Telemetry", active: true},
+            {iconClass: "fa-solid fa-gamepad", label: "Gamepad", active: true}
+        ]);
+
+        window.setActiveInputs(["left_bumper", "right_bumper"]);
+        window.hardwareMap.registerServo("arm");
+
+        window.hardwareMap.onServoPosition((name, logical, physical) => updateArmVisual(name, logical, physical));
+        window.hardwareMap.onScaleRange((name, min, max) => setArmBounds(name, min, max));
+
+        // ── Setup Custom Three.js Close-up View ──
+        window.setFieldVisible(false); 
+        
+        window.setCameraOrbit({
+            radius: 6.2,
+            theta: 0,
+            phi: Math.PI / 2.15,
+            target: {x: 0, y: pivotY, z: pivotZ}
+        });
+
+        const scene = window.scene;
+
+        const baseGeo = new THREE.BoxGeometry(1.2, 2.2, 0.55);
+        const baseMat = new THREE.MeshPhongMaterial({color: 0x2a2a2a});
+        const baseMesh = new THREE.Mesh(baseGeo, baseMat);
+        baseMesh.position.set(0, pivotY - 1.1, 0);
+        baseMesh.castShadow = true;
+        baseMesh.receiveShadow = true;
+        scene.add(baseMesh);
+
+        const pivotHub = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.2, 0.2, 0.16, 32),
+            new THREE.MeshPhongMaterial({color: 0x666666, emissive: 0x111111})
+        );
+        pivotHub.rotation.x = Math.PI / 2;
+        pivotHub.position.set(0, pivotY, pivotZ + 0.08);
+        scene.add(pivotHub);
+
+        armMesh = new THREE.Group();
+        armMesh.position.set(0, pivotY, pivotZ + 0.16);
+        scene.add(armMesh);
+
+        const beamGeo = new THREE.BoxGeometry(2.65, 0.22, 0.14);
+        const beamMat = new THREE.MeshPhongMaterial({color: 0xffaa00}); 
+        armBeam = new THREE.Mesh(beamGeo, beamMat);
+        armBeam.position.set(1.325, 0, 0);
+        armBeam.castShadow = true;
+        armMesh.add(armBeam);
+        
+        armMesh.rotation.z = currentAngle;
+
+        const fullArcGeo = new THREE.RingGeometry(1.75, 2.85, 64, 1, 0, Math.PI);
+        const fullArcMat = new THREE.MeshBasicMaterial({color: 0x555555, side: THREE.DoubleSide, transparent: true, opacity: 0.32});
+        fullArc = new THREE.Mesh(fullArcGeo, fullArcMat);
+        fullArc.position.set(0, pivotY, pivotZ - 0.03);
+        scene.add(fullArc);
+
+        const safeArcGeo = new THREE.RingGeometry(1.75, 2.85, 64, 1, 0.3 * Math.PI, 0.6 * Math.PI);
+        const safeArcMat = new THREE.MeshBasicMaterial({color: 0x22cc66, side: THREE.DoubleSide, transparent: true, opacity: 0.2});
+        safeArc = new THREE.Mesh(safeArcGeo, safeArcMat);
+        safeArc.position.set(0, pivotY, pivotZ - 0.02);
+        scene.add(safeArc);
+
+        const barGeo = new THREE.CylinderGeometry(0.07, 0.07, 0.85);
+        const barMat = new THREE.MeshPhongMaterial({color: 0xff0000});
+        
+        lowerBar = new THREE.Mesh(barGeo, barMat);
+        lowerBar.rotation.x = Math.PI / 2;
+        lowerBar.position.set(2.15 * Math.cos(0.3 * Math.PI), pivotY + 2.15 * Math.sin(0.3 * Math.PI), pivotZ + 0.16);
+        scene.add(lowerBar);
+
+        upperBar = new THREE.Mesh(barGeo, barMat.clone());
+        upperBar.rotation.x = Math.PI / 2;
+        upperBar.position.set(2.15 * Math.cos(0.9 * Math.PI), pivotY + 2.15 * Math.sin(0.9 * Math.PI), pivotZ + 0.16);
+        scene.add(upperBar);
+
+        scene.add(makeLabel("servo pivot", -0.85, pivotY - 0.18, pivotZ + 0.28, "#dddddd"));
+        scene.add(makeLabel("safe range", 0, pivotY + 2.35, pivotZ + 0.16, "#44ff88"));
+        scene.add(makeLabel("hard stops", 0, pivotY + 1.15, pivotZ + 0.38, "#ff7777"));
+        ensureCollisionWarning();
+
+        window.addAnimationCallback(() => {
+            if (armMesh) {
+                currentAngle += (targetAngle - currentAngle) * 0.15;
+                armMesh.rotation.z = currentAngle;
+            }
+        });
+    };
+
+    window.onRun = function() {
+        scaleMin = 0.0;
+        scaleMax = 1.0;
+        clearCollisionEffect();
+        targetAngle = 0.5 * Math.PI; 
+        window.clearHints();
+        
+        applyBarSafetyColors();
+
+        let code = window.getCode();
+        let initBody = window._simGetMethodBody(code, "init") || "";
+        let loopBody = window._simGetMethodBody(code, "loop") || "";
+
+        const req1 = /hardwareMap\s*\.\s*get\(\s*Servo\.class\s*,\s*"arm"\s*\)/.test(initBody);
+        const req2 = /arm\s*\.\s*scaleRange\(\s*0\.3\s*,\s*0\.9\s*\)/.test(initBody);
+        const req3 = /setPosition\(\s*1\.0\s*\)/.test(loopBody);
+        const req4 = /setPosition\(\s*0\.0\s*\)/.test(loopBody);
+        const req6 = /telemetry\s*\.\s*addData\(/.test(code);
+
+        window.setRequirement(0, req1);
+        window.setRequirement(1, req2);
+        window.setRequirement(2, req3);
+        window.setRequirement(3, req4);
+        window.setRequirement(4, true); 
+        window.setRequirement(5, req6);
+
+        if (code.indexOf("arm.scaleRange(0.9, 0.3)") !== -1) {
+            window.addHint("scaleRange takes (min, max) — the smaller value goes first", "error");
+        } else if (loopBody.indexOf(".scaleRange") !== -1) {
+            window.addHint("scaleRange only needs to be set once — call it in init()", "warn");
+        }
+        if (code.indexOf("telemetry.update()") === -1) {
+            window.addHint("Call telemetry.update() to send data to the Driver Station", "warn");
+        }
+
+        window.transpileAndRun(code,
+            function(initFn) {
+                try { initFn(); } catch(e) { window._simShowTelemetryError("Init error: " + e.message); }
+            },
+            function(loopFn) {
+                window._simStartLoop(function() {
+                    try { loopFn(); } catch(e) { window._simShowTelemetryError("Loop error: " + e.message); }
+                    window.setRequirement(4, !collisionTriggered);
+                });
+            }
+        );
+    };
+
+    window.onStop = function() {
+        targetAngle = 0.5 * Math.PI; 
+    };
+
+    window.onReset = function() {
+        window.onStop();
+        clearCollisionEffect();
+        applyBarSafetyColors();
+        window.clearHints();
+    };
+})();
+</script>
+
+</body>
+</html>

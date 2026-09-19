@@ -1,0 +1,189 @@
+---
+id: pose-data
+title: "Lesson 14.3: Extracting Detection IDs and Pose Data for Navigation"
+sidebar_label: "14.3 · Pose Data"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit14Simulator from '@site/src/components/Unit14Simulator';
+
+# Lesson 14.3: Extracting Detection IDs and Pose Data for Navigation
+
+---
+
+## The Difference Between Detecting and Navigating
+
+Lesson 14.2 covered detection: confirming that a specific tag is visible. This lesson covers navigation: using the spatial data from a detection to move the robot to a precise position relative to the tag.
+
+Knowing that tag ID 5 is visible tells you almost nothing useful for movement. Knowing that tag ID 5 is 14.3 inches away and 6.2 inches to the right of the camera's centerline tells you exactly how to move the robot to align with the scoring target it marks. This spatial data is called pose data, and it is the foundation of closed-loop vision-based navigation.
+
+---
+
+## The ftcPose Object
+
+Every `AprilTagDetection` has a member called `ftcPose` of type `AprilTagPoseFtc`. This object expresses the tag's position and orientation relative to the camera in FTC-standard units and coordinate conventions. The fields you will use most often are:
+
+- **`x`**: lateral offset in inches. Positive means the tag is to the right of the camera's center axis. Negative means it is to the left.
+- **`y`**: forward distance in inches. This is how far ahead the tag is. Larger values mean the tag is further away.
+- **`z`**: vertical offset in inches. Positive means the tag is above the camera. This field is less commonly used in TeleOp navigation.
+- **`yaw`**: the tag's rotational heading relative to the camera in degrees. A non-zero yaw means the robot is not facing the tag squarely.
+- **`bearing`**: the horizontal angle in degrees from the camera's forward axis to the tag's position. Useful for turning to face a tag.
+
+For the most common autonomous alignment task, driving up to a scoring target and centering on it, `x` and `y` are the two values you need.
+
+---
+
+## Closed-Loop Vision Alignment
+
+With `x` and `y` from `ftcPose`, you can implement a simple closed-loop alignment routine. The robot drives forward until `y` drops below a threshold (it is close enough), and simultaneously strafes left or right to drive `x` toward zero (it is centered). Each iteration reads fresh pose data and adjusts motor power accordingly, self-correcting for any drift. This is the same proportional control concept introduced in Unit 12 applied to two axes simultaneously.
+
+```java
+double forwardError = detection.ftcPose.y - TARGET_DISTANCE;
+double lateralError = detection.ftcPose.x;
+
+double forwardPower = Range.clip(forwardError * kP_forward, -MAX_POWER, MAX_POWER);
+double strafePower  = Range.clip(lateralError * kP_strafe,  -MAX_POWER, MAX_POWER);
+```
+
+---
+
+## Annotated Code
+
+:::note
+This is an autonomous program. No gamepad input is used.
+:::
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.WebcamName;
+import com.qualcomm.robotcore.util.Range;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import java.util.List;
+
+@Autonomous(name="Pose_Navigation_Demo")
+public class PoseNavigationDemo extends LinearOpMode {
+
+    private VisionPortal      visionPortal;
+    private AprilTagProcessor aprilTagProcessor;
+
+    private static final int    TARGET_TAG_ID    = 5;
+    private static final double TARGET_DISTANCE  = 6.0;  // inches
+    private static final double kP_FORWARD       = 0.03;
+    private static final double kP_STRAFE        = 0.04;
+    private static final double MAX_DRIVE_POWER  = 0.4;
+    private static final double POSITION_TOLERANCE = 1.5; // inches
+
+    @Override
+    public void runOpMode() {
+        // Hardware setup omitted for brevity. Assume the drivetrain is mapped.
+
+        WebcamName webcam = hardwareMap.get(WebcamName.class, "Webcam 1");
+        aprilTagProcessor = AprilTagProcessor.easyCreateWithDefaults();
+        visionPortal      = VisionPortal.easyCreateWithDefaults(webcam, aprilTagProcessor);
+
+        waitForStart();
+
+        while (opModeIsActive()) {
+            List<AprilTagDetection> detections = aprilTagProcessor.getDetections();
+
+            AprilTagDetection targetDetection = null;
+
+            // Find the specific tag the robot should align to
+            for (AprilTagDetection detection : detections) {
+                if (detection.id == TARGET_TAG_ID && detection.metadata != null) {
+                    targetDetection = detection;
+                    break;
+                }
+            }
+
+            if (targetDetection != null) {
+                double forwardError = targetDetection.ftcPose.y - TARGET_DISTANCE;
+                double lateralError = targetDetection.ftcPose.x;
+
+                telemetry.addData("Tag ID",       targetDetection.id);
+                telemetry.addData("Range Y (in)", "%.2f", targetDetection.ftcPose.y);
+                telemetry.addData("Lateral (in)", "%.2f", targetDetection.ftcPose.x);
+                telemetry.addData("Yaw (deg)",    "%.2f", targetDetection.ftcPose.yaw);
+
+                // Check if both axes are within tolerance
+                boolean aligned = Math.abs(forwardError) < POSITION_TOLERANCE
+                               && Math.abs(lateralError) < POSITION_TOLERANCE;
+
+                if (aligned) {
+                    telemetry.addData("Status", "ALIGNED: ready to score");
+                    // Stop drive motors and proceed to scoring action
+                } else {
+                    double forward = Range.clip(forwardError * kP_FORWARD,
+                                               -MAX_DRIVE_POWER, MAX_DRIVE_POWER);
+                    double strafe  = Range.clip(lateralError * kP_STRAFE,
+                                               -MAX_DRIVE_POWER, MAX_DRIVE_POWER);
+                    telemetry.addData("Forward Power", "%.3f", forward);
+                    telemetry.addData("Strafe Power",  "%.3f", strafe);
+                    // Apply forward and strafe to mecanum drivetrain here
+                }
+            } else {
+                telemetry.addData("Status", "Target tag not visible");
+            }
+
+            telemetry.update();
+        }
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The member of an `AprilTagDetection` that contains spatial position data relative to the camera is called `__________`.
+2. The `ftcPose` field that represents the horizontal distance to the right or left of the camera's center axis is `detection.ftcPose.__________`.
+3. The `ftcPose` field that represents the forward distance from the camera to the tag in inches is `detection.ftcPose.__________`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`ftcPose`**
+2. **`x`**
+3. **`y`**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Write a method `getTagDistance(int targetId)` that searches the current detection list for a tag with the given ID, and returns its forward distance (`y`) in inches if found. If the tag is not currently visible or its metadata is null, the method should return `-1.0` as a sentinel value indicating no valid reading. Assume `aprilTagProcessor` is a class member.
+
+<SimulatorRunGuide />
+
+<Unit14Simulator lesson="pose-data" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+double getTagDistance(int targetId) {
+    for (AprilTagDetection detection : aprilTagProcessor.getDetections()) {
+        if (detection.id == targetId && detection.metadata != null) {
+            return detection.ftcPose.y;
+        }
+    }
+
+    return -1.0;
+}
+```
+
+</details>
+
+<MarkComplete
+  lessonId="unit-14/pose-data"
+  nextUnit="/docs/unit-14/opencv-zones"
+  nextUnitName="Lesson 14.4: Defining Vision Windows with OpenCV Rect Boundaries"
+/>

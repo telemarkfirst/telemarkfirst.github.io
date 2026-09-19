@@ -1,0 +1,126 @@
+---
+id: inspection-legal-wiring
+title: "Lesson 9.4: Wiring That Passes Electrical Inspection"
+sidebar_label: "9.4 · Legal Wiring"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 9.4: Wiring That Passes Electrical Inspection
+
+---
+
+## Technical Context
+
+Electrical inspection checks that the robot is legal and safe to operate around other robots and people. Many checklist items also prevent power and communication failures during a match.
+
+Run the current official checklist in the shop so the team has time to correct problems before the event.
+
+---
+
+## The Rules Are the Authority
+
+Everything specific about legality lives in the current season's game manual: which components are legal, what gauge is required in the main power path, what connectors are permitted, how the main switch must be positioned and labeled, how the battery must be secured, and what fusing or breakers are required.
+
+**Read the actual rules for the current season.** Requirements change between seasons, advice from other teams goes stale, and an inspector works from the manual.
+
+This lesson covers how to prepare, not what the specific numbers are.
+
+:::warning Do not learn the rules from another team's robot
+A robot that passed inspection last season may not pass this one, and a robot that passed at one event may have been missed. The manual is the source.
+:::
+
+---
+
+## What Inspectors Consistently Check
+
+Even though the details change, the categories are stable.
+
+**The main power path.** Battery, main switch, and the connection into the power distribution. Inspectors look at gauge, connector type, security, and whether the switch is accessible and clearly identifiable.
+
+**Battery security.** The battery must not be able to move or come free during a match, including if the robot is hit or tips.
+
+**Exposed conductors.** No bare metal at connections that could short against the frame or another wire. This includes crimp barrels not fully insulated and connectors that have backed partly out.
+
+**Damaged insulation.** Any wire with worn, cut, or melted insulation is a fail, and it is also a fire risk.
+
+**Legal components only.** Motors, servos, sensors, and electronics must be from the permitted list.
+
+**Strain relief and routing.** Cables must not be under tension at connectors and must not be able to be caught by a mechanism.
+
+---
+
+## Preparing: Inspect Yourselves First
+
+Run the full inspection on your own robot before the event, using the current season's official inspection checklist. Do it twice: once in the week before, and once in the pit before queueing for inspection.
+
+A workable routine:
+
+1. Print the official checklist for the current season.
+2. Have one student read each item aloud while another checks the robot physically.
+3. Record each item as pass or fail in the notebook, since this is also evidence of process for judges.
+4. Fix everything that failed, then repeat from the top rather than checking only the fixed item.
+
+That last point matters, because fixing one thing often disturbs another.
+
+---
+
+## Making Inspection Fast
+
+Inspectors have limited time and many robots. A robot that is easy to inspect gets through quickly.
+
+- **Make the main switch obvious and reachable** without moving anything.
+- **Keep the battery accessible** so its securing method is visible.
+- **Leave the wiring visible** where possible rather than fully enclosed, or make covers removable without tools.
+- **Bring the port map document** so questions about what is connected where have an immediate answer.
+- **Have a spare of anything fragile**: cables, connectors, and a charged battery.
+
+---
+
+## Common Avoidable Failures
+
+| Failure | Prevention |
+| --- | --- |
+| Battery held only by hook and loop that has lost grip | Add a positive mechanical retention |
+| Exposed crimp barrel | Heat shrink over every crimp |
+| Wire chafed against a frame edge | Grommet, edge protection, or re-route |
+| Main switch buried under a mechanism | Relocate during design, not at the event |
+| Wrong gauge in the main power path | Check the manual before buying wire |
+| Non-legal component left on the robot from testing | Remove test hardware before the event |
+
+Every row is cheap to fix in the shop and expensive to fix in the queue.
+
+:::info Official references
+- Game manuals and the robot inspection checklist for the current season: [FIRST Tech Challenge Game and Season Info](https://www.firstinspires.org/resource-library/ftc/game-and-season-info)
+- REV control system documentation: [REV DUO Control System](https://docs.revrobotics.com/duo-control)
+:::
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The authoritative source for what is legal is the current season's `__________`, not another team's robot.
+2. Every crimp should be covered with `__________` so no conductor is exposed.
+3. After fixing a failed inspection item, the checklist should be repeated from the `__________` rather than rechecking only that item.
+
+<details>
+<summary>Show answers</summary>
+
+1. **game manual** (rules)
+2. **heat shrink**
+3. **top** (beginning)
+
+</details>
+
+---
+
+## Exercise
+
+Print the current season's inspection checklist and run it on your robot with two people, one reading and one checking. Record every result in the notebook. Fix the failures and run it again from the beginning.
+
+<MarkComplete
+  lessonId="module-09/inspection-legal-wiring"
+  nextUnit="/mechanical/module-09/mastery-quiz"
+  nextUnitName="Module 9 Mastery Quiz: Electrical and Wiring"
+/>

@@ -1,0 +1,78 @@
+---
+id: open-project
+title: "Section 6: Opening the FTC Project in Android Studio"
+sidebar_label: "6 · Open the Project"
+sidebar_position: 6
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Section 6: Opening the FTC Project in Android Studio
+
+:::info Stay focused on learning
+This is part of the optional Android Studio head-start path. If project sync errors turn into a serious blocker, continue in [Telemark's built-in simulator](/simulator) and ask your advanced team for its known-good project and setup instructions later.
+:::
+
+---
+
+## Step 6.1: Open the Project
+
+In Android Studio: **File → Open**
+
+Navigate to the `FtcRobotController` folder you just cloned. Select the **folder itself** (not any file inside it). Click "OK."
+
+Android Studio will load the project and begin a Gradle sync. Let it finish before changing project settings.
+
+---
+
+## Step 6.2: What a Successful Sync Looks Like
+
+In the bottom "Build" panel, you will see a sequence of messages ending with:
+
+```
+BUILD SUCCESSFUL in Xs
+```
+
+If you see `BUILD SUCCESSFUL`, skip to Section 7.
+
+If you see `BUILD FAILED`, continue to Step 6.3.
+
+---
+
+## Step 6.3: Common Gradle Sync Errors and Exact Fixes
+
+**Error A: "Could not resolve com.qualcomm.ftcrobotcontroller"**
+
+Gradle cannot download the SDK libraries.
+
+*Cause:* No internet connection, or a corporate/school firewall blocking Maven repositories.
+
+*Fix:* Connect to a different network. If you are on a school network, try a mobile hotspot.
+
+---
+
+**Error B: Unsupported Java or Gradle runtime**
+
+The selected Gradle JDK does not match the version expected by this SDK release.
+
+*Fix:* Compare the project with the current official FTC README, then select its recommended bundled or installed JDK. Do not change `sourceCompatibility` to solve a Gradle runtime error.
+
+---
+
+**Error C: Android SDK platform is missing**
+
+Gradle cannot find the Android platform requested by the current FTC project.
+
+*Fix:* Open Android Studio's SDK Manager and install the platform named in the error. Keep the project's checked-in `compileSdkVersion` unchanged.
+
+---
+
+**Error E: "SDK location not found. Define location with sdk.dir in the local.properties file"**
+
+*Fix:* This file is intentionally excluded from Git. Open the project through Android Studio and confirm the Android SDK location in Settings. Android Studio will create or repair `local.properties`.
+
+<MarkComplete
+  lessonId="unit-01/open-project"
+  nextUnit="/docs/unit-01/verify-build-config"
+  nextUnitName="Section 7: Verifying the Build Configuration"
+/>

@@ -1,0 +1,56 @@
+---
+id: first-opmode
+title: "Section 8: Writing Your First FTC OpMode"
+sidebar_label: "8 · First OpMode"
+sidebar_position: 8
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Section 8: Writing Your First FTC OpMode
+
+In Android Studio, your robot code belongs in:
+
+```
+TeamCode/src/main/java/org/firstinspires/ftc/teamcode/
+```
+
+Right-click this folder, select **New → Java Class**, and name it `DiagnosticOpMode`.
+
+In OnBot Java, create a new OpMode from the browser editor and use the same class body. OnBot Java manages the package and project location for you.
+
+Replace the generated content with the following. This is the minimum valid OpMode that proves your environment is working:
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+
+@TeleOp(name = "Diagnostic", group = "Setup")
+public class DiagnosticOpMode extends OpMode {
+
+    @Override
+    public void init() {
+        telemetry.addData("Build", "Successful");
+        telemetry.addData("Status", "Ready");
+    }
+
+    @Override
+    public void loop() {
+        telemetry.addData("Runtime", getRuntime());
+    }
+}
+```
+
+In Android Studio, press the green **Build** button. You should see `BUILD SUCCESSFUL` in the Build panel.
+
+In OnBot Java, select **Build Everything** and wait for a successful build message.
+
+Telemark's browser simulator can run the lesson examples without either build step. A successful Android Studio or OnBot Java build confirms that your code can move on to physical Robot Controller testing.
+
+<MarkComplete
+  lessonId="unit-01/first-opmode"
+  nextUnit="/docs/unit-01/connect-control-hub"
+  nextUnitName="Section 9: Connecting to the Control Hub"
+/>

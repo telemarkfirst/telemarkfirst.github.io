@@ -1,0 +1,35 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId}/telemark/{documentId} {
+      allow read, write: if request.auth != null
+        && request.auth.uid == userId
+        && request.auth.token.email_verified == true
+        && documentId in ['profile', 'progress'];
+    }
+
+    // Account roles, unique username claims, invitations, and memberships are
+    // server-owned. Callable functions validate both sides of every classroom
+    // relationship before using the Admin SDK to change these collections.
+    match /accounts/{document=**} {
+      allow read, write: if false;
+    }
+    match /usernames/{document=**} {
+      allow read, write: if false;
+    }
+    match /classrooms/{document=**} {
+      allow read, write: if false;
+    }
+    match /userInvites/{document=**} {
+      allow read, write: if false;
+    }
+    match /userClassrooms/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

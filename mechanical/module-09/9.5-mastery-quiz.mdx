@@ -1,0 +1,147 @@
+---
+id: mastery-quiz
+title: "Module 9 Mastery Quiz: Electrical and Wiring"
+sidebar_label: "Module 9 · Mastery Quiz"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import ScoredQuiz from '@site/src/components/mechanical/ScoredQuiz';
+import {MASTERY_QUESTIONS} from '@site/src/telemark/mechanicalQuizzes';
+
+# Module 9 Mastery Quiz: Electrical and Wiring
+
+---
+
+## I. Conceptual Questions
+
+**1. Two Checks:** Explain why choosing a wire gauge requires two separate calculations, and give an example where a wire passes one and fails the other.
+
+<details>
+<summary>Show answer</summary>
+
+The first check is current capacity: the wire must carry the current without overheating, which protects the wire and everything near it. The second is voltage drop: the wire must not lose so much voltage that the motor is meaningfully weakened, since both free speed and stall torque scale with voltage.
+
+The checks are independent because capacity depends only on the current, while drop depends on current times length. A short run of thin wire at high current may be within its thermal capacity while the drop is negligible simply because the run is short. Conversely, a long run at modest current can drop several percent of the system voltage while never getting warm. Each must be checked separately.
+
+</details>
+
+---
+
+**2. Round Trip:** A team calculates voltage drop for a 4 ft motor run and gets half the value they measure. What did they most likely omit?
+
+<details>
+<summary>Show answer</summary>
+
+They used the one way length. Current flows out to the motor and back, so the circuit contains 8 ft of wire, not 4. Voltage drop is `I * R` over the full circuit, so omitting the return path halves the calculated result.
+
+This is the most common arithmetic error in wire sizing, and it always errs in the optimistic direction, which is why it goes unnoticed until the robot underperforms.
+
+</details>
+
+---
+
+**3. Late Match Failures:** A mechanism works in the first matches of a tournament and fails in the last ones. Give two independent electrical explanations.
+
+<details>
+<summary>Show answer</summary>
+
+First, battery state. An FTC battery has internal resistance and its terminal voltage falls under load, and this worsens as the battery discharges through the day. Motors are weaker at reduced voltage, so a mechanism sized without torque margin crosses from working to not working as the battery ages. Rotating and recharging batteries addresses this.
+
+Second, connection degradation. A marginal crimp heats under load, and heating increases its resistance, which increases heating further. Over a day of matches a connection that started acceptable can become significantly resistive, dropping voltage and generating heat at that point.
+
+A third, non-electrical explanation from Module 8 is worth noting: motors that hold static loads accumulate heat through the day and produce less torque when hot.
+
+</details>
+
+---
+
+**4. Intermittent Circuit:** A motor works on the bench and cuts out during matches, and the wire looks undamaged. Explain the likely cause and where to look.
+
+<details>
+<summary>Show answer</summary>
+
+The conductor has most likely fatigued and broken inside the insulation, at or just behind the connector. Cable movement during robot operation transfers into the connector body, flexing the conductor at the point where it is crimped or soldered. It breaks internally over many cycles while the insulation remains intact, so the wire looks fine and the circuit is intermittent, making contact when the cable happens to sit one way and not the other.
+
+Look immediately behind every connector on that circuit, and flex each one gently while the circuit is powered to see whether the fault follows the flex. The prevention is strain relief: anchor the cable within a few inches of the connector with a service loop, so cable movement never reaches the connector.
+
+</details>
+
+---
+
+**5. Inspection Preparation:** Why should a team re-run the entire inspection checklist from the beginning after fixing a failed item, rather than rechecking only that item?
+
+<details>
+<summary>Show answer</summary>
+
+Fixing one item frequently disturbs another. Re-routing a cable to clear an edge can leave it taut at full mechanism extension. Relocating the main switch can move the battery retention. Adding heat shrink can require disconnecting and re-seating a connector that then is not fully engaged.
+
+Checking only the fixed item verifies the fix and not its consequences. Running the full checklist again is a few minutes and catches the change you introduced, which is exactly the kind of failure that otherwise appears in the queue or, worse, during a match.
+
+</details>
+
+---
+
+## II. Review the Wiring
+
+A team describes its wiring. **Identify the 2 errors and state the fix.**
+
+```text
+The slide motor cable runs from the Control Hub, up the
+outside of the fixed slide stage, through a drilled hole in
+the aluminum plate, and directly to the motor on the moving
+carriage. The cable is zip tied tightly at the hub end and
+plugs straight into the motor with no other anchor.
+
+At full extension the cable is straight and slightly tight.
+The team notes this is fine because it does not break.
+
+Wire labels were planned but not applied, since the team knows
+which motor is which.
+```
+
+<details>
+<summary>Show answers</summary>
+
+**Error 1 - No strain relief, an unprotected pass-through, and a cable that goes taut at full extension.**
+Three failures compound in the same run. The cable is anchored only at the hub end, so all movement from the carriage transfers into the motor connector, which fatigues the conductor internally and produces an intermittent circuit that looks like nothing is wrong. The drilled hole in aluminum has a sharp edge that will cut the insulation as the cable moves through it. And a cable that is tight at full extension is under tension every cycle, which guarantees failure within a season.
+
+```text
+Fix: anchor the cable within a few inches of the motor
+connector with a service loop, so nothing pulls on the
+connector. Add a grommet or radiused edge protection at the
+pass-through. Add enough length that the cable stays slack
+through the entire travel, and constrain the moving section
+with a cable carrier or spiral wrap so it bends in a
+controlled radius rather than being pulled straight.
+```
+
+**Error 2 - No labels.**
+"The team knows which motor is which" holds until the person who knows is driving, until a wire is moved during a repair without the configuration being updated, or until the robot must be diagnosed in five minutes between matches. An unlabeled bundle turns a thirty second check into a ten minute trace.
+
+```text
+Fix: label every wire at both ends with the exact name used in
+the robot configuration, using a label maker or writing on
+heat shrink. Build the port map document listing port, device,
+and configuration name, post it in the pit, and put a copy in
+the notebook.
+```
+
+</details>
+
+---
+
+## III. Scored Check
+
+The questions above are for working something through. These are graded, so you can find out whether it stuck. Everything is scored in your browser.
+
+<ScoredQuiz
+  lessonId="module-09/mastery-quiz"
+  questions={MASTERY_QUESTIONS['module-09']}
+/>
+
+<MarkComplete
+  lessonId="module-09/mastery-quiz"
+  nextUnit="/mechanical/module-10"
+  nextUnitName="Module 10: Prototyping, Testing, and Iteration"
+/>

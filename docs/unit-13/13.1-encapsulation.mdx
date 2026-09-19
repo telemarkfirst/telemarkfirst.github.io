@@ -1,0 +1,210 @@
+---
+id: encapsulation
+title: "Lesson 13.1: Encapsulating Component Logic into Mechanism Classes"
+sidebar_label: "13.1 · Encapsulation"
+sidebar_position: 1
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit13Simulator from '@site/src/components/Unit13Simulator';
+
+# Lesson 13.1: Encapsulating Component Logic into Mechanism Classes
+
+---
+
+## The Problem with a Single-File Robot
+
+At the end of Unit 9 you likely had all of your motors, servos, and sensors declared in one OpMode file, with all of their configuration constants and control logic written inline inside `loop()`. For a robot with two or three mechanisms this is tolerable. For a competition robot with a drivetrain, a lift, an intake, a claw, and an arm, this approach produces a file that is hundreds of lines long with no clear boundaries between subsystems.
+
+The deeper problem is code reuse. You will write at least two OpModes, one for TeleOp and one for Autonomous. If the lift's control logic lives directly inside `TeleOpMain.java`, you have to duplicate it in `AutonomousRed.java` and `AutonomousBlue.java`. Every time the lift mechanism changes, you update three files instead of one, and the risk of introducing an inconsistency between them grows with every change.
+
+Encapsulation solves both problems by moving each subsystem into its own dedicated class. The class owns the hardware objects for that mechanism, exposes clean methods that describe what the mechanism does rather than how the hardware is wired, and hides every implementation detail from the OpMode.
+
+---
+
+## What Encapsulation Means in Practice
+
+In Java, a class is a blueprint for an object. When you write a `LiftMechanism` class, you are defining a named container that holds everything related to the lift. The hardware objects (`DcMotor`, `DigitalChannel`) are declared as `private` member variables, which means no code outside the class can reach in and manipulate them directly. External code can only interact with the lift through the public methods you choose to expose, such as `extend()`, `retract()`, and `isAtBottom()`.
+
+This boundary is not just organizational. It is a contract. Any OpMode that uses a `LiftMechanism` object knows it can call `extend()` and the lift will move correctly. It does not need to know which motor port the lift is wired to, what the BRAKE behavior is set to, or how the limit switch is inverted. All of those decisions are made once, inside the class, and remain hidden.
+
+The class needs access to the `hardwareMap` to link its member variables to physical ports. Because `hardwareMap` belongs to the OpMode context, the standard pattern is to write a `public void init(HardwareMap hwMap)` method. The OpMode calls this method during its own `init()` phase, passing its `hardwareMap` in as an argument. The mechanism class uses the parameter to perform all of its hardware lookups.
+
+---
+
+## Annotated Code
+
+<AnnotatedCode
+  title="Private hardware behind a public command"
+  java={String.raw`public class Intake {
+    private CRServo motor;
+
+    public void collect() {
+        motor.setPower(0.8);
+    }
+}`}
+  python={String.raw`class Intake:
+    def __init__(self, motor):
+        self._motor = motor
+
+    def collect(self):
+        self._motor.set_power(0.8)`}
+/>
+
+Both versions keep the hardware reference inside the object and give callers a command named for intent. Python's leading underscore is a convention rather than Java's enforced `private` access.
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+
+/**
+ * Encapsulates all hardware and control logic for the robot's linear lift.
+ * OpModes interact only through the public methods below.
+ */
+public class LiftMechanism {
+
+    // Private: external code cannot modify these directly
+    private DcMotor        liftMotor;
+    private DigitalChannel bottomLimit;
+
+    // Configuration constants live here, not scattered across OpMode files
+    private static final double EXTEND_POWER  =  0.8;
+    private static final double RETRACT_POWER = -0.6;
+
+    /**
+     * Links hardware objects to physical ports.
+     * Must be called before any other method.
+     */
+    public void init(HardwareMap hwMap) {
+        liftMotor   = hwMap.get(DcMotor.class,        "lift_motor");
+        bottomLimit = hwMap.get(DigitalChannel.class,  "limit_bottom");
+
+        bottomLimit.setMode(DigitalChannel.Mode.INPUT);
+        liftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        liftMotor.setPower(0);
+    }
+
+    /** Drives the lift upward at the configured extend power. */
+    public void extend() {
+        liftMotor.setPower(EXTEND_POWER);
+    }
+
+    /**
+     * Drives the lift downward, but only if the bottom limit is not triggered.
+     * The caller does not need to know about the limit switch at all.
+     */
+    public void retract() {
+        if (!isAtBottom()) {
+            liftMotor.setPower(RETRACT_POWER);
+        } else {
+            liftMotor.setPower(0);
+        }
+    }
+
+    /** Cuts motor power. */
+    public void stop() {
+        liftMotor.setPower(0);
+    }
+
+    /** Returns true when the bottom limit switch is physically pressed. */
+    public boolean isAtBottom() {
+        return !bottomLimit.getState(); // active-low inversion
+    }
+}
+```
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+@TeleOp(name="Lift_TeleOp")
+public class LiftTeleOp extends OpMode {
+
+    // The OpMode holds a reference to the mechanism object, not the raw hardware
+    private LiftMechanism lift = new LiftMechanism();
+
+    @Override
+    public void init() {
+        // The mechanism handles all of its own hardware mapping internally
+        lift.init(hardwareMap);
+        telemetry.addData("Status", "Lift ready");
+    }
+
+    @Override
+    public void loop() {
+        // The OpMode describes intent, not hardware details
+        if (gamepad1.dpad_up) {
+            lift.extend();
+        } else if (gamepad1.dpad_down) {
+            lift.retract();
+        } else {
+            lift.stop();
+        }
+
+        telemetry.addData("At Bottom", lift.isAtBottom());
+        telemetry.update();
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. To prevent external code from directly modifying a class's hardware objects, those objects should be declared with the `__________` access modifier.
+2. A mechanism class exposes its functionality through `__________` methods, which describe what the mechanism does without revealing how the hardware is wired.
+3. Because `hardwareMap` belongs to the OpMode context, a mechanism class receives it as a parameter in a dedicated `__________` method.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`private`**
+2. **`public`**
+3. **`init()`** (or initialization method)
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Create an `IntakeMechanism` class that encapsulates a `CRServo` named `"intake_servo"`. It should expose three public methods: `collect()` (runs the servo at 0.8), `eject()` (runs the servo at -0.8), and `stop()` (sets power to 0). The servo must be mapped inside an `init(HardwareMap hwMap)` method.
+
+<SimulatorRunGuide />
+
+<Unit13Simulator lesson="encapsulation" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+private CRServo intake_servo;
+
+public void init(HardwareMap hwMap) {
+    intake_servo = hwMap.get(CRServo.class, "intake_servo");
+}
+
+public void collect() {
+    intake_servo.setPower(0.8);
+}
+
+public void eject() {
+    intake_servo.setPower(-0.8);
+}
+
+public void stop() {
+    intake_servo.setPower(0.0);
+}
+```
+
+</details>
+
+<MarkComplete
+  lessonId="unit-13/encapsulation"
+  nextUnit="/docs/unit-13/inheritance"
+  nextUnitName="Lesson 13.2: Extending Parent Classes for Modular Hardware Subsystems"
+/>

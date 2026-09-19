@@ -1,0 +1,97 @@
+---
+id: boolean-flags
+title: "Lesson 3.3: Using boolean Values for On-or-Off Robot State"
+sidebar_label: "3.3 · boolean Flags"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit3Simulator from '@site/src/components/Unit3Simulator';
+
+# Lesson 3.3: Using boolean Values for On-or-Off Robot State
+
+---
+
+## Technical Context
+
+Sensors like Touch Sensors or Limit Switches only have two states: pressed or not pressed. Using `boolean` flags to store these states allows the robot to make binary decisions, such as stopping a lift before it hits a physical hard-stop and causes mechanical failure.
+
+---
+
+## How boolean Values Simplify Robot Decisions
+
+A `boolean` is a primitive datatype that can only hold one of two values: `true` or `false`. In the FTC environment, digital sensors and gamepad buttons are inherently boolean. When you call `getState()` on a `DigitalChannel` (like a touch sensor), the SDK returns a `boolean`. Storing this result in a variable allows you to **"capture"** the state at a specific moment in the `loop()` cycle and use it for logic comparisons.
+
+---
+
+## Annotated Code
+
+```java
+@TeleOp(name="Boolean_Logic")
+public class BooleanLogic extends OpMode {
+
+    // Declaring a boolean to track if the safety limit is reached
+    boolean isAtLimit;
+    DcMotor lift;
+    DigitalChannel touch;
+
+    @Override
+    public void init() {
+        lift  = hardwareMap.get(DcMotor.class, "lift");
+        touch = hardwareMap.get(DigitalChannel.class, "limit_switch");
+    }
+
+    @Override
+    public void loop() {
+        // Capturing the current hardware state into the boolean variable
+        isAtLimit = touch.getState();
+        telemetry.addData("Safe to move?", isAtLimit);
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. A variable type that can only represent two possible states is a/an `__________`.
+2. The default value of a `boolean` variable in Java, if not assigned, is `__________`.
+3. To invert a `boolean` value (changing `true` to `false`), we use the `__________` operator.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`boolean`**
+2. **`false`**
+3. **`!`** (the logical NOT operator)
+
+</details>
+
+---
+
+## Simulator Challenge
+
+**Robot Scenario:** Capture the state of the `"A"` button on `gamepad1` into a `boolean` variable and send that variable to the Driver Station via telemetry.
+
+<SimulatorRunGuide />
+
+<Unit3Simulator lesson="boolean-flags" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+@Override
+public void loop() {
+    boolean buttonState = gamepad1.a;
+    telemetry.addData("Button A Pressed", buttonState);
+}
+```
+
+</details>
+
+<MarkComplete
+  lessonId="unit-03/boolean-flags"
+  nextUnit="/docs/unit-03/int-datatypes"
+  nextUnitName="Lesson 3.4: Tracking Mechanism Cycle Counts with int Datatypes"
+/>

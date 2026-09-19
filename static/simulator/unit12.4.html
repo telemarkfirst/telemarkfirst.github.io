@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Telemark Unit 12.4 Simulator</title>
+
+<script src="./simulator_base.js"></script>
+
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    background: #111827;
+    color: #e5e7eb;
+    font-family: Inter, Arial, sans-serif;
+}
+
+#sim-root {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#viewport {
+    width: 100%;
+    height: 520px;
+    position: relative;
+    overflow: hidden;
+    background:#0b1118;
+    border-top: 1px solid #374151;
+    border-bottom: 1px solid #374151;
+}
+
+#ui-panel {
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: clamp(190px, 34vh, 330px);
+    overflow-y: auto;
+    background: #0f172a;
+    padding: 14px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+}
+
+#sim-right-panel #sim-scene-container {
+    flex: 1 0 clamp(360px, 58vh, 560px);
+    min-height: 360px;
+}
+
+.panel-card {
+    background: rgba(17,24,39,0.95);
+    border: 1px solid #334155;
+    border-radius: 14px;
+    padding: 14px;
+}
+
+.panel-title {
+    font-size: 14px;
+    color: #94a3b8;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.big-value {
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.green {
+    color: #22c55e;
+}
+
+.red {
+    color: #ef4444;
+}
+
+.yellow {
+    color: #f59e0b;
+}
+
+.bar-wrap {
+    width: 100%;
+    height: 16px;
+    background: #1e293b;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 8px;
+    position: relative;
+}
+
+.bar-fill {
+    height: 100%;
+    transition: width 0.08s linear;
+}
+
+.pitch-fill {
+    background: linear-gradient(90deg, #22c55e, #ef4444);
+}
+
+.roll-fill {
+    background: linear-gradient(90deg, #22c55e, #ef4444);
+}
+
+.condition-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.button-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+#ui-panel button {
+    background: #1e293b;
+    border: 1px solid #475569;
+    color: white;
+    padding: 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+button:hover {
+    background: #334155;
+}
+
+.slider-group {
+    margin-bottom: 12px;
+}
+
+.slider-group label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 14px;
+    color: #cbd5e1;
+}
+
+.slider-group input {
+    width: 100%;
+}
+
+.warning-overlay {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(127, 29, 29, 0.9);
+    border: 1px solid #ef4444;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-weight: bold;
+    display: none;
+    z-index: 20;
+}
+
+.safe-overlay {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(20, 83, 45, 0.9);
+    border: 1px solid #22c55e;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-weight: bold;
+    display: none;
+    z-index: 20;
+}
+</style>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+<script src="./telemark-project.js"></script>
+<link rel="stylesheet" href="./telemark-project.css"/>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+
+<body>
+
+<div id="sim-root">
+
+    <div id="viewport">
+        <div id="warningBadge" class="warning-overlay">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            TIPPING WARNING
+        </div>
+
+        <div id="safeBadge" class="safe-overlay">
+            <i class="fa-solid fa-circle-check"></i>
+            STABLE
+        </div>
+    </div>
+
+    <div id="ui-panel">
+
+        <div class="panel-card">
+            <div class="panel-title">
+                <i class="fa-solid fa-chart-column"></i>
+                Pitch
+            </div>
+
+            <div id="pitchText" class="big-value green">
+                PITCH: 0.0°
+            </div>
+
+            <div class="bar-wrap">
+                <div id="pitchFill" class="bar-fill pitch-fill" style="width:50%"></div>
+            </div>
+        </div>
+
+        <div class="panel-card">
+            <div class="panel-title">
+                <i class="fa-solid fa-chart-column"></i>
+                Roll
+            </div>
+
+            <div id="rollText" class="big-value green">
+                ROLL: 0.0°
+            </div>
+
+            <div class="bar-wrap">
+                <div id="rollFill" class="bar-fill roll-fill" style="width:50%"></div>
+            </div>
+        </div>
+
+        <div class="panel-card">
+            <div class="panel-title">
+                <i class="fa-solid fa-shield-halved"></i>
+                Stability
+            </div>
+
+            <div id="tippingText" class="big-value green">
+                STABLE
+            </div>
+
+            <div style="margin-top:16px">
+                <div class="condition-row">
+                    <span>Math.abs(pitch)</span>
+                    <span id="pitchAbs">0.0</span>
+                </div>
+
+                <div class="condition-row">
+                    <span>> 15.0</span>
+                    <span id="pitchCheck">false</span>
+                </div>
+
+                <div class="condition-row">
+                    <span>Math.abs(roll)</span>
+                    <span id="rollAbs">0.0</span>
+                </div>
+
+                <div class="condition-row">
+                    <span>> 15.0</span>
+                    <span id="rollCheck">false</span>
+                </div>
+
+                <div class="condition-row">
+                    <span>pitch OR roll</span>
+                    <span id="orCheck">false</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-card">
+            <div class="panel-title">
+                <i class="fa-solid fa-sliders"></i>
+                IMU Angle Controls
+            </div>
+
+            <div class="slider-group">
+                <label>Pitch (-45 to 45)</label>
+                <input id="pitchSlider" type="range" min="-45" max="45" step="0.1" value="0" />
+            </div>
+
+            <div class="slider-group">
+                <label>Roll (-45 to 45)</label>
+                <input id="rollSlider" type="range" min="-45" max="45" step="0.1" value="0" />
+            </div>
+
+            <div class="slider-group">
+                <label>Yaw (-180 to 180)</label>
+                <input id="yawSlider" type="range" min="-180" max="180" step="0.1" value="0" />
+            </div>
+        </div>
+
+        <div class="panel-card">
+            <div class="panel-title">
+                <i class="fa-solid fa-flask"></i>
+                Presets
+            </div>
+
+            <div class="button-grid">
+                <button id="presetPitch">
+                    <i class="fa-solid fa-arrow-up"></i>
+                    Pitch Forward 20°
+                </button>
+
+                <button id="presetRoll">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    Roll Left 20°
+                </button>
+
+                <button id="presetSafe">
+                    <i class="fa-solid fa-circle-check"></i>
+                    Both Safe 10°
+                </button>
+
+                <button id="presetDanger">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    Both Tipping 16°
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+function createTippingPanel() {
+    const right = document.getElementById("sim-right-panel");
+    const sceneContainer = document.getElementById("sim-scene-container");
+
+    if (right && !document.getElementById("ui-panel")) {
+        const panel = document.createElement("div");
+        panel.id = "ui-panel";
+        panel.innerHTML = `
+            <div class="panel-card">
+                <div class="panel-title">
+                    <i class="fa-solid fa-chart-column"></i>
+                    Pitch
+                </div>
+                <div id="pitchText" class="big-value green">PITCH: 0.0°</div>
+                <div class="bar-wrap">
+                    <div id="pitchFill" class="bar-fill pitch-fill" style="width:50%"></div>
+                </div>
+            </div>
+
+            <div class="panel-card">
+                <div class="panel-title">
+                    <i class="fa-solid fa-chart-column"></i>
+                    Roll
+                </div>
+                <div id="rollText" class="big-value green">ROLL: 0.0°</div>
+                <div class="bar-wrap">
+                    <div id="rollFill" class="bar-fill roll-fill" style="width:50%"></div>
+                </div>
+            </div>
+
+            <div class="panel-card">
+                <div class="panel-title">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    Stability
+                </div>
+                <div id="tippingText" class="big-value green">STABLE</div>
+                <div style="margin-top:16px">
+                    <div class="condition-row">
+                        <span>Math.abs(pitch)</span>
+                        <span id="pitchAbs">0.0</span>
+                    </div>
+                    <div class="condition-row">
+                        <span>&gt; 15.0</span>
+                        <span id="pitchCheck">false</span>
+                    </div>
+                    <div class="condition-row">
+                        <span>Math.abs(roll)</span>
+                        <span id="rollAbs">0.0</span>
+                    </div>
+                    <div class="condition-row">
+                        <span>&gt; 15.0</span>
+                        <span id="rollCheck">false</span>
+                    </div>
+                    <div class="condition-row">
+                        <span>pitch OR roll</span>
+                        <span id="orCheck">false</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-card">
+                <div class="panel-title">
+                    <i class="fa-solid fa-sliders"></i>
+                    IMU Angle Controls
+                </div>
+                <div class="slider-group">
+                    <label>Pitch (-45 to 45)</label>
+                    <input id="pitchSlider" type="range" min="-45" max="45" step="0.1" value="0" />
+                </div>
+                <div class="slider-group">
+                    <label>Roll (-45 to 45)</label>
+                    <input id="rollSlider" type="range" min="-45" max="45" step="0.1" value="0" />
+                </div>
+                <div class="slider-group">
+                    <label>Yaw (-180 to 180)</label>
+                    <input id="yawSlider" type="range" min="-180" max="180" step="0.1" value="0" />
+                </div>
+            </div>
+
+            <div class="panel-card">
+                <div class="panel-title">
+                    <i class="fa-solid fa-flask"></i>
+                    Presets
+                </div>
+                <div class="button-grid">
+                    <button id="presetPitch">
+                        <i class="fa-solid fa-arrow-up"></i>
+                        Pitch Forward 20°
+                    </button>
+                    <button id="presetRoll">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        Roll Left 20°
+                    </button>
+                    <button id="presetSafe">
+                        <i class="fa-solid fa-circle-check"></i>
+                        Both Safe 10°
+                    </button>
+                    <button id="presetDanger">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        Both Tipping 16°
+                    </button>
+                </div>
+            </div>
+        `;
+        right.appendChild(panel);
+    }
+
+    if (sceneContainer && !document.getElementById("warningBadge")) {
+        const warning = document.createElement("div");
+        warning.id = "warningBadge";
+        warning.className = "warning-overlay";
+        warning.innerHTML =
+            '<i class="fa-solid fa-triangle-exclamation"></i> TIPPING WARNING';
+        sceneContainer.appendChild(warning);
+    }
+
+    if (sceneContainer && !document.getElementById("safeBadge")) {
+        const safe = document.createElement("div");
+        safe.id = "safeBadge";
+        safe.className = "safe-overlay";
+        safe.innerHTML =
+            '<i class="fa-solid fa-circle-check"></i> STABLE';
+        sceneContainer.appendChild(safe);
+    }
+}
+
+function installTippingIMUSdkShims() {
+    window.IMU = window.IMU || {};
+
+    if (typeof window.IMU.Parameters !== "function") {
+        window.IMU.Parameters = function Parameters(orientationOnRobot) {
+            this.orientationOnRobot = orientationOnRobot;
+        };
+    }
+
+    if (typeof window.RevHubOrientationOnRobot !== "function") {
+        const RevHubOrientationOnRobot = function (logoFacingDirection, usbFacingDirection) {
+            this.logoFacingDirection = logoFacingDirection;
+            this.usbFacingDirection = usbFacingDirection;
+        };
+
+        RevHubOrientationOnRobot.LogoFacingDirection = Object.freeze({
+            UP: "UP",
+            DOWN: "DOWN",
+            FORWARD: "FORWARD",
+            BACKWARD: "BACKWARD",
+            LEFT: "LEFT",
+            RIGHT: "RIGHT"
+        });
+        RevHubOrientationOnRobot.UsbFacingDirection = Object.freeze({
+            UP: "UP",
+            DOWN: "DOWN",
+            FORWARD: "FORWARD",
+            BACKWARD: "BACKWARD",
+            LEFT: "LEFT",
+            RIGHT: "RIGHT"
+        });
+        window.RevHubOrientationOnRobot = RevHubOrientationOnRobot;
+    }
+}
+
+window.onSimulatorReady = () => {
+
+    const starterCode = `@TeleOp(name="Tipping_Detection")
+public class TippingDetection extends OpMode {
+
+    IMU imu;
+
+    @Override
+    public void init() {
+        imu = hardwareMap.get(IMU.class, "imu");
+
+        IMU.Parameters parameters = new IMU.Parameters(
+            new RevHubOrientationOnRobot(
+                RevHubOrientationOnRobot.LogoFacingDirection.UP,
+                RevHubOrientationOnRobot.UsbFacingDirection.FORWARD
+            )
+        );
+
+        imu.initialize(parameters);
+        telemetry.addData("Status", "IMU Ready");
+    }
+
+    boolean isTipping() {
+        // TODO: read pitch and roll, then check either axis.
+        return false;
+    }
+
+    @Override
+    public void loop() {
+        telemetry.addData("Tipping",  isTipping());
+        telemetry.addData("Pitch",    imu.getRobotYawPitchRollAngles().getPitch(AngleUnit.DEGREES));
+        telemetry.addData("Roll",     imu.getRobotYawPitchRollAngles().getRoll(AngleUnit.DEGREES));
+        telemetry.update();
+    }
+}`;
+
+    const requirements = [
+        "Use IMU as a class member",
+        "Call imu.getRobotYawPitchRollAngles() in isTipping()",
+        "Use getPitch(AngleUnit.DEGREES)",
+        "Use getRoll(AngleUnit.DEGREES)",
+        "Use Math.abs(pitch)",
+        "Use Math.abs(roll)",
+        "Use || for either-axis tipping",
+        "Use the exact 15.0 degree threshold",
+        "Return boolean from isTipping()"
+    ];
+
+    if (typeof setCode === "function") {
+        setCode(starterCode);
+    }
+
+    if (typeof setChallenge === "function") {
+        setChallenge(
+            "Tipping Detection with Pitch and Roll",
+            "Use IMU pitch and roll values to detect dangerous robot tipping conditions.",
+            requirements
+        );
+        setHeader(
+            "Telemark Unit 12.4 Simulator",
+            "Tipping Detection with Pitch and Roll"
+        );
+    }
+
+    if (typeof setBadges === "function") {
+        setBadges([
+            { iconClass: "fa-solid fa-compass", label: "IMU", active: true },
+            { iconClass: "fa-solid fa-triangle-exclamation", label: "Safety", active: true },
+            { iconClass: "fa-solid fa-display", label: "Telemetry", active: true }
+        ]);
+    }
+
+    if (typeof setActiveInputs === "function") {
+        setActiveInputs([]);
+    }
+
+    if (
+        typeof hardwareMap !== "undefined" &&
+        typeof hardwareMap.registerIMU === "function"
+    ) {
+        hardwareMap.registerIMU("imu");
+    }
+
+    createTippingPanel();
+
+    let scene;
+    let camera;
+    let renderer;
+    let sceneRoot;
+    let robot;
+    let pendulum;
+    let animationId;
+
+    let pitch = 0;
+    let roll = 0;
+    let yaw = 0;
+
+    function syncStudentIMU() {
+        const imu = window.hardwareMap &&
+            window.hardwareMap._devices &&
+            window.hardwareMap._devices.imu;
+
+        if (!imu) return;
+
+        imu._heading = yaw;
+        if (imu._orientation) {
+            imu._orientation.heading = yaw;
+            imu._orientation.pitch = pitch;
+            imu._orientation.roll = roll;
+        }
+    }
+
+    function initThree() {
+
+        if (
+            typeof THREE === "undefined" ||
+            !window.scene ||
+            !window.camera ||
+            !window.renderer
+        ) {
+            return;
+        }
+
+        scene = window.scene;
+        camera = window.camera;
+        renderer = window.renderer;
+
+        const oldRoot =
+            scene.getObjectByName("tipping-root");
+
+        if (oldRoot) {
+            scene.remove(oldRoot);
+        }
+
+        sceneRoot = new THREE.Group();
+        sceneRoot.name = "tipping-root";
+
+        if (window.setFieldVisible) {
+            setFieldVisible(false);
+        }
+
+        if (window.setCameraOrbit) {
+            setCameraOrbit({
+                theta: .72,
+                phi: .86,
+                radius: 8,
+                target: { x: 0, y: .8, z: 0 }
+            });
+        }
+
+        renderer.setClearColor(0x111827,1);
+
+        const hemi = new THREE.HemisphereLight(
+            0xffffff,
+            0x111111,
+            1.2
+        );
+
+        sceneRoot.add(hemi);
+
+        const dir = new THREE.DirectionalLight(
+            0xffffff,
+            1.4
+        );
+
+        dir.position.set(10, 20, 10);
+
+        sceneRoot.add(dir);
+
+        const floor = new THREE.Mesh(
+            new THREE.PlaneGeometry(40, 40),
+            new THREE.MeshStandardMaterial({
+                color: 0x1f2937,
+                roughness: 0.7,
+                metalness: 0.2
+            })
+        );
+
+        floor.rotation.x = -Math.PI / 2;
+
+        sceneRoot.add(floor);
+
+        robot = new THREE.Group();
+
+        const body = new THREE.Mesh(
+            new THREE.BoxGeometry(4, 1.2, 4),
+            new THREE.MeshStandardMaterial({
+                color: 0xff6600,
+                metalness: 0.7,
+                roughness: 0.25
+            })
+        );
+
+        robot.add(body);
+
+        const frontMarker = new THREE.Mesh(
+            new THREE.BoxGeometry(1.5, 0.2, 0.4),
+            new THREE.MeshStandardMaterial({
+                color: 0x00ffff,
+                emissive: 0x004444
+            })
+        );
+
+        frontMarker.position.z = -2.2;
+
+        robot.add(frontMarker);
+
+        pendulum = new THREE.Mesh(
+            new THREE.SphereGeometry(0.22, 32, 32),
+            new THREE.MeshStandardMaterial({
+                color: 0x22c55e,
+                emissive: 0x113311
+            })
+        );
+
+        pendulum.position.set(0, -2, 0);
+
+        robot.add(pendulum);
+
+        robot.position.y = 1.2;
+
+        sceneRoot.add(robot);
+
+        const ring = new THREE.Mesh(
+            new THREE.RingGeometry(1.7, 1.9, 64),
+            new THREE.MeshBasicMaterial({
+                color: 0x22c55e,
+                side: THREE.DoubleSide
+            })
+        );
+
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.y = 0.02;
+
+        sceneRoot.add(ring);
+        scene.add(sceneRoot);
+    }
+
+    function animate() {
+
+        if (robot) {
+
+            robot.rotation.x = THREE.MathUtils.degToRad(pitch);
+            robot.rotation.z = THREE.MathUtils.degToRad(-roll);
+            robot.rotation.y = THREE.MathUtils.degToRad(yaw);
+
+            const tipping =
+                Math.abs(pitch) > 15 ||
+                Math.abs(roll) > 15;
+
+            robot.children[0].material.emissive =
+                new THREE.Color(
+                    tipping ? 0x551111 : 0x000000
+                );
+
+            pendulum.material.color.set(
+                tipping ? 0xef4444 : 0x22c55e
+            );
+        }
+    }
+
+    function updateUI() {
+
+        const tipping =
+            Math.abs(pitch) > 15 ||
+            Math.abs(roll) > 15;
+
+        const pitchText = document.getElementById("pitchText");
+        const rollText = document.getElementById("rollText");
+        const pitchFill = document.getElementById("pitchFill");
+        const rollFill = document.getElementById("rollFill");
+        const pitchAbs = document.getElementById("pitchAbs");
+        const rollAbs = document.getElementById("rollAbs");
+        const pitchCheck = document.getElementById("pitchCheck");
+        const rollCheck = document.getElementById("rollCheck");
+        const orCheck = document.getElementById("orCheck");
+        const tipText = document.getElementById("tippingText");
+        const warningBadge = document.getElementById("warningBadge");
+        const safeBadge = document.getElementById("safeBadge");
+
+        if (
+            !pitchText ||
+            !rollText ||
+            !pitchFill ||
+            !rollFill ||
+            !pitchAbs ||
+            !rollAbs ||
+            !pitchCheck ||
+            !rollCheck ||
+            !orCheck ||
+            !tipText ||
+            !warningBadge ||
+            !safeBadge
+        ) {
+            return;
+        }
+
+        pitchText.textContent =
+            `PITCH: ${pitch.toFixed(1)}°`;
+
+        rollText.textContent =
+            `ROLL: ${roll.toFixed(1)}°`;
+
+        pitchFill.style.width =
+            `${((pitch + 45) / 90) * 100}%`;
+
+        rollFill.style.width =
+            `${((roll + 45) / 90) * 100}%`;
+
+        pitchAbs.textContent =
+            Math.abs(pitch).toFixed(1);
+
+        rollAbs.textContent =
+            Math.abs(roll).toFixed(1);
+
+        pitchCheck.textContent =
+            Math.abs(pitch) > 15;
+
+        rollCheck.textContent =
+            Math.abs(roll) > 15;
+
+        orCheck.textContent =
+            tipping;
+
+        tipText.textContent =
+            tipping ? "TIPPING" : "STABLE";
+
+        tipText.className =
+            `big-value ${tipping ? "red" : "green"}`;
+
+        warningBadge.style.display =
+            tipping ? "block" : "none";
+
+        safeBadge.style.display =
+            tipping ? "none" : "block";
+
+        validateCode();
+    }
+
+    function extractIsTippingBody(code) {
+        const match =
+            /boolean\s+isTipping\s*\(\s*\)\s*\{/.exec(code);
+
+        if (!match) return "";
+
+        let index = match.index + match[0].length;
+        let depth = 1;
+
+        for (; index < code.length; index++) {
+            if (code[index] === "{") depth++;
+            else if (code[index] === "}") {
+                depth--;
+                if (depth === 0) {
+                    return code.slice(match.index + match[0].length,index);
+                }
+            }
+        }
+
+        return "";
+    }
+
+    function validateCode() {
+        if (!window.getCode || !window.setRequirement) {
+            return;
+        }
+
+        const code = getCode();
+        const body = extractIsTippingBody(code);
+        const checks = [
+            /\bIMU\s+imu\s*;/.test(code),
+            /getRobotYawPitchRollAngles\s*\(\s*\)/.test(body),
+            /getPitch\s*\(\s*AngleUnit\.DEGREES\s*\)/.test(body),
+            /getRoll\s*\(\s*AngleUnit\.DEGREES\s*\)/.test(body),
+            /Math\.abs\s*\(\s*pitch\s*\)/.test(body),
+            /Math\.abs\s*\(\s*roll\s*\)/.test(body),
+            /\|\|/.test(body) && !/&&/.test(body),
+            />\s*15\.0/.test(body),
+            /boolean\s+isTipping\s*\(\s*\)/.test(code) && /return\s+/.test(body)
+        ];
+
+        checks.forEach((passed,index) => setRequirement(index,passed));
+    }
+
+    function updateValues(p, r, y) {
+
+        pitch = p;
+        roll = r;
+        yaw = y;
+
+        updateUI();
+
+        if (
+            typeof updateTippingVisual === "function"
+        ) {
+            updateTippingVisual(
+                pitch,
+                roll,
+                yaw
+            );
+        }
+    }
+
+    const pitchSlider = document.getElementById("pitchSlider");
+    const rollSlider = document.getElementById("rollSlider");
+    const yawSlider = document.getElementById("yawSlider");
+
+    if (pitchSlider) {
+        pitchSlider.addEventListener("input", e => {
+            updateValues(
+                parseFloat(e.target.value),
+                roll,
+                yaw
+            );
+        });
+    }
+
+    if (rollSlider) {
+        rollSlider.addEventListener("input", e => {
+            updateValues(
+                pitch,
+                parseFloat(e.target.value),
+                yaw
+            );
+        });
+    }
+
+    if (yawSlider) {
+        yawSlider.addEventListener("input", e => {
+            updateValues(
+                pitch,
+                roll,
+                parseFloat(e.target.value)
+            );
+        });
+    }
+
+    const presetPitch = document.getElementById("presetPitch");
+    const presetRoll = document.getElementById("presetRoll");
+    const presetSafe = document.getElementById("presetSafe");
+    const presetDanger = document.getElementById("presetDanger");
+
+    if (presetPitch) {
+        presetPitch.onclick = () => {
+            syncPreset(20, 0, 0);
+        };
+    }
+
+    if (presetRoll) {
+        presetRoll.onclick = () => {
+            syncPreset(0, -20, 0);
+        };
+    }
+
+    if (presetSafe) {
+        presetSafe.onclick = () => {
+            syncPreset(10, 10, 0);
+        };
+    }
+
+    if (presetDanger) {
+        presetDanger.onclick = () => {
+            syncPreset(16, 16, 0);
+        };
+    }
+
+    function syncPreset(p, r, y) {
+
+        if (pitchSlider) pitchSlider.value = p;
+        if (rollSlider) rollSlider.value = r;
+        if (yawSlider) yawSlider.value = y;
+
+        updateValues(p, r, y);
+    }
+
+    window.onRun = () => {
+        window.getIMUAngles = () => ({
+            pitch,
+            roll,
+            yaw
+        });
+        updateUI();
+
+        installTippingIMUSdkShims();
+        syncStudentIMU();
+
+        const code = window.getCode ? window.getCode() : starterCode;
+        window.transpileAndRun(
+            code,
+            null,
+            function(loopFn) {
+                window._simStartLoop(function() {
+                    syncStudentIMU();
+                    loopFn();
+                });
+            }
+        );
+    };
+
+    window.onStop = () => {};
+
+    window.onReset = () => {
+        syncPreset(0, 0, 0);
+    };
+
+    if (
+        typeof hardwareMap !== "undefined" &&
+        typeof hardwareMap.onIMUAngles === "function"
+    ) {
+        hardwareMap.onIMUAngles((p, r, y) => {
+            updateValues(p, r, y);
+        });
+    }
+
+    if (
+        typeof hardwareMap !== "undefined" &&
+        typeof hardwareMap.onIMU === "function"
+    ) {
+        hardwareMap.onIMU((name,data) => {
+            if (name === "imu" && data) {
+                updateValues(
+                    Number(data.pitch ?? pitch),
+                    Number(data.roll ?? roll),
+                    Number(data.heading ?? yaw)
+                );
+            }
+        });
+    }
+
+    initThree();
+
+    if (typeof addAnimationCallback === "function" && animationId == null) {
+        animationId = addAnimationCallback(animate);
+    }
+
+    updateUI();
+};
+</script>
+
+</body>
+</html>

@@ -1,0 +1,119 @@
+---
+id: assemblies-and-mates
+title: "Lesson 5.9: Assemblies, Mates, and Checking Range of Motion"
+sidebar_label: "5.9 · Assemblies"
+sidebar_position: 9
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 5.9: Assemblies, Mates, and Checking Range of Motion
+
+---
+
+## Technical Context
+
+An assembly checks how individually modeled parts fit and move together. Drive the mechanism through its full range to find interference, missing clearance, and incorrect constraints before fabrication.
+
+---
+
+## Mates Define How Parts Move
+
+A mate constrains one part relative to another. The mate type determines what motion is left.
+
+| Mate | Degrees of freedom left | Use for |
+| --- | --- | --- |
+| Fastened | None | Brackets bolted to frame, anything rigid |
+| Revolute | One rotation | Arm pivots, wheel axles, any hinge |
+| Slider | One translation | Linear slide stages, sliding guides |
+| Cylindrical | Rotation plus translation | A shaft that spins and can slide axially |
+| Planar | Two translations plus rotation | Parts resting on a surface |
+| Ball | Three rotations | Rarely needed in FTC |
+
+Choose the mate that matches the real joint. A pivot modeled as fastened will not reveal an interference at 90 degrees of travel, because it never gets there.
+
+:::tip Model the joint you built, not the joint you wish you built
+If a shaft is free to slide axially because nothing constrains it, model it as cylindrical rather than revolute. The model will then show you the wheel moving out of plane, which is exactly the problem you want to find in CAD instead of on the field.
+:::
+
+---
+
+## Driving Through the Full Range
+
+Once mates are in place, drag the mechanism through its complete travel and look for three things.
+
+**Interference at the extremes.** Retracted and fully extended, arm at maximum and minimum angle. These are where collisions live.
+
+**Interference during travel, not just at the ends.** An arm can clear at 0 and at 110 degrees and hit the frame at 40. Step through the range, not just the endpoints.
+
+**Reach.** With the robot placed where it will legally be on the field, does the end effector arrive at the target position and orientation? Orientation matters: an end effector that reaches the right point at the wrong angle does not score.
+
+Most CAD tools have an interference detection command that checks the whole assembly at a given position. Run it at several positions rather than trusting a visual check, because small overlaps are hard to see.
+
+---
+
+## Checking the Starting Envelope
+
+Model a simple box at the starting size limit from the current game manual and place the robot inside it, with every mechanism in its stowed position.
+
+This is a ten minute exercise that has saved many teams a rebuild. Two details:
+
+- Include everything: bumpers, wire runs that bulge, the intake that does not quite retract, the battery strap.
+- Check every orientation the rules measure, not just the one that looks tight.
+
+:::warning Model the retracted state, not the pretty state
+CAD renders look best with the mechanism deployed, so that is the state teams leave the model in and the state they check. The envelope problem lives in the retracted state.
+:::
+
+---
+
+## Mass Properties and Center of Gravity
+
+Assign materials to parts and CAD reports total mass and center of gravity location. Both feed directly into earlier lessons.
+
+The mass number goes into the weight budget from Lesson 3.4. Compare it against the measured weight once parts are built, because the difference tells you how much your model is omitting, usually fasteners and wiring.
+
+The center of gravity location predicts tipping. A high center of gravity with an extended arm is the geometry that tips robots. Check it in the worst case position, which is the arm fully extended and loaded, not at rest.
+
+---
+
+## Keeping the Assembly Honest
+
+An assembly drifts out of date the moment someone changes something at the workbench without updating the model. A stale model is worse than no model, because people trust it.
+
+The practical discipline: when a part is modified physically, update the model the same session, or write the change on a list posted next to the robot so it is not lost. In Module 10 this becomes part of the design review.
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. A pivot joint should be modeled with a `__________` mate so the mechanism can be driven through its full travel.
+2. Interference must be checked throughout the range of motion, not only at the `__________`.
+3. The center of gravity should be evaluated in the worst case position, which for an arm robot means fully `__________` and loaded.
+
+<details>
+<summary>Show answers</summary>
+
+1. **revolute**
+2. **extremes** (endpoints)
+3. **extended**
+
+</details>
+
+---
+
+:::tip Practice
+Graded exercises with hard numbers and self-checks are in [CAD Practice Exercises](/mechanical/cad-practice).
+:::
+
+---
+
+## Exercise
+
+Assemble one mechanism in CAD with correct mates, then step it through its full range in at least five positions, running interference detection at each. Record any collision you find and the angle at which it occurs.
+
+<MarkComplete
+  lessonId="module-05/assemblies-and-mates"
+  nextUnit="/mechanical/module-05/part-libraries"
+  nextUnitName="Lesson 5.10: Using Vendor Part Libraries and Managing Versions"
+/>

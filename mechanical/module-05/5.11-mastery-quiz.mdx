@@ -1,0 +1,143 @@
+---
+id: mastery-quiz
+title: "Module 5 Mastery Quiz: CAD With Onshape"
+sidebar_label: "Module 5 · Mastery Quiz"
+sidebar_position: 11
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import ScoredQuiz from '@site/src/components/mechanical/ScoredQuiz';
+import {MASTERY_QUESTIONS} from '@site/src/telemark/mechanicalQuizzes';
+
+# Module 5 Mastery Quiz: CAD With Onshape
+
+---
+
+## I. Conceptual Questions
+
+**1. What CAD Cannot Tell You:** A team models an intake, confirms it fits and clears the frame through its full travel, and concludes the design is validated. What have they actually validated, and what remains unknown?
+
+<details>
+<summary>Show answer</summary>
+
+They have validated geometry: the parts do not interfere, the mechanism moves through its range, and it packages within the robot. That is genuinely valuable and it is not the same as validating function.
+
+What remains unknown is everything physical: whether the rollers actually grip the game element, how the element behaves when it arrives off center or tumbling, how much compliance the element needs, whether friction is enough, and what the real acquisition time is. Those questions require a prototype. CAD checks geometry, prototypes check behavior, and a design needs both.
+
+</details>
+
+---
+
+**2. Under-Defined Sketches:** Explain the practical consequence of leaving a sketch under-defined, given that the part looks correct either way.
+
+<details>
+<summary>Show answer</summary>
+
+The part is correct at the moment it is drawn. The problem appears at the first edit. Under-defined geometry has freedom to move, so when a dimension elsewhere changes, that geometry shifts in a way the modeler did not specify and cannot predict. Features built on the sketch then fail or move.
+
+The cost is paid later and repeatedly, usually by whoever inherits the model. Fully defining a sketch takes a few extra constraints at the time of creation and keeps the model editable for the rest of the season.
+
+</details>
+
+---
+
+**3. Constraints Versus Dimensions:** Two holes must remain symmetric about the center of a plate. Compare using two dimensions from the left edge against using a symmetry constraint.
+
+<details>
+<summary>Show answer</summary>
+
+Two dimensions from the left edge place the holes correctly for the current plate width, and they encode no relationship to the center. When the plate width changes, both holes stay where they were relative to the left edge, so the pattern is no longer symmetric, and nothing in the model flags this.
+
+A symmetry constraint encodes the actual design intent. When the width changes, both holes move to maintain symmetry automatically. The constraint captures why the holes are where they are, whereas the dimensions capture only where they happened to be.
+
+</details>
+
+---
+
+**4. Mate Selection:** A team models an arm pivot with a fastened mate because it is simpler. What specific failure does this cause?
+
+<details>
+<summary>Show answer</summary>
+
+A fastened mate removes all relative motion, so the arm is frozen at whatever angle it was modeled in. The assembly can never be driven through its range, which means interference detection only ever tests one position.
+
+Collisions frequently occur in the middle of a travel range rather than at the endpoints. An arm that clears at 0 degrees and at 110 degrees can strike the frame at 40. Using a revolute mate makes the arm drivable, so those positions can be checked, which is the primary reason to assemble in CAD in the first place.
+
+</details>
+
+---
+
+**5. Version Referencing:** Why should an assembly reference a published version of an external document rather than its latest state?
+
+<details>
+<summary>Show answer</summary>
+
+Referencing the latest state means anyone editing that document silently changes your assembly. Your model can break, or worse, quietly become wrong, with no corresponding entry in your own edit history, so the cause is very hard to find.
+
+Referencing a specific published version makes the dependency explicit and stable. Updates become a deliberate act: you choose to move to a newer version, and if something breaks you know exactly what changed.
+
+</details>
+
+---
+
+## II. Review the CAD Practice
+
+A team describes its CAD workflow. **Identify the 2 errors and state the fix.**
+
+```text
+Each student models their own subsystem in a separate document
+and sends screenshots to the group chat for review. Motors and
+wheels are modeled from the dimensions on the vendor web page,
+since downloading models seemed slower.
+
+Sketches are dimensioned enough to look right and left
+otherwise unconstrained, because fully constraining everything
+took too long.
+
+At week 7 the subsystems were combined for the first time. The
+slide tower and the intake occupy overlapping space, and the
+robot is 1.5 in over the starting size limit.
+```
+
+<details>
+<summary>Show answers</summary>
+
+**Error 1 - Subsystems were never assembled together until week 7.**
+Separate documents reviewed by screenshot cannot reveal interference between subsystems, because nothing ever occupied the same coordinate space. The overlapping slide tower and intake, and the oversize envelope, are exactly the class of problem an assembly exists to catch, and both were discoverable in week 2.
+
+```text
+Fix: maintain one master assembly from the first week, with
+each subsystem inserted as it develops, even in rough form.
+Model a box at the starting size limit and keep the robot
+inside it with all mechanisms stowed. Run interference
+detection on the full assembly regularly, not once.
+```
+
+**Error 2 - Vendor parts were hand-modeled and sketches were left under-defined.**
+Hand-modeling purchased parts from web page dimensions costs hours and produces parts that are approximately right, which is the worst outcome for a fit check. Under-defined sketches make every later change unpredictable, which compounds as the model grows.
+
+```text
+Fix: insert published vendor models by reference for every
+purchased component. Fully define every sketch before exiting
+it, and use constraints rather than dimensions where they
+express design intent.
+```
+
+</details>
+
+---
+
+## III. Scored Check
+
+The questions above are for working something through. These are graded, so you can find out whether it stuck. Everything is scored in your browser.
+
+<ScoredQuiz
+  lessonId="module-05/mastery-quiz"
+  questions={MASTERY_QUESTIONS['module-05']}
+/>
+
+<MarkComplete
+  lessonId="module-05/mastery-quiz"
+  nextUnit="/mechanical/module-06"
+  nextUnitName="Module 6: Power Transmission"
+/>

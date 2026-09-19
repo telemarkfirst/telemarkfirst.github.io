@@ -1,0 +1,32 @@
+---
+id: repeat-known-count
+title: "Lesson 3.1: Repeat a Known Number of Times"
+sidebar_label: "3.1 · Repeat a Known Count"
+sidebar_position: 1
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 3.1: Repeat a Known Number of Times
+
+A **loop** repeats a group of commands. A fixed-count loop is useful when the number of repeats is known before the loop begins.
+
+If `move forward by 1` appears inside `repeat 4 times`, the move runs four times. The loop body is the group of blocks held inside the repeat block. Commands connected after the loop run once after all repeats finish.
+
+Count the repeated commands, not the loop block itself. A loop with two commands in its body and four repeats performs those body commands eight times in total.
+
+## Guided practice
+
+Use one repeat block to move forward by 1 four times. Predict the final position and move count. Run, then use Step to count each movement.
+
+Add a print block inside the loop and another after it. The inside message should appear four times. The outside message should appear once.
+
+Change the repeat count to zero. A fixed-count loop with zero repeats skips its body. This is a valid boundary case and should not produce an error.
+
+<BlockPractice lessonId="blocks-unit-03/repeat-known-count" />
+
+<MarkComplete
+  lessonId="blocks-unit-03/repeat-known-count"
+  nextUnit="/blocks/blocks-unit-03/repeat-while-true"
+  nextUnitName="Lesson 3.2: Repeat While a Rule Is True"
+/>

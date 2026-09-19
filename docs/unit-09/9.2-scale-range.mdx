@@ -1,0 +1,104 @@
+---
+id: scale-range
+title: "Lesson 9.2: Limiting Servo Travel Safely with scaleRange()"
+sidebar_label: "9.2 · scaleRange()"
+sidebar_position: 2
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit9Simulator from '@site/src/components/Unit9Simulator';
+
+# Lesson 9.2: Limiting Servo Travel Safely with scaleRange()
+
+---
+
+## Technical Context
+
+Most robot mechanisms have physical stops that prevent a servo from completing its full 180-degree rotation. Using `scaleRange()` prevents the software from attempting to drive the servo through a physical barrier, which protects the internal motor and mounting brackets from the high-current stall that occurs when a servo is forced against a hard stop.
+
+---
+
+## Why scaleRange() Protects Your Mechanism
+
+The `scaleRange(double min, double max)` method redefines the logical `0.0` to `1.0` window to map onto a specific physical subsection of the servo's total travel. Once called in `init()`, any subsequent `setPosition()` call operates **within the new bounds**:
+
+- `setPosition(0.0)` moves to the physical angle corresponding to `min`
+- `setPosition(1.0)` moves to the physical angle corresponding to `max`
+- `setPosition(0.5)` moves to the midpoint between `min` and `max`
+
+This is a clean way to document hardware constraints in code: rather than remembering "don't go below 0.3" everywhere in your OpMode, you call `scaleRange(0.3, 0.9)` once in `init()` and the SDK enforces it automatically for the lifetime of that OpMode run.
+
+Both parameters must be between `0.0` and `1.0`, and `min` must be less than `max`.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Servo;
+
+@TeleOp(name="ScaleRange_Demo")
+public class ScaleRangeDemo extends OpMode {
+
+    private Servo delivery;
+
+    @Override
+    public void init() {
+        delivery = hardwareMap.get(Servo.class, "delivery");
+
+        // Limit range to the middle 50% of travel to avoid mechanical binding
+        // setPosition(0.0) will now move to 0.25, setPosition(1.0) to 0.75
+        delivery.scaleRange(0.25, 0.75);
+
+        delivery.setPosition(0.0); // Safe start at the constrained minimum
+        telemetry.addData("Delivery", "Range constrained: 0.25 to 0.75");
+    }
+
+    @Override
+    public void loop() {
+        if (gamepad1.a) {
+            delivery.setPosition(1.0); // Moves to physical 0.75
+        } else if (gamepad1.b) {
+            delivery.setPosition(0.0); // Moves to physical 0.25
+        }
+        telemetry.addData("Position Command", delivery.getPosition());
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The `scaleRange()` method takes two `__________` parameters to define the physical window.
+2. After calling `scaleRange(0.5, 1.0)`, a `setPosition(0.0)` command will actually move the servo to its physical `__________` position.
+3. To reset the servo to its factory full range, you would call `scaleRange(__________, 1.0)`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`double`**
+2. **0.5** (the minimum of the defined range)
+3. **`0.0`**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Use the simulator below to practice constraining a servo with `scaleRange(0.3, 0.9)` before commanding the mechanism against its physical limits.
+
+<SimulatorRunGuide />
+
+<Unit9Simulator lesson="scale-range" />
+
+<MarkComplete
+  lessonId="unit-09/scale-range"
+  nextUnit="/docs/unit-09/servo-direction"
+  nextUnitName="Lesson 9.3: Configuring Servo Logical Direction for Inverted Assemblies"
+/>

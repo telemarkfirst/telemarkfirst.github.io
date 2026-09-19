@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>Telemark Unit 11.5 Simulator</title>
+
+<script src="simulator_base.js"></script>
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+
+<style>
+html,body{
+    margin:0;
+    background:#081018;
+    color:white;
+    font-family:Inter,sans-serif;
+    overflow:hidden;
+}
+
+#root{
+    display:flex;
+    flex-direction:column;
+    height:100vh;
+}
+
+#viewer{
+    position:relative;
+    height:60vh;
+    background:#0b1118;
+}
+
+#hud{
+    flex:0 0 330px;
+    background:#0f172a;
+    overflow:auto;
+    padding:16px;
+    border-top:1px solid rgba(255,255,255,.08);
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:16px;
+}
+
+.card{
+    background:#111827;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;
+    padding:18px;
+}
+
+.label{
+    font-size:13px;
+    opacity:.7;
+    margin-bottom:8px;
+}
+
+.big{
+    font-size:34px;
+    font-weight:900;
+}
+
+.green{
+    color:#22c55e;
+}
+
+.red{
+    color:#ef4444;
+}
+
+.yellow{
+    color:#facc15;
+}
+
+.bar{
+    height:18px;
+    border-radius:999px;
+    background:#1e293b;
+    overflow:hidden;
+}
+
+.fill{
+    height:100%;
+    transition:.08s linear;
+}
+
+.logic{
+    margin-top:10px;
+    font-family:monospace;
+    font-size:14px;
+}
+
+.stateTable{
+    margin-top:16px;
+    border-collapse:collapse;
+    width:100%;
+    font-size:13px;
+}
+
+.stateTable td,
+.stateTable th{
+    border:1px solid rgba(255,255,255,.1);
+    padding:8px;
+    text-align:center;
+}
+
+.activeRow{
+    background:#14532d;
+}
+
+#hud button{
+    border:none;
+    background:#2563eb;
+    color:white;
+    border-radius:10px;
+    padding:10px 14px;
+    font-weight:700;
+    cursor:pointer;
+    margin-right:10px;
+}
+
+#warning{
+    position:absolute;
+    top:16px;
+    left:16px;
+    z-index:20;
+    padding:12px 16px;
+    border-radius:12px;
+    font-weight:800;
+    display:none;
+}
+
+#warning.show{
+    display:block;
+}
+
+#success{
+    position:absolute;
+    top:16px;
+    right:16px;
+    z-index:20;
+    background:#052e16;
+    border:1px solid #166534;
+    color:#86efac;
+    padding:12px 16px;
+    border-radius:12px;
+    display:none;
+    font-weight:800;
+}
+
+#success.show{
+    display:block;
+}
+</style>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+
+<body>
+
+<div id="root">
+
+    <div id="viewer">
+
+        <div id="warning"></div>
+
+        <div id="success">
+            Challenge Complete! Your smart intake system is working correctly.
+        </div>
+
+    </div>
+
+    <div id="hud">
+
+        <div class="grid">
+
+            <div class="card">
+
+                <div class="label">
+                    <i class="fa-solid fa-ruler"></i>
+                    DISTANCE SENSOR
+                </div>
+
+                <div id="distanceText"
+                     class="big green">
+                    45.0 cm
+                </div>
+
+                <div class="bar"
+                     style="margin-top:14px;">
+
+                    <div id="distanceFill"
+                         class="fill"
+                         style="background:#22c55e;width:40%;">
+                    </div>
+
+                </div>
+
+                <div class="logic"
+                     id="logic1"></div>
+
+                <div class="logic"
+                     id="logic2"></div>
+
+                <div class="logic"
+                     id="logic3"></div>
+
+            </div>
+
+            <div class="card">
+
+                <div class="label">
+                    <i class="fa-solid fa-hand-point-up"></i>
+                    STORAGE SENSOR
+                </div>
+
+                <div id="storageState"
+                     class="big green">
+                    AVAILABLE
+                </div>
+
+                <div style="margin-top:12px;">
+                    Storage:
+                    <span id="storageCount">0/3</span>
+                </div>
+
+            </div>
+
+            <div class="card">
+
+                <div class="label">
+                    <i class="fa-solid fa-microchip"></i>
+                    INTAKE MOTOR
+                </div>
+
+                <div id="intakeState"
+                     class="big red">
+                    STOPPED
+                </div>
+
+                <div class="bar"
+                     style="margin-top:14px;">
+
+                    <div id="motorFill"
+                         class="fill"
+                         style="background:#22c55e;width:0%;">
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="card">
+
+                <div class="label">
+                    STATE TABLE
+                </div>
+
+                <table class="stateTable">
+
+                    <tr>
+                        <th>distance &lt; 10</th>
+                        <th>limit pressed</th>
+                        <th>Expected</th>
+                    </tr>
+
+                    <tr id="row1">
+                        <td>false</td>
+                        <td>false</td>
+                        <td>STOPPED</td>
+                    </tr>
+
+                    <tr id="row2">
+                        <td>true</td>
+                        <td>false</td>
+                        <td>RUNNING</td>
+                    </tr>
+
+                    <tr id="row3">
+                        <td>false</td>
+                        <td>true</td>
+                        <td>STOPPED</td>
+                    </tr>
+
+                    <tr id="row4">
+                        <td>true</td>
+                        <td>true</td>
+                        <td>STOPPED</td>
+                    </tr>
+
+                </table>
+
+            </div>
+
+            <div class="card">
+
+                <div class="label">
+                    TEST CONTROLS
+                </div>
+
+                <button onclick="spawnSphere()">
+                    Spawn Element
+                </button>
+
+                <button onclick="clearStorage()">
+                    Clear Storage
+                </button>
+
+                <button onclick="toggleLimit()">
+                    Toggle Limit
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+(() => {
+
+"use strict";
+
+const starterCode = `@TeleOp(name="Smart_Intake")
+public class SmartIntake extends OpMode {
+
+    DcMotor    intake;
+    DistanceSensor range;
+    TouchSensor    limit;
+
+    @Override
+    public void init() {
+        intake = hardwareMap.get(DcMotor.class,        "intake");
+        range  = hardwareMap.get(DistanceSensor.class, "range");
+        limit  = hardwareMap.get(TouchSensor.class,    "limit");
+
+        telemetry.addData("Status", "Initialized");
+    }
+
+    @Override
+    public void loop() {
+        double distance = 999.0;
+        boolean storageFull = false;
+
+        // TODO: read the distance sensor and storage limit.
+        // TODO: run intake only when an element is close and storage is open.
+        intake.setPower(0.0);
+        telemetry.addData("Intake", "STOPPED");
+
+        telemetry.addData("Distance", distance);
+        telemetry.addData("Storage",  storageFull ? "FULL" : "Available");
+        telemetry.update();
+    }
+}`;
+
+const sim = {
+
+    running:false,
+
+    intakePower:0,
+
+    distance:45,
+
+    storage:0,
+
+    limitPressed:false,
+
+    validations:{
+        distance:false,
+        touch:false,
+        gate:false,
+        run:false,
+        stopFull:false,
+        stopEmpty:false,
+        telemetry:false,
+        motor:false
+    },
+
+    spheres:[]
+};
+
+let scene;
+let camera;
+let renderer;
+
+let robot;
+let intakeRoller;
+let storageGroup;
+let beam;
+let sceneRoot;
+let animationId = null;
+
+function clamp(v,min,max){
+    return Math.max(min,Math.min(max,v));
+}
+
+function createHud(){
+
+    const right =
+        document.getElementById("sim-right-panel");
+
+    if(!right || document.getElementById("hud")){
+        return;
+    }
+
+    const hud =
+        document.createElement("div");
+
+    hud.id = "hud";
+
+    hud.innerHTML = `
+        <div class="grid">
+            <div class="card">
+                <div class="label">
+                    <i class="fa-solid fa-ruler"></i>
+                    DISTANCE SENSOR
+                </div>
+
+                <div id="distanceText"
+                     class="big green">
+                    45.0 cm
+                </div>
+
+                <div class="bar"
+                     style="margin-top:14px;">
+                    <div id="distanceFill"
+                         class="fill"
+                         style="background:#22c55e;width:40%;">
+                    </div>
+                </div>
+
+                <div class="logic" id="logic1"></div>
+                <div class="logic" id="logic2"></div>
+                <div class="logic" id="logic3"></div>
+            </div>
+
+            <div class="card">
+                <div class="label">
+                    <i class="fa-solid fa-hand-point-up"></i>
+                    STORAGE SENSOR
+                </div>
+
+                <div id="storageState"
+                     class="big green">
+                    AVAILABLE
+                </div>
+
+                <div style="margin-top:12px;">
+                    Storage:
+                    <span id="storageCount">0/3</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="label">
+                    <i class="fa-solid fa-microchip"></i>
+                    INTAKE MOTOR
+                </div>
+
+                <div id="intakeState"
+                     class="big red">
+                    STOPPED
+                </div>
+
+                <div class="bar"
+                     style="margin-top:14px;">
+                    <div id="motorFill"
+                         class="fill"
+                         style="background:#22c55e;width:0%;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="label">STATE TABLE</div>
+
+                <table class="stateTable">
+                    <tr>
+                        <th>distance &lt; 10</th>
+                        <th>limit pressed</th>
+                        <th>Expected</th>
+                    </tr>
+                    <tr id="row1">
+                        <td>false</td>
+                        <td>false</td>
+                        <td>STOPPED</td>
+                    </tr>
+                    <tr id="row2">
+                        <td>true</td>
+                        <td>false</td>
+                        <td>RUNNING</td>
+                    </tr>
+                    <tr id="row3">
+                        <td>false</td>
+                        <td>true</td>
+                        <td>STOPPED</td>
+                    </tr>
+                    <tr id="row4">
+                        <td>true</td>
+                        <td>true</td>
+                        <td>STOPPED</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="card">
+                <div class="label">TEST CONTROLS</div>
+                <button onclick="spawnSphere()">Spawn Element</button>
+                <button onclick="clearStorage()">Clear Storage</button>
+                <button onclick="toggleLimit()">Toggle Limit</button>
+            </div>
+        </div>
+    `;
+
+    right.appendChild(hud);
+
+    const sceneContainer =
+        document.getElementById("sim-scene-container");
+
+    if(sceneContainer && !document.getElementById("warning")){
+        const warning =
+            document.createElement("div");
+
+        warning.id = "warning";
+        sceneContainer.appendChild(warning);
+    }
+
+    if(sceneContainer && !document.getElementById("success")){
+        const success =
+            document.createElement("div");
+
+        success.id = "success";
+        success.textContent =
+            "Challenge Complete! Your smart intake system is working correctly.";
+        sceneContainer.appendChild(success);
+    }
+}
+
+function setupThree(){
+
+    if(!window.THREE || !window.scene){
+        console.error("THREE missing");
+        return;
+    }
+
+    const THREE = window.THREE;
+
+    scene =
+        window.scene;
+
+    renderer =
+        window.renderer;
+
+    const oldRoot =
+        scene.getObjectByName("smart-intake-root");
+
+    if(oldRoot){
+        scene.remove(oldRoot);
+    }
+
+    sceneRoot =
+        new THREE.Group();
+
+    sceneRoot.name =
+        "smart-intake-root";
+
+    sceneRoot.scale.set(.1,.1,.1);
+
+    scene.background =
+        new THREE.Color(0x010101);
+
+    const sceneContainer =
+        document.getElementById("sim-scene-container");
+
+    if(sceneContainer){
+        sceneContainer.style.background = "#010101";
+    }
+
+    if(renderer){
+        renderer.setClearColor(0x010101,1);
+    }
+
+    if(window.setFieldVisible){
+        window.setFieldVisible(false);
+    }
+
+    camera =
+        window.camera;
+
+    if(window.setCameraOrbit){
+        window.setCameraOrbit({
+            theta:.35,
+            phi:.9,
+            radius:10,
+            target:{x:1,y:.1,z:0}
+        });
+    }
+
+    const hemi =
+        new THREE.HemisphereLight(
+            0xf8fafc,
+            0x020202,
+            1.1
+        );
+
+    sceneRoot.add(hemi);
+
+    const dir =
+        new THREE.DirectionalLight(
+            0xffffff,
+            2.35
+        );
+
+    dir.position.set(-28,42,24);
+
+    sceneRoot.add(dir);
+
+    const rim =
+        new THREE.PointLight(
+            0x38bdf8,
+            1.35,
+            95
+        );
+
+    rim.position.set(-28,14,-26);
+
+    sceneRoot.add(rim);
+
+    const intakeGlow =
+        new THREE.PointLight(
+            0xff8a1f,
+            .95,
+            75
+        );
+
+    intakeGlow.position.set(14,8,8);
+
+    sceneRoot.add(intakeGlow);
+
+    const floor =
+        new THREE.Mesh(
+            new THREE.PlaneGeometry(120,120),
+            new THREE.MeshStandardMaterial({
+                color:0x040404,
+                metalness:.42,
+                roughness:.34
+            })
+        );
+
+    floor.rotation.x =
+        -Math.PI/2;
+
+    sceneRoot.add(floor);
+
+    const intakeLane =
+        new THREE.Mesh(
+            new THREE.PlaneGeometry(70,16),
+            new THREE.MeshStandardMaterial({
+                color:0x0b0f14,
+                metalness:.35,
+                roughness:.38,
+                emissive:0x010409
+            })
+        );
+
+    intakeLane.rotation.x =
+        -Math.PI/2;
+
+    intakeLane.position.set(
+        22,
+        .03,
+        0
+    );
+
+    sceneRoot.add(intakeLane);
+
+    buildRobot();
+
+    scene.add(sceneRoot);
+}
+
+function buildRobot(){
+
+    const THREE = window.THREE;
+
+    robot =
+        new THREE.Group();
+
+    const body =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(12,4,10),
+            new THREE.MeshStandardMaterial({
+                color:0x090909,
+                metalness:.86,
+                roughness:.22,
+                emissive:0x020202
+            })
+        );
+
+    body.position.y = 2;
+
+    robot.add(body);
+
+    intakeRoller =
+        new THREE.Group();
+
+    const rollerBar =
+        new THREE.Mesh(
+            new THREE.CylinderGeometry(2,2,10,32),
+            new THREE.MeshStandardMaterial({
+                color:0x0b111d,
+                metalness:.78,
+                roughness:.18,
+                emissive:0x020617
+            })
+        );
+
+    rollerBar.rotation.x =
+        Math.PI/2;
+
+    intakeRoller.add(rollerBar);
+
+    for(let i=0;i<6;i++){
+
+        const angle =
+            i * Math.PI / 3;
+
+        const spoke =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(.28,.28,10.8),
+                new THREE.MeshStandardMaterial({
+                    color:i % 2 ? 0x38bdf8 : 0xff8a1f,
+                    metalness:.35,
+                    roughness:.2,
+                    emissive:i % 2 ? 0x082f49 : 0x431407
+                })
+            );
+
+        spoke.position.set(
+            Math.cos(angle) * 1.65,
+            Math.sin(angle) * 1.65,
+            0
+        );
+
+        intakeRoller.add(spoke);
+    }
+
+    intakeRoller.position.set(
+        7,
+        2,
+        0
+    );
+
+    robot.add(intakeRoller);
+
+    beam =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(20,.15,.15),
+            new THREE.MeshBasicMaterial({
+                color:0x22c55e
+            })
+        );
+
+    beam.position.set(
+        16,
+        2,
+        0
+    );
+
+    robot.add(beam);
+
+    storageGroup =
+        new THREE.Group();
+
+    storageGroup.position.set(
+        -3,
+        3,
+        0
+    );
+
+    robot.add(storageGroup);
+
+    sceneRoot.add(robot);
+
+    spawnSphere();
+    spawnSphere();
+}
+
+function spawnSphere(){
+
+    if(!scene)
+        return;
+
+    const THREE = window.THREE;
+
+    const sphere =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                1.2,
+                24,
+                24
+            ),
+            new THREE.MeshStandardMaterial({
+                color:0x7c3aed,
+                emissive:0x2e1065,
+                metalness:.38,
+                roughness:.28
+            })
+        );
+
+    sphere.position.set(
+        12 + Math.random() * 28,
+        1.2,
+            (Math.random() - .5) * 12
+        );
+
+    sphere.userData = {
+        vx: -(.045 + Math.random() * .055),
+        vz: -(sphere.position.z * .018)
+    };
+
+    sim.spheres.push(sphere);
+
+    sceneRoot.add(sphere);
+}
+
+window.spawnSphere =
+    spawnSphere;
+
+function clearStorage(){
+
+    sim.storage = 0;
+    sim.limitPressed = false;
+
+    rebuildStorage();
+    updateUI();
+}
+
+window.clearStorage =
+    clearStorage;
+
+function toggleLimit(){
+
+    sim.limitPressed =
+        !sim.limitPressed;
+
+    updateUI();
+}
+
+window.toggleLimit =
+    toggleLimit;
+
+function rebuildStorage(){
+
+    if(!storageGroup){
+        return;
+    }
+
+    while(storageGroup.children.length){
+
+        storageGroup.remove(
+            storageGroup.children[0]
+        );
+    }
+
+    const THREE = window.THREE;
+
+    for(let i=0;i<sim.storage;i++){
+
+        const s =
+            new THREE.Mesh(
+                new THREE.SphereGeometry(
+                    .9,
+                    16,
+                    16
+                ),
+                new THREE.MeshStandardMaterial({
+                    color:0x7c3aed,
+                    emissive:0x2e1065,
+                    metalness:.35,
+                    roughness:.26
+                })
+            );
+
+        s.position.set(
+            (i % 2) * 2,
+            Math.floor(i / 2) * 2,
+            0
+        );
+
+        storageGroup.add(s);
+    }
+
+    updateUI();
+}
+
+function animate(){
+
+    requestAnimationFrame(
+        animate
+    );
+
+    updateSimulation();
+
+    renderer.render(
+        scene,
+        camera
+    );
+}
+
+function updateSimulation(){
+
+    if(!sim.running)
+        return;
+
+    if(intakeRoller){
+
+        intakeRoller.rotation.z +=
+            sim.intakePower * .2;
+    }
+
+    let nearest = null;
+    let nearestDistance = 999;
+
+    sim.spheres.forEach(s => {
+
+        if(s.userData){
+
+            s.position.x +=
+                s.userData.vx || 0;
+
+            s.position.z +=
+                s.userData.vz || 0;
+
+            if(Math.abs(s.position.z) < .08){
+                s.position.z = 0;
+                s.userData.vz = 0;
+            }
+
+            if(
+                sim.intakePower <= 0 &&
+                s.position.x < 8.8
+            ){
+                s.position.x = 8.8;
+                s.userData.vx = 0;
+            }
+        }
+
+        const d =
+            s.position.x - 7;
+
+        if(d < nearestDistance){
+
+            nearestDistance = d;
+            nearest = s;
+        }
+    });
+
+    if(nearest){
+
+        sim.distance =
+            clamp(
+                nearestDistance,
+                2,
+                255
+            );
+
+    }else{
+
+        sim.distance =
+            Number.MAX_VALUE;
+    }
+
+    if(
+        nearest &&
+        sim.intakePower > 0
+    ){
+
+        nearest.position.x -= .35;
+
+        if(nearest.position.x < 8){
+
+            sceneRoot.remove(nearest);
+
+            sim.spheres =
+                sim.spheres.filter(
+                    s => s !== nearest
+                );
+
+            sim.storage++;
+
+            if(sim.storage >= 3){
+
+                sim.storage = 3;
+                sim.limitPressed = true;
+            }
+
+            rebuildStorage();
+        }
+    }
+
+    updateBeam();
+    updateUI();
+}
+
+function updateBeam(){
+
+    if(!beam)
+        return;
+
+    const d =
+        sim.distance === Number.MAX_VALUE
+            ? 45
+            : sim.distance;
+
+    beam.scale.x =
+        d / 20;
+
+    beam.position.x =
+        8 + d / 2;
+
+    if(d < 10){
+
+        beam.material.color.set(
+            0xef4444
+        );
+
+    }else if(d < 20){
+
+        beam.material.color.set(
+            0xfacc15
+        );
+
+    }else{
+
+        beam.material.color.set(
+            0x22c55e
+        );
+    }
+}
+
+function updateUI(){
+
+    const distanceEl =
+        document.getElementById("distanceText");
+
+    const distanceFill =
+        document.getElementById("distanceFill");
+
+    const storageState =
+        document.getElementById("storageState");
+
+    const storageCount =
+        document.getElementById("storageCount");
+
+    const intakeState =
+        document.getElementById("intakeState");
+
+    const motorFill =
+        document.getElementById("motorFill");
+
+    const logic1 =
+        document.getElementById("logic1");
+
+    const logic2 =
+        document.getElementById("logic2");
+
+    const logic3 =
+        document.getElementById("logic3");
+
+    const rows =
+        ["row1","row2","row3","row4"]
+            .map(id => document.getElementById(id));
+
+    if(
+        !distanceEl ||
+        !distanceFill ||
+        !storageState ||
+        !storageCount ||
+        !intakeState ||
+        !motorFill ||
+        !logic1 ||
+        !logic2 ||
+        !logic3 ||
+        rows.some(row => !row)
+    ){
+        return;
+    }
+
+    const distanceValid =
+        sim.distance !== Number.MAX_VALUE;
+
+    const distanceText =
+        distanceValid
+            ? sim.distance.toFixed(1) + " cm"
+            : "NO TARGET";
+
+    distanceEl.textContent =
+        distanceText;
+
+    distanceEl.className =
+        !distanceValid
+            ? "big yellow"
+            : sim.distance < 10
+                ? "big red"
+                : "big green";
+
+    distanceFill.style.width =
+        distanceValid
+            ? `${clamp(
+                sim.distance,
+                0,
+                50
+            ) * 2}%`
+            : "0%";
+
+    storageState.textContent =
+        sim.limitPressed
+            ? "FULL"
+            : "AVAILABLE";
+
+    storageState.className =
+        sim.limitPressed
+            ? "big red"
+            : "big green";
+
+    storageCount.textContent =
+        sim.storage >= 3
+            ? "3/3 FULL"
+            : `${sim.storage}/3`;
+
+    intakeState.textContent =
+        sim.intakePower > 0
+            ? "RUNNING"
+            : "STOPPED";
+
+    intakeState.className =
+        sim.intakePower > 0
+            ? "big green"
+            : "big red";
+
+    motorFill.style.width =
+        `${sim.intakePower * 100}%`;
+
+    const c1 =
+        sim.distance < 10;
+
+    const c2 =
+        !sim.limitPressed;
+
+    const c3 =
+        c1 && c2;
+
+    logic1.textContent =
+        `distance < 10.0 -> ${c1}`;
+
+    logic2.textContent =
+        `!limit.isPressed() -> ${c2}`;
+
+    logic3.textContent =
+        `distance < 10.0 AND !limit.isPressed() -> ${c3}`;
+
+    rows
+        .forEach(row => {
+            row.classList.remove("activeRow");
+        });
+
+    let active = "row1";
+
+    if(c1 && !sim.limitPressed)
+        active = "row2";
+
+    else if(!c1 && sim.limitPressed)
+        active = "row3";
+
+    else if(c1 && sim.limitPressed)
+        active = "row4";
+
+    document.getElementById(active)
+        .classList.add("activeRow");
+
+    const success =
+        Object.values(
+            sim.validations
+        ).every(Boolean);
+
+    const successEl =
+        document.getElementById("success");
+
+    if(successEl){
+        successEl.classList.toggle(
+            "show",
+            success
+        );
+    }
+}
+
+function updateRequirementStates(){
+    if(!window.setRequirement) return;
+
+    [
+        sim.validations.distance,
+        sim.validations.touch,
+        sim.validations.gate,
+        sim.validations.run,
+        sim.validations.stopFull,
+        sim.validations.stopEmpty,
+        sim.validations.telemetry,
+        sim.validations.motor
+    ].forEach(function(passed,index){
+        window.setRequirement(index,passed);
+    });
+}
+
+function installMocks(){
+    let noiseStep = 0;
+    const noisePattern = [-1.2, 0.8, -0.4, 1.1, -0.7, 0.5];
+
+    window.getDistance =
+        () => {
+            if(
+                window.isFaultActive &&
+                isFaultActive("threshold-noise")
+            ){
+                const noise =
+                    noisePattern[
+                        noiseStep %
+                        noisePattern.length
+                    ];
+
+                noiseStep++;
+
+                return Math.max(
+                    0,
+                    sim.distance + noise
+                );
+            }
+
+            return sim.distance;
+        };
+
+    window.isTouchPressed =
+        () => sim.limitPressed;
+
+    window.setMotorPower =
+        (_,value) => {
+
+            sim.intakePower = value;
+        };
+}
+
+function transpile(code){
+
+    return code
+
+        .replace(
+            /\b(double|int|boolean|String|float|long|byte|short|char)\s+(?=[A-Za-z_$])/g,
+            "let "
+        )
+
+        .replace(
+            /\b(DcMotor|DcMotorEx|DistanceSensor|TouchSensor)\s+(?=[A-Za-z_$])/g,
+            "let "
+        )
+
+        .replace(
+            /\bhardwareMap\s*\.\s*get\s*\(\s*(\w+)\.class\s*,/g,
+            'hardwareMap.get("$1",'
+        )
+
+        .replace(
+            /\brange\s*\.\s*getDistance\s*\(\s*DistanceUnit\s*\.\s*CM\s*\)/g,
+            'getDistance("range")'
+        )
+
+        .replace(
+            /\blimit\s*\.\s*isPressed\s*\(\s*\)/g,
+            'isTouchPressed("limit")'
+        )
+
+        .replace(
+            /\bintake\s*\.\s*setPower\s*\(/g,
+            'setMotorPower("intake",'
+        )
+
+        .replace(
+            /\btelemetry\s*\.\s*addData\s*\(/g,
+            "addTelemetry("
+        )
+
+        .replace(
+            /\btelemetry\s*\.\s*update\s*\(\s*\)/g,
+            "updateTelemetry()"
+        )
+
+        .replace(
+            /\btelemetry\s*\.\s*clear\s*\(\s*\)/g,
+            "clearTelemetry()"
+        );
+}
+
+function extractLoop(code){
+
+    const match =
+        /(?:public\s+|private\s+|protected\s+)?void\s+loop\s*\([^)]*\)\s*\{/.exec(code);
+
+    if(!match)
+        return "";
+
+    const start =
+        match.index +
+        match[0].length -
+        1;
+
+    let depth = 1;
+
+    let i = start + 1;
+
+    while(
+        i < code.length &&
+        depth > 0
+    ){
+
+        if(code[i] === "{")
+            depth++;
+
+        if(code[i] === "}")
+            depth--;
+
+        i++;
+    }
+
+    return code.slice(
+        start + 1,
+        i - 1
+    );
+}
+
+window.onSimulatorReady =
+function(){
+
+    setCode(starterCode);
+
+    setChallenge({
+        title: "Smart Intake with Distance Sensor and Touch Sensor Gate",
+        scenario: "Run the intake only when a game element is close AND storage is not full.",
+        successMessage: "The intake responds safely to both sensors.",
+        faultModes: [
+            {
+                id: "threshold-noise",
+                label: "Noisy distance threshold",
+                description: "A repeatable measurement pattern moves the reading above and below the true distance, exposing chatter near 10 cm."
+            }
+        ],
+        requirements: [
+            "Read distance sensor",
+            "Read touch sensor",
+            "Single gate if/else",
+            "Run only within 10cm",
+            "Stop when storage full",
+            "Stop when no element",
+            "Use telemetry",
+            "Control intake motor"
+        ]
+    });
+
+    setHeader(
+        "Telemark Unit 11.5 Simulator",
+        "Smart Intake with Distance Sensor and Touch Sensor Gate"
+    );
+
+    setBadges([
+        {
+            iconClass:"fa-solid fa-ruler",
+            label:"DistanceSensor",
+            active:true
+        },
+        {
+            iconClass:"fa-solid fa-hand-point-up",
+            label:"TouchSensor",
+            active:true
+        },
+        {
+            iconClass:"fa-solid fa-microchip",
+            label:"DcMotor",
+            active:true
+        },
+        {
+            iconClass:"fa-solid fa-display",
+            label:"Telemetry",
+            active:true
+        }
+    ]);
+
+    setActiveInputs([]);
+
+    if(window.hardwareMap?.registerMotor){
+        hardwareMap.registerMotor("intake");
+    }
+
+    if(window.hardwareMap?.registerTouchSensor){
+        hardwareMap.registerTouchSensor("limit");
+    }
+
+    createHud();
+    setupThree();
+    updateUI();
+
+    if(animationId === null && window.addAnimationCallback){
+        animationId =
+            window.addAnimationCallback(updateSimulation);
+    }
+};
+
+let executionGeneration = 0;
+let preparedLoopRunner = null;
+
+window.onInit = function(){
+
+    const generation = ++executionGeneration;
+    sim.running = false;
+    preparedLoopRunner = null;
+
+    installMocks();
+
+    if(window.clearTelemetry){
+        clearTelemetry();
+    }
+
+    const editor =
+        document.getElementById(
+            "sim-code-editor"
+        );
+
+    const source =
+        editor?.value ||
+        starterCode;
+
+    const js =
+        transpile(source);
+
+    const loopSource = extractLoop(source);
+    const loopJs = transpile(loopSource);
+    const powerArguments = Array.from(
+        loopJs.matchAll(/setMotorPower\(\s*"intake"\s*,\s*([^)]+)\)/g),
+        match => match[1].trim()
+    );
+    const hasZeroPower = powerArguments.some(
+        value => /^0(?:\.0+)?$/.test(value)
+    );
+    const hasRunningPower = powerArguments.some(
+        value => !/^0(?:\.0+)?$/.test(value)
+    );
+
+    sim.validations.distance =
+        js.includes(
+            'getDistance("range")'
+        );
+
+    sim.validations.touch =
+        js.includes(
+            'isTouchPressed("limit")'
+        );
+
+    sim.validations.gate =
+        /\bif\s*\(/.test(loopSource) &&
+        /\belse\b/.test(loopSource) &&
+        js.includes(
+            "distance < 10.0"
+        ) &&
+        js.includes(
+            '!isTouchPressed("limit")'
+        );
+
+    sim.validations.run = sim.validations.gate && hasRunningPower;
+    sim.validations.stopFull = sim.validations.gate && hasZeroPower;
+    sim.validations.stopEmpty = sim.validations.gate && hasZeroPower;
+    sim.validations.telemetry =
+        /telemetry\s*\.\s*addData\s*\(/.test(loopSource) &&
+        /telemetry\s*\.\s*update\s*\(\s*\)/.test(loopSource);
+    sim.validations.motor =
+        /hardwareMap\s*\.\s*get\s*\(\s*DcMotor\s*\.\s*class\s*,\s*"intake"\s*\)/.test(source) &&
+        powerArguments.length > 0;
+
+    updateRequirementStates();
+
+    const loopBody = loopJs;
+
+    try{
+
+        if(!loopBody){
+            throw new Error("Missing loop() method");
+        }
+
+        const loopFn =
+            new Function(loopBody);
+
+        preparedLoopRunner = function tick(){
+
+            if(!sim.running || generation !== executionGeneration)
+                return;
+
+            try{
+
+                if(window.clearTelemetry){
+                    clearTelemetry();
+                }
+
+                loopFn();
+
+            }catch(err){
+
+                console.error(err);
+
+                if(window._simShowTelemetryError){
+                    _simShowTelemetryError(
+                        "Runtime error: " +
+                        err.message
+                    );
+                }
+
+                sim.running = false;
+
+                if(window.stopExecution){
+                    stopExecution();
+                }
+            }
+
+            setTimeout(
+                tick,
+                50
+            );
+        };
+
+    }catch(err){
+
+        console.error(err);
+
+        const warning =
+            document.getElementById(
+                "warning"
+            );
+
+        if(warning){
+
+            warning.className =
+                "show";
+
+            warning.style.background =
+                "#450a0a";
+
+            warning.innerHTML =
+                err.message;
+        }
+
+        if(window._simShowTelemetryError){
+            _simShowTelemetryError(
+                "ERROR: " +
+                err.message
+            );
+        }
+
+        if(window.stopExecution){
+            stopExecution();
+        }
+    }
+};
+
+window.onStart = function(){
+    if(!preparedLoopRunner) return;
+
+    sim.running = true;
+    preparedLoopRunner();
+};
+
+window.onStop = function(){
+
+    executionGeneration++;
+    sim.running = false;
+    preparedLoopRunner = null;
+    sim.intakePower = 0;
+};
+
+window.onReset = function(){
+
+    sim.running = false;
+
+    sim.intakePower = 0;
+
+    sim.storage = 0;
+
+    sim.limitPressed = false;
+
+    sim.spheres.forEach(s => {
+        if(sceneRoot){
+            sceneRoot.remove(s);
+        }
+    });
+
+    sim.spheres = [];
+
+    spawnSphere();
+    spawnSphere();
+
+    rebuildStorage();
+    updateUI();
+};
+
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,121 @@
+---
+id: set-position
+title: "Lesson 9.1: Using setPosition() for Accurate Servo Movement"
+sidebar_label: "9.1 · setPosition()"
+sidebar_position: 1
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit9Simulator from '@site/src/components/Unit9Simulator';
+
+# Lesson 9.1: Using setPosition() for Accurate Servo Movement
+
+---
+
+## Technical Context
+
+Positional servos are useful for claws, latches, and gates that need repeatable target positions. If a linkage blocks the servo before it reaches the command, the servo can stall, heat up, draw excess current, and damage its gears or the mechanism.
+
+---
+
+## How setPosition() Maps to Real Servo Motion
+
+The `setPosition(double position)` method sends a specific **pulse-width modulation (PWM)** signal to the Control Hub to move the servo to a fraction of its total range. It accepts a `double` parameter between `0.0` and `1.0`, where:
+
+- **`0.0`**: one endpoint of the configured logical range
+- **`0.5`**: the midpoint of the configured logical range
+- **`1.0`**: the other endpoint of the configured logical range
+
+A standard servo's internal controller continues trying to hold its commanded position while PWM output is enabled. You do not need to resend the same command every loop, but the servo may keep drawing current if the mechanism is loaded or blocked.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Servo;
+
+@TeleOp(name="SetPosition_Demo")
+public class SetPositionDemo extends OpMode {
+
+    private Servo claw;
+
+    @Override
+    public void init() {
+        // Lookup in configuration registry
+        claw = hardwareMap.get(Servo.class, "claw_servo");
+
+        // Move to a known safe position at initialization
+        claw.setPosition(0.5);
+        telemetry.addData("Claw", "Initialized to center (0.5)");
+    }
+
+    @Override
+    public void loop() {
+        if (gamepad1.a) {
+            claw.setPosition(1.0); // Fully closed
+            telemetry.addData("Claw", "Closed");
+        } else if (gamepad1.b) {
+            claw.setPosition(0.0); // Fully open
+            telemetry.addData("Claw", "Open");
+        } else {
+            telemetry.addData("Claw", "Holding position");
+        }
+    }
+}
+```
+
+## Coordinating Two Servos in BunyipsLib
+
+A dual-servo mechanism stores separate targets, then sends both targets during its periodic update:
+
+```java
+@Override
+protected void periodic() {
+    left.setPosition(leftServoPosition);
+    right.setPosition(rightServoPosition);
+    logger.leftTarget = leftServoPosition;
+    logger.rightTarget = rightServoPosition;
+    logger.leftServoTarget = left.getPosition();
+    logger.rightServoTarget = right.getPosition();
+}
+```
+
+Separating the desired state from the hardware write makes it easier for commands such as open and close to update a pair consistently. Excerpted from [BunyipsLib's `DualServos.java` at a pinned commit](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/src/main/java/au/edu/sa/mbhs/studentrobotics/bunyipslib/subsystems/DualServos.java) under the [MIT License](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/LICENSE).
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The `setPosition()` method requires a `__________` data type to specify the target location.
+2. In the SDK, a value of `__________` typically represents the midpoint of a servo's travel.
+3. To access servo methods, the hardware must be instantiated using the `__________` class.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`double`**
+2. **`0.5`**
+3. **`Servo`**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Use the simulator below to practice mapping a `"gate"` servo, moving it with `gamepad1.y` and `gamepad1.a`, and reporting the current position through telemetry.
+
+<SimulatorRunGuide />
+
+<Unit9Simulator lesson="set-position" />
+
+<MarkComplete
+  lessonId="unit-09/set-position"
+  nextUnit="/docs/unit-09/scale-range"
+  nextUnitName="Lesson 9.2: Constraining Physical Motion Ranges with scaleRange()"
+/>

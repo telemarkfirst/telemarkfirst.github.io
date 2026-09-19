@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Telemark Unit 12.1 Simulator</title>
+
+<script src="simulator_base.js"></script>
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+
+<style>
+html, body {
+    margin: 0;
+    background: #0f1117;
+    color: #e6edf3;
+    font-family: Inter, Arial, sans-serif;
+}
+
+#imu-panel {
+    width: 100%;
+    background: #161b22;
+    border-top: 1px solid #30363d;
+    padding: 14px;
+    box-sizing: border-box;
+}
+
+.imu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+}
+
+.imu-card {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 12px;
+}
+
+.imu-title {
+    font-size: 13px;
+    color: #8b949e;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.imu-big {
+    font-size: 30px;
+    font-weight: 700;
+}
+
+.good {
+    color: #3fb950;
+}
+
+.bad {
+    color: #f85149;
+}
+
+.warn {
+    color: #d29922;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.axis-box {
+    height: 150px;
+    position: relative;
+    border-radius: 10px;
+    background:#0b1118;
+    overflow: hidden;
+}
+
+.axis-line {
+    position: absolute;
+    transform-origin: left center;
+}
+
+.x-axis {
+    width: 80px;
+    height: 4px;
+    background: #f85149;
+    top: 75px;
+    left: 75px;
+}
+
+.y-axis {
+    width: 80px;
+    height: 4px;
+    background: #3fb950;
+    top: 75px;
+    left: 75px;
+    transform: rotate(90deg);
+}
+
+.z-axis {
+    width: 70px;
+    height: 4px;
+    background: #58a6ff;
+    top: 40px;
+    left: 75px;
+    transform: rotate(-45deg);
+}
+
+.dropdown {
+    width: 100%;
+    margin-bottom: 10px;
+    background: #161b22;
+    color: white;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 8px;
+}
+
+.apply-btn {
+    width: 100%;
+    background: #238636;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.apply-btn:hover {
+    background: #2ea043;
+}
+
+.status-banner {
+    margin-top: 10px;
+    padding: 12px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: 700;
+}
+
+.correct {
+    background: rgba(63,185,80,0.15);
+    border: 1px solid #3fb950;
+    color: #3fb950;
+}
+
+.incorrect {
+    background: rgba(248,81,73,0.15);
+    border: 1px solid #f85149;
+    color: #f85149;
+}
+</style>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+
+<body>
+
+<div id="imu-panel">
+    <div class="imu-grid">
+
+        <div class="imu-card">
+            <div class="imu-title">
+                <i class="fa-solid fa-compass"></i>
+                Orientation
+            </div>
+
+            <div class="row">
+                <span>Logo Direction</span>
+                <strong id="logoDir">RIGHT</strong>
+            </div>
+
+            <div class="row">
+                <span>USB Direction</span>
+                <strong id="usbDir">UP</strong>
+            </div>
+
+            <div class="row">
+                <span>Required Logo</span>
+                <strong class="good">
+                    <i class="fa-solid fa-check"></i>
+                    RIGHT
+                </strong>
+            </div>
+
+            <div class="row">
+                <span>Required USB</span>
+                <strong class="good">
+                    <i class="fa-solid fa-check"></i>
+                    UP
+                </strong>
+            </div>
+
+            <div id="imuStatus" class="status-banner incorrect">
+                CONFIGURATION ERROR
+            </div>
+        </div>
+
+        <div class="imu-card">
+            <div class="imu-title">
+                <i class="fa-solid fa-cube"></i>
+                IMU Axis Alignment
+            </div>
+
+            <div class="axis-box">
+                <div class="axis-line x-axis"></div>
+                <div class="axis-line y-axis"></div>
+                <div class="axis-line z-axis"></div>
+            </div>
+
+            <div style="margin-top:12px;font-size:13px;color:#8b949e;">
+                X = Robot Right<br/>
+                Y = Robot Forward<br/>
+                Z = Robot Up
+            </div>
+        </div>
+
+        <div class="imu-card">
+            <div class="imu-title">
+                <i class="fa-solid fa-sliders"></i>
+                Interactive Orientation Picker
+            </div>
+
+            <select id="logoSelect" class="dropdown">
+                <option>UP</option>
+                <option>DOWN</option>
+                <option>LEFT</option>
+                <option selected>RIGHT</option>
+                <option>FORWARD</option>
+                <option>BACKWARD</option>
+            </select>
+
+            <select id="usbSelect" class="dropdown">
+                <option selected>UP</option>
+                <option>DOWN</option>
+                <option>LEFT</option>
+                <option>RIGHT</option>
+                <option>FORWARD</option>
+                <option>BACKWARD</option>
+            </select>
+
+            <button class="apply-btn" id="applyBtn">
+                Apply To Code
+            </button>
+
+            <div style="margin-top:12px;color:#8b949e;font-size:13px;">
+                Rotate the hub visually and apply the matching enum values directly into the editor.
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+function createImuPanel() {
+    const right =
+        document.getElementById("sim-right-panel");
+
+    if (!right || document.getElementById("imu-panel")) {
+        return;
+    }
+
+    const panel =
+        document.createElement("div");
+
+    panel.id = "imu-panel";
+
+    panel.innerHTML = `
+        <div class="imu-grid">
+            <div class="imu-card">
+                <div class="imu-title">
+                    <i class="fa-solid fa-compass"></i>
+                    Orientation
+                </div>
+
+                <div class="row">
+                    <span>Logo Direction</span>
+                    <strong id="logoDir">RIGHT</strong>
+                </div>
+
+                <div class="row">
+                    <span>USB Direction</span>
+                    <strong id="usbDir">UP</strong>
+                </div>
+
+                <div class="row">
+                    <span>Required Logo</span>
+                    <strong class="good">
+                        <i class="fa-solid fa-check"></i>
+                        RIGHT
+                    </strong>
+                </div>
+
+                <div class="row">
+                    <span>Required USB</span>
+                    <strong class="good">
+                        <i class="fa-solid fa-check"></i>
+                        UP
+                    </strong>
+                </div>
+
+                <div id="imuStatus" class="status-banner incorrect">
+                    CONFIGURATION ERROR
+                </div>
+            </div>
+
+            <div class="imu-card">
+                <div class="imu-title">
+                    <i class="fa-solid fa-cube"></i>
+                    IMU Axis Alignment
+                </div>
+
+                <div class="axis-box">
+                    <div class="axis-line x-axis"></div>
+                    <div class="axis-line y-axis"></div>
+                    <div class="axis-line z-axis"></div>
+                </div>
+
+                <div style="margin-top:12px;font-size:13px;color:#8b949e;">
+                    X = Robot Right<br/>
+                    Y = Robot Forward<br/>
+                    Z = Robot Up
+                </div>
+            </div>
+
+            <div class="imu-card">
+                <div class="imu-title">
+                    <i class="fa-solid fa-sliders"></i>
+                    Interactive Orientation Picker
+                </div>
+
+                <select id="logoSelect" class="dropdown">
+                    <option>UP</option>
+                    <option>DOWN</option>
+                    <option>LEFT</option>
+                    <option selected>RIGHT</option>
+                    <option>FORWARD</option>
+                    <option>BACKWARD</option>
+                </select>
+
+                <select id="usbSelect" class="dropdown">
+                    <option selected>UP</option>
+                    <option>DOWN</option>
+                    <option>LEFT</option>
+                    <option>RIGHT</option>
+                    <option>FORWARD</option>
+                    <option>BACKWARD</option>
+                </select>
+
+                <button class="apply-btn" id="applyBtn">
+                    Apply To Code
+                </button>
+
+                <div style="margin-top:12px;color:#8b949e;font-size:13px;">
+                    Rotate the hub visually and apply the matching enum values directly into the editor.
+                </div>
+            </div>
+        </div>
+    `;
+
+    right.appendChild(panel);
+}
+
+window.onSimulatorReady = () => {
+
+const starterCode = `@TeleOp(name="IMU_Config")
+public class IMUConfig extends OpMode {
+
+    IMU imu;
+
+    @Override
+    public void init() {
+        imu = hardwareMap.get(IMU.class, "imu");
+
+        // TODO: create a RevHubOrientationOnRobot for this vertical mount.
+        // TODO: wrap it in IMU.Parameters and initialize the imu.
+
+        telemetry.addData("Status", "IMU not configured yet");
+    }
+
+    @Override
+    public void loop() {
+        telemetry.addData("Status", "Running");
+        telemetry.update();
+    }
+}`;
+
+setCode(starterCode);
+
+setChallenge(
+    "IMU Mounting Configuration",
+    "Configure the REV Control Hub IMU mounting orientation correctly using RevHubOrientationOnRobot parameters.",
+    [
+        "Map the IMU with hardwareMap.get(IMU.class, \"imu\")",
+        "Initialize the IMU with parameters",
+        "Use RevHubOrientationOnRobot",
+        "Set LogoFacingDirection.RIGHT",
+        "Set UsbFacingDirection.UP",
+        "Send telemetry"
+    ]
+);
+
+setHeader(
+    "Telemark Unit 12.1 Simulator",
+    "IMU Mounting Configuration"
+);
+
+setBadges([
+    { iconClass: "fa-solid fa-compass", label: "IMU", active: true },
+    { iconClass: "fa-solid fa-display", label: "Telemetry", active: true }
+]);
+
+setActiveInputs([]);
+
+createImuPanel();
+
+const scene = window.scene;
+const camera = window.camera;
+const renderer = window.renderer;
+
+if (!scene || !camera || !renderer || typeof THREE === "undefined") {
+    console.error("Three.js scene unavailable.");
+    return;
+}
+
+renderer.setClearColor(0x0f1117);
+
+if (window.setFieldVisible) {
+    setFieldVisible(false);
+}
+
+camera.position.set(7, 6, 7);
+camera.lookAt(0, 1.2, 0);
+
+const hemi = new THREE.HemisphereLight(0xffffff, 0x222233, 2.2);
+scene.add(hemi);
+
+const dir = new THREE.DirectionalLight(0xffffff, 2.5);
+dir.position.set(5, 10, 6);
+scene.add(dir);
+
+const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(18, 18),
+    new THREE.MeshStandardMaterial({
+        color: 0x1a1a2e,
+        metalness: 0.6,
+        roughness: 0.5
+    })
+);
+floor.rotation.x = -Math.PI / 2;
+scene.add(floor);
+
+const robot = new THREE.Mesh(
+    new THREE.BoxGeometry(4, 1, 4),
+    new THREE.MeshStandardMaterial({
+        color: 0x2a2a2a,
+        metalness: 0.8,
+        roughness: 0.35
+    })
+);
+robot.position.y = 0.5;
+scene.add(robot);
+
+const hubGroup = new THREE.Group();
+scene.add(hubGroup);
+
+const hub = new THREE.Mesh(
+    new THREE.BoxGeometry(1.6, 0.8, 1.2),
+    new THREE.MeshStandardMaterial({
+        color: 0x9ca3af,
+        metalness: 0.9,
+        roughness: 0.2
+    })
+);
+
+hub.position.set(1.7, 1.1, 0);
+hubGroup.add(hub);
+
+const logoFace = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.8, 0.4),
+    new THREE.MeshBasicMaterial({
+        color: 0xff6600,
+        side: THREE.DoubleSide
+    })
+);
+
+logoFace.position.set(0.81, 0, 0);
+logoFace.rotation.y = -Math.PI / 2;
+hub.add(logoFace);
+
+const usbFace = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.6, 0.2),
+    new THREE.MeshBasicMaterial({
+        color: 0x58a6ff,
+        side: THREE.DoubleSide
+    })
+);
+
+usbFace.position.set(0, 0.41, 0);
+usbFace.rotation.x = -Math.PI / 2;
+hub.add(usbFace);
+
+const arrowMat = new THREE.MeshBasicMaterial({ color: 0x3fb950 });
+
+function createArrow(dirVec) {
+    const arrow = new THREE.Mesh(
+        new THREE.ConeGeometry(0.1, 0.4, 10),
+        arrowMat
+    );
+    arrow.position.copy(dirVec);
+    return arrow;
+}
+
+hubGroup.add(createArrow(new THREE.Vector3(3,2,0)));
+
+let currentLogo = "UP";
+let currentUsb = "FORWARD";
+
+function directionVector(direction) {
+    const vectors = {
+        RIGHT: [1,0,0],
+        LEFT: [-1,0,0],
+        UP: [0,1,0],
+        DOWN: [0,-1,0],
+        FORWARD: [0,0,-1],
+        BACKWARD: [0,0,1]
+    };
+
+    const v = vectors[direction] || vectors.RIGHT;
+
+    return new THREE.Vector3(v[0],v[1],v[2]);
+}
+
+function updateHubOrientation() {
+    const logoAxis =
+        directionVector(currentLogo);
+
+    const usbAxis =
+        directionVector(currentUsb);
+
+    if (Math.abs(logoAxis.dot(usbAxis)) > .001) {
+        hub.material.emissive = new THREE.Color(0x550000);
+        return;
+    }
+
+    const zAxis =
+        new THREE.Vector3()
+            .crossVectors(logoAxis,usbAxis)
+            .normalize();
+
+    const matrix =
+        new THREE.Matrix4()
+            .makeBasis(
+                logoAxis,
+                usbAxis,
+                zAxis
+            );
+
+    hub.setRotationFromMatrix(matrix);
+}
+
+function updateVisual() {
+
+    const logoDir =
+        document.getElementById("logoDir");
+
+    const usbDir =
+        document.getElementById("usbDir");
+
+    const status =
+        document.getElementById("imuStatus");
+
+    if (!logoDir || !usbDir || !status) {
+        return;
+    }
+
+    logoDir.textContent = currentLogo;
+    usbDir.textContent = currentUsb;
+
+    updateHubOrientation();
+
+    const correct =
+        currentLogo === "RIGHT" &&
+        currentUsb === "UP";
+
+    if (correct) {
+        status.className = "status-banner correct";
+        status.innerHTML =
+            '<i class="fa-solid fa-check"></i> CORRECTLY CONFIGURED';
+
+        hub.material.emissive = new THREE.Color(0x00ff66);
+    } else {
+
+        status.className = "status-banner incorrect";
+
+        let msg = [];
+
+        if (currentLogo !== "RIGHT") {
+            msg.push("Logo should face RIGHT");
+        }
+
+        if (currentUsb !== "UP") {
+            msg.push("USB should face UP");
+        }
+
+        status.innerHTML =
+            '<i class="fa-solid fa-triangle-exclamation"></i> ' +
+            msg.join(" | ");
+
+        hub.material.emissive = new THREE.Color(0x550000);
+    }
+}
+
+function parseDirections(code) {
+
+    const logo =
+        code.match(/LogoFacingDirection\.([A-Z]+)/);
+
+    const usb =
+        code.match(/UsbFacingDirection\.([A-Z]+)/);
+
+    if (logo) currentLogo = logo[1];
+    if (usb) currentUsb = usb[1];
+
+    updateVisual();
+}
+
+window.initializeIMU = function(params) {
+    updateHubVisual(params);
+};
+
+window.createIMUParams = function(v) {
+    return v;
+};
+
+window.createHubOrientation = function(logo, usb) {
+    currentLogo = logo;
+    currentUsb = usb;
+    updateVisual();
+
+    return {
+        logo,
+        usb
+    };
+};
+
+window.updateHubVisual = function(params) {
+    if (!params) return;
+};
+
+window.LogoFacing = {
+    UP: "UP",
+    DOWN: "DOWN",
+    LEFT: "LEFT",
+    RIGHT: "RIGHT",
+    FORWARD: "FORWARD",
+    BACKWARD: "BACKWARD"
+};
+
+window.UsbFacing = {
+    UP: "UP",
+    DOWN: "DOWN",
+    LEFT: "LEFT",
+    RIGHT: "RIGHT",
+    FORWARD: "FORWARD",
+    BACKWARD: "BACKWARD"
+};
+
+function transpile(javaCode) {
+
+    parseDirections(javaCode);
+
+    return javaCode
+        .replace(/@TeleOp[^\n]*/g, "")
+        .replace(/public class[\s\S]*?\{/g, "")
+        .replace(/IMU imu;/g, "let imu;")
+        .replace(/@Override/g, "")
+        .replace(/public void init\(\)/g, "function init()")
+        .replace(/public void loop\(\)/g, "function loop()")
+        .replace(
+            /imu = hardwareMap\.get\(IMU\.class,\s*"imu"\);/g,
+            'imu = {};'
+        )
+        .replace(
+            /new IMU\.Parameters\(/g,
+            'createIMUParams('
+        )
+        .replace(
+            /new RevHubOrientationOnRobot\(/g,
+            'createHubOrientation('
+        )
+        .replace(
+            /RevHubOrientationOnRobot\.LogoFacingDirection\./g,
+            'LogoFacing.'
+        )
+        .replace(
+            /RevHubOrientationOnRobot\.UsbFacingDirection\./g,
+            'UsbFacing.'
+        )
+        .replace(
+            /imu\.initialize\(/g,
+            'initializeIMU('
+        )
+        .replace(
+            /telemetry\.addData\(/g,
+            'addTelemetry('
+        )
+        .replace(
+            /telemetry\.update\(\)/g,
+            'updateTelemetry()'
+        )
+        .replace(/}\s*$/g, "");
+}
+
+let running = false;
+let loopInterval = null;
+let preparedLoop = null;
+
+window.onInit = () => {
+
+    try {
+
+        if (loopInterval) {
+            clearInterval(loopInterval);
+            loopInterval = null;
+        }
+        preparedLoop = null;
+
+        const code =
+            window.getCode
+                ? getCode()
+                : starterCode;
+
+        if (!window._simGetMethodBody) {
+            throw new Error("Java method parser is unavailable");
+        }
+
+        const initBody = window._simGetMethodBody(code, "init");
+        const loopBody = window._simGetMethodBody(code, "loop");
+        if (initBody === null) {
+            throw new Error("Required init() method is missing or has unmatched braces");
+        }
+        if (loopBody === null) {
+            throw new Error("Required loop() method is missing or has unmatched braces");
+        }
+
+        const js = transpile(code);
+
+        eval(js);
+
+        if (typeof init === "function") {
+            init();
+        }
+
+        running = false;
+        preparedLoop = typeof loop === "function" ? loop : null;
+
+    } catch (err) {
+
+        console.error(err);
+
+        if (window._simShowTelemetryError) {
+            window._simShowTelemetryError("Java compile/runtime error: " + err.message);
+        }
+        if (window.stopExecution) {
+            window.stopExecution();
+        }
+    }
+};
+
+window.onStart = () => {
+
+    if (!preparedLoop) {
+        if (window._simShowTelemetryError) {
+            window._simShowTelemetryError("Java compile error: Required loop() method is missing or invalid");
+        }
+        if (window.stopExecution) window.stopExecution();
+        return;
+    }
+    running = true;
+
+    if (loopInterval) {
+        clearInterval(loopInterval);
+    }
+        loopInterval = setInterval(() => {
+
+            if (!running) return;
+
+            if (window.clearTelemetry) window.clearTelemetry();
+            try {
+                preparedLoop();
+            } catch (err) {
+                console.error("Unit 12.1 loop() failed", err);
+                if (window._simShowTelemetryError) {
+                    window._simShowTelemetryError("loop() runtime error: " + err.message);
+                }
+                if (window.stopExecution) window.stopExecution();
+            }
+
+        }, 50);
+};
+
+window.onStop = () => {
+    running = false;
+
+    if (loopInterval) {
+        clearInterval(loopInterval);
+    }
+};
+
+window.onReset = () => {
+
+    window.onStop();
+
+    currentLogo = "UP";
+    currentUsb = "FORWARD";
+
+    updateVisual();
+
+    hub.rotation.set(0,0,0);
+};
+
+const applyBtn =
+    document.getElementById("applyBtn");
+
+if (applyBtn) {
+    applyBtn.addEventListener("click", () => {
+
+    const logo =
+        document.getElementById("logoSelect").value;
+
+    const usb =
+        document.getElementById("usbSelect").value;
+
+    let code =
+        window.getCode
+            ? getCode()
+            : starterCode;
+
+    code = code.replace(
+        /LogoFacingDirection\.[A-Z]+/g,
+        `LogoFacingDirection.${logo}`
+    );
+
+    code = code.replace(
+        /UsbFacingDirection\.[A-Z]+/g,
+        `UsbFacingDirection.${usb}`
+    );
+
+    if (window.setCode) {
+        setCode(code);
+    }
+
+    currentLogo = logo;
+    currentUsb = usb;
+
+    updateVisual();
+    });
+}
+
+function syncVisualFromPicker() {
+    const logoSelect =
+        document.getElementById("logoSelect");
+
+    const usbSelect =
+        document.getElementById("usbSelect");
+
+    if (!logoSelect || !usbSelect) {
+        return;
+    }
+
+    currentLogo = logoSelect.value;
+    currentUsb = usbSelect.value;
+    updateVisual();
+}
+
+const logoSelect =
+    document.getElementById("logoSelect");
+
+const usbSelect =
+    document.getElementById("usbSelect");
+
+if (logoSelect) {
+    logoSelect.addEventListener(
+        "change",
+        syncVisualFromPicker
+    );
+}
+
+if (usbSelect) {
+    usbSelect.addEventListener(
+        "change",
+        syncVisualFromPicker
+    );
+}
+
+updateVisual();
+
+};
+</script>
+
+</body>
+</html>

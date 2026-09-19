@@ -1,0 +1,117 @@
+---
+id: drive-and-stop
+title: "Lesson 10.5: Developing a Precise Drive and Stop System for Linear Navigation"
+sidebar_label: "10.5 · Drive and Stop"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit10Simulator from '@site/src/components/Unit10Simulator';
+
+# Lesson 10.5: Developing a Precise Drive and Stop System for Linear Navigation
+
+---
+
+## Why Encoder Resets Matter More Than You Think
+
+Suppose an autonomous move ends near 1000 ticks and the next command should advance another 500 ticks. Calling `setTargetPosition(500)` requests the absolute encoder position 500, which is behind the current position. The controller may correctly drive backward toward that absolute target even though the programmer intended a relative move.
+
+`STOP_AND_RESET_ENCODER` establishes a known software zero, but it is not required before every segment. A routine can reset once and use cumulative absolute targets, or compute a relative target such as `drive.getCurrentPosition() + deltaTicks`. Re-zero only at an intentional reference point because resetting the count does not correct the robot's physical field pose.
+
+---
+
+## Putting the Full Sequence Together
+
+A basic encoder-based move after establishing a known zero has six steps:
+
+1. Reset the encoder with `STOP_AND_RESET_ENCODER`
+2. Set the target position with `setTargetPosition()`
+3. Switch to `RUN_TO_POSITION`
+4. Apply power with `setPower()`
+5. Wait for the move to finish with `isBusy()`
+6. Stop and restore `RUN_USING_ENCODER` for the next normal drive command
+
+The `isBusy()` method reports whether a motor in `RUN_TO_POSITION` is still outside its configured target tolerance. Combining it with `opModeIsActive()` is a useful loop condition. A timeout and multi-motor completion policy may also be needed so a stalled or lagging motor cannot hold autonomous indefinitely.
+
+One thing to remember: after `STOP_AND_RESET_ENCODER`, the motor is stopped. You must switch to a movement mode before calling `setPower()` or nothing will happen. `RUN_TO_POSITION` also remains active after arrival, so cleanup must restore `RUN_USING_ENCODER`. Otherwise the next TeleOp-style power command can continue targeting the old position instead of behaving like a velocity request.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.hardware.DcMotor;
+
+@Autonomous(name="Drive_And_Stop_Demo")
+public class DriveAndStopDemo extends LinearOpMode {
+
+    @Override
+    public void runOpMode() {
+        DcMotor drive = hardwareMap.get(DcMotor.class, "drive");
+        drive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        waitForStart();
+
+        // Step 1: Zero out any accumulated ticks from previous runs
+        drive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        // Step 2: Define the absolute target from zero
+        drive.setTargetPosition(1000);
+
+        // Step 3: Activate position control
+        drive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        // Step 4: Apply power. The Hub starts moving now.
+        drive.setPower(0.5);
+
+        // Step 5: Block until the Hub reports arrival
+        while (opModeIsActive() && drive.isBusy()) {
+            telemetry.addData("Target",   drive.getTargetPosition());
+            telemetry.addData("Position", drive.getCurrentPosition());
+            telemetry.update();
+        }
+
+        drive.setPower(0);
+        drive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        telemetry.addData("Status", "Move complete");
+        telemetry.update();
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. To zero out accumulated ticks before a new move, you apply the `DcMotor.RunMode.__________` mode.
+2. After a reset, the motor must be switched to a movement mode because the reset command also `__________` the motor shaft.
+3. After the move, restore `__________` so later drive commands no longer target the old encoder position.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`STOP_AND_RESET_ENCODER`**
+2. **stops** (halts / disables)
+3. **`RUN_USING_ENCODER`**
+
+</details>
+
+---
+
+## Simulator Practice
+
+Use the simulator below to complete the precise autonomous slider routine. Fill in the missing reset, target, run mode, power, busy-loop telemetry, stop logic, and `RUN_USING_ENCODER` restoration, then press START to move the game element.
+
+<SimulatorRunGuide />
+
+<Unit10Simulator lesson="drive-and-stop" />
+
+<MarkComplete
+  lessonId="unit-10/drive-and-stop"
+  nextUnit="/docs/unit-10/mastery-coding-challenge"
+  nextUnitName="Unit 10 Comprehensive Coding Challenge"
+/>

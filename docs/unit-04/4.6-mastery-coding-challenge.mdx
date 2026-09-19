@@ -1,0 +1,36 @@
+---
+id: mastery-coding-challenge
+title: "Unit 4 Project Stage: Mecanum Drivetrain"
+sidebar_label: "Unit 4 · Coding Challenge"
+sidebar_position: 6
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import MasterySimulator from '@site/src/components/MasterySimulator';
+
+# Stage 3: Mecanum Drivetrain
+
+The shared project adds `Drivetrain.java`. Keep raw drive hardware inside that class and let `CompetitionTeleOp.java` pass it one gamepad's inputs.
+
+## Your Task
+
+Build normalized mecanum drive:
+
+1. Map `"leftFront"`, `"leftBack"`, `"rightFront"`, and `"rightBack"` during `init()`.
+2. Accept forward, strafe, and turn inputs and apply the configured deadzone.
+3. Calculate front-left, front-right, back-left, and back-right mecanum values.
+4. Normalize all four values together before calling `setPower()`.
+5. Call `drivetrain.drive()` from `CompetitionTeleOp.loop()` with `gamepad1` stick axes.
+
+The controls should remain predictable when several inputs are active at once.
+
+## Coding Challenge Simulator
+
+<MasterySimulator unit={4} project />
+
+<MarkComplete
+  lessonId="unit-04/mastery-coding-challenge"
+  completesUnit="unit-04"
+  nextUnit="/docs/unit-05"
+  nextUnitName="Unit 5: Logic & Decisions"
+/>

@@ -1,0 +1,284 @@
+---
+id: full-autonomous
+title: "Lesson 15.5: Coordinating a Pedro 3 Autonomous with Ivy"
+sidebar_label: "15.5 · Pedro 3 + Ivy"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit15Simulator from '@site/src/components/Unit15Simulator';
+
+# Lesson 15.5: Coordinating a Pedro 3 Autonomous with Ivy
+
+---
+
+## What This Lesson Assembles
+
+This lesson combines:
+
+- The DECODE `RobotHardware`, intake, transfer, launcher, and sensor subsystems built earlier.
+- Pre-match vision to select an autonomous branch.
+- Pedro 3 `Path` methods using `line()`, `curve()`, and `path()`.
+- Gated Limelight pose corrections from Lesson 15.4.
+- Ivy commands that coordinate paths and mechanisms without blocking `follower.update()`.
+
+The field and simulator stay on DECODE so new members can concentrate on integration instead of learning a second game's layout.
+
+---
+
+## Why Commands Instead of a New State Machine?
+
+A hand-written state machine can work, but every new state adds transition conditions, timers, and cleanup paths that the team must test. Pedro 3's documentation recommends command-based flow, and Ivy already knows how to turn a Pedro path into a command.
+
+Ivy gives each action a clear lifecycle:
+
+- `sequential(...)` runs commands one after another.
+- `parallel(...)` runs compatible commands together.
+- `follow(follower, path)` starts Pedro and completes when the path reaches its end condition.
+- `instant(() -> action)` runs one mechanism action.
+- `waitMs(milliseconds)` waits without blocking the OpMode loop.
+- `waitUntil(condition)` waits for a sensor or mechanism condition.
+
+The OpMode still owns the periodic loop. Every cycle calls `follower.update()`, `robot.update()`, and `Scheduler.execute()`.
+
+:::note When a state machine is still reasonable
+Keep a mature state machine if the team already has one and has tested its transition and interruption behavior. For new Pedro 3 code, Ivy removes boilerplate and matches the official examples and visualizer output. Another established command framework is also fine; do not run two schedulers in the same OpMode.
+:::
+
+---
+
+## Compose Robot Actions Around Paths
+
+```java
+private Command autoRoutine(Path firstPath) {
+    return sequential(
+        follow(follower, firstPath),
+        instant(() -> robot.intake.eject()),
+        waitMs(400),
+        instant(() -> robot.intake.stop()),
+        follow(follower, driveToGoal()),
+        instant(() -> robot.launcher.launch(getRuntime()))
+    );
+}
+```
+
+`waitMs(400)` is an Ivy command, not `sleep(400)`. The scheduler continues to execute the surrounding OpMode loop while the wait command checks elapsed time.
+
+For a position-controlled mechanism, prefer its real completion condition:
+
+```java
+sequential(
+    instant(() -> robot.lift.moveToScore()),
+    waitUntil(robot.lift::isAtTarget),
+    instant(() -> robot.intake.eject())
+)
+```
+
+The same composition idea appears in other languages even though FTC robot code is Java:
+
+<AnnotatedCode
+  title="Command sequence concept"
+  java={String.raw`Command routine = sequential(
+    follow(follower, scorePath),
+    instant(() -> robot.intake.eject()),
+    waitMs(500),
+    instant(() -> robot.intake.stop())
+);`}
+  python={String.raw`routine = sequential(
+    follow(follower, score_path),
+    instant(robot.intake.eject),
+    wait_ms(500),
+    instant(robot.intake.stop),
+)`}
+/>
+
+This Python is a conceptual comparison only; FTC OpModes and the Pedro/Ivy APIs shown in this course use Java.
+
+---
+
+## Complete Pedro 3 + Ivy Structure
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import static com.pedropathing.api.Paths.*;
+import static com.pedropathing.ivy.Scheduler.schedule;
+import static com.pedropathing.ivy.commands.Commands.*;
+import static com.pedropathing.ivy.groups.Groups.sequential;
+import static com.pedropathing.ivy.pedro.PedroCommands.follow;
+
+import com.pedropathing.api.PoseFactory;
+import com.pedropathing.follower.Follower;
+import com.pedropathing.ivy.Command;
+import com.pedropathing.ivy.Scheduler;
+import com.pedropathing.math.Pose;
+import com.pedropathing.paths.Path;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+import org.firstinspires.ftc.teamcode.pedro.Constants;
+
+@Autonomous(name="DECODE_Pedro_3_Auto")
+public class DecodePedro3Auto extends LinearOpMode {
+
+    private Follower follower;
+    private RobotHardware robot;
+    private Limelight3A limelight;
+
+    private final PoseFactory poseFactory = PoseFactory.degrees();
+    private final Pose startPose   = poseFactory.of(8, 60, 0);
+    private final Pose scorePose   = poseFactory.of(60, 60, 0);
+    private final Pose controlPose = poseFactory.of(88, 82, 35);
+    private final Pose parkPose    = poseFactory.of(116, 108, 90);
+
+    private Path scorePath() {
+        return line(startPose, scorePose).linear(startPose, scorePose);
+    }
+
+    private Path parkPath() {
+        return curve(scorePose, controlPose, parkPose)
+            .linear(scorePose, parkPose);
+    }
+
+    private Command autoRoutine() {
+        return sequential(
+            follow(follower, scorePath()),
+            instant(() -> robot.intake.eject()),
+            waitMs(400),
+            instant(() -> robot.intake.stop()),
+            follow(follower, parkPath()),
+            instant(() -> robot.stopAll())
+        );
+    }
+
+    @Override
+    public void runOpMode() {
+        Scheduler.reset();
+
+        robot = new RobotHardware();
+        robot.init(hardwareMap);
+
+        follower = Constants.create(hardwareMap);
+        follower.setPose(startPose);
+        follower.update();
+
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        limelight.pipelineSwitch(0);
+        limelight.start();
+
+        waitForStart();
+        if (isStopRequested()) return;
+
+        schedule(autoRoutine());
+
+        while (opModeIsActive()) {
+            follower.update();
+            robot.update();
+            Scheduler.execute();
+            applyLimelightCorrection();
+
+            telemetry.addData("Follower mode", follower.mode());
+            telemetry.addData("Path segment", follower.pathIndex());
+            telemetry.addData("X", "%.1f", follower.pose().x());
+            telemetry.addData("Y", "%.1f", follower.pose().y());
+            telemetry.update();
+        }
+
+        limelight.stop();
+        robot.stopAll();
+    }
+
+    private void applyLimelightCorrection() {
+        LLResult result = limelight.getLatestResult();
+        if (result == null || !result.isValid()) return;
+        if (result.getStaleness() > 100 || result.getBotposeTagCount() < 1) return;
+
+        Pose3D botPose = result.getBotpose();
+        if (botPose == null) return;
+
+        Pose estimate = follower.pose();
+        double measuredX = botPose.getPosition().x * 39.3701;
+        double measuredY = botPose.getPosition().y * 39.3701;
+        double measuredHeading =
+            botPose.getOrientation().getYaw(AngleUnit.RADIANS);
+
+        double dx = measuredX - estimate.x();
+        double dy = measuredY - estimate.y();
+        double dh = AngleUnit.normalizeRadians(
+            measuredHeading - estimate.heading()
+        );
+
+        if (Math.hypot(dx, dy) > 12.0) return;
+
+        double gain = 0.35;
+        follower.setPose(new Pose(
+            estimate.x() + gain * dx,
+            estimate.y() + gain * dy,
+            AngleUnit.normalizeRadians(estimate.heading() + gain * dh)
+        ));
+    }
+}
+```
+
+This compact correction keeps the example readable; Lesson 15.4 explains the covariance-based alternative. In either version, confirm that Limelight and Pedro use the same field origin, axes, units, and heading convention before fusing poses.
+
+For a production example of keeping AprilTag relocalization behind a reusable localization API, compare Murray Bridge Bunyips' [`AprilTagRelocalizingAccumulator`](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/src/main/java/au/edu/sa/mbhs/studentrobotics/bunyipslib/localization/accumulators/AprilTagRelocalizingAccumulator.java). The lesson's command routine deliberately calls a small correction method rather than mixing estimator details into the Ivy sequence.
+
+---
+
+## Bring Your Earlier Files Forward
+
+Use the simulator's **+** control to bring forward the DECODE project files from the completed-lesson library. Keep them in the same TeamCode package so the autonomous class can reuse them directly. Keep raw motor and servo access inside subsystem files. The autonomous OpMode should express intent through methods such as `robot.intake.eject()` and `robot.launcher.launch(...)`.
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Ivy runs several commands in order with `__________(...)`.
+2. The three periodic calls are `follower.update()`, `robot.update()`, and `Scheduler.__________()`.
+3. A non-blocking 400 ms pause is `__________(400)`, not `sleep(400)`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`sequential`**
+2. **`execute`**
+3. **`waitMs`**
+
+</details>
+
+---
+
+## Simulator Practice
+
+Complete an Ivy routine that follows the supplied DECODE scoring path, ejects through the `RobotHardware` subsystem, waits 500 ms without blocking, stops the intake, and stops all robot outputs. Keep the follower, robot, and scheduler updated every active loop.
+
+<SimulatorRunGuide />
+
+<Unit15Simulator lesson="full-autonomous" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+Command autoRoutine() {
+    return sequential(
+        follow(follower, scoringPath),
+        instant(() -> robot.intake.eject()),
+        waitMs(500),
+        instant(() -> robot.intake.stop()),
+        instant(() -> robot.stopAll())
+    );
+}
+```
+
+</details>
+
+<MarkComplete
+  lessonId="unit-15/full-autonomous"
+  nextUnit="/docs/unit-15/mastery-coding-challenge"
+  nextUnitName="Unit 15 Comprehensive Coding Challenge"
+/>

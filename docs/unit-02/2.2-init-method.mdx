@@ -1,0 +1,100 @@
+---
+id: init-method
+title: "Lesson 2.2: Setting Up Hardware in init() Before the Match Starts"
+sidebar_label: "2.2 · init() Method"
+sidebar_position: 2
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit2Simulator from '@site/src/components/Unit2Simulator';
+
+# Lesson 2.2: Setting Up Hardware in init() Before the Match Starts
+
+---
+
+## Technical Context
+
+The `init()` method is the hardware setup phase. Mapping required motors and sensors here exposes configuration problems before the match begins and gives the program a place to establish safe initial states. `HardwareMap.get(...)` throws if a required device cannot be found; a hardware field that was never assigned can produce a `NullPointerException` when later code tries to use it.
+
+---
+
+## What is the init() Method?
+
+The `init()` method is a callback executed **exactly once** when the driver presses the "INIT" button on the Driver Station. This is the stage where the program accesses the `hardwareMap`, a built-in object that acts as a registry for all configured devices.
+
+By using `hardwareMap.get()`, you associate a Java variable with the specific configuration name assigned in the Robot Controller settings. This is also where you define the initial state of components, such as setting `DcMotors` to `RUN_USING_ENCODER` mode.
+
+---
+
+## Annotated Code
+
+```java
+@TeleOp(name="Init_Demo")
+public class InitDemo extends OpMode {
+
+    // Declaring the object variable before initialization
+    private DcMotor armMotor;
+
+    @Override
+    public void init() {
+        // Linking the Java variable to the physical Control Hub Port 0
+        // The string "arm" must match the Hub configuration exactly
+        armMotor = hardwareMap.get(DcMotor.class, "arm");
+
+        // Setting the hardware to a known safe state
+        armMotor.setPower(0);
+        telemetry.addData("Hardware", "Arm Motor Map Successful");
+    }
+
+    @Override
+    public void loop() {}
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The `init()` method is executed exactly `__________` time(s) when the driver presses the INIT button.
+2. To link a physical motor to a code variable, you must call the `__________` method from the `hardwareMap` object.
+3. Variables for hardware like motors should be declared at the `__________` level so they can be accessed by both `init()` and `loop()`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **one (1)**
+2. **`get()`**
+3. **class** level (as fields, outside of any method)
+
+</details>
+
+---
+
+## Simulator Challenge
+
+You need to prepare a `Servo` named `"claw"` for the match. Use the `init()` method to map it and ensure it is ready to move once the match starts.
+
+<SimulatorRunGuide />
+
+<Unit2Simulator lesson="init-method" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+private Servo claw;
+
+@Override
+public void init() {
+    claw = hardwareMap.get(Servo.class, "claw_servo");
+    telemetry.addData("Status", "Claw Initialized");
+}
+```
+
+</details>
+
+<MarkComplete
+  lessonId="unit-02/init-method"
+  nextUnit="/docs/unit-02/loop-lifecycle"
+  nextUnitName="Lesson 2.3: Executing Real-time Logic inside the loop() Lifecycle"
+/>

@@ -1,0 +1,56 @@
+---
+id: install-android-studio
+title: "Section 3: Installing Android Studio for FTC"
+sidebar_label: "3 · Android Studio (Optional)"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Section 3: Installing Android Studio for FTC
+
+:::info Recommended only as an advanced-team head start
+Android Studio is optional. Install it now only if you want a head start with the full SDK project, Git collaboration, and third-party libraries commonly used by advanced teams. You do not need it to learn Java, use Telemark's built-in simulator, work in OnBot Java, or follow a compatible browser-based team workflow.
+:::
+
+:::warning Do not let setup block the curriculum
+If installation, the setup wizard, Gradle, or the Android SDK causes serious issues, stop here and continue in [Telemark's built-in simulator](/simulator). The simulator remains available for learning and debugging, and you can revisit Android Studio later with an experienced teammate or mentor.
+:::
+
+---
+
+## Step 3.1: Download Android Studio
+
+Go to: [https://developer.android.com/studio](https://developer.android.com/studio)
+
+Download Android Studio Ladybug 2024.2 or a later stable release supported by the current FTC SDK. Avoid Canary and Beta builds for a competition project.
+
+---
+
+## Step 3.2: Run the Installer
+
+**Windows:** Run the `.exe` installer. Keep Android Studio and the Android SDK selected.
+
+**macOS:** Open the `.dmg` file and drag Android Studio to Applications. The first launch will complete the installation.
+
+**Linux:** Follow the installation instructions supplied with the current `.tar.gz` package, then launch `studio.sh`.
+
+---
+
+## Step 3.3: First Launch Setup Wizard
+
+When Android Studio launches for the first time, it runs a setup wizard. Navigate it as follows:
+
+| Step | Action |
+|---|---|
+| Welcome screen | Click "Next." |
+| Install type | Select "Standard." Click "Next." |
+| UI theme | Choose either. Click "Next." |
+| SDK Components | Keep the recommended Android SDK components selected and let the download finish. |
+| Verify Settings | Click "Finish." |
+
+<MarkComplete
+  lessonId="unit-01/install-android-studio"
+  nextUnit="/docs/unit-01/configure-jdk"
+  nextUnitName="Section 4: Checking the Gradle JDK"
+/>

@@ -1,0 +1,71 @@
+---
+id: build-robot-hardware
+title: "Lesson 13.8: Build RobotHardware.java"
+sidebar_label: "13.8 · Build RobotHardware"
+sidebar_position: 8
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 13.8: Build `RobotHardware.java`
+
+`RobotHardware` gives every OpMode one entry point to the robot. It owns the subsystem objects, initializes them, updates ongoing work, and stops powered hardware.
+
+## The Composition Root
+
+<AnnotatedCode
+  title="RobotHardware.java"
+  java={String.raw`package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.hardware.HardwareMap;
+
+public class RobotHardware {
+    public final Intake intake = new Intake();
+    public final Lift lift = new Lift();
+
+    public void init(HardwareMap hardwareMap) {
+        intake.init(hardwareMap);
+        lift.init(hardwareMap);
+    }
+
+    public void update() {
+        lift.update();
+    }
+
+    public void stopAll() {
+        intake.stop();
+        lift.stop();
+    }
+}`}
+  python={String.raw`class RobotHardware:
+    def __init__(self):
+        self.intake = Intake()
+        self.lift = Lift()
+
+    def initialize(self, hardware):
+        self.intake.initialize(hardware)
+        self.lift.initialize(hardware)
+
+    def update(self):
+        self.lift.update()
+
+    def stop_all(self):
+        self.intake.stop()
+        self.lift.stop()`}
+/>
+
+This class does not replace the subsystems. It connects them. The intake still owns intake behavior, and the lift still owns lift behavior.
+
+Keep `update()` short and non-blocking. An OpMode will call it every cycle, including while an autonomous path is running.
+
+## Project Practice
+
+Initialize both subsystems, delegate periodic updates, and provide one cleanup path.
+
+<Unit13BuildSimulator lesson="hardware" />
+
+<MarkComplete
+  lessonId="unit-13/build-robot-hardware"
+  nextUnit="/docs/unit-13/competition-teleop"
+  nextUnitName="Lesson 13.9: Complete CompetitionTeleOp.java"
+/>

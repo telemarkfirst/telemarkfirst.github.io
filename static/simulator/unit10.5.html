@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>Telemark Unit 10.5 Simulator</title>
+
+<script src="simulator_base.js"></script>
+
+<style>
+    :root{
+        --bg:#0c0f16;
+        --panel:#121826;
+        --panel2:#181f31;
+        --border:rgba(255,255,255,0.08);
+        --text:#eef2ff;
+        --muted:#94a3b8;
+        --blue:#3b82f6;
+        --green:#22c55e;
+        --orange:#22d3ee;
+        --red:#ef4444;
+    }
+
+    body{
+        background:var(--bg);
+    }
+
+    .slider-panel{
+        margin:10px;
+        background:#252526;
+        border:1px solid var(--border);
+        border-radius:8px;
+        padding:12px;
+        color:var(--text);
+        font-family:Inter,sans-serif;
+        box-shadow:0 10px 24px rgba(0,0,0,0.34);
+    }
+
+    .slider-title{
+        color:#7dd3fc;
+        font-size:1rem;
+        font-weight:800;
+        margin-bottom:12px;
+    }
+
+    .slider-position{
+        font-family:"JetBrains Mono",monospace;
+        font-size:1.18rem;
+        font-weight:900;
+        margin-bottom:12px;
+        letter-spacing:0;
+    }
+
+    .progress-wrap{
+        position:relative;
+        height:26px;
+        border-radius:8px;
+        overflow:hidden;
+        background:#1a2131;
+        border:1px solid rgba(255,255,255,0.08);
+    }
+
+    .progress-fill{
+        position:absolute;
+        inset:0 auto 0 0;
+        width:0%;
+        background:linear-gradient(90deg,#38bdf8,#22d3ee);
+        transition:width .05s linear;
+    }
+
+    .target-marker{
+        position:absolute;
+        top:0;
+        bottom:0;
+        width:4px;
+        background:orange;
+    }
+
+    .panel-grid{
+        display:grid;
+        grid-template-columns:minmax(0,1fr) 190px;
+        gap:12px;
+        margin-top:12px;
+    }
+
+    .status-box{
+        background:rgba(255,255,255,0.03);
+        border-radius:8px;
+        border:1px solid rgba(255,255,255,0.06);
+        padding:12px;
+    }
+
+    .status-line{
+        margin-top:10px;
+        font-size:.9rem;
+        color:#d6def5;
+    }
+
+    .power-bar{
+        height:16px;
+        border-radius:8px;
+        overflow:hidden;
+        background:#1b2435;
+        margin-top:6px;
+    }
+
+    .power-fill{
+        height:100%;
+        width:0%;
+        background:linear-gradient(90deg,#38bdf8,#22d3ee);
+    }
+
+    .busy-indicator{
+        margin-top:14px;
+        font-weight:900;
+        color:orange;
+    }
+
+    .busy-indicator.moving{
+        animation:pulse .8s infinite;
+    }
+
+    .busy-indicator.done{
+        color:#4ade80;
+    }
+
+    @keyframes pulse{
+        0%{opacity:.4}
+        50%{opacity:1}
+        100%{opacity:.4}
+    }
+
+    .step-panel{
+        display:flex;
+        flex-direction:column;
+        gap:7px;
+    }
+
+    .step{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        padding:10px;
+        border-radius:6px;
+        background:#151c2a;
+        border:1px solid rgba(255,255,255,0.06);
+        font-size:.82rem;
+    }
+
+    .step-dot{
+        width:12px;
+        height:12px;
+        border-radius:50%;
+        background:#475569;
+        flex-shrink:0;
+    }
+
+    .step.active .step-dot{
+        background:#3b82f6;
+        box-shadow:0 0 16px #3b82f6;
+    }
+
+    .step.complete .step-dot{
+        background:#22c55e;
+        box-shadow:0 0 16px #22c55e;
+    }
+
+    .overlay{
+        position:absolute;
+        inset:0;
+        background:rgba(0,0,0,0.84);
+        display:none;
+        align-items:center;
+        justify-content:center;
+        flex-direction:column;
+        z-index:200;
+        color:white;
+        gap:20px;
+        font-family:sans-serif;
+    }
+
+    .overlay.visible{
+        display:flex;
+    }
+
+    .overlay button{
+        padding:12px 28px;
+        border:none;
+        border-radius:10px;
+        background:#22c55e;
+        color:white;
+        font-weight:900;
+        cursor:pointer;
+    }
+
+    .warning-chip{
+        position:absolute;
+        top:16px;
+        left:16px;
+        z-index:200;
+        padding:10px 14px;
+        border-radius:8px;
+        font-size:.82rem;
+        font-weight:800;
+        display:none;
+    }
+
+    .warning-chip.warn{
+        display:block;
+        background:rgba(70,55,10,.95);
+        border:1px solid rgba(255,196,0,.25);
+        color:#ffd966;
+    }
+
+    .warning-chip.error{
+        display:block;
+        background:rgba(60,10,10,.95);
+        border:1px solid rgba(255,0,0,.3);
+        color:#ffb4b4;
+    }
+
+    .target-hit{
+        position:absolute;
+        right:16px;
+        top:16px;
+        z-index:200;
+        padding:12px 16px;
+        border-radius:8px;
+        background:rgba(10,60,22,.95);
+        border:1px solid rgba(0,255,120,.3);
+        color:#4ade80;
+        font-weight:900;
+        display:none;
+    }
+
+    .target-hit.visible{
+        display:block;
+        animation:flash .5s ease-out;
+    }
+
+    @keyframes flash{
+        from{
+            transform:scale(.6);
+            opacity:0;
+        }
+        to{
+            transform:scale(1);
+            opacity:1;
+        }
+    }
+</style>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+<script src="./telemark-project.js"></script>
+<link rel="stylesheet" href="./telemark-project.css"/>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+
+<script>
+(() => {
+
+"use strict";
+
+const starterCode = `@Autonomous(name="Precise_Slider")
+public class PreciseSlider extends LinearOpMode {
+
+    DcMotorEx slider;
+
+    @Override
+    public void runOpMode() {
+        slider = hardwareMap.get(DcMotorEx.class, "slider");
+
+        waitForStart();
+
+        // TODO: Reset the encoder before moving
+        // TODO: Set the target position to 500 ticks
+        // TODO: Switch the motor into position-control mode
+        // TODO: Apply 0.8 power to start the slider
+
+        while (opModeIsActive() && slider.isBusy()) {
+            // TODO: Display the current position, target, and power
+            // TODO: Refresh telemetry each loop
+        }
+
+        // TODO: Stop the motor
+        // TODO: Restore RUN_USING_ENCODER for later drive commands
+        // TODO: Display final status and position with telemetry
+    }
+}`;
+
+const requirements = [
+    "Get slider motor from hardwareMap",
+    "Reset encoder",
+    "Set RUN_TO_POSITION",
+    "Set target position to 500",
+    "Apply nonzero power",
+    "Use while(opModeIsActive() && slider.isBusy())",
+    "Read getCurrentPosition() in wait loop",
+    "Set power to 0 after loop",
+    "Restore RUN_USING_ENCODER after the move",
+    "Slider reaches 500 ticks"
+];
+
+const sim = {
+    active:false,
+    running:false,
+    waiting:false,
+    startRequested:false,
+    started:false,
+    motionInterval:null,
+
+    currentTicks:0,
+    targetTicks:0,
+
+    power:0,
+    mode:"RUN_WITHOUT_ENCODER",
+
+    encoderReset:false,
+    busy:false,
+
+    step:0,
+
+    requirements:[false,false,false,false,false,false,false,false,false,false]
+};
+
+let overlay;
+let warningChip;
+let targetHit;
+
+let positionText;
+let modeText;
+let extensionText;
+let busyText;
+
+let progressFill;
+let targetMarker;
+let powerFill;
+
+let stepElements = [];
+
+let sliderInner;
+let gearRack;
+let gameSphere;
+
+let startResolver = null;
+let executionToken = 0;
+let compiledProgram = null;
+const STOP_SIGNAL = {};
+
+function clamp(v,min,max){
+    return Math.max(min,Math.min(max,v));
+}
+
+function sleep(ms){
+    return new Promise(resolve=>setTimeout(resolve,ms));
+}
+
+function setWarning(message,type){
+
+    if(!message){
+        warningChip.style.display = "none";
+        return;
+    }
+
+    warningChip.textContent = message;
+    warningChip.className = `warning-chip ${type}`;
+}
+
+function updateRequirements(){
+    if(!window.setRequirement) return;
+
+    sim.requirements.forEach((v,i)=>{
+        window.setRequirement(i,v);
+    });
+
+    const allGreen =
+        sim.requirements.every(Boolean);
+
+    const banner =
+        document.getElementById(
+            "sim-success-banner"
+        );
+
+    if(allGreen && banner){
+
+        banner.classList.add("visible");
+
+        banner.innerHTML =
+            '<i class="fa-solid fa-circle-check"></i> Challenge Complete! Slider moved precisely 500 ticks.';
+    }
+}
+
+function pushSliderTelemetry(status){
+    if(
+        !window.clearTelemetry ||
+        !window.addTelemetry ||
+        !window.updateTelemetry
+    ){
+        return;
+    }
+
+    window.clearTelemetry();
+    window.addTelemetry("Status", status);
+    window.addTelemetry("Position", Math.round(sim.currentTicks));
+    window.addTelemetry("Target", sim.targetTicks || 500);
+    window.addTelemetry("Power", Number(sim.power || 0).toFixed(2));
+    window.updateTelemetry();
+}
+
+function setStep(index){
+
+    sim.step = Math.max(sim.step,index);
+
+    stepElements.forEach((el,i)=>{
+
+        el.classList.remove(
+            "active",
+            "complete"
+        );
+
+        if(i < sim.step){
+            el.classList.add("complete");
+        }
+
+        if(i === sim.step){
+            el.classList.add("active");
+        }
+    });
+}
+
+function createPanel(){
+
+    const right =
+        document.getElementById(
+            "sim-right-panel"
+        );
+
+    const panel =
+        document.createElement("div");
+
+    panel.className =
+        "slider-panel";
+
+    panel.innerHTML = `
+        <div class="slider-title">
+            Encoder Position Panel
+        </div>
+
+        <div class="slider-position" id="slider-position">
+            POSITION: 0 / 500 ticks
+        </div>
+
+        <div class="progress-wrap">
+            <div class="progress-fill" id="progress-fill"></div>
+            <div class="target-marker" id="target-marker"></div>
+        </div>
+
+        <div class="panel-grid">
+
+            <div class="status-box">
+
+                <div id="mode-text">
+                    MODE: RUN_WITHOUT_ENCODER
+                </div>
+
+                <div class="status-line">
+                    MOTOR POWER
+                </div>
+
+                <div class="power-bar">
+                    <div class="power-fill" id="power-fill"></div>
+                </div>
+
+                <div class="status-line" id="extension-text">
+                    EXTENDED: 0.0 cm
+                </div>
+
+                <div class="busy-indicator" id="busy-text">
+                    IDLE
+                </div>
+            </div>
+
+            <div class="step-panel" id="step-panel"></div>
+        </div>
+    `;
+
+    right.appendChild(panel);
+
+    positionText =
+        document.getElementById(
+            "slider-position"
+        );
+
+    modeText =
+        document.getElementById(
+            "mode-text"
+        );
+
+    extensionText =
+        document.getElementById(
+            "extension-text"
+        );
+
+    busyText =
+        document.getElementById(
+            "busy-text"
+        );
+
+    progressFill =
+        document.getElementById(
+            "progress-fill"
+        );
+
+    targetMarker =
+        document.getElementById(
+            "target-marker"
+        );
+
+    powerFill =
+        document.getElementById(
+            "power-fill"
+        );
+
+    const steps = [
+        "RESET",
+        "CONFIGURED",
+        "TARGET SET",
+        "WAITING",
+        "MOVING",
+        "ARRIVED",
+        "STOPPED"
+    ];
+
+    const stepPanel =
+        document.getElementById(
+            "step-panel"
+        );
+
+    steps.forEach(label=>{
+
+        const el =
+            document.createElement("div");
+
+        el.className = "step";
+
+        el.innerHTML = `
+            <div class="step-dot"></div>
+            <div>${label}</div>
+        `;
+
+        stepPanel.appendChild(el);
+
+        stepElements.push(el);
+    });
+
+    const sceneContainer =
+        document.getElementById(
+            "sim-scene-container"
+        );
+
+    warningChip =
+        document.createElement("div");
+
+    warningChip.className =
+        "warning-chip";
+
+    sceneContainer.appendChild(
+        warningChip
+    );
+
+    targetHit =
+        document.createElement("div");
+
+    targetHit.className =
+        "target-hit";
+
+    targetHit.innerHTML =
+        "TARGET REACHED";
+
+    sceneContainer.appendChild(
+        targetHit
+    );
+
+    overlay =
+        document.createElement("div");
+
+    overlay.className =
+        "overlay";
+
+    overlay.innerHTML = `
+        <div style="font-size:1.4rem;font-weight:900;">
+            Waiting for start...
+        </div>
+
+        <div style="font-size:0.88rem;color:#d1d5db;margin-top:8px;">
+            Press Start in the bottom Driver Station controls.
+        </div>
+    `;
+
+    sceneContainer.appendChild(
+        overlay
+    );
+
+    updatePanel();
+}
+
+function updatePanel(){
+
+    const pct =
+        clamp(
+            sim.currentTicks / 500,
+            0,
+            1
+        );
+
+    positionText.textContent =
+        `POSITION: ${Math.round(sim.currentTicks)} / 500 ticks`;
+
+    progressFill.style.width =
+        `${pct * 100}%`;
+
+    targetMarker.style.left =
+        `100%`;
+
+    modeText.textContent =
+        `MODE: ${sim.mode}`;
+
+    powerFill.style.width =
+        `${clamp(
+            Math.abs(sim.power),
+            0,
+            1
+        ) * 100}%`;
+
+    const extensionCm =
+        (sim.currentTicks / 500) * 20;
+
+    extensionText.textContent =
+        `EXTENDED: ${extensionCm.toFixed(1)} cm`;
+
+    if(sim.busy){
+
+        busyText.textContent =
+            "MOVING";
+
+        busyText.className =
+            "busy-indicator moving";
+
+    }else if(
+        Math.abs(
+            sim.currentTicks -
+            sim.targetTicks
+        ) <= 5 &&
+        sim.targetTicks > 0
+    ){
+
+        busyText.textContent =
+            "AT TARGET";
+
+        busyText.className =
+            "busy-indicator done";
+
+    }else{
+
+        busyText.textContent =
+            "IDLE";
+
+        busyText.className =
+            "busy-indicator";
+    }
+}
+
+function buildScene(){
+
+    requestAnimationFrame(()=>{
+
+        if(
+            !window.scene ||
+            !window.THREE
+        ){
+            console.error(
+                "Scene unavailable"
+            );
+            return;
+        }
+
+        const THREE =
+            window.THREE;
+
+        const scene =
+            window.scene;
+
+        window.setFieldVisible(false);
+
+        scene.background =
+            new THREE.Color(
+                0x0a0a0a
+            );
+
+        const ambient =
+            new THREE.AmbientLight(
+                0xffffff,
+                0.75
+            );
+
+        scene.add(ambient);
+
+        const keyLight =
+            new THREE.DirectionalLight(
+                0xffffff,
+                0.95
+            );
+
+        keyLight.position.set(
+            5,
+            8,
+            5
+        );
+
+        scene.add(keyLight);
+
+        const fill =
+            new THREE.PointLight(
+                0x67e8f9,
+                0.65,
+                12
+            );
+
+        fill.position.set(
+            -4,
+            3,
+            4
+        );
+
+        scene.add(fill);
+
+        const rim =
+            new THREE.PointLight(
+                0xffffff,
+                0.55,
+                10
+            );
+
+        rim.position.set(
+            6,
+            4,
+            -3
+        );
+
+        scene.add(rim);
+
+        const floor =
+            new THREE.Mesh(
+                new THREE.PlaneGeometry(
+                    14,
+                    8
+                ),
+                new THREE.MeshPhysicalMaterial({
+                    color:0x090b10,
+                    metalness:0.45,
+                    roughness:0.32,
+                    clearcoat:0.55,
+                    clearcoatRoughness:0.2
+                })
+            );
+
+        floor.rotation.x =
+            -Math.PI / 2;
+
+        scene.add(floor);
+
+        const robot =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    2.6,
+                    1.0,
+                    1.9
+                ),
+                new THREE.MeshPhysicalMaterial({
+                    color:0x08090b,
+                    metalness:0.75,
+                    roughness:0.26,
+                    clearcoat:0.45,
+                    clearcoatRoughness:0.18
+                })
+            );
+
+        robot.position.y = 0.65;
+
+        scene.add(robot);
+
+        const outerTube =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    2.5,
+                    0.36,
+                    0.56
+                ),
+                new THREE.MeshPhysicalMaterial({
+                    color:0x10141a,
+                    metalness:0.9,
+                    roughness:0.18,
+                    clearcoat:0.5,
+                    clearcoatRoughness:0.12
+                })
+            );
+
+        outerTube.position.set(
+            2.1,
+            0.82,
+            0
+        );
+
+        scene.add(outerTube);
+
+        sliderInner =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    2.1,
+                    0.28,
+                    0.42
+                ),
+                new THREE.MeshPhysicalMaterial({
+                    color:0x171d26,
+                    metalness:0.88,
+                    roughness:0.16,
+                    clearcoat:0.7,
+                    clearcoatRoughness:0.1
+                })
+            );
+
+        sliderInner.position.set(
+            2.9,
+            0.82,
+            0
+        );
+
+        scene.add(sliderInner);
+
+        gearRack =
+            new THREE.Group();
+
+        for(let i=0;i<24;i++){
+
+            const tooth =
+                new THREE.Mesh(
+                    new THREE.BoxGeometry(
+                        0.08,
+                        0.05,
+                        0.28
+                    ),
+                    new THREE.MeshPhysicalMaterial({
+                        color:0x1b2028,
+                        metalness:0.9,
+                        roughness:0.2,
+                        clearcoat:0.35
+                    })
+                );
+
+            tooth.position.set(
+                i * 0.10,
+                0,
+                0
+            );
+
+            gearRack.add(tooth);
+        }
+
+        gearRack.position.set(
+            2.45,
+            0.52,
+            0
+        );
+
+        scene.add(gearRack);
+
+        gameSphere =
+            new THREE.Mesh(
+                new THREE.SphereGeometry(
+                    0.32,
+                    24,
+                    24
+                ),
+                new THREE.MeshPhysicalMaterial({
+                    color:0x12081c,
+                    emissive:0x170028,
+                    metalness:0.35,
+                    roughness:0.22,
+                    clearcoat:0.8,
+                    clearcoatRoughness:0.12
+                })
+            );
+
+        gameSphere.position.set(
+            6.75,
+            0.88,
+            0
+        );
+
+        scene.add(gameSphere);
+
+        const scoreZone =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    1.35,
+                    0.1,
+                    1.35
+                ),
+                new THREE.MeshPhysicalMaterial({
+                    color:0x06130b,
+                    emissive:0x022b12,
+                    metalness:0.25,
+                    roughness:0.35,
+                    clearcoat:0.35
+                })
+            );
+
+        scoreZone.position.set(
+            8.8,
+            0.06,
+            0
+        );
+
+        scene.add(scoreZone);
+
+        if(window.camera){
+
+            window.setCameraOrbit({
+                theta:0.92,
+                phi:0.88,
+                radius:8,
+                target:{x:4.6,y:0.75,z:0}
+            });
+        }
+
+        updateSliderVisual();
+    });
+}
+
+function updateSliderVisual(){
+
+    if(!sliderInner) return;
+
+    const ratio =
+        clamp(
+            sim.currentTicks / 500,
+            0,
+            1
+        );
+
+    const extension =
+        ratio * 3.6;
+
+    sliderInner.position.x =
+        2.9 + extension;
+
+    gearRack.position.x =
+        2.45 + extension * 0.25;
+
+    gearRack.children.forEach(
+        (t,i)=>{
+            t.position.y =
+                Math.sin(
+                    performance.now() * 0.02 +
+                    i
+                ) * 0.01;
+        }
+    );
+
+    if(sliderInner.material.emissive){
+        sliderInner.material.emissive.setHex(
+            Math.abs(sim.currentTicks - 500) <= 5
+                ? 0x00ff66
+                : 0x000000
+        );
+    }
+
+    if(gameSphere){
+        const pushProgress =
+            clamp(
+                (ratio - 0.68) / 0.32,
+                0,
+                1
+            );
+
+        const eased =
+            pushProgress * pushProgress *
+            (3 - 2 * pushProgress);
+
+        gameSphere.position.x =
+            6.75 + eased * 2.05;
+
+        gameSphere.position.y =
+            0.88 + Math.sin(eased * Math.PI) * 0.06;
+
+        gameSphere.rotation.z =
+            -eased * Math.PI * 2;
+    }
+}
+
+function installHooks(){
+
+    hardwareMap.registerMotor(
+        "slider"
+    );
+
+    const originalGet =
+        hardwareMap.get.bind(
+            hardwareMap
+        );
+
+    hardwareMap.get = function(
+        clazz,
+        name
+    ){
+
+        const motor =
+            originalGet(
+                clazz,
+                name
+            );
+
+        if(
+            !motor ||
+            motor.__hooked
+        ){
+            return motor;
+        }
+
+        motor.__hooked = true;
+
+        motor.setMode = function(
+            mode
+        ){
+
+            sim.mode =
+                String(mode);
+
+            if(
+                sim.mode.includes(
+                    "STOP_AND_RESET_ENCODER"
+                )
+            ){
+
+                sim.currentTicks = 0;
+                sim.targetTicks = 0;
+
+                sim.encoderReset = true;
+
+                sim.requirements[1] = true;
+
+                setStep(0);
+            }
+
+            if(
+                sim.mode.includes(
+                    "RUN_TO_POSITION"
+                )
+            ){
+
+                sim.requirements[2] = true;
+
+                setStep(1);
+            }
+
+            if(
+                sim.mode.includes("RUN_USING_ENCODER") &&
+                sim.currentTicks >= 495 &&
+                sim.power === 0
+            ){
+                sim.requirements[8] = true;
+                setStep(7);
+            }
+
+            updateRequirements();
+            updatePanel();
+        };
+
+        motor.setTargetPosition =
+            function(target){
+
+            sim.targetTicks =
+                Number(target) || 0;
+
+            if(
+                sim.targetTicks === 500
+            ){
+                sim.requirements[3] = true;
+            }
+
+            setStep(2);
+
+            updateRequirements();
+            updatePanel();
+            maybeBeginMotion();
+        };
+
+        motor.setPower = function(
+            power
+        ){
+
+            sim.power =
+                Number(power) || 0;
+
+            if(
+                Math.abs(sim.power) > 0.01
+            ){
+                sim.requirements[4] = true;
+            }
+
+            if(
+                sim.power === 0 &&
+                sim.currentTicks >= 495
+            ){
+
+                sim.requirements[7] = true;
+
+                setStep(6);
+            }
+
+            updateRequirements();
+            updatePanel();
+            maybeBeginMotion();
+        };
+
+        motor.getPower = function(){
+            return sim.power;
+        };
+
+        motor.getCurrentPosition =
+            function(){
+                return Math.round(
+                    sim.currentTicks
+                );
+            };
+
+        motor.getTargetPosition = function(){
+            return Math.round(sim.targetTicks);
+        };
+
+        motor.isBusy = function(){
+            return sim.busy;
+        };
+
+        return motor;
+    };
+}
+
+function readyToMove(){
+    return (
+        sim.running &&
+        sim.active &&
+        sim.started &&
+        sim.mode.includes("RUN_TO_POSITION") &&
+        Math.abs(sim.power) > 0.01
+    );
+}
+
+function maybeBeginMotion(){
+    if(!readyToMove()){
+        if(!sim.motionInterval){
+            sim.busy = false;
+            updatePanel();
+        }
+
+        return;
+    }
+
+    if(Math.abs(sim.targetTicks - sim.currentTicks) <= 5){
+        sim.busy = false;
+        updatePanel();
+        return;
+    }
+
+    if(sim.motionInterval){
+        return;
+    }
+
+    sim.busy = true;
+    beginMotion();
+}
+
+function beginMotion(){
+
+    if(sim.motionInterval){
+        clearInterval(
+            sim.motionInterval
+        );
+    }
+
+    setStep(4);
+
+    sim.motionInterval =
+        setInterval(()=>{
+
+        if(!readyToMove()){
+            clearInterval(
+                sim.motionInterval
+            );
+            sim.motionInterval = null;
+            sim.busy = false;
+            updatePanel();
+            return;
+        }
+
+        const error =
+            sim.targetTicks -
+            sim.currentTicks;
+
+        if(
+            Math.abs(error) <= 5
+        ){
+
+            sim.currentTicks =
+                sim.targetTicks;
+
+            sim.busy = false;
+
+            sim.requirements[9] = true;
+
+            setStep(5);
+
+            targetHit.classList.add(
+                "visible"
+            );
+
+            setTimeout(()=>{
+                targetHit.classList.remove(
+                    "visible"
+                );
+            },1500);
+
+            updateRequirements();
+            updatePanel();
+            updateSliderVisual();
+            pushSliderTelemetry("Arrived");
+
+            clearInterval(
+                sim.motionInterval
+            );
+            sim.motionInterval = null;
+
+            return;
+        }
+
+        const direction =
+            Math.sign(error);
+
+        const slowdown =
+            Math.max(
+                0.15,
+                Math.min(
+                    1,
+                    Math.abs(error) / 120
+                )
+            );
+
+        const velocity =
+            direction *
+            sim.power *
+            12 *
+            slowdown;
+
+        sim.currentTicks +=
+            velocity;
+
+        if(
+            sim.currentTicks > 530
+        ){
+
+            setWarning(
+                "Overshot target — check your wait loop",
+                "error"
+            );
+        }
+
+        sim.busy = true;
+
+        updatePanel();
+        updateSliderVisual();
+        pushSliderTelemetry("Moving");
+
+    },50);
+}
+
+function validateStudentCode(code){
+    sim.requirements[0] =
+        /hardwareMap\s*\.\s*get\s*\(\s*DcMotor(?:Ex)?\s*\.\s*class\s*,\s*"slider"\s*\)/.test(code);
+    sim.requirements[5] =
+        /while\s*\(\s*opModeIsActive\s*\(\s*\)\s*&&\s*slider\s*\.\s*isBusy\s*\(\s*\)\s*\)/.test(code);
+    sim.requirements[6] =
+        /slider\s*\.\s*getCurrentPosition\s*\(\s*\)/.test(code);
+    updateRequirements();
+
+    if(!code.includes("STOP_AND_RESET_ENCODER")){
+        setWarning(
+            "Reset your encoder first — without this you don't know your starting position",
+            "warn"
+        );
+    }
+
+    if(!/setPower\s*\(\s*0(?:\.0+)?\s*\)/.test(code)){
+        setWarning(
+            "Cut motor power after reaching target — leaving it at full power wastes battery and can damage hardware",
+            "warn"
+        );
+    }
+
+    if(!/telemetry\s*\.\s*update\s*\(\s*\)/.test(code)){
+        setWarning(
+            "Call telemetry.update() inside the loop so position updates appear on the Driver Station in real time",
+            "warn"
+        );
+    }
+
+    const targetMatch =
+        /setTargetPosition\s*\(\s*(-?\d+)\s*\)/.exec(code);
+    if(targetMatch && Number(targetMatch[1]) !== 500){
+        setWarning(
+            "Challenge requires exactly 500 ticks — check your setTargetPosition() call",
+            "error"
+        );
+    }
+
+    if(!/\bwaitForStart\s*\(\s*\)/.test(code)){
+        setWarning(
+            "Autonomous code should call waitForStart() before moving",
+            "error"
+        );
+    }
+}
+
+function ensureCurrentExecution(token){
+    if(token !== executionToken || !sim.running) throw STOP_SIGNAL;
+}
+
+async function waitForDriverStationStart(token){
+    sim.waiting = true;
+    sim.active = false;
+    sim.started = false;
+    setStep(3);
+    pushSliderTelemetry("Waiting for start");
+    overlay.classList.add("visible");
+
+    await new Promise(resolve=>{
+        startResolver = resolve;
+        if(sim.startRequested) releaseDriverStationStart(false);
+    });
+
+    ensureCurrentExecution(token);
+    sim.waiting = false;
+    sim.active = true;
+    sim.started = true;
+    maybeBeginMotion();
+    pushSliderTelemetry("Started");
+}
+
+async function runCode(code,token){
+    validateStudentCode(code);
+
+    if(!/\bwaitForStart\s*\(\s*\)/.test(code)){
+        sim.active = true;
+        sim.started = true;
+    }
+
+    const runtime = window.TelemarkSimulatorBase.createRuntime({
+        gamepad1: window.gamepad || {},
+        gamepad2: window.gamepad2 || {},
+        getRuntime: window.getRuntime,
+        isStopRequested: function(){
+            return token !== executionToken || !sim.running;
+        },
+        opModeIsActive: function(){
+            return token === executionToken && sim.running && sim.active;
+        },
+        waitForStart: function(){
+            return waitForDriverStationStart(token);
+        },
+        sleep: async function(ms){
+            await sleep(ms);
+            ensureCurrentExecution(token);
+        },
+        onTelemetryUpdate: function(frame){
+            window.clearTelemetry();
+            frame.forEach(function(item){
+                window.addTelemetry(item.key,item.value);
+            });
+            window.updateTelemetry();
+        },
+        onTelemetryClear: function(event){
+            if(!event || !event.automatic) window.clearTelemetry();
+        }
+    });
+    runtime.hardwareMap = window.hardwareMap;
+    runtime.linearTick = async function(){
+        await sleep(50);
+        ensureCurrentExecution(token);
+    };
+
+    compiledProgram = window.TelemarkSimulatorBase.compileStudentSource(code,runtime);
+    if(!compiledProgram.ok){
+        const diagnostic = compiledProgram.diagnostics[0];
+        throw new Error(
+            diagnostic.message +
+            " (line " + diagnostic.line +
+            ", column " + diagnostic.column + ")"
+        );
+    }
+
+    if(compiledProgram.kind !== "linear" || !compiledProgram.methods.runOpMode){
+        throw new Error("This challenge requires a LinearOpMode with runOpMode().");
+    }
+
+    await compiledProgram.methods.runOpMode();
+    updatePanel();
+}
+
+window.onSimulatorReady = function(){
+
+    setCode(starterCode);
+
+    setChallenge(
+        "Precise Autonomous Slider Movement",
+        "Use motor encoders and RUN_TO_POSITION mode to move a horizontal slider precisely 500 ticks in autonomous.",
+        requirements
+    );
+
+    setBadges([
+        {
+            iconClass:"fa-solid fa-sliders",
+            label:"DcMotorEx",
+            active:true
+        },
+        {
+            iconClass:"fa-solid fa-gauge-high",
+            label:"Encoder",
+            active:true
+        },
+        {
+            iconClass:"fa-solid fa-tower-broadcast",
+            label:"Telemetry",
+            active:true
+        }
+    ]);
+
+    setActiveInputs([]);
+
+    setHeader(
+        "Telemark Unit 10.5 Simulator",
+        "Precise Autonomous Slider · RUN_TO_POSITION"
+    );
+
+    createPanel();
+
+    installHooks();
+
+    buildScene();
+};
+
+function releaseDriverStationStart(markRequested){
+
+    if(markRequested !== false){
+        sim.startRequested = true;
+    }
+
+    if(overlay){
+        overlay.classList.remove(
+            "visible"
+        );
+    }
+
+    sim.waiting = false;
+
+    if(startResolver){
+        const resolve =
+            startResolver;
+        startResolver = null;
+        resolve();
+    }
+}
+
+window.onInit = async function(){
+
+    if(sim.running) return;
+
+    sim.running = true;
+    sim.active = false;
+    sim.started = false;
+    sim.waiting = false;
+    sim.startRequested = false;
+    const token = ++executionToken;
+    compiledProgram = null;
+
+    setWarning(null);
+    pushSliderTelemetry("Initialized");
+
+    const editor =
+        document.getElementById(
+            "sim-code-editor"
+        );
+
+    const code =
+        editor?.value ||
+        starterCode;
+
+    try{
+        await runCode(code,token);
+    }catch(err){
+        if(err === STOP_SIGNAL) return;
+        console.error(err);
+        if(window._simShowTelemetryError){
+            window._simShowTelemetryError(err.message || String(err));
+        }else if(window.addTelemetry && window.updateTelemetry){
+            window.addTelemetry("ERROR",err.message || String(err));
+            window.updateTelemetry();
+        }
+    }
+	};
+
+window.onStart = function(){
+    releaseDriverStationStart(true);
+};
+	
+	window.onStop = function(){
+
+    executionToken++;
+    sim.running = false;
+    sim.active = false;
+    sim.busy = false;
+    sim.waiting = false;
+    sim.startRequested = false;
+    sim.started = false;
+
+    clearInterval(
+        sim.motionInterval
+    );
+    sim.motionInterval = null;
+
+    overlay.classList.remove(
+        "visible"
+    );
+
+    if(startResolver){
+        releaseDriverStationStart(false);
+    }
+    sim.startRequested = false;
+    compiledProgram = null;
+
+    pushSliderTelemetry("Stopped");
+    updatePanel();
+};
+
+window.onReset = function(){
+
+    window.onStop();
+
+    sim.currentTicks = 0;
+    sim.targetTicks = 0;
+
+    sim.power = 0;
+
+    sim.mode =
+        "RUN_WITHOUT_ENCODER";
+
+    sim.encoderReset = false;
+    sim.waiting = false;
+    sim.startRequested = false;
+    sim.started = false;
+
+    sim.step = 0;
+
+    sim.requirements =
+        [false,false,false,false,false,false,false,false,false];
+
+    if(gameSphere){
+        gameSphere.position.x = 6.75;
+        gameSphere.position.y = 0.88;
+        gameSphere.rotation.set(0,0,0);
+    }
+
+    targetHit.classList.remove(
+        "visible"
+    );
+
+    updatePanel();
+    updateSliderVisual();
+    updateRequirements();
+
+    if(window.clearTelemetry){
+        window.clearTelemetry();
+    }
+
+    stepElements.forEach(el=>{
+        el.classList.remove(
+            "active",
+            "complete"
+        );
+    });
+};
+
+})();
+</script>
+
+</body>
+</html>

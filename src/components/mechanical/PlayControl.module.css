@@ -1,0 +1,46 @@
+.control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.32rem 0.7rem;
+  border: 1px solid var(--tm-border-strong);
+  border-radius: var(--tm-r-lg);
+  background: var(--tm-accent-a08);
+  color: var(--tm-accent);
+  cursor: pointer;
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.control:hover:not(:disabled) {
+  border-color: var(--tm-accent-a55);
+  background: var(--tm-border);
+}
+
+.control:disabled {
+  border-color: var(--tm-border-quiet);
+  background: transparent;
+  color: var(--tm-text-faint);
+  cursor: not-allowed;
+}
+
+.glyph {
+  font-size: var(--tm-fs-2xs);
+  line-height: 1;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.6rem;
+}
+
+.hint {
+  color: var(--tm-text-muted);
+  font-size: var(--tm-fs-2xs);
+}

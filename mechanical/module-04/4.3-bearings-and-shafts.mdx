@@ -1,0 +1,129 @@
+---
+id: bearings-and-shafts
+title: "Lesson 4.3: Supporting Rotating Shafts With Bearings"
+sidebar_label: "4.3 · Bearings & Shafts"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import {BearingSupportDiagram} from '@site/src/components/mechanical/EngineeringDiagrams';
+
+# Lesson 4.3: Supporting Rotating Shafts With Bearings
+
+---
+
+## Technical Context
+
+A shaft turning directly in a drilled aluminum hole wears the softer material. As the hole becomes oval, the shaft develops play and the parts it locates move out of position.
+
+Bearings exist to carry that load on a hardened rolling surface instead of on your structure.
+
+---
+
+## What a Bearing Does
+
+A bearing constrains a shaft in the radial direction while allowing rotation. Most FTC applications use **radial ball bearings**, which carry load perpendicular to the shaft well and axial load along the shaft poorly.
+
+The parts that matter for design:
+
+- **Bore**: the inside diameter, matched to your shaft
+- **Outside diameter**: what the housing must accept
+- **Width**: how much axial space it occupies
+- **Shielded or sealed**: a cover keeping debris out. Shielded is standard for FTC and adds a little drag
+
+Common FTC shaft sizes are 5 mm, 6 mm, and 8 mm, and bearings are sold to match. Build systems supply bearings that press into their standard bracket and channel patterns, which is one of the strongest reasons to stay inside a build system.
+
+---
+
+## Two Supports, Always
+
+A shaft supported at one point can pivot around it. The shaft tips, the gear or sprocket on it goes out of alignment, and the load concentrates at the edge of the single support, which then wears.
+
+**Support every rotating shaft in two places, spaced as far apart as the design allows.** The wider the spacing, the smaller the reaction forces at each bearing and the less the shaft can tip.
+
+The most common FTC violation is a wheel or sprocket cantilevered well outside the two supports. The load at the end of the cantilever multiplies into the bearings, and the shaft deflects. Where you cannot avoid a cantilever, keep it short and increase the bearing spacing.
+
+<BearingSupportDiagram />
+
+:::tip Bearing spacing is a free lever
+Moving two bearings from 1 in apart to 3 in apart reduces the reaction forces at each bearing by roughly a factor of three and reduces shaft tipping proportionally. It costs nothing but layout attention.
+:::
+
+---
+
+## Constraining Axial Movement
+
+Radial bearings do not stop a shaft from sliding along its own axis. Something must, or the shaft walks out during a match.
+
+Options, from best to worst:
+
+1. **Shaft collars** clamped on either side of the bearing. A clamping collar is far better than a set screw collar.
+2. **Shoulders or steps** machined into the shaft, which locate positively.
+3. **Spacers** filling the gap between the bearing and the next component, so there is nowhere to move.
+4. **A set screw hub** that also serves to locate axially, acceptable but relies on the set screw holding.
+
+Design the axial constraint deliberately. "It probably will not move" is how a drivetrain shaft ends up on the field.
+
+---
+
+## Bushings and When They Are Fine
+
+A bushing is a plain sleeve, usually bronze or a low friction plastic such as acetal, with no rolling elements. It is cheaper, thinner, and quieter than a bearing, and it tolerates shock better.
+
+Bushings are fine for:
+
+- Slow moving pivots such as an arm joint that rotates a few degrees per second
+- Low load guide surfaces
+- Places where a bearing physically will not fit
+
+They are poor for high speed or high load, where friction and wear become significant. A drivetrain shaft should be on bearings.
+
+:::warning Do not press a bearing into a 3D printed part
+Printed plastic creeps under sustained load, so the interference that holds the bearing relaxes over weeks and the bearing works loose. It also deforms locally, so the bore is not round to begin with. Press bearings into aluminum, or use a printed part only to locate a bearing that is retained by a metal plate or a clamping feature.
+:::
+
+---
+
+## Alignment Between the Two Supports
+
+Two bearings that are not coaxial fight each other. The shaft has to bend slightly to pass through both, which loads the bearings permanently, increases friction noticeably, and shortens their life.
+
+Sources of misalignment and their fixes:
+
+| Cause | Fix |
+| --- | --- |
+| Two plates drilled separately | Clamp and drill both together, or use the build system's pattern for both |
+| Plates not parallel | Tie them with a spacer or standoff of known length rather than relying on the frame |
+| A plate that flexes | Stiffen it, since a plate that bends under load pulls the bearing out of alignment while running |
+| Bearing housing bored oversize | Use a shoulder or retaining plate rather than relying on the press |
+
+The symptom of misalignment is a shaft that turns freely when the second bearing is not yet installed and stiffly once it is. That test takes ten seconds and is worth doing during assembly.
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Every rotating shaft should be supported in at least `__________` places.
+2. Radial ball bearings carry radial load well but do not prevent movement along the shaft's `__________`.
+3. If a shaft spins freely with one bearing installed and stiffly with both, the two bearing bores are not `__________`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **two**
+2. **axis** (axial movement)
+3. **coaxial** (aligned)
+
+</details>
+
+---
+
+## Exercise
+
+Find every rotating shaft on your robot. For each one, record the number of supports, the spacing between them, the length of any cantilever beyond the supports, and what constrains it axially. Any shaft with one support, or with a cantilever longer than the bearing spacing, is a candidate for redesign.
+
+<MarkComplete
+  lessonId="module-04/bearings-and-shafts"
+  nextUnit="/mechanical/module-04/spacers-and-stackups"
+  nextUnitName="Lesson 4.4: Planning Spacer Stack-Ups and Controlling Alignment"
+/>

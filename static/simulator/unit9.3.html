@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telemark Unit 9.3 Simulator</title>
+    <script src="simulator_base.js"></script>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+<script src="./telemark-project.js"></script>
+<link rel="stylesheet" href="./telemark-project.css"/>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+
+<script>
+/**
+ * Challenge: Double Gate - Mirrored Servo Direction
+ * Unit: Unit 9 - Servo Control, Challenge 3
+ */
+
+(function() {
+    window.onSimulatorReady = function() {
+        const MAX_GATE_ANGLE = Math.PI * 0.48;
+        const WALL_Y = 1.45;
+        const WALL_Z = 0;
+        const OPENING_WIDTH = 2.8;
+        const OPENING_HEIGHT = 1.8;
+        const GATE_WIDTH = OPENING_WIDTH * 0.5;
+        const GATE_HEIGHT = OPENING_HEIGHT;
+        const GATE_THICKNESS = 0.08;
+
+        const gatePositions = {
+            left_gate: 0,
+            right_gate: 0
+        };
+        const gateDirections = {
+            left_gate: "FORWARD",
+            right_gate: "FORWARD"
+        };
+        const targetAngles = {
+            left_gate: 0,
+            right_gate: 0
+        };
+        const currentAngles = {
+            left_gate: 0,
+            right_gate: 0
+        };
+        const sampleProgress = [0, 0, 0];
+        const samples = [];
+
+        let leftGateGroup = null;
+        let rightGateGroup = null;
+        let leftGateMesh = null;
+        let rightGateMesh = null;
+        let leftDirectionLabel = null;
+        let rightDirectionLabel = null;
+        let statusLabel = null;
+        let statusBannerEl = null;
+        let sceneBuilt = false;
+        let pulse = 0;
+
+        const starterCode = `@TeleOp(name="Double_Gate")
+public class DoubleGate extends OpMode {
+
+    Servo left_gate, right_gate;
+
+    @Override
+    public void init() {
+        left_gate  = hardwareMap.get(Servo.class, "left_gate");
+        right_gate = hardwareMap.get(Servo.class, "right_gate");
+
+        // TODO: Reverse right_gate so the mirrored gate moves correctly
+
+        telemetry.addData("Status", "Initialized");
+    }
+
+    @Override
+    public void loop() {
+        if (gamepad1.y) {
+            left_gate.setPosition(1.0);
+            right_gate.setPosition(1.0);
+            telemetry.addData("Gates", "Open");
+        } else if (gamepad1.a) {
+            left_gate.setPosition(0.0);
+            right_gate.setPosition(0.0);
+            telemetry.addData("Gates", "Closed");
+        }
+
+        telemetry.addData("Left Gate",  left_gate.getPosition());
+        telemetry.addData("Right Gate", right_gate.getPosition());
+        telemetry.update();
+    }
+}`;
+
+        function ensureStatusBanner() {
+            if (statusBannerEl) return statusBannerEl;
+
+            const style = document.createElement("style");
+            style.textContent = `
+                .sim-gate-status-banner {
+                    position: absolute;
+                    left: 50%;
+                    top: 18px;
+                    transform: translateX(-50%) scale(0.96);
+                    padding: 10px 18px;
+                    border-radius: 8px;
+                    font-weight: 800;
+                    font-size: 1rem;
+                    line-height: 1.2;
+                    white-space: nowrap;
+                    pointer-events: none;
+                    opacity: 0;
+                    visibility: hidden;
+                    transition: opacity .2s ease, transform .2s ease, visibility .2s ease;
+                    z-index: 18;
+                    box-shadow: 0 0 28px rgba(0,0,0,.38);
+                }
+                .sim-gate-status-banner.visible {
+                    opacity: 1;
+                    visibility: visible;
+                    transform: translateX(-50%) scale(1);
+                }
+                .sim-gate-status-banner.good {
+                    background: rgba(34,204,102,.92);
+                    border: 1px solid rgba(190,255,215,.9);
+                    color: #04160a;
+                }
+                .sim-gate-status-banner.error {
+                    background: rgba(204,34,34,.92);
+                    border: 1px solid rgba(255,130,130,.9);
+                    color: #fff;
+                    animation: simGatePulse .35s alternate infinite;
+                }
+                @keyframes simGatePulse {
+                    from { transform: translateX(-50%) scale(1); }
+                    to { transform: translateX(-50%) scale(1.05); }
+                }
+            `;
+            document.head.appendChild(style);
+
+            statusBannerEl = document.createElement("div");
+            statusBannerEl.className = "sim-gate-status-banner";
+            const sceneContainer = document.getElementById("sim-scene-container");
+            if (sceneContainer) sceneContainer.appendChild(statusBannerEl);
+            return statusBannerEl;
+        }
+
+        function showStatus(message, type) {
+            const banner = ensureStatusBanner();
+            if (!banner) return;
+            const icon = type === "good"
+                ? '<i class="fa-solid fa-circle-check"></i> '
+                : '<i class="fa-solid fa-triangle-exclamation"></i> ';
+            banner.className = "sim-gate-status-banner visible " + type;
+            banner.innerHTML = icon + message;
+        }
+
+        function hideStatus() {
+            if (!statusBannerEl) return;
+            statusBannerEl.className = "sim-gate-status-banner";
+            statusBannerEl.textContent = "";
+        }
+
+        function roundRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.arcTo(x + width, y, x + width, y + height, radius);
+            ctx.arcTo(x + width, y + height, x, y + height, radius);
+            ctx.arcTo(x, y + height, x, y, radius);
+            ctx.arcTo(x, y, x + width, y, radius);
+            ctx.closePath();
+        }
+
+        function makeLabel(text, x, y, z, options) {
+            const canvas = document.createElement("canvas");
+            canvas.width = 512;
+            canvas.height = 128;
+            const ctx = canvas.getContext("2d");
+            const texture = new THREE.CanvasTexture(canvas);
+            const material = new THREE.SpriteMaterial({
+                map: texture,
+                transparent: true,
+                depthWrite: false
+            });
+            const sprite = new THREE.Sprite(material);
+            sprite.position.set(x, y, z);
+            sprite.scale.set(
+                (options && options.scaleX) || 1.9,
+                (options && options.scaleY) || 0.42,
+                1
+            );
+
+            function setText(nextText, color, bgColor) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                if (bgColor) {
+                    ctx.fillStyle = bgColor;
+                    roundRect(ctx, 8, 18, canvas.width - 16, canvas.height - 36, 18);
+                    ctx.fill();
+                }
+                ctx.font = "bold 32px IBM Plex Sans, Arial, sans-serif";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillStyle = color || "#ffffff";
+                ctx.fillText(nextText, canvas.width / 2, canvas.height / 2);
+                texture.needsUpdate = true;
+            }
+
+            setText(
+                text,
+                (options && options.color) || "#ffffff",
+                options && options.bgColor
+            );
+
+            return {
+                sprite: sprite,
+                setText: setText
+            };
+        }
+
+        function buildScene() {
+            if (sceneBuilt) return;
+            sceneBuilt = true;
+
+            window.setFieldVisible(false);
+            window.setCameraOrbit({
+                radius: 7.8,
+                theta: 0,
+                phi: Math.PI / 2.25,
+                target: {x: 0, y: WALL_Y, z: -0.05}
+            });
+
+            const scene = window.scene;
+            const wallMaterial = new THREE.MeshPhongMaterial({color: 0x303038});
+            const trimMaterial = new THREE.MeshPhongMaterial({color: 0x666674});
+            const wallDepth = 0.28;
+
+            const topWall = new THREE.Mesh(
+                new THREE.BoxGeometry(6.8, 1.15, wallDepth),
+                wallMaterial
+            );
+            topWall.position.set(0, WALL_Y + OPENING_HEIGHT * 0.5 + 0.62, WALL_Z);
+            topWall.castShadow = true;
+            topWall.receiveShadow = true;
+            scene.add(topWall);
+
+            const bottomWall = new THREE.Mesh(
+                new THREE.BoxGeometry(6.8, 1.05, wallDepth),
+                wallMaterial.clone()
+            );
+            bottomWall.position.set(0, WALL_Y - OPENING_HEIGHT * 0.5 - 0.58, WALL_Z);
+            bottomWall.castShadow = true;
+            bottomWall.receiveShadow = true;
+            scene.add(bottomWall);
+
+            const sideWallGeometry = new THREE.BoxGeometry(2, OPENING_HEIGHT + 1.2, wallDepth);
+            const leftWall = new THREE.Mesh(sideWallGeometry, wallMaterial.clone());
+            leftWall.position.set(-2.4, WALL_Y, WALL_Z);
+            leftWall.castShadow = true;
+            leftWall.receiveShadow = true;
+            scene.add(leftWall);
+
+            const rightWall = new THREE.Mesh(sideWallGeometry, wallMaterial.clone());
+            rightWall.position.set(2.4, WALL_Y, WALL_Z);
+            rightWall.castShadow = true;
+            rightWall.receiveShadow = true;
+            scene.add(rightWall);
+
+            const frameTop = new THREE.Mesh(
+                new THREE.BoxGeometry(OPENING_WIDTH + 0.28, 0.1, 0.2),
+                trimMaterial
+            );
+            frameTop.position.set(0, WALL_Y + OPENING_HEIGHT * 0.5, WALL_Z + 0.12);
+            scene.add(frameTop);
+
+            const frameBottom = new THREE.Mesh(
+                new THREE.BoxGeometry(OPENING_WIDTH + 0.28, 0.1, 0.2),
+                trimMaterial.clone()
+            );
+            frameBottom.position.set(0, WALL_Y - OPENING_HEIGHT * 0.5, WALL_Z + 0.12);
+            scene.add(frameBottom);
+
+            const frameSideGeometry = new THREE.BoxGeometry(0.1, OPENING_HEIGHT + 0.1, 0.2);
+            const frameLeft = new THREE.Mesh(frameSideGeometry, trimMaterial.clone());
+            frameLeft.position.set(-OPENING_WIDTH * 0.5, WALL_Y, WALL_Z + 0.12);
+            scene.add(frameLeft);
+
+            const frameRight = new THREE.Mesh(frameSideGeometry, trimMaterial.clone());
+            frameRight.position.set(OPENING_WIDTH * 0.5, WALL_Y, WALL_Z + 0.12);
+            scene.add(frameRight);
+
+            const floor = new THREE.Mesh(
+                new THREE.BoxGeometry(OPENING_WIDTH + 0.2, 0.08, 2.6),
+                new THREE.MeshPhongMaterial({color: 0x202026})
+            );
+            floor.position.set(0, WALL_Y - OPENING_HEIGHT * 0.5 - 0.36, -0.18);
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            leftGateGroup = new THREE.Group();
+            leftGateGroup.position.set(-OPENING_WIDTH * 0.5, WALL_Y, WALL_Z + 0.04);
+            scene.add(leftGateGroup);
+
+            rightGateGroup = new THREE.Group();
+            rightGateGroup.position.set(OPENING_WIDTH * 0.5, WALL_Y, WALL_Z + 0.04);
+            scene.add(rightGateGroup);
+
+            const gateGeometry = new THREE.BoxGeometry(GATE_WIDTH, GATE_HEIGHT, GATE_THICKNESS);
+            leftGateMesh = new THREE.Mesh(
+                gateGeometry,
+                new THREE.MeshPhongMaterial({color: 0x2255cc, emissive: 0x081530})
+            );
+            leftGateMesh.position.set(GATE_WIDTH * 0.5, 0, 0);
+            leftGateMesh.castShadow = true;
+            leftGateMesh.receiveShadow = true;
+            leftGateGroup.add(leftGateMesh);
+
+            rightGateMesh = new THREE.Mesh(
+                gateGeometry,
+                new THREE.MeshPhongMaterial({color: 0xcc2222, emissive: 0x2a0707})
+            );
+            rightGateMesh.position.set(-GATE_WIDTH * 0.5, 0, 0);
+            rightGateMesh.castShadow = true;
+            rightGateMesh.receiveShadow = true;
+            rightGateGroup.add(rightGateMesh);
+
+            const hingeGeometry = new THREE.CylinderGeometry(0.06, 0.06, GATE_HEIGHT + 0.1, 20);
+            const leftHinge = new THREE.Mesh(
+                hingeGeometry,
+                new THREE.MeshPhongMaterial({color: 0xb8b8c0, emissive: 0x111111})
+            );
+            leftHinge.rotation.z = Math.PI * 0.5;
+            leftHinge.position.set(0, 0, GATE_THICKNESS * 0.35);
+            leftGateGroup.add(leftHinge);
+
+            const rightHinge = new THREE.Mesh(
+                hingeGeometry,
+                new THREE.MeshPhongMaterial({color: 0xb8b8c0, emissive: 0x111111})
+            );
+            rightHinge.rotation.z = Math.PI * 0.5;
+            rightHinge.position.set(0, 0, GATE_THICKNESS * 0.35);
+            rightGateGroup.add(rightHinge);
+
+            scene.add(makeLabel("left_gate", -1.42, WALL_Y + 1.22, 0.38, {
+                color: "#8ec2ff",
+                bgColor: "rgba(10,22,54,.72)",
+                scaleX: 1.45,
+                scaleY: 0.34
+            }).sprite);
+
+            scene.add(makeLabel("right_gate", 1.42, WALL_Y + 1.22, 0.38, {
+                color: "#ffaaaa",
+                bgColor: "rgba(62,12,12,.74)",
+                scaleX: 1.55,
+                scaleY: 0.34
+            }).sprite);
+
+            leftDirectionLabel = makeLabel("", -1.42, WALL_Y - 1.34, 0.38, {
+                scaleX: 1.55,
+                scaleY: 0.34
+            });
+            rightDirectionLabel = makeLabel("", 1.42, WALL_Y - 1.34, 0.38, {
+                scaleX: 1.72,
+                scaleY: 0.34
+            });
+            statusLabel = makeLabel("", 0, WALL_Y + 1.68, 0.34, {
+                scaleX: 2.65,
+                scaleY: 0.36
+            });
+            scene.add(leftDirectionLabel.sprite);
+            scene.add(rightDirectionLabel.sprite);
+            scene.add(statusLabel.sprite);
+
+            const sampleGeometry = new THREE.SphereGeometry(0.16, 24, 24);
+            [-0.45, 0, 0.45].forEach(function(x, index) {
+                const sample = new THREE.Mesh(
+                    sampleGeometry,
+                    new THREE.MeshPhongMaterial({color: 0x22cc66, emissive: 0x0a3018})
+                );
+                sample.castShadow = true;
+                sample.receiveShadow = true;
+                sample.position.set(x, WALL_Y - 0.72, -1.08 - index * 0.15);
+                samples.push(sample);
+                scene.add(sample);
+            });
+
+            ensureStatusBanner();
+            window.addAnimationCallback(animateScene);
+        }
+
+        function directionSign(name) {
+            return gateDirections[name] === "REVERSE" ? -1 : 1;
+        }
+
+        function bothOpen() {
+            return gatePositions.left_gate > 0.95 && gatePositions.right_gate > 0.95;
+        }
+
+        function gatesSymmetric() {
+            return gateDirections.left_gate === "FORWARD" && gateDirections.right_gate === "REVERSE";
+        }
+
+        function gatesBlocked() {
+            return bothOpen() && !gatesSymmetric();
+        }
+
+        function updateDirectionLabels() {
+            if (leftDirectionLabel) {
+                leftDirectionLabel.setText(
+                    gateDirections.left_gate === "REVERSE" ? "REVERSE" : "FORWARD",
+                    gateDirections.left_gate === "REVERSE" ? "#ffcc66" : "#8ec2ff",
+                    "rgba(10,10,18,.72)"
+                );
+            }
+            if (rightDirectionLabel) {
+                rightDirectionLabel.setText(
+                    gateDirections.right_gate === "REVERSE" ? "REVERSE" : "FORWARD",
+                    gateDirections.right_gate === "REVERSE" ? "#7cffb0" : "#ffaaaa",
+                    "rgba(10,10,18,.72)"
+                );
+            }
+            if (statusLabel) {
+                if (gatesSymmetric()) {
+                    statusLabel.setText("right_gate reversed", "#7cffb0", "rgba(10,60,24,.76)");
+                } else {
+                    statusLabel.setText("right_gate still forward", "#ffaaaa", "rgba(75,12,12,.78)");
+                }
+            }
+        }
+
+        function updateGateVisual(name, value) {
+            if (name !== "left_gate" && name !== "right_gate") return;
+            const logical = Math.max(0, Math.min(1, Number(value) || 0));
+            gatePositions[name] = logical;
+            targetAngles[name] = logical * MAX_GATE_ANGLE * directionSign(name);
+
+            if (window.gamepad.y && logical < 0.5) {
+                window.addHint("A later setPosition call is overriding your Y branch. Remove the extra gate command after the if/else block.", "warn");
+            }
+            if (window.gamepad.a && logical > 0.5) {
+                window.addHint("A later setPosition call is overriding your A branch. Remove the extra gate command after the if/else block.", "warn");
+            }
+        }
+
+        function setGateDirection(name, dir) {
+            if (name !== "left_gate" && name !== "right_gate") return;
+            gateDirections[name] = dir === "REVERSE" ? "REVERSE" : "FORWARD";
+            updateDirectionLabels();
+            updateGateVisual(name, gatePositions[name]);
+        }
+
+        function updateVisualRequirement() {
+            window.setRequirement(5, bothOpen() && gatesSymmetric());
+        }
+
+        function resetVisuals() {
+            gatePositions.left_gate = 0;
+            gatePositions.right_gate = 0;
+            gateDirections.left_gate = "FORWARD";
+            gateDirections.right_gate = "FORWARD";
+            targetAngles.left_gate = 0;
+            targetAngles.right_gate = 0;
+            currentAngles.left_gate = 0;
+            currentAngles.right_gate = 0;
+            sampleProgress[0] = 0;
+            sampleProgress[1] = 0;
+            sampleProgress[2] = 0;
+            pulse = 0;
+
+            if (leftGateGroup) leftGateGroup.rotation.y = 0;
+            if (rightGateGroup) rightGateGroup.rotation.y = 0;
+            if (rightGateMesh) {
+                rightGateMesh.position.z = 0;
+                rightGateMesh.material.emissive.setHex(0x2a0707);
+            }
+            if (leftGateMesh) leftGateMesh.material.emissive.setHex(0x081530);
+            hideStatus();
+            updateDirectionLabels();
+            updateVisualRequirement();
+        }
+
+        function resetServoHardware() {
+            const left = window.hardwareMap.get("Servo", "left_gate");
+            const right = window.hardwareMap.get("Servo", "right_gate");
+            left.setDirection(window.Servo.Direction.FORWARD);
+            right.setDirection(window.Servo.Direction.FORWARD);
+            left.setPosition(0);
+            right.setPosition(0);
+        }
+
+        function animateSamples() {
+            const passThrough = bothOpen() && gatesSymmetric();
+            const blocked = gatesBlocked();
+
+            for (let i = 0; i < samples.length; i++) {
+                if (passThrough) {
+                    sampleProgress[i] = Math.min(1, sampleProgress[i] + 0.018 + i * 0.002);
+                } else if (blocked) {
+                    sampleProgress[i] = Math.min(0.44, sampleProgress[i] + 0.014);
+                } else {
+                    sampleProgress[i] += (0 - sampleProgress[i]) * 0.18;
+                }
+
+                const startZ = -1.08 - i * 0.15;
+                const endZ = 1.18 + i * 0.08;
+                const sample = samples[i];
+                if (!sample) continue;
+                sample.position.z = startZ + (endZ - startZ) * sampleProgress[i];
+                sample.position.y = WALL_Y - 0.72 + Math.sin(sampleProgress[i] * 8.5 + i) * 0.035;
+
+                if (sampleProgress[i] >= 1) sampleProgress[i] = 0;
+            }
+        }
+
+        function animateScene() {
+            currentAngles.left_gate += (targetAngles.left_gate - currentAngles.left_gate) * 0.14;
+            currentAngles.right_gate += (targetAngles.right_gate - currentAngles.right_gate) * 0.14;
+
+            if (leftGateGroup) leftGateGroup.rotation.y = currentAngles.left_gate;
+            if (rightGateGroup) rightGateGroup.rotation.y = currentAngles.right_gate;
+
+            if (gatesBlocked()) {
+                pulse += 0.22;
+                if (rightGateMesh) {
+                    rightGateMesh.position.z = Math.sin(pulse) * 0.055;
+                    rightGateMesh.material.emissive.setHex(0x550000);
+                }
+                showStatus("Gates misaligned - game elements blocked", "error");
+            } else {
+                if (rightGateMesh) {
+                    rightGateMesh.position.z += (0 - rightGateMesh.position.z) * 0.2;
+                    rightGateMesh.material.emissive.setHex(0x2a0707);
+                }
+                if (bothOpen() && gatesSymmetric()) {
+                    showStatus("Direction corrected - game elements pass through", "good");
+                } else {
+                    hideStatus();
+                }
+            }
+
+            animateSamples();
+            updateVisualRequirement();
+        }
+
+        function getBranchBody(loopBody, button) {
+            const re = new RegExp(
+                "(?:if|else\\s+if)\\s*\\(\\s*(?:gamepad1|gamepad)\\s*\\.\\s*" +
+                    button +
+                    "\\s*\\)\\s*\\{([\\s\\S]*?)\\}",
+                "i"
+            );
+            const match = loopBody.match(re);
+            return match ? match[1] : "";
+        }
+
+        function hasSetPosition(body, servoName, value) {
+            const valuePattern = value === "1.0"
+                ? "1(?:\\.0+)?"
+                : "0(?:\\.0+)?";
+            const re = new RegExp(
+                "\\b" + servoName + "\\s*\\.\\s*setPosition\\s*\\(\\s*" + valuePattern + "\\s*\\)"
+            );
+            return re.test(body);
+        }
+
+        function setRequirementStatesFromCode(code) {
+            const initBody = window._simGetMethodBody(code, "init") || "";
+            const loopBody = window._simGetMethodBody(code, "loop") || "";
+            const yBranch = getBranchBody(loopBody, "y");
+            const aBranch = getBranchBody(loopBody, "a");
+
+            const mapsLeft = /\bhardwareMap\s*\.\s*get\(\s*Servo\.class\s*,\s*"left_gate"\s*\)/.test(initBody);
+            const mapsRight = /\bhardwareMap\s*\.\s*get\(\s*Servo\.class\s*,\s*"right_gate"\s*\)/.test(initBody);
+            const reversesRight = /\bright_gate\s*\.\s*setDirection\s*\(\s*Servo\s*\.\s*Direction\s*\.\s*REVERSE\s*\)/.test(initBody);
+            const reversesLeft = /\bleft_gate\s*\.\s*setDirection\s*\(\s*Servo\s*\.\s*Direction\s*\.\s*REVERSE\s*\)/.test(initBody);
+            const yOpensBoth = hasSetPosition(yBranch, "left_gate", "1.0") && hasSetPosition(yBranch, "right_gate", "1.0");
+            const aClosesBoth = hasSetPosition(aBranch, "left_gate", "0.0") && hasSetPosition(aBranch, "right_gate", "0.0");
+            const sendsTelemetry = /\btelemetry\s*\.\s*addData\s*\(/.test(code);
+
+            window.setRequirement(0, mapsLeft);
+            window.setRequirement(1, mapsRight);
+            window.setRequirement(2, reversesRight);
+            window.setRequirement(3, yOpensBoth);
+            window.setRequirement(4, aClosesBoth);
+            window.setRequirement(5, false);
+            window.setRequirement(6, sendsTelemetry);
+
+            if (reversesLeft && !reversesRight) {
+                window.addHint("Reverse right_gate, not left_gate. The right servo is the mirrored one.", "error");
+            } else if (!reversesRight) {
+                window.addHint("The right gate is mounted mirrored. Add right_gate.setDirection(Servo.Direction.REVERSE) in init().", "error");
+            }
+            if (/\.setDirection\s*\(/.test(loopBody)) {
+                window.addHint("setDirection only needs to run once in init().", "warn");
+            }
+            if (!yOpensBoth || !aClosesBoth) {
+                window.addHint("Set both gate positions in the same Y/A branches so the gates move together.", "warn");
+            }
+            if (code.indexOf("telemetry.update()") === -1) {
+                window.addHint("Call telemetry.update() to send data to the Driver Station.", "warn");
+            }
+        }
+
+        window.setCode(starterCode);
+
+        window.setChallenge(
+            "Double Gate - Mirrored Servo Direction",
+            "Map two mirrored gate servos, reverse the right gate, then use Y and A to open and close both gates together.",
+            [
+                "Map left_gate in init()",
+                "Map right_gate in init()",
+                "Reverse right_gate in init()",
+                "Open both gates to 1.0 in the Y branch",
+                "Close both gates to 0.0 in the A branch",
+                "Gates open symmetrically with no clipping",
+                "Send telemetry with telemetry.addData(...)"
+            ]
+        );
+
+        window.setHeader(
+            "Telemark Unit 9.3 Simulator",
+            "Double Gate · Mirror direction · Open gates"
+        );
+
+        window.setBadges([
+            {iconClass: "fa-solid fa-gears", label: "Servo x2", active: true},
+            {iconClass: "fa-solid fa-tower-broadcast", label: "Telemetry", active: true},
+            {iconClass: "fa-solid fa-gamepad", label: "Gamepad", active: true}
+        ]);
+
+        window.setActiveInputs(["y", "a"]);
+        window.hardwareMap.registerServo("left_gate");
+        window.hardwareMap.registerServo("right_gate");
+
+        window.hardwareMap.onServoPosition((name, value) => updateGateVisual(name, value));
+        window.hardwareMap.onServoDirection((name, dir) => setGateDirection(name, dir));
+
+        buildScene();
+        resetVisuals();
+
+        const successBanner = document.getElementById("sim-success-banner");
+        if (successBanner) {
+            successBanner.innerHTML = '<i class="fa-solid fa-circle-check"></i> Challenge Complete! Both gates open symmetrically.';
+        }
+
+        window.onRun = function() {
+            window.clearHints();
+            resetVisuals();
+            resetServoHardware();
+
+            const code = window.getCode();
+            setRequirementStatesFromCode(code);
+
+            window.transpileAndRun(
+                code,
+                function(initFn) {
+                    try {
+                        initFn();
+                    } catch (e) {
+                        window._simShowTelemetryError("Init error: " + e.message);
+                    }
+                },
+                function(loopFn) {
+                    window._simStartLoop(function() {
+                        try {
+                            loopFn();
+                        } catch (e) {
+                            window._simShowTelemetryError("Loop error: " + e.message);
+                        }
+                        updateVisualRequirement();
+                    });
+                }
+            );
+        };
+
+        window.onStop = function() {
+            gatePositions.left_gate = 0;
+            gatePositions.right_gate = 0;
+            targetAngles.left_gate = 0;
+            targetAngles.right_gate = 0;
+            hideStatus();
+        };
+
+        window.onReset = function() {
+            window.clearHints();
+            resetServoHardware();
+            resetVisuals();
+        };
+    };
+})();
+</script>
+
+</body>
+</html>

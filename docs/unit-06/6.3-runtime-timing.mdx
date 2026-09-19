@@ -1,0 +1,116 @@
+---
+id: runtime-timing
+title: "Lesson 6.3: Timing Robot Actions with getRuntime()"
+sidebar_label: "6.3 · getRuntime() Timing"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit6Simulator from '@site/src/components/Unit6Simulator';
+
+# Lesson 6.3: Timing Robot Actions with getRuntime()
+
+---
+
+## Technical Context
+
+Standard `sleep()` commands block the **entire thread**, preventing the robot from reading sensor data or reacting to gamepad inputs during the sleep period. Comparing loop iterations against `getRuntime()` allows for **"non-blocking"** timing, enabling the robot to perform multiple hardware tasks simultaneously within the same loop cycle.
+
+---
+
+## How getRuntime() Helps You Time Actions Without Guessing
+
+The `getRuntime()` method returns a `double` representing the seconds elapsed since the OpMode was initialized. By capturing a "start time" timestamp and comparing it to the current `getRuntime()` value inside a `while` or `if` statement, the programmer creates a timed window for hardware to operate: without freezing any other logic.
+
+The key pattern is: **capture a target timestamp, then check against it each loop cycle.**
+
+```java
+double targetTime = getRuntime() + 2.0; // 2 seconds from now
+```
+
+The clock increments in sub-milliseconds, so you must use `<` (less than) rather than `==` for the comparison: the current time will almost never land on the exact target value.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.hardware.DcMotor;
+
+@Autonomous(name="Timed_Drive_Demo")
+public class TimedDriveDemo extends LinearOpMode {
+
+    @Override
+    public void runOpMode() {
+        DcMotor driveMotor = hardwareMap.get(DcMotor.class, "drive");
+
+        waitForStart();
+
+        // Set a timestamp 2 seconds in the future
+        double targetTime = getRuntime() + 2.0;
+
+        // Drive forward until the 2-second window closes
+        while (opModeIsActive() && getRuntime() < targetTime) {
+            driveMotor.setPower(0.5);
+            telemetry.addData("Time Remaining", targetTime - getRuntime());
+            telemetry.update();
+        }
+
+        driveMotor.setPower(0); // Stop cleanly after the timed move
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The `getRuntime()` method returns the time as a `__________` data type.
+2. When comparing time, it is critical to use the `__________` operator instead of `==` because the clock increments in sub-milliseconds.
+3. To reset the internal clock to zero at the start of the match, use the `__________` method.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`double`**
+2. **`<`** (less than)
+3. **`resetRuntime()`**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Use the simulator below to practice non-blocking timing with `getRuntime()` inside a TeleOp-style `loop()`.
+
+<SimulatorRunGuide />
+
+<Unit6Simulator lesson="runtime-timing" />
+
+## A Team Checks Time and Returns
+
+BunyipsLib's periodic task resets a timer once, checks whether its interval has passed, runs its action, and returns. Renamed for this lesson, the core looks like this:
+
+```java
+if (!timerStarted) {
+    timer.reset();
+    timerStarted = true;
+}
+if (timer.milliseconds() >= intervalMs) {
+    runScheduledAction();
+    timer.reset();
+}
+```
+
+The callback wrapper and zero-interval option were omitted. No line waits, so the OpMode can keep doing other work. Adapted from [BunyipsLib's `Periodic.java` at a pinned commit](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/src/main/java/au/edu/sa/mbhs/studentrobotics/bunyipslib/executables/Periodic.java) under the [MIT License](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/LICENSE).
+
+<MarkComplete
+  lessonId="unit-06/runtime-timing"
+  nextUnit="/docs/unit-06/hardware-arrays"
+  nextUnitName="Lesson 6.4: Iterating Hardware Arrays using for..each Syntax"
+/>

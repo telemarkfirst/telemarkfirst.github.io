@@ -1,0 +1,131 @@
+---
+id: screws-and-threads
+title: "Lesson 4.1: Metric Fasteners, Thread Callouts, and Hole Sizing"
+sidebar_label: "4.1 · Screws & Threads"
+sidebar_position: 1
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import LessonTool from '@site/src/components/mechanical/LessonTool';
+import LessonPhoto from '@site/src/components/mechanical/LessonPhoto';
+import ThreadCondition from '@site/src/components/mechanical/visuals/ThreadCondition';
+import TapDrillReference from '@site/src/components/mechanical/TapDrillReference';
+
+# Lesson 4.1: Metric Fasteners, Thread Callouts, and Hole Sizing
+
+---
+
+## Technical Context
+
+An FTC robot may use hundreds of fasteners, many of them M3 or M4. Their size, grade, engagement, and installation determine whether joints stay clamped through repeated impacts and vibration.
+
+---
+
+## Reading a Fastener Callout
+
+A complete callout looks like this:
+
+```text
+M3 x 0.5 x 12 SHCS
+ |    |     |   |
+ |    |     |   +--- head style: socket head cap screw
+ |    |     +------- length in mm, under the head
+ |    +------------- thread pitch in mm
+ +------------------ nominal major diameter in mm
+```
+
+Most common metric sizes have one standard coarse pitch, so it is usually written "M3 x 12" with the pitch implied. The pitch matters when you are tapping, which is why Module 2 covered it.
+
+**Length is measured under the head** for most heads, and **overall** for flat countersunk heads, because a countersunk head sits inside the material. Ordering 12 mm flat head when you wanted 12 mm of shank gets you a screw that is short.
+
+---
+
+## Head Styles and When Each Is Right
+
+| Head | Recognize it by | Use when |
+| --- | --- | --- |
+| Socket head cap (SHCS) | Cylindrical head, hex socket | Default for structure. Strong, high torque capacity |
+| Button head | Domed low head, hex socket | Where clearance is tight or a snag hazard exists |
+| Flat head (countersunk) | Conical underside | Where the head must sit flush with the surface |
+| Set screw | No head at all | Locking a hub or collar onto a shaft |
+
+Prefer socket head cap screws for anything structural. Button heads have a shallower socket and strip more easily under torque, and flat heads rely on the countersink being cut accurately to seat correctly.
+
+:::warning Screw length matters more than teams expect
+Too short, and there is not enough thread engagement to carry load. Too long, and the screw bottoms out in a blind hole and stops pulling the joint tight, so the joint feels tight while carrying no clamping force at all. That failure is invisible during assembly and shows up as a joint that loosens in one match.
+:::
+
+---
+
+## The Two Holes, Again
+
+This was covered in Lesson 2.4 and is repeated here because it is the most common single mistake in FTC fabrication.
+
+- The part the screw **passes through** gets a **clearance hole**, larger than the screw.
+- The part the screw **threads into** gets a **tapped hole**, drilled at the tap drill size, which is smaller than the screw.
+
+<LessonTool
+  toolId="tap-drill"
+  bring="The thread size the joint uses."
+  change="The thread, and compare the four diameters drawn to scale."
+  read="How close the tap drill and clearance sizes are. Mark every hole before drilling."
+>
+  <TapDrillReference />
+</LessonTool>
+
+---
+
+## How a Bolted Joint Actually Carries Load
+
+A properly made bolted joint does not carry load on the screw. Tightening the screw stretches it slightly, and that stretch clamps the two parts together. The friction between the clamped faces carries the load.
+
+Three consequences:
+
+**Clamping force is the point.** A screw that is snug but not tight provides little clamping force, so the joint relies on the screw in shear, and the parts shift within the clearance hole under load. That shifting is what you feel as slop.
+
+**Two fasteners resist rotation, one does not.** A single screw through a bracket lets the bracket pivot around it. Two screws spaced as far apart as the bracket allows resist rotation directly. When a bracket keeps going crooked, the answer is a second screw, not a tighter one.
+
+**Washers spread the load.** Under a screw head on soft material, a washer prevents the head from digging in and losing clamping force as the material deforms. On polycarbonate or printed plastic, a washer is not optional.
+
+:::tip Grade and material
+Most FTC hardware is stainless or alloy steel. Stainless resists corrosion but strips more easily. Alloy steel socket head screws are stronger and better suited to high-load joints. Avoid aluminum screws in structural joints unless the design specifically accounts for their lower strength.
+:::
+
+---
+
+<LessonPhoto
+  drawing={<ThreadCondition />}
+  alt="Two aluminum plates with a stripped thread beside a good thread."
+  caption="A stripped tapped hole next to an intact one. The stripped threads have been flattened into the bore, which is why the screw spins freely but pulls out under load."
+  shot="A stripped M3 tapped hole in thin aluminum, photographed beside a good one in the same plate for comparison."
+  framing="Macro, both holes in one frame, angled light so the thread crests catch the light."
+/>
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. In the callout M4 x 0.7 x 16, the number 0.7 is the thread `__________`.
+2. A bolted joint carries load primarily through the friction generated by `__________` force, not through the screw itself.
+3. When a bracket keeps rotating out of position, the correct fix is usually a second `__________` rather than more torque.
+
+<details>
+<summary>Show answers</summary>
+
+1. **pitch**
+2. **clamping**
+3. **fastener** (screw)
+
+</details>
+
+---
+
+## Exercise
+
+Find every single-fastener bracket on your robot. For each one, determine whether it can rotate about that fastener under load. Every one that can is a future alignment problem.
+
+<MarkComplete
+  lessonId="module-04/screws-and-threads"
+  nextUnit="/mechanical/module-04/thread-locking"
+  nextUnitName="Lesson 4.2: Keeping Fasteners Tight Under Vibration"
+/>

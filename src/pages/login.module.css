@@ -1,0 +1,155 @@
+.page {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.25rem;
+  background: var(--tm-bg);
+  color: var(--tm-text-strong);
+  font-family: 'Exo 2', system-ui, sans-serif;
+  scrollbar-color: var(--tm-accent) var(--tm-bg);
+  scrollbar-width: thin;
+}
+
+.page *,
+.page *::before,
+.page *::after {
+  box-sizing: border-box;
+}
+
+.page * {
+  scrollbar-color: var(--tm-accent) var(--tm-bg);
+  scrollbar-width: thin;
+}
+
+.page::-webkit-scrollbar,
+.page *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.page::-webkit-scrollbar-track,
+.page *::-webkit-scrollbar-track {
+  background: var(--tm-bg);
+}
+
+.page::-webkit-scrollbar-thumb,
+.page *::-webkit-scrollbar-thumb {
+  border: 2px solid var(--tm-bg);
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-accent);
+}
+
+.card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 430px;
+  padding: 3rem 2.5rem;
+  text-align: center;
+}
+
+[data-theme='light'] .card {
+  background: #fff;
+}
+
+.logoWrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.4rem;
+}
+
+.logoMark {
+  width: 66px;
+  height: 66px;
+  display: block;
+  object-fit: contain;
+}
+
+.eyebrow {
+  margin: 0 0 7px;
+  color: var(--tm-text-soft);
+  font-family: var(--tm-font-label);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.brand {
+  margin: 0 0 1rem;
+  color: var(--tm-blue-soft);
+  font-family: 'Exo 2', system-ui, sans-serif;
+  font-size: var(--tm-fs-3xl);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.sub {
+  margin: 0 0 2rem;
+  color: var(--tm-text-soft);
+  font-size: var(--tm-fs-sm);
+  line-height: 1.7;
+}
+
+.googleBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 1.25rem;
+  padding: 14px 24px;
+  border: 1px solid var(--tm-border-strong);
+  border-radius: var(--tm-r-sm);
+  background: #fff;
+  color: #111820;
+  cursor: pointer;
+  font-family: 'Exo 2', system-ui, sans-serif;
+  font-size: var(--tm-fs-sm);
+  font-weight: 650;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.googleBtn:hover {
+  border-color: var(--tm-accent);
+}
+
+.googleBtn:focus-visible {
+  outline: 3px solid var(--tm-accent-a55);
+  outline-offset: 3px;
+}
+
+.privacy {
+  margin: 0;
+  color: var(--tm-text-soft);
+  font-family: var(--tm-font-label);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+}
+
+.error {
+  margin: 0 0 1rem;
+  color: var(--tm-danger);
+  font-size: var(--tm-fs-sm);
+  line-height: var(--tm-lh-normal);
+}
+
+[data-theme='light'] .privacy {
+  color: #111820;
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 2.5rem 1.4rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .googleBtn {
+    transition: none;
+  }
+}

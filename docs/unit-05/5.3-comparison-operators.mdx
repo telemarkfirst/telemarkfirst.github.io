@@ -1,0 +1,95 @@
+---
+id: comparison-operators
+title: "Lesson 5.3: Using Comparison Operators to Protect Hardware Limits"
+sidebar_label: "5.3 · Comparison Operators"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit5Simulator from '@site/src/components/Unit5Simulator';
+
+# Lesson 5.3: Using Comparison Operators to Protect Hardware Limits
+
+---
+
+## Technical Context
+
+Comparison operators let the robot interpret values such as encoder ticks or sensor voltage. A software limit can stop a mechanism before it reaches a hard stop, reducing stalls, heat, and mechanical wear. Software limits should support, not replace, suitable physical design and current protection.
+
+---
+
+## How Comparisons Create Safe Operating Zones
+
+Hardware sensors return numerical values that must be compared against thresholds. Java provides several conditional operators for this purpose: `==` (equal to), `!=` (not equal to), `<` (less than), `>` (greater than), `<=` (less than or equal to), and `>=` (greater than or equal to). In the case of an arm mechanism, the programmer compares the current `DcMotor` encoder position against a maximum "Safe-Zone" integer. If the position exceeds the limit, the logic overrides driver input to force the power to zero.
+
+---
+
+## Annotated Code
+
+```java
+@Override
+public void loop() {
+    double liftPower = -1 * gamepad1.left_stick_y;
+    int currentPos   = liftMotor.getCurrentPosition();
+
+    // Hardware Protection Logic: Max Height is 2000 ticks
+    if (currentPos > 2000 && liftPower > 0) {
+        // Overriding power to prevent mechanical over-extension
+        liftPower = 0.0;
+        telemetry.addData("Safety", "MAX LIMIT REACHED");
+    }
+
+    liftMotor.setPower(liftPower);
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. To test if two numerical hardware values are exactly equal, the `__________` operator must be used.
+2. The `__________` operator is used to check if a sensor value is "not equal" to a specific constant.
+3. A common error is accidentally using the single `=` operator, which is for `__________`, instead of the double `==` operator.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`==`**
+2. **`!=`**
+3. **assignment**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+**Robot Scenario:** Your team is using a Distance Sensor to prevent the robot from hitting walls. If the distance reading is less than `10.0` cm, the motor power should be set to `0.0` immediately.
+
+<SimulatorRunGuide />
+
+<Unit5Simulator lesson="comparison-operators" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+@Override
+public void loop() {
+    double dist = distanceSensor.getDistance(DistanceUnit.CM);
+
+    if (dist < 10.0) {
+        driveMotor.setPower(0.0);
+    } else {
+        driveMotor.setPower(-1 * gamepad1.left_stick_y);
+    }
+}
+```
+
+</details>
+
+<MarkComplete
+  lessonId="unit-05/comparison-operators"
+  nextUnit="/docs/unit-05/logical-operators"
+  nextUnitName="Lesson 5.4: Combining Sensor Thresholds with Logical AND/OR Operators"
+/>

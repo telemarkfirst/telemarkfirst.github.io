@@ -1,0 +1,82 @@
+---
+id: joint-standards
+title: "Lesson 12.2: Thread Engagement, Fastener Count, and Retention"
+sidebar_label: "12.2 · Joint Standards"
+sidebar_position: 2
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 12.2: Thread Engagement, Fastener Count, and Retention
+
+---
+
+## Technical Context
+
+Set a small number of joint standards before the build schedule becomes crowded. Use them consistently unless a documented load or access constraint requires a different choice.
+
+---
+
+## The standards
+
+| Standard | Value | Why |
+| --- | --- | --- |
+| Thread engagement in aluminium | **at least 1.5 x diameter** | Below it the threads strip before the screw yields |
+| Thread engagement in steel | 1.0 x diameter | Steel threads carry more per turn |
+| Fasteners per bracket | **two, spaced apart** | One fastener is a pivot, not a joint |
+| Screw protrusion past a nut | at least 1.5 threads | Proves full nut engagement |
+| Washer under a head on plastic | **always** | Spreads load so the head cannot sink |
+
+For M3 that means **4.5 mm of tapped depth minimum**. An M3 tapped into 1/8 in plate, which is 3.175 mm, is already below standard: use a nut, an insert, or a thicker section.
+
+:::warning One fastener is not a joint
+A bracket held by a single screw rotates about that screw. Every load cycle works it a little further out of position, and no amount of torque fixes it because torque was never the problem. Two fasteners spaced as far apart as the bracket allows is the standard, and it costs one screw.
+:::
+
+---
+
+## Retention, in order of preference
+
+1. **Correct preload.** Most fasteners that come loose were never properly tightened. Free.
+2. **Nylon insert lock nut.** Wherever there is room for a nut. Replace it when it spins on by hand.
+3. **Blue threadlocker.** Removable. Red is not for a robot you have to service between matches.
+4. **A flat on the shaft** for any set screw. The flat gives the screw a positive surface to bear against and reduces slipping.
+
+Split lock washers are not on this list. They do very little on a properly tightened joint and are not a substitute for a nylock.
+
+---
+
+## The standard that is not a number
+
+**Every fastener that matters gets a witness mark.** A paint pen line across the head and onto the part, so a pit crew can check thirty of them visually in under a minute instead of feeling each one with a driver.
+
+If a marked fastener keeps moving, the fix is structural rather than chemical: the joint is flexing, and threadlocker only delays it. That is [Lesson 4.2](/mechanical/module-04/thread-locking).
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Minimum thread engagement in aluminium is `__________` times the screw diameter.
+2. A bracket needs at least `__________` fasteners, spaced apart.
+3. A set screw on a round shaft should bear on a machined `__________`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **1.5**
+2. **two**
+3. **flat**
+
+</details>
+
+---
+
+## Exercise
+
+Walk your robot and count the single-fastener brackets. Every one of them is a future alignment problem. Fix the two that carry the most load this week.
+
+<MarkComplete
+  lessonId="module-12/joint-standards"
+  nextUnit="/mechanical/module-12/rotating-standards"
+  nextUnitName="Lesson 12.3: Standards for Anything That Spins"
+/>

@@ -1,0 +1,1594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Telemark Unit 15.5 Simulator</title>
+<style>
+  #sim-right-panel #sim-scene-container {
+    flex: 1 0 clamp(390px, 56vh, 660px);
+    min-height: 390px;
+    background: #020204;
+  }
+
+  #sim-right-panel .u155-panel {
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: clamp(300px, 38vh, 500px);
+    overflow-y: auto;
+    margin: 10px;
+    padding: 12px;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #0b0b0f;
+    color: #e5e7eb;
+    font-family: var(--font-ui, Arial, sans-serif);
+  }
+
+  #sim-scene-container .u155-badge,
+  #sim-scene-container .u155-score-badge,
+  #sim-scene-container .u155-stuck-badge,
+  #sim-scene-container .u155-diagram {
+    position: absolute;
+    z-index: 5;
+    border: 1px solid rgba(243, 234, 215, 0.34);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.88);
+    color: #f3ead7;
+    font-weight: 800;
+    pointer-events: none;
+    box-shadow: 0 0 18px rgba(243, 234, 215, 0.08);
+  }
+
+  #sim-scene-container .u155-badge {
+    top: 12px;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 11px;
+  }
+
+  #sim-scene-container .u155-score-badge {
+    left: 12px;
+    bottom: 12px;
+    display: none;
+    padding: 9px 12px;
+  }
+
+  #sim-scene-container .u155-stuck-badge {
+    right: 12px;
+    bottom: 12px;
+    display: none;
+    padding: 9px 12px;
+    color: #d8c7a5;
+    border-color: rgba(216, 199, 165, 0.54);
+  }
+
+  #sim-scene-container .u155-diagram {
+    top: 12px;
+    right: 12px;
+    width: min(300px, 42%);
+    padding: 10px;
+  }
+
+  #sim-scene-container .u155-diagram-title,
+  #sim-right-panel .u155-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 800;
+  }
+
+  #sim-scene-container .u155-diagram-title {
+    margin-bottom: 8px;
+  }
+
+  #sim-scene-container .u155-flow {
+    display: grid;
+    gap: 7px;
+  }
+
+  #sim-scene-container .u155-state-node,
+  #sim-scene-container .u155-arrow-node {
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #08080c;
+    color: #8f8778;
+    padding: 7px;
+    font-size: 0.75rem;
+  }
+
+  #sim-scene-container .u155-state-node.active {
+    color: #f3ead7;
+    border-color: #f3ead7;
+    box-shadow: 0 0 14px rgba(243, 234, 215, 0.22);
+  }
+
+  #sim-scene-container .u155-state-node.done,
+  #sim-scene-container .u155-arrow-node.pulse {
+    color: #d8c7a5;
+    border-color: #d8c7a5;
+  }
+
+  #sim-scene-container .u155-state-node.stuck {
+    color: #d8c7a5;
+    border-color: #8f8778;
+    box-shadow: 0 0 16px rgba(216, 199, 165, 0.22);
+  }
+
+  #sim-right-panel .u155-title {
+    margin: 12px 0 8px;
+  }
+
+  #sim-right-panel .u155-title:first-child {
+    margin-top: 0;
+  }
+
+  #sim-right-panel .u155-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  #sim-right-panel .u155-card,
+  #sim-right-panel .u155-step {
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #08080c;
+    color: #9ca3af;
+    padding: 9px;
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  #sim-right-panel .u155-card strong {
+    color: #f4f4f5;
+    font-size: 1.08rem;
+  }
+
+  #sim-right-panel .u155-card.large strong {
+    font-size: 1.35rem;
+  }
+
+  #sim-right-panel .u155-card.good,
+  #sim-right-panel .u155-step.good {
+    border-color: #22cc66;
+    color: #bbf7d0;
+    box-shadow: 0 0 12px rgba(34, 204, 102, 0.1);
+  }
+
+  #sim-right-panel .u155-card.warn,
+  #sim-right-panel .u155-step.warn {
+    border-color: #8a6a20;
+    color: #fde68a;
+  }
+
+  #sim-right-panel .u155-card.bad,
+  #sim-right-panel .u155-step.bad {
+    border-color: #7f1d1d;
+    color: #fecaca;
+  }
+
+  #sim-right-panel .u155-bar {
+    height: 10px;
+    margin-top: 6px;
+    border-radius: 999px;
+    background: #15151c;
+    overflow: hidden;
+    border: 1px solid #2a2a3a;
+  }
+
+  #sim-right-panel .u155-fill {
+    height: 100%;
+    width: 0%;
+    background: #f3ead7;
+  }
+
+  #sim-right-panel .u155-timeline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  #sim-right-panel .u155-warning,
+  #sim-right-panel .u155-success,
+  #sim-right-panel .u155-callout {
+    margin-top: 10px;
+    border-radius: 8px;
+    padding: 9px;
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  #sim-right-panel .u155-callout {
+    border: 1px solid #374151;
+    background: rgba(244, 244, 245, 0.05);
+    color: #e5e7eb;
+  }
+
+  #sim-right-panel .u155-warning {
+    display: none;
+    border: 1px solid #8a6a20;
+    background: rgba(255, 204, 102, 0.08);
+    color: #fde68a;
+  }
+
+  #sim-right-panel .u155-warning.error {
+    border-color: #7f1d1d;
+    background: rgba(239, 68, 68, 0.1);
+    color: #fecaca;
+  }
+
+  #sim-right-panel .u155-success {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #22cc66;
+    background: rgba(34, 204, 102, 0.1);
+    color: #22cc66;
+    font-weight: 800;
+  }
+</style>
+<script src="./simulator_base.js"></script>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+  <script src="./telemark-project.js"></script>
+  <link href="./telemark-project.css" rel="stylesheet"/>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+<script>
+window.onSimulatorReady = function () {
+  "use strict";
+
+  const starterCode = `package org.firstinspires.ftc.teamcode;
+
+import com.pedropathing.follower.Follower;
+import com.pedropathing.api.PoseFactory;
+import com.pedropathing.ivy.Command;
+import com.pedropathing.ivy.Scheduler;
+import com.pedropathing.math.Pose;
+import com.pedropathing.paths.Path;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import org.firstinspires.ftc.teamcode.pedro.Constants;
+
+import static com.pedropathing.api.Paths.line;
+import static com.pedropathing.ivy.Scheduler.schedule;
+import static com.pedropathing.ivy.commands.Commands.instant;
+import static com.pedropathing.ivy.commands.Commands.waitMs;
+import static com.pedropathing.ivy.groups.Groups.sequential;
+import static com.pedropathing.ivy.pedro.PedroCommands.follow;
+
+@Autonomous(name="Full_Autonomous_Practice")
+public class FullAutonomousPractice extends LinearOpMode {
+
+    Follower  follower;
+    RobotHardware robot;
+    Path scoringPath;
+
+    private Command autoRoutine() {
+        return sequential(
+            follow(follower, scoringPath),
+            instant(() -> robot.lift.moveToScore()),
+            instant(() -> robot.intake.eject()),
+            // TODO: Wait 500 ms without blocking, then stop the intake.
+            // Add both commands here.
+            instant(() -> robot.stopAll())
+        );
+    }
+
+    @Override
+    public void runOpMode() {
+
+        Scheduler.reset();
+
+        follower = Constants.create(hardwareMap);
+        robot = new RobotHardware();
+        robot.init(hardwareMap);
+
+        PoseFactory poses = PoseFactory.degrees();
+        Pose startPose = poses.of(8, 60, 0);
+        Pose scorePose = poses.of(120, 120, 0);
+        follower.setPose(startPose);
+        follower.update();
+        scoringPath = line(startPose, scorePose).linear(startPose, scorePose);
+
+        robot.intake.stop();
+
+        telemetry.addData("Status", "Ready");
+        telemetry.update();
+
+        waitForStart();
+
+        schedule(autoRoutine());
+
+        while (opModeIsActive()) {
+            follower.update();
+            robot.update();
+            Scheduler.execute();
+
+            Pose pose = follower.pose();
+            telemetry.addData("Mode",    follower.mode());
+            telemetry.addData("X",       pose.x());
+            telemetry.addData("Y",       pose.y());
+            telemetry.addData("Heading", pose.heading());
+            telemetry.update();
+        }
+
+        robot.stopAll();
+
+        telemetry.addData("Status", "COMPLETE");
+        telemetry.update();
+    }
+}`;
+
+  const referenceFiles = [
+    {
+      name: "RobotConfig.java",
+      source: `package org.firstinspires.ftc.teamcode;
+
+public final class RobotConfig {
+    public static final String INTAKE_NAME = "intake";
+    public static final String LIFT_NAME = "lift";
+    public static final double INTAKE_POWER = 0.8;
+    public static final int LIFT_SCORE_TICKS = 1200;
+    public static final double LIFT_POWER = 0.75;
+
+    private RobotConfig() {}
+}`
+    },
+    {
+      name: "Intake.java",
+      source: `package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+
+public class Intake {
+    private CRServo motor;
+
+    public void init(HardwareMap hardwareMap) {
+        motor = hardwareMap.get(CRServo.class, RobotConfig.INTAKE_NAME);
+        stop();
+    }
+
+    public void collect() { motor.setPower(RobotConfig.INTAKE_POWER); }
+    public void eject() { motor.setPower(-RobotConfig.INTAKE_POWER); }
+    public void stop() { motor.setPower(0.0); }
+}`
+    },
+    {
+      name: "MotorMechanism.java",
+      source: `package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+
+public class MotorMechanism {
+    protected DcMotor motor;
+
+    public void init(HardwareMap hardwareMap, String name) {
+        motor = hardwareMap.get(DcMotor.class, name);
+        motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        stop();
+    }
+
+    public void stop() { motor.setPower(0.0); }
+}`
+    },
+    {
+      name: "Lift.java",
+      source: `package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+
+public class Lift extends MotorMechanism {
+    public void init(HardwareMap hardwareMap) {
+        super.init(hardwareMap, RobotConfig.LIFT_NAME);
+        motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+
+    public void moveToScore() {
+        motor.setTargetPosition(RobotConfig.LIFT_SCORE_TICKS);
+        motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        motor.setPower(RobotConfig.LIFT_POWER);
+    }
+
+    public boolean isAtTarget() { return !motor.isBusy(); }
+    public void update() { if (isAtTarget()) stop(); }
+
+    @Override
+    public void stop() { motor.setPower(0.0); }
+}`
+    },
+    {
+      name: "RobotHardware.java",
+      source: `package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.hardware.HardwareMap;
+
+public class RobotHardware {
+    public final Intake intake = new Intake();
+    public final Lift lift = new Lift();
+
+    public void init(HardwareMap hardwareMap) {
+        intake.init(hardwareMap);
+        lift.init(hardwareMap);
+    }
+
+    public void update() { lift.update(); }
+    public void stopAll() { intake.stop(); lift.stop(); }
+}`
+    }
+  ];
+
+  const requirements = [
+    "Create the Follower with Constants.create()",
+    "Set the Pedro 3 starting pose with follower.setPose()",
+    "Build the scoring Path with Paths.line()",
+    "Create and initialize one RobotHardware object",
+    "Return an Ivy sequential(...) command group",
+    "Follow the scoring path with PedroCommands.follow()",
+    "Use instant(...) for lift and intake actions",
+    "Wait 500 ms with waitMs(500), not sleep()",
+    "Schedule autoRoutine() after Start",
+    "Call Scheduler.execute() every iteration",
+    "Call robot.update() every iteration",
+    "Call follower.update() every iteration",
+    "Use opModeIsActive() in the while condition",
+    "Call robot.stopAll() after the loop",
+    "Keep raw intake and lift mapping out of the OpMode"
+  ];
+
+  const FIELD_INCHES = 144;
+  const FIELD_SCALE = 0.047;
+  const START_POSE = { x: 8, y: 60, heading: 0 };
+  const TARGET_POSE = { x: 120, y: 120, heading: 0 };
+  const CLAW_OPEN = 0.1;
+  const CLAW_CLOSED = 0.9;
+
+  const state = {
+    runToken: 0,
+    active: false,
+    stopRequested: false,
+    waitingForStart: false,
+    startRequested: false,
+    _resolveStart: null,
+    phase: "NOT INITIALIZED",
+    currentState: "INIT",
+    visited: {},
+    history: [],
+    pose: { x: START_POSE.x, y: START_POSE.y, heading: START_POSE.heading },
+    startPose: { x: START_POSE.x, y: START_POSE.y, heading: START_POSE.heading },
+    path: null,
+    pathProgress: 0,
+    followerBusy: false,
+    clawPosition: CLAW_CLOSED,
+    deliverTimer: 0,
+    deliverElapsed: 0,
+    correctedDeliverStart: 0,
+    lastTransition: "",
+    transitionPulse: 0,
+    scored: false,
+    stuck: false,
+    completed: false,
+    analysis: null,
+    lastError: "",
+    runtimeStart: 0,
+    finalTelemetry: false
+  };
+
+  let followerDevice;
+  let clawDevice;
+  let sceneRoot;
+  let robotGroup;
+  let clawLeft;
+  let clawRight;
+  let gameElement;
+  let scoreZone;
+  let pathLine;
+  let progressLine;
+  let timerRing;
+  let transitionFlash;
+  let animationRegistered = false;
+  const followerCallbacks = [];
+
+  function el(id) {
+    return document.getElementById(id);
+  }
+
+  function safeCall(fn) {
+    if (typeof fn !== "function") return undefined;
+    const args = Array.prototype.slice.call(arguments, 1);
+    return fn.apply(null, args);
+  }
+
+  ensureHardware();
+
+  setCode(starterCode);
+  const editor = document.getElementById("sim-code-editor");
+  const restoredMain = getCode();
+  TelemarkProject.attach(editor, null, {
+    initialFiles: [
+      { name: "FullAutonomousPractice.java", source: restoredMain }
+    ].concat(referenceFiles),
+    addMissingInitialFiles: true
+  });
+  setChallenge(
+    "Telemark Unit 15.5 Simulator",
+    "Pedro 3 + Ivy Autonomous with Robot Subsystems",
+    requirements
+  );
+  setBadges([
+    { icon: "fa-route", iconClass: "fa-solid fa-route", label: "PedroPathing", active: true },
+    { icon: "fa-diagram-project", iconClass: "fa-solid fa-diagram-project", label: "Ivy commands", active: true },
+    { icon: "fa-gears", iconClass: "fa-solid fa-gears", label: "Subsystem APIs", active: true },
+    { icon: "fa-folder-tree", iconClass: "fa-solid fa-folder-tree", label: "6 Java files", active: true },
+    { icon: "fa-clock", iconClass: "fa-solid fa-clock", label: "waitMs", active: true },
+    { icon: "fa-display", iconClass: "fa-solid fa-display", label: "Telemetry", active: true }
+  ]);
+  setActiveInputs([]);
+
+  const banner = el("sim-success-banner");
+  if (banner) {
+    banner.innerHTML = '<i class="fa-solid fa-circle-check"></i> Challenge Complete! The Ivy routine follows the path, scores, waits without blocking, and cleans up.';
+  }
+
+  followerDevice = hardwareMap.registerFollower("follower");
+  clawDevice = hardwareMap.registerServo("claw");
+  hardwareMap.onFollowerUpdate(function (x, y, heading) {
+    updateRobotPose(x, y, heading);
+  });
+  hardwareMap.onServoPosition(function (name, value) {
+    updateClawVisual(name, value);
+  });
+
+  createPanel();
+  setupScene();
+  resetSimulationState();
+  validateCode();
+  updatePanel();
+
+  window.onInit = function () {
+    state.runToken += 1;
+    state.active = true;
+    state.stopRequested = false;
+    state.startRequested = false;
+    state.waitingForStart = false;
+    resetSimulationState();
+    state.phase = "INITIALIZING";
+    validateCode();
+    runLinearOpMode(state.runToken);
+  };
+
+  window.onStart = function () {
+    state.startRequested = true;
+    releaseWaitForStart();
+  };
+
+  window.onRun = window.onInit;
+
+  window.onStop = function () {
+    state.stopRequested = true;
+    state.active = false;
+    state.waitingForStart = false;
+    state.phase = "STOPPED";
+    releaseWaitForStart();
+    updatePanel();
+  };
+
+  window.onReset = function () {
+    state.runToken += 1;
+    state.active = false;
+    state.stopRequested = false;
+    state.startRequested = false;
+    state.waitingForStart = false;
+    resetSimulationState();
+    safeCall(clearTelemetry);
+    validateCode();
+    updatePanel();
+  };
+
+  if (!animationRegistered && typeof addAnimationCallback === "function") {
+    addAnimationCallback(tick);
+    animationRegistered = true;
+  }
+
+  function ensureHardware() {
+    if (typeof hardwareMap.registerFollower !== "function") {
+      hardwareMap.registerFollower = function (name) {
+        const device = {
+          _name: name,
+          setPose: function (pose) { setFollowerStartPose(pose); },
+          follow: function (path) { followPath(path); },
+          update: function () { updateFollower(); },
+          isBusy: function () { return isFollowerBusy(); },
+          pose: function () { return getFollowerPose(); },
+          mode: function () { return state.followerBusy ? "FOLLOWING" : "IDLE"; }
+        };
+        hardwareMap._devices[name] = device;
+        return device;
+      };
+    }
+
+    if (typeof hardwareMap.onFollowerUpdate !== "function") {
+      hardwareMap.onFollowerUpdate = function (cb) { followerCallbacks.push(cb); };
+    } else {
+      const original = hardwareMap.onFollowerUpdate.bind(hardwareMap);
+      hardwareMap.onFollowerUpdate = function (cb) {
+        followerCallbacks.push(cb);
+        original(cb);
+      };
+    }
+  }
+
+  function createPanel() {
+    const rightPanel = el("sim-right-panel");
+    const sceneContainer = el("sim-scene-container");
+    if (!rightPanel || !sceneContainer) return;
+
+    ["u155-panel", "u155-scene-badge", "u155-score-badge", "u155-stuck-badge", "u155-diagram"].forEach(function (id) {
+      const old = el(id);
+      if (old) old.remove();
+    });
+
+    const sceneBadge = document.createElement("div");
+    sceneBadge.id = "u155-scene-badge";
+    sceneBadge.className = "u155-badge";
+    sceneContainer.appendChild(sceneBadge);
+
+    const scoreBadge = document.createElement("div");
+    scoreBadge.id = "u155-score-badge";
+    scoreBadge.className = "u155-score-badge";
+    scoreBadge.innerHTML = '<i class="fa-solid fa-circle-check"></i> SCORED';
+    sceneContainer.appendChild(scoreBadge);
+
+    const stuckBadge = document.createElement("div");
+    stuckBadge.id = "u155-stuck-badge";
+    stuckBadge.className = "u155-stuck-badge";
+    stuckBadge.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> STUCK';
+    sceneContainer.appendChild(stuckBadge);
+
+    const diagram = document.createElement("div");
+    diagram.id = "u155-diagram";
+    diagram.className = "u155-diagram";
+    diagram.innerHTML = `
+      <div class="u155-diagram-title"><i class="fa-solid fa-diagram-project"></i> Ivy Command Sequence</div>
+      <div class="u155-flow">
+        <div class="u155-state-node" id="u155-node-drive">follow(path)</div>
+        <div class="u155-arrow-node" id="u155-arrow-drive">path completes</div>
+        <div class="u155-state-node" id="u155-node-deliver">instant(eject)</div>
+        <div class="u155-arrow-node" id="u155-arrow-deliver">waitMs(500)</div>
+        <div class="u155-state-node" id="u155-node-done">instant(stop)</div>
+      </div>
+    `;
+    sceneContainer.appendChild(diagram);
+
+    const panel = document.createElement("div");
+    panel.id = "u155-panel";
+    panel.className = "u155-panel";
+    panel.innerHTML = `
+      <div class="u155-title"><i class="fa-solid fa-location-arrow"></i> Active Command</div>
+      <div class="u155-grid">
+        <div class="u155-card large" id="u155-state-card"></div>
+        <div class="u155-card large" id="u155-claw-card"></div>
+        <div class="u155-card" id="u155-pose-card"></div>
+        <div class="u155-card" id="u155-progress-card"></div>
+      </div>
+
+      <div class="u155-title"><i class="fa-solid fa-code-branch"></i> Command Completion</div>
+      <div class="u155-grid">
+        <div class="u155-card" id="u155-busy-card"></div>
+        <div class="u155-card" id="u155-timer-card"></div>
+      </div>
+
+      <div class="u155-title"><i class="fa-solid fa-clock-rotate-left"></i> Command History</div>
+      <div class="u155-timeline" id="u155-history"></div>
+
+      <div class="u155-title"><i class="fa-solid fa-stopwatch"></i> Non-blocking Wait</div>
+      <div class="u155-card" id="u155-deliver-bar"></div>
+
+      <div class="u155-callout">
+        <i class="fa-solid fa-circle-info"></i>
+        The OpMode should keep the follower and robot updated, delegate mechanism work, wait 0.5 seconds without blocking, then stop cleanly.
+      </div>
+      <div class="u155-success" id="u155-success"><i class="fa-solid fa-circle-check"></i> Challenge Complete! The Pedro 3 + Ivy command sequence ran correctly.</div>
+      <div class="u155-warning" id="u155-warning"></div>
+    `;
+    rightPanel.appendChild(panel);
+  }
+
+  function setupScene() {
+    if (!window.THREE || !window.scene) return;
+    if (sceneRoot) window.scene.remove(sceneRoot);
+
+    sceneRoot = new THREE.Group();
+    sceneRoot.name = "unit15_5_scene";
+    window.scene.add(sceneRoot);
+    window.scene.background = new THREE.Color(0x000000);
+    safeCall(setFieldVisible, false);
+
+    if (window.camera) {
+      window.camera.position.set(0, 11.5, 0.001);
+      window.camera.lookAt(0, 0, 0);
+    }
+
+    const ambient = new THREE.AmbientLight(0xffffff, 1.28);
+    sceneRoot.add(ambient);
+    const dir = new THREE.DirectionalLight(0xf3ead7, 0.9);
+    dir.position.set(3, 8, 4);
+    sceneRoot.add(dir);
+
+    const fieldSize = FIELD_INCHES * FIELD_SCALE;
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(fieldSize, fieldSize),
+      new THREE.MeshStandardMaterial({
+        color: 0x050505,
+        roughness: 0.95,
+        metalness: 0.02,
+        polygonOffset: true,
+        polygonOffsetFactor: 1,
+        polygonOffsetUnits: 1
+      })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    sceneRoot.add(floor);
+
+    const grid = new THREE.GridHelper(fieldSize, 6, 0xd8c7a5, 0x1f1f1f);
+    grid.position.y = 0.018;
+    grid.material.transparent = true;
+    grid.material.opacity = 0.42;
+    grid.material.depthWrite = false;
+    sceneRoot.add(grid);
+
+    addFieldFrame(fieldSize);
+    addTargetZone();
+    addPathVisual();
+
+    robotGroup = buildRobot();
+    sceneRoot.add(robotGroup);
+
+    gameElement = new THREE.Mesh(
+      new THREE.SphereGeometry(0.16, 24, 24),
+      new THREE.MeshStandardMaterial({ color: 0xd8c7a5, roughness: 0.5, metalness: 0.04, emissive: 0x000000 })
+    );
+    const target = fieldToScene(TARGET_POSE.x, TARGET_POSE.y);
+    gameElement.position.set(target.x + 0.28, 0.18, target.z - 0.22);
+    sceneRoot.add(gameElement);
+
+    timerRing = new THREE.Mesh(
+      new THREE.RingGeometry(0.38, 0.48, 48),
+      new THREE.MeshBasicMaterial({ color: 0xf3ead7, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false })
+    );
+    timerRing.rotation.x = -Math.PI / 2;
+    sceneRoot.add(timerRing);
+
+    transitionFlash = new THREE.Mesh(
+      new THREE.RingGeometry(0.55, 0.75, 48),
+      new THREE.MeshBasicMaterial({ color: 0xf3ead7, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false })
+    );
+    transitionFlash.rotation.x = -Math.PI / 2;
+    sceneRoot.add(transitionFlash);
+  }
+
+  function addFieldFrame(fieldSize) {
+    const mat = new THREE.MeshBasicMaterial({ color: 0xd8c7a5, transparent: true, opacity: 0.16, depthWrite: false });
+    [
+      [0, -fieldSize / 2, fieldSize, 0.04],
+      [0, fieldSize / 2, fieldSize, 0.04],
+      [-fieldSize / 2, 0, 0.04, fieldSize],
+      [fieldSize / 2, 0, 0.04, fieldSize]
+    ].forEach(function (data) {
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(data[2], 0.14, data[3]), mat);
+      wall.position.set(data[0], 0.07, data[1]);
+      sceneRoot.add(wall);
+    });
+  }
+
+  function addTargetZone() {
+    const pos = fieldToScene(120, 120);
+    scoreZone = new THREE.Mesh(
+      new THREE.BoxGeometry(1.2, 0.035, 1.2),
+      new THREE.MeshBasicMaterial({ color: 0xf3ead7, transparent: true, opacity: 0.18, depthWrite: false })
+    );
+    scoreZone.position.set(pos.x, 0.045, pos.z);
+    sceneRoot.add(scoreZone);
+  }
+
+  function addPathVisual() {
+    pathLine = makeLine(0x8f8778, 0.46);
+    progressLine = makeLine(0xf3ead7, 0.9);
+    sceneRoot.add(pathLine);
+    sceneRoot.add(progressLine);
+    const start = fieldToScene(START_POSE.x, START_POSE.y);
+    const end = fieldToScene(TARGET_POSE.x, TARGET_POSE.y);
+    setLine(pathLine, [
+      new THREE.Vector3(start.x, 0.08, start.z),
+      new THREE.Vector3(end.x, 0.08, end.z)
+    ]);
+    setLine(progressLine, [
+      new THREE.Vector3(start.x, 0.1, start.z),
+      new THREE.Vector3(start.x, 0.1, start.z)
+    ]);
+  }
+
+  function buildRobot() {
+    const group = new THREE.Group();
+    const body = new THREE.Mesh(
+      new THREE.BoxGeometry(0.72, 0.28, 0.58),
+      new THREE.MeshStandardMaterial({ color: 0xf3ead7, roughness: 0.62, metalness: 0.08 })
+    );
+    body.position.y = 0.18;
+    group.add(body);
+
+    const front = new THREE.Mesh(
+      new THREE.BoxGeometry(0.16, 0.08, 0.62),
+      new THREE.MeshBasicMaterial({ color: 0xd8c7a5 })
+    );
+    front.position.set(0.36, 0.34, 0);
+    group.add(front);
+
+    const tireMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.86, metalness: 0.03 });
+    const hubMat = new THREE.MeshStandardMaterial({ color: 0xd8c7a5, roughness: 0.58, metalness: 0.1 });
+    [-0.38, 0.38].forEach(function (z) {
+      [-0.28, 0.28].forEach(function (x) {
+        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.1, 20), tireMat);
+        wheel.rotation.x = Math.PI / 2;
+        wheel.position.set(x, 0.1, z);
+        group.add(wheel);
+        const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.105, 16), hubMat);
+        hub.rotation.x = Math.PI / 2;
+        hub.position.copy(wheel.position);
+        group.add(hub);
+      });
+    });
+
+    const clawMat = new THREE.MeshStandardMaterial({ color: 0x8f8778, roughness: 0.65, metalness: 0.08, emissive: 0x000000 });
+    clawLeft = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.08, 0.32), clawMat);
+    clawRight = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.08, 0.32), clawMat);
+    clawLeft.position.set(0.5, 0.24, -0.12);
+    clawRight.position.set(0.5, 0.24, 0.12);
+    group.add(clawLeft);
+    group.add(clawRight);
+    return group;
+  }
+
+  function makeLine(color, opacity) {
+    return new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
+      new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: opacity, depthWrite: false })
+    );
+  }
+
+  function tick() {
+    updateScene();
+  }
+
+  function updateScene() {
+    if (!window.THREE || !sceneRoot) return;
+    if (robotGroup) {
+      const pos = fieldToScene(state.pose.x, state.pose.y);
+      robotGroup.position.set(pos.x, 0, pos.z);
+      robotGroup.rotation.y = state.pose.heading;
+    }
+
+    if (clawLeft && clawRight) {
+      const open = state.clawPosition <= 0.2;
+      const spread = open ? 0.2 : 0.09;
+      clawLeft.position.z += (-spread - clawLeft.position.z) * 0.24;
+      clawRight.position.z += (spread - clawRight.position.z) * 0.24;
+      const emissive = open ? 0x2a261d : 0x000000;
+      clawLeft.material.emissive.setHex(emissive);
+      clawRight.material.emissive.setHex(emissive);
+    }
+
+    const start = fieldToScene(START_POSE.x, START_POSE.y);
+    const end = fieldToScene(TARGET_POSE.x, TARGET_POSE.y);
+    const px = start.x + (end.x - start.x) * state.pathProgress;
+    const pz = start.z + (end.z - start.z) * state.pathProgress;
+    setLine(progressLine, [
+      new THREE.Vector3(start.x, 0.1, start.z),
+      new THREE.Vector3(px, 0.1, pz)
+    ]);
+
+    if (gameElement) {
+      gameElement.material.emissive.setHex(state.scored ? 0x2a261d : 0x000000);
+      gameElement.position.y = state.scored ? 0.22 + Math.sin(performance.now() * 0.005) * 0.03 : 0.18;
+    }
+
+    if (scoreZone) {
+      scoreZone.material.opacity = state.scored ? 0.28 : 0.18;
+    }
+
+    if (timerRing) {
+      const target = fieldToScene(TARGET_POSE.x, TARGET_POSE.y);
+      timerRing.position.set(target.x, 0.065, target.z);
+      timerRing.material.opacity = state.currentState === "DELIVER" ? 0.25 + Math.min(0.5, state.deliverElapsed) : 0;
+      timerRing.scale.setScalar(1 + Math.min(1, state.deliverElapsed / 0.5) * 0.45);
+    }
+
+    if (transitionFlash) {
+      const pos = fieldToScene(state.pose.x, state.pose.y);
+      transitionFlash.position.set(pos.x, 0.075, pos.z);
+      state.transitionPulse = Math.max(0, state.transitionPulse - 0.04);
+      transitionFlash.material.opacity = state.transitionPulse * 0.62;
+      transitionFlash.scale.setScalar(1 + (1 - state.transitionPulse) * 0.8);
+    }
+  }
+
+  function createFollower() {
+    state.phase = "FOLLOWER CREATED";
+    return followerDevice || hardwareMap.registerFollower("follower");
+  }
+
+  function getServo(name) {
+    if (hardwareMap._devices && hardwareMap._devices[name]) return hardwareMap._devices[name];
+    return hardwareMap.registerServo(name);
+  }
+
+  function createRobotHardware() {
+    return {
+      init: function () {
+        setServoPosition("claw", CLAW_CLOSED);
+      },
+      update: function () {},
+      stopAll: function () {},
+      intake: {
+        collect: function () { setServoPosition("claw", CLAW_CLOSED); },
+        eject: function () { setServoPosition("claw", CLAW_OPEN); },
+        stop: function () {}
+      },
+      lift: {
+        moveToScore: function () {},
+        isAtTarget: function () { return true; },
+        update: function () {},
+        stop: function () {}
+      }
+    };
+  }
+
+  function getPathBuilder() {
+    const paths = [];
+    return {
+      addPath: function (path) {
+        paths.push(path);
+        return this;
+      },
+      buildChain: function () {
+        return { segments: paths.length ? paths : [createPath(createBezierLine(createPoint(8, 60), createPoint(120, 120)))] };
+      }
+    };
+  }
+
+  function createPoint(x, y) {
+    return { x: Number(x) || 0, y: Number(y) || 0 };
+  }
+
+  function createPose(x, y, heading) {
+    return { x: Number(x) || 0, y: Number(y) || 0, heading: Number(heading) || 0 };
+  }
+
+  function createPoseFactory() {
+    return { of: function (x, y, heading) { return createPose(x, y, heading); } };
+  }
+
+  function createLinePath(start, end) {
+    const path = { segments: [{ type: "line", start: start, end: end }] };
+    path.linear = function () { return path; };
+    return path;
+  }
+
+  function createBezierLine(start, end) {
+    return { type: "line", start: start, end: end };
+  }
+
+  function createPath(segment) {
+    return { segment: segment };
+  }
+
+  function setFollowerStartPose(pose) {
+    state.startPose = createPose(pose && pose.x, pose && pose.y, pose && pose.heading);
+    state.pose = createPose(state.startPose.x, state.startPose.y, state.startPose.heading);
+    emitFollowerUpdate();
+  }
+
+  function followPath(chain) {
+    state.path = normalizePath(chain);
+    state.pathProgress = 0;
+    state.followerBusy = true;
+    state.phase = "DRIVE_TO_TARGET";
+    setCurrentState("DRIVE_TO_TARGET");
+  }
+
+  function scheduleAutoRoutine(path) {
+    followPath(path);
+    state.phase = "IVY: FOLLOW";
+  }
+
+  function resetScheduler() {
+    state.phase = "SCHEDULER RESET";
+  }
+
+  function executeScheduler() {
+    if (state.currentState === "DRIVE_TO_TARGET" && !state.followerBusy && state.pathProgress >= 1) {
+      setCurrentState("DELIVER");
+      state.phase = "IVY: INSTANT + WAIT";
+      state.deliverTimer = getSimRuntime();
+      setServoPosition("claw", CLAW_OPEN);
+      state.scored = true;
+    } else if (state.currentState === "DELIVER") {
+      state.deliverElapsed = Math.max(0, getSimRuntime() - state.deliverTimer);
+      if (state.deliverElapsed >= 0.5) {
+        setServoPosition("claw", CLAW_CLOSED);
+        setCurrentState("DONE");
+        state.phase = "IVY: COMPLETE";
+        state.completed = true;
+        state.active = false;
+      }
+    }
+  }
+
+  function normalizePath(chain) {
+    const fallback = { start: createPoint(START_POSE.x, START_POSE.y), end: createPoint(TARGET_POSE.x, TARGET_POSE.y) };
+    if (!chain || !chain.segments || !chain.segments.length) return fallback;
+    const first = chain.segments[0];
+    const segment = first.segment || first;
+    return {
+      start: segment.start || fallback.start,
+      end: segment.end || fallback.end
+    };
+  }
+
+  function updateFollower() {
+    if (!state.followerBusy || !state.path) return;
+    const speed = 0.038;
+    state.pathProgress = Math.min(1, state.pathProgress + speed);
+    const start = state.path.start;
+    const end = state.path.end;
+    state.pose.x = start.x + (end.x - start.x) * state.pathProgress;
+    state.pose.y = start.y + (end.y - start.y) * state.pathProgress;
+    state.pose.heading = Math.atan2(end.y - start.y, end.x - start.x);
+    if (state.pathProgress >= 1) {
+      state.followerBusy = false;
+      state.pose.x = end.x;
+      state.pose.y = end.y;
+    }
+    emitFollowerUpdate();
+  }
+
+  function isFollowerBusy() {
+    if (state.analysis && state.analysis.wrongBusyCondition) return false;
+    return !!state.followerBusy;
+  }
+
+  function getFollowerPose() {
+    return createPose(state.pose.x, state.pose.y, state.pose.heading);
+  }
+
+  function setServoPosition(name, value) {
+    if (name !== "claw") return;
+    const position = Number(value);
+    state.clawPosition = Number.isFinite(position) ? position : state.clawPosition;
+    if (clawDevice && typeof clawDevice.setPosition === "function") {
+      clawDevice.setPosition(state.clawPosition);
+    }
+  }
+
+  function addSimTelemetry(key, value) {
+    if (String(key) === "Status" && String(value) === "COMPLETE") {
+      state.finalTelemetry = true;
+      state.completed = true;
+      setCurrentState("DONE");
+      state.phase = "COMPLETE";
+    }
+    safeCall(addTelemetry, key, value);
+  }
+
+  function updateClawVisual(name, value) {
+    if (name !== "claw") return;
+    state.clawPosition = Number(value);
+    state.scored = state.clawPosition <= 0.2 && state.pathProgress >= 0.98;
+  }
+
+  function updateRobotPose(x, y, heading) {
+    state.pose = createPose(x, y, heading);
+  }
+
+  function emitFollowerUpdate() {
+    followerCallbacks.forEach(function (cb) {
+      try {
+        cb(state.pose.x, state.pose.y, state.pose.heading);
+      } catch (err) {
+        console.error("[Follower callback error]", err);
+      }
+    });
+  }
+
+  function waitForStart() {
+    state.waitingForStart = true;
+    state.phase = "WAITING FOR START";
+    updatePanel();
+    return new Promise(function (resolve) {
+      state._resolveStart = function () {
+        if (state.stopRequested) {
+          state.waitingForStart = false;
+          resolve();
+          return;
+        }
+        state.waitingForStart = false;
+        state.runtimeStart = performance.now();
+        state.phase = "STARTED";
+        updatePanel();
+        resolve();
+      };
+      if (state.startRequested) releaseWaitForStart();
+    });
+  }
+
+  function releaseWaitForStart() {
+    if (typeof state._resolveStart === "function") {
+      const resolve = state._resolveStart;
+      state._resolveStart = null;
+      resolve();
+    }
+  }
+
+  function opModeIsActive() {
+    return state.active && !state.stopRequested;
+  }
+
+  function getSimRuntime() {
+    if (!state.runtimeStart) return 0;
+    return (performance.now() - state.runtimeStart) / 1000;
+  }
+
+  function sleep(ms) {
+    return new Promise(function (resolve) {
+      window.setTimeout(resolve, Math.max(0, Number(ms) || 0));
+    });
+  }
+
+  function linearTick() {
+    state.deliverElapsed = state.currentState === "DELIVER" ? Math.max(0, getSimRuntime() - state.deliverTimer) : 0;
+    detectRuntimeState();
+    validateCode();
+    updatePanel();
+    return sleep(50);
+  }
+
+  async function runLinearOpMode(token) {
+    const code = getCodeSafe();
+    const runBody = extractMethodBody(code, "runOpMode");
+    if (!runBody) {
+      failStudentExecution("runOpMode() was not found.");
+      return;
+    }
+
+    state.analysis = analyzeCode(code);
+    const js = transpileLinearBody(runBody);
+    let fn;
+    try {
+      fn = new Function(
+        "hardwareMap",
+        "createFollower",
+        "createRobotHardware",
+        "getServo",
+        "getPathBuilder",
+        "createPose",
+        "createPoseFactory",
+        "createLinePath",
+        "createPoint",
+        "createPath",
+        "createBezierLine",
+        "setFollowerStartPose",
+        "followPath",
+        "scheduleAutoRoutine",
+        "resetScheduler",
+        "executeScheduler",
+        "updateFollower",
+        "isFollowerBusy",
+        "getFollowerPose",
+        "setServoPosition",
+        "waitForStart",
+        "opModeIsActive",
+        "sleep",
+        "linearTick",
+        "getSimRuntime",
+        "addTelemetry",
+        "updateTelemetry",
+        "clearTelemetry",
+        '"use strict"; let follower; let robot; let scoringPath; let deliverTimer = 0; return (async function(){\n' + js + '\n})();'
+      );
+    } catch (err) {
+      failStudentExecution("compile error: " + err.message);
+      return;
+    }
+
+    try {
+      safeCall(clearTelemetry);
+      await fn(
+        hardwareMap,
+        createFollower,
+        createRobotHardware,
+        getServo,
+        getPathBuilder,
+        createPose,
+        createPoseFactory,
+        createLinePath,
+        createPoint,
+        createPath,
+        createBezierLine,
+        setFollowerStartPose,
+        followPath,
+        scheduleAutoRoutine,
+        resetScheduler,
+        executeScheduler,
+        updateFollower,
+        isFollowerBusy,
+        getFollowerPose,
+        setServoPosition,
+        waitForStart,
+        opModeIsActive,
+        sleep,
+        linearTick,
+        getSimRuntime,
+        addSimTelemetry,
+        updateTelemetry,
+        clearTelemetry
+      );
+      if (token === state.runToken && !state.stopRequested) {
+        state.completed = state.currentState === "DONE" || state.finalTelemetry;
+        state.phase = state.completed ? "COMPLETE" : state.phase;
+        updatePanel();
+      }
+    } catch (err) {
+      if (token === state.runToken && !state.stopRequested) {
+        failStudentExecution("runOpMode() runtime error: " + err.message);
+      }
+    }
+  }
+
+  function transpileLinearBody(body) {
+    let js = body || "";
+    js = js
+      .replace(/\bScheduler\s*\.\s*reset\s*\(\s*\)/g, "resetScheduler()")
+      .replace(/\bConstants\s*\.\s*create\s*\(\s*hardwareMap\s*\)/g, "createFollower()")
+      .replace(/\bnew\s+RobotHardware\s*\(\s*\)/g, "createRobotHardware()")
+      .replace(/\bhardwareMap\s*\.\s*get\s*\(\s*Servo\.class\s*,\s*"claw"\s*\)/g, 'getServo("claw")')
+      .replace(/\bPoseFactory\s*\.\s*degrees\s*\(\s*\)/g, "createPoseFactory()")
+      .replace(/\bline\s*\(/g, "createLinePath(")
+      .replace(/\bfollower\s*\.\s*setPose\s*\(/g, "setFollowerStartPose(")
+      .replace(/\bfollower\s*\.\s*update\s*\(\s*\)/g, "updateFollower()")
+      .replace(/\bfollower\s*\.\s*isBusy\s*\(\s*\)/g, "isFollowerBusy()")
+      .replace(/\bfollower\s*\.\s*pose\s*\(\s*\)/g, "getFollowerPose()")
+      .replace(/\bfollower\s*\.\s*mode\s*\(\s*\)/g, '(isFollowerBusy() ? "FOLLOWING" : "IDLE")')
+      .replace(/\bschedule\s*\(\s*autoRoutine\s*\(\s*\)\s*\)/g, "scheduleAutoRoutine(scoringPath)")
+      .replace(/\bScheduler\s*\.\s*execute\s*\(\s*\)/g, "executeScheduler()")
+      .replace(/\bclaw\s*\.\s*setPosition\s*\(/g, 'setServoPosition("claw",')
+      .replace(/\bCLAW_OPEN\b/g, String(CLAW_OPEN))
+      .replace(/\bCLAW_CLOSED\b/g, String(CLAW_CLOSED))
+      .replace(/\bnew\s+Pose\s*\(/g, "createPose(")
+      .replace(/\.x\s*\(\s*\)/g, ".x")
+      .replace(/\.y\s*\(\s*\)/g, ".y")
+      .replace(/\.heading\s*\(\s*\)/g, ".heading")
+      .replace(/\bgetRuntime\s*\(\s*\)/g, "getSimRuntime()")
+      .replace(/\btelemetry\s*\.\s*addData\s*\(/g, "addTelemetry(")
+      .replace(/\btelemetry\s*\.\s*update\s*\(\s*\)/g, "updateTelemetry()")
+      .replace(/\bwaitForStart\s*\(\s*\)\s*;/g, "await waitForStart(); if (!opModeIsActive()) return;")
+      .replace(/\bsleep\s*\(/g, "await sleep(")
+      .replace(/(^|[;{}\n]\s*)(?:final\s+)?(?:double|int|boolean|String|float|long|byte|short|char|Follower|RobotHardware|Servo|PoseFactory|Pose|Path|Command)\s+([A-Za-z_$])/gm, "$1let $2");
+    js = addAwaitToWhileLoops(js);
+    if (typeof _simTranspile === "function") js = _simTranspile(js);
+    return js;
+  }
+
+  function addAwaitToWhileLoops(js) {
+    let output = "";
+    let cursor = 0;
+    let match;
+    const whileRe = /\bwhile\s*\(/g;
+    while ((match = whileRe.exec(js)) !== null) {
+      let index = whileRe.lastIndex;
+      let depth = 1;
+      for (; index < js.length; index++) {
+        if (js[index] === "(") depth++;
+        else if (js[index] === ")") {
+          depth--;
+          if (depth === 0) break;
+        }
+      }
+      if (js[index + 1] !== " " && js[index + 1] !== "{") continue;
+      let brace = js.indexOf("{", index);
+      if (brace < 0) continue;
+      output += js.slice(cursor, brace + 1) + " await linearTick();";
+      cursor = brace + 1;
+    }
+    return output + js.slice(cursor);
+  }
+
+  function detectRuntimeState() {
+    const previous = state.currentState;
+    const runtime = getSimRuntime();
+    const poseAtTarget = state.pathProgress >= 0.98;
+    if (state.currentState === "DRIVE_TO_TARGET" && state.clawPosition <= 0.2 && poseAtTarget) {
+      setCurrentState("DELIVER");
+      state.deliverTimer = state.analysis && state.analysis.hasDeliverTimer ? state.deliverTimer || runtime : 0;
+      state.scored = true;
+    } else if (state.currentState === "DELIVER" && state.deliverElapsed >= 0.5 && state.completed) {
+      setCurrentState("DONE");
+    }
+    if (previous !== state.currentState) triggerTransition(previous + "->" + state.currentState);
+    if (state.currentState === "DRIVE_TO_TARGET" && !state.followerBusy && state.pathProgress >= 1 && state.analysis && state.analysis.wrongBusyCondition) {
+      state.stuck = true;
+    }
+  }
+
+  function setCurrentState(value) {
+    if (!value || state.currentState === value) return;
+    state.currentState = value;
+    state.visited[value] = true;
+    state.history.push({ state: value, time: getSimRuntime() });
+    if (value === "DELIVER") state.deliverTimer = getSimRuntime();
+    if (value === "DONE") state.completed = true;
+    triggerTransition(value);
+  }
+
+  function triggerTransition(name) {
+    state.lastTransition = name || "";
+    state.transitionPulse = 1;
+  }
+
+  function resetSimulationState() {
+    state.phase = "NOT INITIALIZED";
+    state.currentState = "INIT";
+    state.visited = {};
+    state.history = [];
+    state.pose = createPose(START_POSE.x, START_POSE.y, START_POSE.heading);
+    state.startPose = createPose(START_POSE.x, START_POSE.y, START_POSE.heading);
+    state.path = null;
+    state.pathProgress = 0;
+    state.followerBusy = false;
+    state.clawPosition = CLAW_CLOSED;
+    state.deliverTimer = 0;
+    state.deliverElapsed = 0;
+    state.lastTransition = "";
+    state.transitionPulse = 0;
+    state.scored = false;
+    state.stuck = false;
+    state.completed = false;
+    state.lastError = "";
+    state.runtimeStart = 0;
+    state.finalTelemetry = false;
+    setServoPosition("claw", CLAW_CLOSED);
+    emitFollowerUpdate();
+  }
+
+  function validateCode(updateRequirements) {
+    const raw = getCodeSafe();
+    const code = stripComments(raw);
+    const runBody = extractMethodBody(code, "runOpMode") || "";
+    const routineBody = extractMethodBody(code, "autoRoutine") || "";
+    const analysis = analyzeCode(code);
+    state.analysis = analysis;
+    const checks = [
+      /Constants\s*\.\s*create\s*\(\s*hardwareMap\s*\)/.test(runBody),
+      /follower\s*\.\s*setPose\s*\(/.test(runBody),
+      /\bline\s*\(/.test(runBody),
+      /new\s+RobotHardware\s*\(\s*\)/.test(runBody) && /robot\s*\.\s*init\s*\(\s*hardwareMap\s*\)/.test(runBody),
+      /return\s+sequential\s*\(/.test(routineBody),
+      /follow\s*\(\s*follower\s*,\s*scoringPath\s*\)/.test(routineBody),
+      /instant\s*\(\s*\(\s*\)\s*->\s*robot\s*\.\s*lift\s*\.\s*moveToScore\s*\(\s*\)\s*\)/.test(routineBody) &&
+        /instant\s*\(\s*\(\s*\)\s*->\s*robot\s*\.\s*intake\s*\.\s*eject\s*\(\s*\)\s*\)/.test(routineBody),
+      /waitMs\s*\(\s*500\s*\)/.test(routineBody) && !/\bsleep\s*\(/.test(code),
+      /schedule\s*\(\s*autoRoutine\s*\(\s*\)\s*\)/.test(runBody),
+      /Scheduler\s*\.\s*execute\s*\(\s*\)/.test(runBody),
+      /robot\s*\.\s*update\s*\(\s*\)/.test(runBody),
+      /follower\s*\.\s*update\s*\(\s*\)/.test(runBody),
+      /while\s*\([^)]*opModeIsActive\s*\(\s*\)[^)]*\)/.test(runBody),
+      /robot\s*\.\s*stopAll\s*\(\s*\)/.test(runBody),
+      !/hardwareMap\s*\.\s*get\s*\(\s*(?:DcMotor|CRServo|Servo)\s*\.\s*class/.test(runBody)
+    ];
+
+    if (updateRequirements !== false) {
+      checks.forEach(function (passed, index) {
+        safeCall(setRequirement, index, !!passed);
+      });
+    }
+
+    const success = el("u155-success");
+    if (success) success.style.display = checks.every(Boolean) ? "flex" : "none";
+    updateWarning(checks, analysis);
+    return { list: checks, meta: analysis };
+  }
+
+  function analyzeCode(code) {
+    const runBody = extractMethodBody(code, "runOpMode") || "";
+    const routineBody = extractMethodBody(code, "autoRoutine") || "";
+    return {
+      hasSequential: /return\s+sequential\s*\(/.test(routineBody),
+      hasFollow: /follow\s*\(\s*follower\s*,\s*scoringPath\s*\)/.test(routineBody),
+      hasMechanisms: /robot\s*\.\s*lift\s*\.\s*moveToScore/.test(routineBody) && /robot\s*\.\s*intake\s*\.\s*eject/.test(routineBody),
+      hasWait: /waitMs\s*\(\s*500\s*\)/.test(routineBody),
+      hasIntakeStop: /instant\s*\(\s*\(\s*\)\s*->\s*robot\s*\.\s*intake\s*\.\s*stop\s*\(\s*\)\s*\)/.test(routineBody),
+      wrongBusyCondition: false
+    };
+  }
+
+  function updateWarning(checks, analysis) {
+    const warning = el("u155-warning");
+    if (!warning) return;
+    let message = "";
+    let type = "warn";
+    if (!analysis.hasSequential || !analysis.hasFollow) {
+      message = "Return sequential(...) from autoRoutine() and make follow(follower, scoringPath) its first command.";
+      type = "error";
+    } else if (!analysis.hasMechanisms) {
+      message = "Wrap the lift and intake actions in instant(() -> ...), so Ivy can schedule them.";
+    } else if (!analysis.hasWait || !analysis.hasIntakeStop) {
+      message = "Add waitMs(500), then instant(() -> robot.intake.stop()). Ivy waits without blocking follower updates.";
+      type = "error";
+    } else if (!checks[9]) {
+      message = "Call Scheduler.execute() every iteration so Ivy commands can advance.";
+      type = "error";
+    } else if (!checks[12]) {
+      message = "Include opModeIsActive() in the while condition so the Driver Station can stop autonomous.";
+    } else if (!/telemetry\s*\.\s*update\s*\(\s*\)/.test(getCodeSafe())) {
+      message = "Call telemetry.update() to send data to the Driver Station.";
+    }
+
+    warning.style.display = message ? "block" : "none";
+    warning.classList.toggle("error", type === "error");
+    warning.innerHTML = message ? '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(message) : "";
+  }
+
+  function updatePanel() {
+    validateCode(false);
+    state.deliverElapsed = state.currentState === "DELIVER" ? Math.max(0, getSimRuntime() - state.deliverTimer) : state.deliverElapsed;
+    const done = state.currentState === "DONE" || state.completed;
+    renderCard("u155-state-card", '<i class="fa-solid fa-diagram-project"></i> State<br><strong>' + escapeHTML(state.currentState) + "</strong><br>" + escapeHTML(state.phase), done ? "good" : state.stuck ? "bad" : state.currentState === "DELIVER" ? "warn" : "");
+    renderCard("u155-claw-card", '<i class="fa-solid fa-gears"></i> Intake action<br><strong>' + (state.clawPosition <= 0.2 ? "EJECT" : "HOLD") + "</strong>", state.clawPosition <= 0.2 ? "good" : "");
+    renderCard("u155-pose-card", '<i class="fa-solid fa-location-dot"></i> Robot Position<br><strong>X ' + fmt(state.pose.x) + "  Y " + fmt(state.pose.y) + "</strong><br>Heading " + fmt(state.pose.heading) + " rad", "");
+    renderCard("u155-progress-card", '<i class="fa-solid fa-route"></i> Path Progress<br><strong>' + Math.round(state.pathProgress * 100) + '%</strong><div class="u155-bar"><div class="u155-fill" style="width:' + Math.round(state.pathProgress * 100) + '%"></div></div>', state.pathProgress >= 1 ? "good" : "");
+    renderCard("u155-busy-card", '<i class="fa-solid fa-code-branch"></i> !follower.isBusy()<br><strong>' + (!isFollowerBusy()) + "</strong><br>follower.isBusy(): " + isFollowerBusy(), !isFollowerBusy() && state.pathProgress >= 1 ? "good" : "");
+    const timerPct = Math.max(0, Math.min(100, state.deliverElapsed / 0.5 * 100));
+    renderCard("u155-timer-card", '<i class="fa-solid fa-clock"></i> Timer Condition<br><strong>' + fmt(state.deliverElapsed) + 's / 0.5s</strong><br>&gt;= 0.5: ' + (state.deliverElapsed >= 0.5), state.deliverElapsed >= 0.5 ? "good" : state.currentState === "DELIVER" ? "warn" : "");
+    renderCard("u155-deliver-bar", '<i class="fa-solid fa-stopwatch"></i> DELIVER TIMER: <strong>' + fmt(state.deliverElapsed) + 's / 0.5s</strong><div class="u155-bar"><div class="u155-fill" style="width:' + timerPct + '%"></div></div>', state.deliverElapsed >= 0.5 ? "good" : state.currentState === "DELIVER" ? "warn" : "");
+
+    const history = el("u155-history");
+    if (history) {
+      history.innerHTML = state.history.length
+        ? state.history.map(function (item) {
+            return '<div class="u155-step good"><i class="fa-solid fa-circle-check"></i> ' + escapeHTML(item.state) + '<br>' + fmt(item.time) + "s</div>";
+          }).join("")
+        : '<div class="u155-step"><i class="fa-solid fa-circle"></i> Waiting for first state</div>';
+    }
+
+    const badge = el("u155-scene-badge");
+    if (badge) badge.innerHTML = '<i class="fa-solid fa-diagram-project"></i> ' + escapeHTML(state.currentState);
+    const scoreBadge = el("u155-score-badge");
+    if (scoreBadge) scoreBadge.style.display = state.scored ? "block" : "none";
+    const stuckBadge = el("u155-stuck-badge");
+    if (stuckBadge) stuckBadge.style.display = state.stuck ? "block" : "none";
+    updateDiagram();
+  }
+
+  function updateDiagram() {
+    const states = ["drive", "deliver", "done"];
+    const names = { drive: "DRIVE_TO_TARGET", deliver: "DELIVER", done: "DONE" };
+    states.forEach(function (key) {
+      const node = el("u155-node-" + key);
+      if (!node) return;
+      node.classList.toggle("active", state.currentState === names[key]);
+      node.classList.toggle("done", !!state.visited[names[key]] || state.currentState === "DONE");
+      node.classList.toggle("stuck", key === "drive" && state.stuck);
+    });
+    const driveArrow = el("u155-arrow-drive");
+    const deliverArrow = el("u155-arrow-deliver");
+    if (driveArrow) driveArrow.classList.toggle("pulse", state.transitionPulse > 0 && /DELIVER|DRIVE_TO_TARGET/.test(state.lastTransition));
+    if (deliverArrow) deliverArrow.classList.toggle("pulse", state.transitionPulse > 0 && /DONE|DELIVER/.test(state.lastTransition));
+  }
+
+  function renderCard(id, html, status) {
+    const card = el(id);
+    if (!card) return;
+    card.className = "u155-card" + (status ? " " + status : "");
+    card.innerHTML = html;
+  }
+
+  function setLine(line, points) {
+    if (!line || !points || points.length < 2) return;
+    line.geometry.dispose();
+    line.geometry = new THREE.BufferGeometry().setFromPoints(points);
+  }
+
+  function fieldToScene(x, y) {
+    return {
+      x: (Number(x) - FIELD_INCHES / 2) * FIELD_SCALE,
+      z: (FIELD_INCHES / 2 - Number(y)) * FIELD_SCALE
+    };
+  }
+
+  function extractMethodBody(code, name) {
+    if (!code) return "";
+    const re = new RegExp("\\b(?:public\\s+|private\\s+|protected\\s+)?(?:void|boolean|double|int|String)\\s+" + name + "\\s*\\([^)]*\\)\\s*\\{");
+    const match = re.exec(code);
+    if (!match) return "";
+    let index = match.index + match[0].length;
+    let depth = 1;
+    for (; index < code.length; index++) {
+      if (code[index] === "{") depth++;
+      else if (code[index] === "}") {
+        depth--;
+        if (depth === 0) return code.slice(match.index + match[0].length, index);
+      }
+    }
+    return "";
+  }
+
+  function extractSwitchCase(body, name) {
+    const re = new RegExp("case\\s+(?:State\\s*\\.\\s*)?" + name + "\\s*:");
+    const match = re.exec(body || "");
+    if (!match) return "";
+    const start = match.index + match[0].length;
+    const rest = body.slice(start);
+    const next = /\bcase\s+(?:State\s*\.\s*)?(?:DRIVE_TO_TARGET|DELIVER|DONE)\s*:|\bdefault\s*:/.exec(rest);
+    return next ? rest.slice(0, next.index) : rest;
+  }
+
+  function stripComments(code) {
+    return String(code || "")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\/\/.*$/gm, "");
+  }
+
+  function getCodeSafe() {
+    if (typeof getCode !== "function") return starterCode;
+    try {
+      return getCode();
+    } catch (err) {
+      return starterCode;
+    }
+  }
+
+  function fmt(value) {
+    return (Number(value) || 0).toFixed(2);
+  }
+
+  function showStudentError(message) {
+    const text = String(message || "Unknown simulator error");
+    state.lastError = text;
+    const warning = el("u155-warning");
+    if (warning) {
+      warning.classList.add("error");
+      warning.style.display = "block";
+      warning.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(text);
+    }
+    if (typeof _simShowTelemetryError === "function") _simShowTelemetryError(text);
+    else {
+      safeCall(addTelemetry, "ERROR", text);
+      safeCall(updateTelemetry);
+    }
+  }
+
+  function failStudentExecution(message) {
+    if (typeof stopExecution === "function") stopExecution();
+    showStudentError(message);
+  }
+
+  function escapeHTML(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+---
+id: dynamic-power-challenge
+title: "Lesson 3.5: Build Dynamic Power Logic with Multiple Variables"
+sidebar_label: "3.5 · Dynamic Power"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit3Simulator from '@site/src/components/Unit3Simulator';
+
+# Lesson 3.5: Build Dynamic Power Logic with Multiple Variables
+
+---
+
+## Technical Context
+
+A competitive robot rarely runs at one static speed. Combining inputs, multipliers, and offsets can create adjustable control behavior. For example, a driver-selected multiplier can reduce maximum power for precise alignment. Compensating for battery sag requires a measured voltage model or closed-loop velocity controller; a fixed multiplier alone cannot ensure consistent performance.
+
+---
+
+## How to Think Through Multi-Variable Power Logic
+
+This lesson combines different variable types in a single expression. When an `int` and a `double` are used in the same math operation, Java **"promotes"** the result to a `double` to maintain precision. You must be careful with assignment operators; using `=` updates the variable's value, while using `*=` or `+=` allows you to modify the current value relative to its previous state.
+
+---
+
+## Annotated Code
+
+```java
+@TeleOp(name="Dynamic_Control")
+public class DynamicControl extends OpMode {
+
+    DcMotor drive;
+
+    // Multi-variable setup
+    double baseSpeed       = 0.5;
+    double boostMultiplier = 2.0;
+    int    gearSetting     = 1;
+
+    @Override
+    public void init() {
+        drive = hardwareMap.get(DcMotor.class, "motor");
+    }
+
+    @Override
+    public void loop() {
+        double finalPower;
+
+        if (gamepad1.right_trigger > 0.5) {
+            // Math combining double inputs and multipliers
+            finalPower = baseSpeed * boostMultiplier;
+        } else {
+            finalPower = baseSpeed;
+        }
+
+        drive.setPower(finalPower);
+        telemetry.addData("Gear", gearSetting);
+        telemetry.addData("Output Power", finalPower);
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The operator used to assign a new value to a variable is `__________`.
+2. If you multiply an `int` by a `double`, the resulting datatype will be a/an `__________`.
+3. To perform math and update a variable in one step (e.g., adding 5 to the current value), you use the `__________` operator.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`=`**
+2. **`double`** (Java promotes the result to the wider type)
+3. **`+=`**
+
+</details>
+
+---
+
+## Simulator Practice
+
+**Robot Scenario:** Create a "Precision Mode." If the driver holds the left bumper, the motor power should be exactly half of the joystick input. Use variables for `input`, `scaleFactor`, and `finalPower`.
+
+<SimulatorRunGuide />
+
+<Unit3Simulator lesson="dynamic-power-challenge" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+@Override
+public void loop() {
+    double input = -gamepad1.left_stick_y;
+
+    double finalPower;
+
+    if (gamepad1.left_bumper) {
+        finalPower = input * scaleFactor;
+    } else {
+        finalPower = input;
+    }
+
+    motor.setPower(finalPower);
+}
+```
+
+</details>
+
+## A Team Separates Input from Scale
+
+Titan Robotics Club reads drive inputs, applies separate drive and turn scales, then sends the results to its drive base. This smaller version keeps the variable flow visible:
+
+```java
+double forwardInput = -gamepad1.left_stick_y;
+double turnInput = gamepad1.right_stick_x;
+double forwardPower = forwardInput * driveScale;
+double turnPower = turnInput * turnScale;
+robot.drive.arcadeDrive(forwardPower, turnPower);
+```
+
+The input array and framework types were replaced with lesson vocabulary. The separate variables still make each value and scale easy to inspect. Adapted from [Team 3543 Titan Robotics Club's `FtcTeleOp.java` at a pinned commit](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/TeamCode/src/main/java/teamcode/FtcTeleOp.java) under the [MIT License](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/LICENSE).
+
+<MarkComplete
+  lessonId="unit-03/dynamic-power-challenge"
+  nextUnit="/docs/unit-03/mastery-coding-challenge"
+  nextUnitName="Unit 3 Comprehensive Coding Challenge"
+/>

@@ -1,0 +1,23 @@
+{
+  "extends": "@docusaurus/tsconfig",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "jsx": "react-jsx",
+    "types": [
+      "node",
+      "react",
+      "react-dom"
+    ],
+    "paths": {
+      "@site/*": [
+        "./*"
+      ]
+    }
+  },
+  "exclude": [
+    ".docusaurus",
+    "build",
+    "functions",
+    "Telemark-repo"
+  ]
+}

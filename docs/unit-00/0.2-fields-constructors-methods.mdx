@@ -1,0 +1,157 @@
+---
+id: how-java-runs
+slug: /unit-00/fields-constructors-methods
+title: "Lesson 0.2: Fields, Constructors, and Methods"
+sidebar_label: "0.2 · Fields, Constructors & Methods"
+sidebar_position: 2
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 0.2: Fields, Constructors, and Methods
+
+A class becomes useful when it defines what its objects remember, how they start, and what they can do. Java names those parts fields, constructors, and methods.
+
+If words such as `private`, `double`, `public`, `this`, `new`, or `void` are still unfamiliar, use the [Java keyword reference from Lesson 0.1](/docs/unit-00/classes-and-objects#read-the-java-keywords) while you work through the examples below.
+
+The house blueprint still helps:
+
+- A blueprint lists features such as an address and paint color. A class declares **fields**.
+- A construction process turns the plan into one finished house. A **constructor** prepares one new object.
+- A completed house supports actions such as opening its door. **Methods** define actions for an object.
+
+Now connect each part to Java.
+
+## Fields Store Object State
+
+```java
+private String name;
+private double power;
+```
+
+A field is a variable that belongs to an object. Every `RobotArm` object gets its own `name` and `power`. Together, those values form the object's state.
+
+`private` means that code outside `RobotArm` cannot change these fields directly. Unit 13 explains that protection as encapsulation. For now, notice that the class controls its own values.
+
+## A Constructor Prepares a New Object
+
+```java
+public RobotArm(String name) {
+    this.name = name;
+    this.power = 0.0;
+}
+```
+
+A constructor has the same name as its class and no return type. Java runs it when `new` creates an object.
+
+Read the first assignment carefully:
+
+- `this.name` means the `name` field on the object being constructed.
+- The plain `name` on the right means the argument supplied by the caller.
+
+```java
+RobotArm arm = new RobotArm("main arm");
+```
+
+`new` creates the object. The constructor receives `"main arm"`, stores that value in the object's field, and starts its power at zero.
+
+## Methods Define Behavior
+
+```java
+public void move(double requestedPower) {
+    power = requestedPower;
+}
+
+public void stop() {
+    move(0.0);
+}
+```
+
+A method is a named section of behavior. `move` receives a parameter and changes the object's state. `stop` calls another method on the same object.
+
+The word `void` means the method does not return a value. A method that reports information can return a value instead:
+
+```java
+public double getPower() {
+    return power;
+}
+```
+
+## Annotated Code
+
+<AnnotatedCode
+  title="One complete class"
+  java={String.raw`public class RobotArm {
+    private String name;
+    private double power;
+
+    public RobotArm(String name) {
+        this.name = name;
+        this.power = 0.0;
+    }
+
+    public void move(double requestedPower) {
+        power = requestedPower;
+    }
+
+    public double getPower() {
+        return power;
+    }
+}`}
+  python={String.raw`class RobotArm:
+    def __init__(self, name):
+        self.name = name
+        self.power = 0.0
+
+    def move(self, requested_power):
+        self.power = requested_power
+
+    def get_power(self):
+        return self.power`}
+/>
+
+Python uses `self` where Java uses `this`. It also uses `__init__` for object setup. The spelling differs, but both versions store state on one object and provide methods that operate on it.
+
+## Terms to Keep
+
+| Term | Meaning |
+|---|---|
+| Field | A variable stored on an object. |
+| Constructor | Code that prepares an object created with `new`. |
+| Parameter | A named input received by a constructor or method. |
+| Argument | The value supplied by the caller. |
+| `this` | The current object whose code is running. |
+| `return` | Send a result back to the caller. |
+
+## Check Your Understanding
+
+<details>
+<summary>When does the RobotArm constructor run?</summary>
+
+It runs when Java evaluates `new RobotArm(...)`.
+
+</details>
+
+<details>
+<summary>Why does stop call move instead of assigning power directly?</summary>
+
+The class keeps one power-setting path. Any later validation added to `move` also applies when `stop` calls it.
+
+</details>
+
+<details>
+<summary>What does this.name select?</summary>
+
+It selects the `name` field on the current object.
+
+</details>
+
+## Where You Will Use This
+
+[Lesson 13.1](/docs/unit-13/encapsulation) uses fields and public methods to give a mechanism a safe interface.
+
+<MarkComplete
+  lessonId="unit-00/how-java-runs"
+  nextUnit="/docs/unit-00/references-and-identity"
+  nextUnitName="Lesson 0.3: References and Object Identity"
+/>

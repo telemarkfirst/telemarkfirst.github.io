@@ -1,0 +1,120 @@
+---
+id: counterbalance
+title: "Lesson 8.4: Springs, Tubing, and Counterbalancing Static Loads"
+sidebar_label: "8.4 · Counterbalance"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 8.4: Springs, Tubing, and Counterbalancing Static Loads
+
+---
+
+## Technical Context
+
+A motor holding an arm against gravity draws current and produces heat even when the arm is stationary. A counterbalance supplies part of that holding torque mechanically, reducing the continuous demand on the motor.
+
+Consider a counterbalance when holding torque and motor heating leave too little margin.
+
+---
+
+## What a Counterbalance Does
+
+It applies a torque opposing gravity, so the motor only has to supply the difference plus whatever is needed to accelerate the mechanism.
+
+A well matched counterbalance can reduce the motor's required torque dramatically. That has three effects at once:
+
+- The reduction can be lower, so the arm moves faster
+- Current draw falls, so the battery lasts longer and there is more headroom for the drivetrain
+- The motor runs cooler, which extends its life across a tournament day
+
+---
+
+## Options
+
+| Element | Force behavior | Good for |
+| --- | --- | --- |
+| Extension or torsion spring | Force rises with extension | Arms, where torque demand falls as the arm rises |
+| Surgical tubing | Roughly proportional to stretch, softer | Cheap, easy to tune by adding strands |
+| Gas spring | Nearly constant force | Heavy loads, long travel |
+| Constant force spring | Constant force | Slides, where demand does not vary with position |
+| Counterweight | Constant torque times cosine | Matches an arm exactly, but adds mass |
+
+Surgical tubing is the FTC workhorse: cheap, available, and tunable by changing the number of strands or the anchor point. Its disadvantage is that it degrades with UV and age, so it needs replacing on a schedule rather than when it snaps.
+
+---
+
+## Matching the Force Curve
+
+The gravity torque on an arm follows a cosine: maximum at horizontal, zero at vertical. A good counterbalance produces a matching curve, so the motor sees a small residual at every angle rather than being over-helped at one end and under-helped at the other.
+
+A spring pulling in a straight line from a fixed anchor to a point on the arm naturally produces something close to this, because the moment arm of the spring changes as the arm rotates. Tuning consists of moving the two anchor points until the residual is small across the range.
+
+The practical method is empirical, and it works well:
+
+1. Install the spring with a guess at the anchor positions.
+2. Disconnect the motor.
+3. Move the arm by hand to several angles across the range and note where it falls, where it rises on its own, and where it stays put.
+4. Move the anchors and repeat until the arm is close to balanced everywhere.
+
+An arm that stays roughly where you put it across the whole range is well counterbalanced.
+
+:::warning Never over-counterbalance
+A counterbalance stronger than gravity drives the arm upward on its own. The motor must then fight it downward, which is the same problem with the sign reversed, and it makes the arm dangerous when the motor is unpowered. Aim for slightly under-balanced, so the arm settles gently downward when released.
+:::
+
+---
+
+## Safety
+
+A counterbalanced mechanism stores energy, and that energy is released if something fails or is disassembled.
+
+- Assume a spring will fail and design so its failure is not catastrophic. Route it so a broken spring cannot whip into a person or into electronics.
+- Never disassemble a counterbalanced mechanism without relieving the spring first, and make sure everyone on the team knows which mechanisms are sprung.
+- Label sprung mechanisms in the pit.
+- Surgical tubing degrades with age and UV exposure. Replace it on a schedule and keep spares.
+
+---
+
+## When a Counterbalance Is the Wrong Answer
+
+It is not always right. A counterbalance adds parts, adds a failure mode, adds stored energy, and adds tuning work.
+
+Skip it when:
+
+- The arm only holds a load briefly, so heating is not a concern
+- The reduction is already non-back-drivable and holds the load mechanically
+- The mechanism's range is small enough that gravity torque barely varies
+- The added complexity would delay something more valuable
+
+The decision belongs in a decision matrix like any other, weighed against the alternatives from Lesson 8.3.
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. A counterbalance lets the motor supply only the `__________` between gravity torque and spring torque, plus what is needed to accelerate.
+2. A counterbalance that is stronger than gravity will drive the arm `__________` on its own, which is unsafe when unpowered.
+3. Surgical tubing degrades with age and `__________` exposure, so it should be replaced on a schedule.
+
+<details>
+<summary>Show answers</summary>
+
+1. **difference**
+2. **upward** (up)
+3. **UV** (ultraviolet)
+
+</details>
+
+---
+
+## Exercise
+
+Disconnect the motor from your arm and check whether the arm stays where you put it at 0, 30, 60, and 90 degrees. If it falls at every angle, there is no counterbalance and the motor is carrying the full load continuously. Estimate the current that costs using the Module 6 calculator, and decide whether a counterbalance is worth adding.
+
+<MarkComplete
+  lessonId="module-08/counterbalance"
+  nextUnit="/mechanical/module-08/mastery-quiz"
+  nextUnitName="Module 8 Mastery Quiz: Mechanisms"
+/>

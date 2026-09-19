@@ -1,0 +1,108 @@
+/* Editor panel. Sits on the page background rather than a lighter surface, so
+   the code reads as part of the page instead of a floating screenshot. */
+.editor {
+  overflow: hidden;
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-md);
+  background: var(--tm-bg);
+}
+
+.chrome {
+  display: flex;
+  align-items: center;
+  gap: var(--tm-sp-2);
+  padding: var(--tm-sp-3) var(--tm-sp-4);
+  border-bottom: 1px solid var(--tm-border-hair);
+  background: var(--tm-surface-1);
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--tm-r-pill);
+  background: var(--tm-text-faint);
+}
+
+.fileName {
+  margin-left: var(--tm-sp-2);
+  color: var(--tm-text-muted);
+  font-family: var(--tm-font-mono);
+  font-size: var(--tm-fs-2xs);
+}
+
+/* One ink colour, no syntax palette: the page carries a single accent and a
+   five-hue code block would be the loudest thing on it. */
+.code {
+  min-height: 22rem;
+  padding: var(--tm-sp-4);
+  margin: 0;
+  background: transparent;
+  color: var(--tm-text-soft);
+  font-family: var(--tm-font-mono);
+  font-size: var(--tm-fs-xs);
+  line-height: 1.7;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.code code {
+  /* The site styles inline code as an accent-coloured chip. That is right for a
+     symbol inside a sentence and wrong for a whole file, which would arrive as
+     boxed cyan text instead of the single-ink block this is meant to be. */
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+}
+
+.caret {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.05em;
+  background: var(--tm-text-strong);
+  translate: 0 0.2em;
+  animation: blink 1s steps(2, start) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .code code {
+  /* The site styles inline code as an accent-coloured chip. That is right for a
+     symbol inside a sentence and wrong for a whole file, which would arrive as
+     boxed cyan text instead of the single-ink block this is meant to be. */
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+}
+
+.caret {
+    animation: none;
+  }
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  margin: -1px;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* In the hero the panel shares the row with the robot, so it gives up height
+   rather than forcing the fold down. */
+.compact .code {
+  min-height: 15rem;
+  font-size: var(--tm-fs-2xs);
+}

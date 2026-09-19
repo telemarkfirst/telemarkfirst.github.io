@@ -1,0 +1,111 @@
+---
+id: servo-direction
+title: "Lesson 9.3: Fixing Inverted Servo Setups with Direction Settings"
+sidebar_label: "9.3 · Servo Direction"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit9Simulator from '@site/src/components/Unit9Simulator';
+
+# Lesson 9.3: Fixing Inverted Servo Setups with Direction Settings
+
+---
+
+## Technical Context
+
+Dual-servo grippers often have servos mounted **mirrored** to each other on opposing sides of the mechanism. Without software inversion, a "close" command would move one servo inward and the other outward, causing the gripper to splay open instead of grip. Correcting this in `init()` allows identical position commands to drive both sides symmetrically.
+
+---
+
+## When Servo Direction Is the Cleaner Fix
+
+The `setDirection()` method reverses the servo object's logical coordinate system. With `Servo.Direction.REVERSE`, logical `0.0` and `1.0` exchange endpoints. The physical directions depend on the servo mounting and linkage, so verify them on the actual mechanism.
+
+This serves the same basic purpose as `DcMotorSimple.Direction.REVERSE`: it lets code use one logical convention for mirrored hardware instead of repeating inversion math.
+
+| Setting | `setPosition(0.0)` result | `setPosition(1.0)` result |
+|---|---|---|
+| `Direction.FORWARD` (default) | Physical far-left | Physical far-right |
+| `Direction.REVERSE` | Physical far-right | Physical far-left |
+
+The default direction for all servos is `Servo.Direction.FORWARD`.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Servo;
+
+@TeleOp(name="Servo_Direction_Demo")
+public class ServoDirectionDemo extends OpMode {
+
+    private Servo leftServo;
+    private Servo rightServo;
+
+    @Override
+    public void init() {
+        leftServo  = hardwareMap.get(Servo.class, "left_claw");
+        rightServo = hardwareMap.get(Servo.class, "right_claw");
+
+        // Invert the right servo so both respond identically to "close" commands
+        // Without this, setPosition(1.0) would open one side and close the other
+        rightServo.setDirection(Servo.Direction.REVERSE);
+
+        leftServo.setPosition(0.5);
+        rightServo.setPosition(0.5);
+        telemetry.addData("Claw", "Both servos at center");
+    }
+
+    @Override
+    public void loop() {
+        if (gamepad1.a) {
+            // Both servos move inward: claw closes
+            leftServo.setPosition(1.0);
+            rightServo.setPosition(1.0);
+        } else if (gamepad1.b) {
+            // Both servos move outward: claw opens
+            leftServo.setPosition(0.0);
+            rightServo.setPosition(0.0);
+        }
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. To flip the orientation of a servo, we use the parameter `Servo.Direction.__________`.
+2. The default direction for all servos in the SDK is `Servo.Direction.__________`.
+3. Reversing a servo's direction is typically performed during the `__________` method of the OpMode lifecycle.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`REVERSE`**
+2. **`FORWARD`**
+3. **`init()`**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Use the simulator below to practice reversing the mirrored `"right_gate"` servo so both double-gate flaps open and close symmetrically.
+
+<SimulatorRunGuide />
+
+<Unit9Simulator lesson="servo-direction" />
+
+<MarkComplete
+  lessonId="unit-09/servo-direction"
+  nextUnit="/docs/unit-09/cr-servo"
+  nextUnitName="Lesson 9.4: Mapping Continuous Rotation Servos for Intake Mechanisms"
+/>

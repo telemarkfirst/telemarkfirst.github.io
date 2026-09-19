@@ -1,0 +1,129 @@
+---
+id: rapid-prototyping
+title: "Lesson 10.1: Rapid Prototyping to Answer One Question at a Time"
+sidebar_label: "10.1 · Prototyping"
+sidebar_position: 1
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 10.1: Rapid Prototyping to Answer One Question at a Time
+
+---
+
+## Technical Context
+
+A prototype is an experiment built to answer a specific question. It only needs enough structure and accuracy to produce a useful result.
+
+If you build the prototype like a competition mechanism, it takes longer and becomes harder to discard when the test fails.
+
+---
+
+## State the Question First
+
+Before building anything, write down the question in one sentence.
+
+Good prototype questions are narrow and answerable:
+
+- Can a compliant wheel at 200 RPM pull this element off the floor?
+- What funnel angle acquires an element that arrives 2 in off center?
+- Does a three stage cascade lift 4 lb with this spool and motor?
+- How long does it take a driver to align at the scoring position?
+
+Bad prototype questions are broad and unanswerable in one build:
+
+- Does our intake design work?
+- Is this a good mechanism?
+
+The narrower the question, the faster the build and the clearer the result.
+
+:::tip One variable at a time
+A prototype that changes the wheel compound, the funnel angle, and the motor speed together tells you that something improved and not which thing. Change one, measure, then change the next.
+:::
+
+---
+
+## Build Only What the Test Needs
+
+The prototype should be the cheapest thing that answers the question.
+
+| Instead of | Use |
+| --- | --- |
+| Machined aluminum bracket | Wood, scrap plate, or cardboard |
+| Precision mounting | Clamps, zip ties, tape |
+| CAD and fabrication | Whatever is on the shelf |
+| The real motor and gearbox | Any motor that gets close to the right speed |
+| A finished chassis | A board on the floor with the mechanism clamped to it |
+
+If the prototype needs to be accurate in one specific dimension because that is the question, make that one dimension accurate and let everything else be sloppy.
+
+:::warning Keep the prototype short
+The result needs to arrive early enough to change the design. If the prototype will take more than a day or two, narrow the question or simplify the fixture.
+:::
+
+---
+
+## Make It Adjustable
+
+Since the point is to learn, build in the ability to change the thing you are studying.
+
+Slotted holes, clamps instead of bolts, and a stack of shims let you sweep through a range of values in one session rather than rebuilding between each trial. A funnel prototype with a hinged wall and a protractor answers "what angle" in twenty minutes, while a fixed-angle prototype answers it in three sessions.
+
+---
+
+## Test With the Real Element
+
+Use the actual game element or the closest official replica available. Weight, surface texture, compressibility, and motion affect the result, so a convenient substitute can mislead the test.
+
+Test in the real conditions too: on field tile rather than a smooth table, at the real height, with the real approach angle.
+
+---
+
+## Know When to Stop
+
+A prototype has done its job when the question is answered. Three outcomes are all successes:
+
+**It works.** Record the numbers and move to designing the real version.
+
+**It does not work.** Record why, and go back to the concept list from Module 0. A concept eliminated in two days is a large win.
+
+**It works but reveals a different problem.** Write down the new question and plan the next prototype.
+
+Do not keep refining a prototype after it has answered the question. Record the result, take the fixture apart if you no longer need it, and apply what you learned to the real design.
+
+---
+
+## Recording It
+
+Every prototype gets a notebook entry in the four part format from Lesson 1.2: the question, what you built, the measured result, and what you decided. Photograph it before you take it apart, with a caption.
+
+These entries give the team a useful test record and show judges how the design changed in response to evidence.
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Before building a prototype, the team should write down the single `__________` it is meant to answer.
+2. A prototype should be built from the cheapest materials that answer the question, and should be `__________` so values can be swept in one session.
+3. Prototypes must be tested with the real game element because weight, texture, and how it `__________` all affect the result.
+
+<details>
+<summary>Show answers</summary>
+
+1. **question**
+2. **adjustable**
+3. **tumbles** (behaves, moves)
+
+</details>
+
+---
+
+## Exercise
+
+Pick one open question about a mechanism on your robot. Write it as a single sentence, then build something in under two hours that answers it. Record the result in the four part format.
+
+<MarkComplete
+  lessonId="module-10/rapid-prototyping"
+  nextUnit="/mechanical/module-10/test-plans"
+  nextUnitName="Lesson 10.2: Writing Test Plans and Collecting Reliability Data"
+/>

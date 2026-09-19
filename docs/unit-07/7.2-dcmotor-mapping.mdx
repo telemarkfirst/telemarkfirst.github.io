@@ -1,0 +1,101 @@
+---
+id: dcmotor-mapping
+title: "Lesson 7.2: Mapping DcMotors with the Right Names and Ports"
+sidebar_label: "7.2 · DcMotor Mapping"
+sidebar_position: 2
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit7Simulator from '@site/src/components/Unit7Simulator';
+
+# Lesson 7.2: Mapping DcMotors with the Right Names and Ports
+
+---
+
+## Technical Context
+
+Motors connect to the motor ports on a Control Hub or Expansion Hub. Mapping gives your Java variable access to the device name stored in the Robot Controller configuration. If the name points to the wrong configured port, later commands can move the wrong mechanism.
+
+---
+
+## What Good Motor Mapping Looks Like
+
+In Java, you declare a member variable of type `DcMotor` at the class level. During the `init()` phase, you use `hardwareMap.get(DcMotor.class, "name")` to assign the physical motor to that variable. Once instantiated, the motor object gains access to methods like `setPower()`, `setDirection()`, and `setMode()`.
+
+Set the motor's **direction**, **run mode**, and other required defaults during initialization so the mechanism begins each OpMode in a known software state. A safe initialization sequence should still keep motor power at zero until movement is intended.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+
+@TeleOp(name="DcMotor_Mapping_Demo")
+public class DcMotorMappingDemo extends OpMode {
+
+    private DcMotor frontLeft;
+    private DcMotor frontRight;
+
+    @Override
+    public void init() {
+        // Instantiating motors for a differential drivetrain
+        frontLeft  = hardwareMap.get(DcMotor.class, "fl_motor");
+        frontRight = hardwareMap.get(DcMotor.class, "fr_motor");
+
+        // Setting logical orientation immediately after mapping
+        // Right side is physically reversed on most robot builds
+        frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        // Ensure motors start at zero power in a known state
+        frontLeft.setPower(0);
+        frontRight.setPower(0);
+
+        telemetry.addData("Status", "Drivetrain mapped and ready");
+    }
+
+    @Override
+    public void loop() {
+        frontLeft.setPower(-gamepad1.left_stick_y);
+        frontRight.setPower(-gamepad1.right_stick_y);
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. To declare a motor variable at the class scope, you use the `__________` data type.
+2. The `DcMotor.class` parameter in the `get()` method ensures `__________` safety by telling the SDK what type of hardware to return.
+3. After mapping, you can reverse the motor's physical bias by invoking the `__________` method.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`DcMotor`**
+2. **type** safety
+3. **`setDirection()`**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Use the simulator below to practice mapping multiple motors and correcting drivetrain direction immediately after registration.
+
+<SimulatorRunGuide />
+
+<Unit7Simulator lesson="dcmotor-mapping" />
+
+<MarkComplete
+  lessonId="unit-07/dcmotor-mapping"
+  nextUnit="/docs/unit-07/sensor-mapping"
+  nextUnitName="Lesson 7.3: Instantiating Digital and Analog Sensor Objects in Java"
+/>

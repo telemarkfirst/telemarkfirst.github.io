@@ -1,0 +1,70 @@
+---
+id: verify-build-config
+title: "Section 7: Checking That the Build Setup Works"
+sidebar_label: "7 · Verify Build Config"
+sidebar_position: 7
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Section 7: Checking That the Build Setup Works
+
+Your team's custom code goes in the **TeamCode** module. Before writing robot code, confirm that the project still inherits the build configuration supplied by the current FTC SDK.
+
+---
+
+## Step 7.1: Open the TeamCode build.gradle
+
+In the Project panel on the left side of Android Studio:
+
+**TeamCode → build.gradle**
+
+Double-click to open it.
+
+---
+
+## Step 7.2: Verify the Shared Configuration
+
+`TeamCode/build.gradle` normally applies shared files from the project root. Do not duplicate or replace the SDK's Android settings in TeamCode.
+
+In the current official project, `build.common.gradle` contains settings similar to:
+
+```groovy
+android {
+    compileSdkVersion 30
+
+    defaultConfig {
+        minSdkVersion 24
+        targetSdkVersion 28
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+```
+
+Treat the checked-in SDK files as the source of truth. FIRST can change these values in a later release.
+
+## Step 7.3: Why You Should Not Rewrite Them
+
+The Android SDK levels and Gradle plugin are tested together as part of the Robot Controller project. Raising one value can trigger new Android behavior or make the build incompatible with the rest of the project.
+
+Java 8 source compatibility is also intentional. It lets the same basic team code work in Android Studio and OnBot Java even when Android Studio itself runs Gradle on a newer JDK.
+
+---
+
+## Step 7.4: Save and Re-Sync
+
+After making any changes to `build.gradle`, save the file and run:
+
+**File → Sync Project with Gradle Files**
+
+Wait for `BUILD SUCCESSFUL`.
+
+<MarkComplete
+  lessonId="unit-01/verify-build-config"
+  nextUnit="/docs/unit-01/first-opmode"
+  nextUnitName="Section 8: Writing Your First OpMode"
+/>

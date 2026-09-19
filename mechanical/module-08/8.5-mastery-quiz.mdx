@@ -1,0 +1,156 @@
+---
+id: mastery-quiz
+title: "Module 8 Mastery Quiz: Mechanisms"
+sidebar_label: "Module 8 · Mastery Quiz"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import ScoredQuiz from '@site/src/components/mechanical/ScoredQuiz';
+import {MASTERY_QUESTIONS} from '@site/src/telemark/mechanicalQuizzes';
+
+# Module 8 Mastery Quiz: Mechanisms
+
+---
+
+## I. Conceptual Questions
+
+**1. Reliability Over Speed:** Explain why an intake that fails one attempt in five is worse than an intake that is half a second slower per cycle.
+
+<details>
+<summary>Show answer</summary>
+
+A failed acquisition costs a full retry, including time to reposition, approach, and try again. At a 20% failure rate, one cycle in five carries that penalty, which adds more average cycle time than a half-second change to the mechanism.
+
+Failures also cost more than time. They disrupt the driver's rhythm, they sometimes leave the element in a worse position, and they occasionally result in the robot being out of position when a partner needs the space. Reliability is the design target, and speed is optimized after reliability is established.
+
+</details>
+
+---
+
+**2. Cascade Trade:** A three stage cascading slide is chosen for its extension speed. What happens to the available lifting force, and what mistake does this cause?
+
+<details>
+<summary>Show answer</summary>
+
+With three moving stages, the top stage moves three times as fast as the string is taken up, and the force available at the load is divided by three. Speed and force trade exactly.
+
+The mistake is sizing the motor and spool for the required extension speed, confirming that number, and never checking the force side. The result is a slide that extends quickly with no load on the bench and cannot lift the actual payload, which is usually discovered after the slide is built. The fix is to check both quantities before building: use the calculator to confirm the lifting force exceeds the load with real margin, and adjust the spool diameter or reduction if it does not.
+
+</details>
+
+---
+
+**3. Worst Case Angle:** An arm lifts its payload from a stowed vertical position without difficulty, then stalls partway through its travel. Explain.
+
+<details>
+<summary>Show answer</summary>
+
+Gravity torque on an arm is `m * g * L * cos(theta)` measured from horizontal. At vertical, cosine is 0 and essentially no holding torque is required, which is why the initial lift succeeds. As the arm rotates toward horizontal, cosine rises toward 1 and the required torque rises to its maximum.
+
+The stall occurs where the demanded torque crosses what the drive can deliver, which is at or near horizontal. The arm was sized against the easy position rather than the worst case. The design check must always be performed at horizontal, with the payload included, and with a safety factor of at least 2.
+
+</details>
+
+---
+
+**4. Over-Counterbalance:** Why is a counterbalance stronger than gravity a problem rather than extra margin?
+
+<details>
+<summary>Show answer</summary>
+
+An over-strong counterbalance produces a net upward torque, so the arm rises on its own. The motor must now fight the spring to lower the arm, which is the same continuous-torque problem the counterbalance was meant to solve, with the sign reversed.
+
+It is also a safety issue. With the motor unpowered, whether from a disconnected battery, a disabled robot, or a failure, the arm drives itself to full extension under spring force with nothing restraining it. The correct target is slightly under-balanced, so the arm settles gently downward when released and the motor's remaining job is small.
+
+</details>
+
+---
+
+**5. Slide Friction Diagnosis:** A slide extends smoothly by hand on the bench but stalls under load at full extension. Give the mechanical explanation.
+
+<details>
+<summary>Show answer</summary>
+
+At full extension the slide is a long cantilever, and deflection scales with the cube of the extended length. Under load the stages deflect, which means the rails are no longer parallel to each other along their length. Non-parallel rails bind, so friction rises sharply at exactly the position where the mechanism has the least mechanical advantage.
+
+The bench test missed it because an unloaded slide barely deflects. The correct test is at the extreme of travel with the real load applied. Remedies include stiffening the stages, increasing the overlap between stages so each is better supported, reducing the payload weight, and confirming the string pulls straight along the travel rather than at an angle.
+
+</details>
+
+---
+
+## II. Review the Mechanism
+
+A team describes an arm design. **Identify the 2 errors and state the fix.**
+
+```text
+The arm is 20 in from pivot to end effector and weighs 3 lb,
+balanced at 11 in from the pivot. The payload is 1.5 lb.
+
+The team computed the torque with the arm at 45 degrees, since
+that is where it spends most of its time, getting about 2.5
+N-m, and applied a 1.2 safety factor for 3.0 N-m.
+
+The arm holds the scoring position for roughly 60 seconds per
+match on motor power alone. The motor is a 0.105 N-m unit
+behind a 40:1 reduction.
+
+In competition the arm sometimes fails to reach the scoring
+position in the last matches of the day, and the motor is very
+hot afterward.
+```
+
+<details>
+<summary>Show answers</summary>
+
+**Error 1 - Torque computed at 45 degrees rather than at the worst case, with an inadequate safety factor.**
+Gravity torque follows `cos(theta)` from horizontal. At 45 degrees the cosine is about 0.707, so the calculation understated the worst case by roughly 40%. The horizontal value is:
+
+```text
+arm:     3 lb   * 11 in  ->  1.36 kg * 9.81 * 0.279 m = 3.73 N-m
+payload: 1.5 lb * 20 in  ->  0.68 kg * 9.81 * 0.508 m = 3.39 N-m
+total worst case = 7.12 N-m
+```
+
+Against that, a 1.2 safety factor is far too small even before the angle error. The available torque is `0.105 * 40 * efficiency`, roughly 3.4 N-m at 80%, which is less than half of what the worst case demands.
+
+```text
+Fix: compute at horizontal, apply a safety factor of at least
+2, giving a target near 14 N-m. That requires roughly a 170:1
+reduction at 80% efficiency, and the resulting speed must then
+be checked against the cycle time requirement. If the arm
+becomes too slow, reduce the torque instead: shorten the
+payload distance, lighten the far end, or counterbalance.
+```
+
+**Error 2 - The arm holds position for 60 seconds per match on motor power alone.**
+Holding a static load with motor torque produces no motion and converts the entire electrical input into heat. Over 60 seconds per match across a tournament day this heats the motor badly, and a hot motor produces less torque, which explains why the arm fails specifically in the last matches. The symptom looks intermittent because it depends on accumulated heat and on battery state.
+
+```text
+Fix: add a counterbalance sized so the arm is slightly under
+balanced across its range, so the motor supplies only the
+residual. Alternatively use a non-back-drivable reduction or a
+mechanical brake to hold position without current. The
+counterbalance also reduces the required reduction from Error
+1, which recovers the speed.
+```
+
+</details>
+
+---
+
+## III. Scored Check
+
+The questions above are for working something through. These are graded, so you can find out whether it stuck. Everything is scored in your browser.
+
+<ScoredQuiz
+  lessonId="module-08/mastery-quiz"
+  questions={MASTERY_QUESTIONS['module-08']}
+/>
+
+<MarkComplete
+  lessonId="module-08/mastery-quiz"
+  nextUnit="/mechanical/module-09"
+  nextUnitName="Module 9: Electrical and Wiring"
+/>

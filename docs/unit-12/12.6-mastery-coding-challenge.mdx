@@ -1,0 +1,34 @@
+---
+id: mastery-coding-challenge
+title: "Unit 12 Project Stage: IMU Field-Centric Drive"
+sidebar_label: "Unit 12 · Coding Challenge"
+sidebar_position: 6
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import MasterySimulator from '@site/src/components/MasterySimulator';
+
+# Stage 11: IMU Field-Centric Drive
+
+Upgrade the existing `Drivetrain.java`; do not create another OpMode. The TeleOp continues to delegate stick input while the subsystem owns heading and coordinate conversion.
+
+## Your Task
+
+1. Map the IMU as `"imu"` and initialize it with the Control Hub's physical logo and USB orientation.
+2. Read yaw explicitly in radians.
+3. Let the X button reset heading.
+4. Rotate forward and strafe with sine and cosine.
+5. Reuse the normalized four-wheel mecanum output from Unit 4.
+
+Keep all angle units explicit. Degrees and radians must not be mixed accidentally.
+
+## Coding Challenge Simulator
+
+<MasterySimulator unit={12} project />
+
+<MarkComplete
+  lessonId="unit-12/mastery-coding-challenge"
+  completesUnit="unit-12"
+  nextUnit="/docs/unit-13"
+  nextUnitName="Unit 13: OOP & Inheritance"
+/>

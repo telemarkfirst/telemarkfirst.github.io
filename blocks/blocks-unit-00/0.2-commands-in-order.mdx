@@ -1,0 +1,37 @@
+---
+id: commands-in-order
+title: "Lesson 0.2: Commands Run in Order"
+sidebar_label: "0.2 · Commands Run in Order"
+sidebar_position: 2
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 0.2: Commands Run in Order
+
+A **sequence** is a group of commands arranged in the order they run. The runner starts at the top of a connected stack, finishes one command, and then moves to the next connected command.
+
+Order matters when one action depends on an earlier action. If a program prints a score before it changes the score, the old value appears. If it changes the score first, the new value appears.
+
+Read this sequence from top to bottom:
+
+1. Move forward by 2.
+2. Turn right.
+3. Move forward by 1.
+4. Print `done`.
+
+The final position depends on both move commands and the turn between them. Swapping the first move and turn produces a different route even though the program contains the same blocks.
+
+## Predict before running
+
+Build three connected print blocks with the values `first`, `second`, and `third`. Before you run, write down the output you expect. Run the program and compare the actual order with your prediction.
+
+Next, move `third` above `second`. Run again. Stepping through the program should show the same order as the output panel.
+
+<BlockPractice lessonId="blocks-unit-00/commands-in-order" />
+
+<MarkComplete
+  lessonId="blocks-unit-00/commands-in-order"
+  nextUnit="/blocks/blocks-unit-00/start-blocks-and-events"
+  nextUnitName="Lesson 0.3: Start Blocks and Events"
+/>

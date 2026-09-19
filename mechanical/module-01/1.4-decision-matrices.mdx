@@ -1,0 +1,121 @@
+---
+id: decision-matrices
+title: "Lesson 1.4: Choosing Between Designs With a Weighted Decision Matrix"
+sidebar_label: "1.4 · Decision Matrices"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import LessonTool from '@site/src/components/mechanical/LessonTool';
+import DecisionMatrix from '@site/src/components/mechanical/DecisionMatrix';
+
+# Lesson 1.4: Choosing Between Designs With a Weighted Decision Matrix
+
+---
+
+## Technical Context
+
+An unstructured design discussion can drift toward personal preference or seniority. The team needs a way to compare concepts against the same priorities.
+
+A weighted decision matrix makes that judgment visible. The team can discuss the criteria, weights, and evidence behind a score instead of debating unsupported conclusions.
+
+---
+
+## How It Works
+
+1. **List the criteria** that actually matter for this decision.
+2. **Weight each criterion** from 1 to 5 by how much it matters.
+3. **Score each option** from 1 to 5 against each criterion.
+4. **Multiply and sum.** The weighted total ranks the options.
+
+The critical rule is ordering: **weight the criteria before you score the options.** Doing it the other way lets the team quietly tune the weights until the favorite wins, which produces a matrix that documents a bias rather than a decision.
+
+---
+
+## Choosing Criteria That Are Not Redundant
+
+Weak matrices list five criteria that are all the same criterion in different words. "Fast," "quick cycle," and "efficient" will be scored identically and triple-count one factor.
+
+Criteria that tend to be genuinely independent for FTC mechanisms:
+
+| Criterion | What it captures |
+| --- | --- |
+| Cycle time | How fast the mechanism completes its job |
+| Reliability | How often it works out of many attempts |
+| Build difficulty | Hours, tooling, and skill required |
+| Weight | Mass added to the robot |
+| Serviceability | How fast it can be repaired between matches |
+| Packaging | Whether it fits the size envelope and clears other subsystems |
+| Cost | Parts you have to buy |
+
+Pick four to six criteria. A longer list is harder to score consistently and can dilute the priorities that should drive the decision.
+
+:::tip Weight from strategy, not from habit
+If your strategy is high cycle count, cycle time gets a 5 and weight might get a 2. If your strategy depends on a heavy arm reaching far, weight gets a 5. The weights are where your strategy enters the mechanical decision, and they should differ between teams with different strategies.
+:::
+
+---
+
+## Try It
+
+The matrix below is pre-filled with three intake concepts. Change the criteria, the weights, and the scores to match a real decision your team is facing.
+
+<LessonTool
+  toolId="decision-matrix"
+  bring="Criteria your team weighted before anyone scored an option."
+  change="A weight, and see whether the ranking survives."
+  read="The margin. Within a few points means prototype both."
+>
+  <DecisionMatrix />
+</LessonTool>
+
+---
+
+## Reading the Result Honestly
+
+A matrix output is not a verdict. Read it in three steps.
+
+**If one option wins by a wide margin,** check which criteria created the gap. If the weights and scores still make sense, record the result.
+
+**If the top two are within a few points,** treat them as effectively tied. The estimates are not precise enough to justify the ranking, so prototype both.
+
+**If the result differs from the team's expectation,** do not immediately adjust the weights. Check which criteria created the difference and whether their weights still match the strategy. If they do, investigate the result instead of tuning it away.
+
+:::warning A matrix cannot score what you have not measured
+Before a concept has been built, its reliability score is still an estimate. That is acceptable for an initial screen, but label it accordingly. After prototyping, score it again with measured values and check whether the ranking changes. Module 10 covers how to collect that data.
+:::
+
+---
+
+## What Goes In the Notebook
+
+Photograph or redraw the completed matrix. For each rejected option, add a specific reason tied to a requirement, such as: "The claw's 4 second alignment time made the cycle 40 percent slower than the requirement allowed."
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Criteria must be weighted `__________` the options are scored, so the weights cannot be tuned to favor a preferred outcome.
+2. When the top two options finish within a few points of each other, the correct next step is to `__________` both.
+3. Scoring a concept for reliability before anything has been built produces a `__________` rather than evidence.
+
+<details>
+<summary>Show answers</summary>
+
+1. **before**
+2. **prototype** (build rough versions and test)
+3. **guess** (an estimate, not measured data)
+
+</details>
+
+---
+
+## Exercise
+
+Take the two surviving concepts from the Module 0 exercise and score them properly. Weight the criteria as a full team before anyone sees the scores. Record the result in the notebook with the rejection sentences.
+
+<MarkComplete
+  lessonId="module-01/decision-matrices"
+  nextUnit="/mechanical/module-01/mastery-quiz"
+  nextUnitName="Module 1 Mastery Quiz: The Engineering Notebook"
+/>

@@ -1,0 +1,128 @@
+---
+id: compliance
+title: "Lesson 13.1: Why Compliant Intakes Beat Precise Ones"
+sidebar_label: "13.1 · Compliant Intakes"
+sidebar_position: 1
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 13.1: Why Compliant Intakes Beat Precise Ones
+
+---
+
+## Technical Context
+
+A rigid gripper is an easy concept to picture: close two surfaces around the game element and hold it between them.
+
+The difficult part is presenting the element in exactly the pose that the gripper expects. During a match, it may be rotated, against a wall, or resting on another element. A design that accepts only a narrow position makes the driver correct each of those variations.
+
+Compliant mechanisms accept a wider range of positions by deforming around the element and guiding it into the robot.
+
+---
+
+## Compliance is a strategy, not a material
+
+Compliance means the mechanism deforms to fit what it is holding instead of requiring what it is holding to fit the mechanism.
+
+A rigid gripper has one correct position. Anything else is a miss. A compliant intake has a **range** of positions that all work, because the mechanism absorbs the difference. Surgical tubing stretches. A compliant wheel squashes. A flexible flap bends out of the way and springs back.
+
+The following intake arrangements handle different kinds of variation:
+
+| Arrangement | What it absorbs | Where it struggles |
+| --- | --- | --- |
+| Compliant wheels on a fixed axle | Element height, rotation, and approach angle | Elements that must arrive in a known orientation |
+| Surgical tubing flaps on a spinning hub | Wide size range, delicate elements | Wear, and tubing that takes a set over a season |
+| Counter rotating rollers | Element alignment and automatic centering | Elements taller than the gap between rollers |
+| Rigid claw | Nothing. Position must be exact | Everywhere the field is not a fixture |
+
+None of this makes the claw wrong. A claw is the right answer when the element arrives in a known pose, most often because your own robot placed it there.
+
+---
+
+## The physics: contact patch and normal force
+
+A gripper works by friction, and friction needs normal force. The available grip is:
+
+**F = μN**
+
+where μ is the friction coefficient and N is the force pressing the surfaces together. A rigid gripper produces N only when it is closed to the right width. Too much force can crush or eject the element. Too little compression drops N toward zero.
+
+A compliant element replaces that knife edge with a spring. Once the material deforms, N is set by **how far it deformed**, not by whether you hit an exact dimension:
+
+**N ≈ k·x**
+
+where k is the stiffness of the compliant element and x is the compression. Now a 3 mm error in element position changes the grip force a little, instead of changing it from "gripped" to "dropped".
+
+The practical benefit is a wider acquisition window. The driver only needs to place the mechanism near the element instead of aligning it to one exact pose.
+
+A compliant wheel also grows its contact patch as it compresses. More area does not directly increase friction in the classic model, but it does spread the load, reduce local crushing of a soft element, and give the surface irregularities more places to interlock, which is why real compliant wheels grip better than the model alone predicts.
+
+---
+
+## Choosing compression
+
+Too little compression and the wheel skips over the element. Too much and the intake stalls, the element deforms, or the wheels wear flat.
+
+The usual working range is **3 to 6 mm of compression** on a typical compliant wheel, set by the gap between the wheel and the floor or opposing surface. Position the wheel so its uncompressed outer diameter overlaps the element by the target amount, then confirm the result with the real element.
+
+Use a mounting slot so you can tune compression after the first test. A fixed hole pattern forces the team to drill new holes or remake the mount for each adjustment.
+
+:::tip Design for the adjustment you know you will make
+Every intake gets its height changed. Give it 8 to 10 mm of slotted travel on the first version and you will tune it in five minutes instead of remaking a plate.
+:::
+
+---
+
+## Surface speed, not motor speed
+
+An intake pulls an element in because its surface is moving faster than the element. What matters is **surface speed**:
+
+**v = ω·r**
+
+A small wheel spinning fast and a large wheel spinning slowly can deliver the same surface speed, but they do not behave the same. The larger wheel has a longer contact time and a gentler entry angle, which is why oversized intake wheels tend to be more forgiving even when the surface speeds match.
+
+If the element is being flung away rather than pulled in, the surface speed is too high relative to how long the element stays in contact. Slow it down or wrap it further.
+
+---
+
+## Reading a mechanism instead of copying it
+
+When you see an intake that works, the useful question is not "what did they build". It is:
+
+1. **What variation does this absorb?** Height, rotation, lateral position, element size.
+2. **Where does the compliance live?** The wheel, a spring loaded arm, the mounting, or the element itself.
+3. **What does it require in exchange?** Every compliant design gives up something: speed, retention, or the ability to hold the element in a known pose afterwards.
+
+Answer those three and you can adapt the idea to a game element it was never designed for. Copy the geometry without answering them and you have a mechanism that worked for someone else's problem.
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Compliance replaces a requirement for exact position with a requirement for \_\_\_\_\_\_\_\_ position.
+2. Grip force in a compliant intake is set by how far the element \_\_\_\_\_\_\_\_ the compliant part.
+3. A typical compliant wheel is set up with \_\_\_\_\_\_\_\_ to \_\_\_\_\_\_\_\_ mm of compression.
+4. What an intake does to an element depends on \_\_\_\_\_\_\_\_ speed, not motor speed.
+
+<details>
+<summary>Show answers</summary>
+
+1. approximate
+2. compresses (deforms)
+3. 3 to 6
+4. surface
+
+</details>
+
+---
+
+## Exercise
+
+Pick any intake from a past season, yours or one you have seen. Write down the three questions above and answer them in one sentence each. Then name one game element it would fail on, and say which of its three answers is the reason.
+
+<MarkComplete
+  lessonId="module-13/compliance"
+  nextUnit="/mechanical/module-13/lifts"
+  nextUnitName="Lesson 13.2: Cascading, Continuous, and the Rigging That Decides"
+/>

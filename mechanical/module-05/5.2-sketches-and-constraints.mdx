@@ -1,0 +1,117 @@
+---
+id: sketches-and-constraints
+title: "Lesson 5.2: Fully Defined Sketches and the Core Feature Set"
+sidebar_label: "5.2 · Sketches"
+sidebar_position: 2
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 5.2: Fully Defined Sketches and the Core Feature Set
+
+---
+
+## Technical Context
+
+A parametric CAD model is built from sketches turned into solid features. The quality of the model, meaning whether it can be changed later without falling apart, is decided almost entirely at the sketch level.
+
+---
+
+## Fully Defined Sketches
+
+A sketch is **fully defined** when every point in it is locked down by dimensions and constraints, so nothing can move by dragging. Onshape shows this by changing the sketch entity color; most CAD tools have an equivalent indicator.
+
+An under-defined sketch looks fine and behaves badly. When you later change one dimension, the under-defined geometry moves in unpredictable ways, and features built on it fail.
+
+The habit: **do not exit a sketch until it is fully defined.** It takes a few extra constraints and it makes the model editable for the rest of the season.
+
+---
+
+## Constraints Versus Dimensions
+
+Both lock geometry down, and they carry different meaning.
+
+A **dimension** says "this is 42 mm." A **constraint** says "these two lines are parallel" or "this circle is concentric with that one."
+
+Prefer constraints where they express design intent. If two holes must always be symmetric about the center of a plate, a symmetry constraint keeps them symmetric when the plate width changes. Two separate dimensions from one edge do not: change the width, and the symmetry silently breaks.
+
+| Constraint | Use it to say |
+| --- | --- |
+| Coincident | These points are the same point |
+| Horizontal / vertical | This line stays aligned to the axis |
+| Parallel / perpendicular | These two lines keep their angular relationship |
+| Concentric | These circles share a center |
+| Equal | These two features are always the same size |
+| Symmetric | These are mirrored about a line |
+| Tangent | This arc meets this line smoothly |
+
+:::tip Design intent is what survives change
+Ask "if this part gets 20 mm longer next week, what should stay true?" Constraints that answer that question make the model robust. Models that break every time a dimension changes were built from dimensions where constraints belonged.
+:::
+
+---
+
+## The Core Feature Set
+
+Most FTC parts are made from a small number of features. This is the short version; each one gets a proper treatment later in the module.
+
+**Extrude** turns a closed sketch into a solid of a given thickness, making plates, brackets, and blocks. **Extrude remove** does the same in reverse, which is how holes, slots, and pockets are cut. **Revolve** spins a sketch about an axis for shafts, spools, and pulleys. See [Lesson 5.4](/mechanical/module-05/solid-features), which also covers sweep and loft.
+
+**Fillet** rounds an edge and **chamfer** cuts an angled one. **Hole** places a properly specified hole, including tap drill or clearance size, which connects directly to Lesson 4.1. See [Lesson 5.5](/mechanical/module-05/modifying-solids), which also covers shell, draft, and rib.
+
+**Mirror and pattern** repeat features: a linear pattern makes a row of mounting holes, a circular pattern makes a bolt circle. Patterns beat copies because changing the original updates every instance. See [Lesson 5.6](/mechanical/module-05/patterns-and-booleans).
+
+:::tip Get the sketch right first
+Every feature above is built on a sketch. A feature applied to an under-defined sketch inherits its instability, so the habit in this lesson comes before all of them.
+:::
+
+---
+
+## Building Parts That Can Be Changed
+
+Three habits separate a model you can edit from one you rebuild.
+
+**Sketch on planes, not on faces, where you can.** A sketch attached to a face breaks when that face is modified or removed. A sketch on a datum plane survives.
+
+**Keep the feature tree shallow.** Long chains of features that each depend on the previous one propagate a failure all the way down. Independent features fail independently.
+
+**Name things.** "Extrude 14" tells you nothing in February. "slide tower plate" does.
+
+:::warning Do not model around a mistake
+When a dimension is wrong, fix the dimension. Adding a corrective extrude to patch a part whose base sketch is wrong produces a model nobody can edit, including the person who built it.
+:::
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. A sketch in which no geometry can be moved by dragging is said to be fully `__________`.
+2. A `__________` such as symmetry preserves design intent when a dimension changes, whereas two separate dimensions do not.
+3. Sketching on a datum `__________` rather than on a model face makes the sketch survive later edits.
+
+<details>
+<summary>Show answers</summary>
+
+1. **defined**
+2. **constraint**
+3. **plane**
+
+</details>
+
+---
+
+:::tip Practice
+Graded exercises with hard numbers and self-checks are in [CAD Practice Exercises](/mechanical/cad-practice).
+:::
+
+---
+
+## Exercise
+
+Model one bracket from your robot with a fully defined sketch. Then change one base dimension, such as the overall length, by 20 mm and see whether the model updates cleanly. If it fails, the failure points show you where constraints were missing.
+
+<MarkComplete
+  lessonId="module-05/sketches-and-constraints"
+  nextUnit="/mechanical/module-05/part-studios"
+  nextUnitName="Lesson 5.3: Part Studios, the Feature List, and Reference Geometry"
+/>

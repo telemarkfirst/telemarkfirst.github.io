@@ -1,0 +1,82 @@
+{
+  "name": "cake-recipes",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "docusaurus": "docusaurus",
+    "start": "docusaurus start",
+    "build": "docusaurus build",
+    "build:redirects": "node scripts/build-redirect-site.cjs",
+    "swizzle": "docusaurus swizzle",
+    "deploy": "docusaurus deploy",
+    "clear": "docusaurus clear",
+    "serve": "docusaurus serve",
+    "write-translations": "docusaurus write-translations",
+    "write-heading-ids": "docusaurus write-heading-ids",
+    "typecheck": "tsc",
+    "functions:build": "npm --prefix functions run build",
+    "functions:test": "npm --prefix functions test",
+    "test:simulator": "node scripts/telemark-java.test.cjs && node scripts/motor-battery.test.cjs && node scripts/decode-game.test.cjs && node scripts/java-project-compiler.test.cjs && node scripts/telemark-editor.test.cjs && node scripts/gamepad-controls.test.cjs && node scripts/simulator-base-runtime.test.cjs && node scripts/grading-review.test.cjs && node scripts/mastery-grading.test.cjs && node scripts/advanced-integration.test.cjs && node scripts/mastery-motion.test.cjs && node scripts/cad-assets.test.cjs && node scripts/unit2-runtime.test.cjs && node scripts/unit3-runtime.test.cjs && node scripts/unit6-unit7-runtime.test.cjs && node scripts/unit7-project.test.cjs && node scripts/unit15-fusion.test.cjs && node scripts/pedro3-curriculum.test.cjs && node scripts/project-library.test.cjs && node scripts/cumulative-project.test.cjs && node scripts/legacy-project-runtime.test.cjs && node scripts/project-checks.test.cjs",
+    "test:simulator:audit": "node scripts/audit-simulators.cjs",
+    "test:site": "node scripts/site-regression.test.cjs && node scripts/brand-detachment.test.cjs && node scripts/curriculum-coverage.test.cjs && node scripts/oop-progression.test.cjs && node scripts/annotated-code.test.cjs && node scripts/team-code-excerpts.test.cjs && node scripts/progress-store.test.cjs && node scripts/profile-routing.test.cjs && node scripts/classroom-progress.test.cjs && node scripts/classroom-flow.test.cjs && node scripts/blocks-foundations.test.cjs && node scripts/fll-extension.test.cjs && node scripts/design-tokens.test.cjs && node scripts/design-bans.test.cjs && node scripts/track-parity.test.cjs && node scripts/coach-assessments.test.cjs && node scripts/mechanical-content.test.cjs && node scripts/mechanical-math.test.cjs && node scripts/mechanical-render.test.cjs && node scripts/cad-check.test.cjs && node scripts/chat-store.test.cjs && node scripts/ask-stream.test.cjs && node scripts/completion-case.test.cjs && node scripts/changelog.test.cjs",
+    "test:coaches": "node scripts/coach-assessments.test.cjs",
+    "check:content": "node scripts/check-content.cjs",
+    "verify:build": "node scripts/verify-build.cjs",
+    "smoke:deployed": "node scripts/smoke-deployed.cjs",
+    "smoke:redirects": "node scripts/smoke-redirects.cjs",
+    "test:redirects": "node scripts/build-redirect-site.cjs && node scripts/redirect-site.test.cjs",
+    "firebase:emulators": "npm run functions:build && firebase emulators:start --only functions,firestore",
+    "deploy:functions": "npm run functions:build && firebase deploy --only functions",
+    "deploy:firestore": "firebase deploy --only firestore:rules",
+    "pdf:software": "node scripts/build-curriculum-pdf.mjs software",
+    "photos:shotlist": "node scripts/photo-shotlist.mjs",
+    "test:design": "node scripts/design-tokens.test.cjs && node scripts/design-bans.test.cjs",
+    "test:parity": "node scripts/track-parity.test.cjs",
+    "test:mechanical": "node scripts/mechanical-content.test.cjs && node scripts/mechanical-math.test.cjs && node scripts/mechanical-render.test.cjs && node scripts/cad-check.test.cjs && node scripts/chat-store.test.cjs && node scripts/ask-stream.test.cjs",
+    "pdf:mechanical": "node scripts/build-curriculum-pdf.mjs mechanical",
+    "prepare:decode-field": "node scripts/prepare-decode-field.cjs",
+    "rig:decode-mechanisms": "node scripts/rig-decode-mechanisms.cjs"
+  },
+  "dependencies": {
+    "@docusaurus/core": "3.9.2",
+    "@docusaurus/plugin-content-docs": "3.9.2",
+    "@docusaurus/plugin-google-gtag": "^3.9.2",
+    "@docusaurus/preset-classic": "3.9.2",
+    "@mdx-js/react": "^3.0.0",
+    "animejs": "^4.5.0",
+    "blockly": "13.2.0",
+    "clsx": "^2.0.0",
+    "firebase": "^12.10.0",
+    "gsap": "^3.15.0",
+    "motion": "^13.1.1",
+    "prism-react-renderer": "^2.3.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "three": "^0.179.1"
+  },
+  "devDependencies": {
+    "@docusaurus/module-type-aliases": "3.9.2",
+    "@docusaurus/tsconfig": "3.9.2",
+    "@docusaurus/types": "3.9.2",
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "firebase-tools": "^15.22.0",
+    "typescript": "~5.6.2"
+  },
+  "browserslist": {
+    "production": [
+      ">0.5%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 3 chrome version",
+      "last 3 firefox version",
+      "last 5 safari version"
+    ]
+  },
+  "engines": {
+    "node": ">=24.0"
+  }
+}

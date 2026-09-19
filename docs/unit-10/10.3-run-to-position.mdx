@@ -1,0 +1,138 @@
+---
+id: run-to-position
+title: "Lesson 10.3: Automating Targeted Movement with RUN_TO_POSITION"
+sidebar_label: "10.3 · RUN_TO_POSITION"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit10Simulator from '@site/src/components/Unit10Simulator';
+import {RunToPositionDiagram} from '@site/src/components/DocDiagrams';
+
+# Lesson 10.3: Automating Targeted Movement with RUN_TO_POSITION
+
+---
+
+## Why You Should Let the Hub Handle the Stopping
+
+A common beginner approach to encoder-based movement looks like this: set a target, run the motor, and write a `while` loop that keeps checking `getCurrentPosition()` until it gets close enough, then set power to zero. This works, but it has a real problem. By the time your code reads the position, evaluates the condition, and sends the stop command, the motor has already traveled past the target. At high speeds this overshoot can be significant.
+
+`RUN_TO_POSITION` improves this by moving the stopping logic off of your code and onto the Hub's motor-control layer. The Hub updates its control loop faster than your OpMode loop, so it can react more smoothly than a hand-written "poll position, then stop" loop. It is still not magic: overshoot and settling error can happen if the mechanism is heavy, underpowered, loose, poorly geared, or commanded with too much power.
+
+---
+
+## The Three-Step Setup You Must Follow in Order
+
+This mode requires three commands in a specific sequence. Putting them in the wrong order is one of the most common bugs in FTC encoder code.
+
+**Step 1: Set the target.** Call `setTargetPosition(int ticks)` first. This tells the Hub where you want to go. The parameter is an absolute tick value, not a relative offset from the current position.
+
+**Step 2: Switch the run mode.** Call `setMode(DcMotor.RunMode.RUN_TO_POSITION)`. This activates the Hub's internal PID controller. If you try to set the target after switching modes, the behavior can be unpredictable.
+
+**Step 3: Apply power.** Call `setPower()` with a non-zero value. In this mode, power acts as a speed limit rather than a voltage command. The Hub will not exceed that fraction of full speed as it drives toward the target. The motor will not move at all if power is still at zero after the mode switch.
+
+Once the motor reaches the target, the Hub may apply holding current to resist external force pushing the shaft away from the target position. How well it holds depends on the motor, gearing, load, battery state, and mechanical friction.
+
+<RunToPositionDiagram />
+
+:::info Official reference
+For the exact enum names and SDK method signatures, compare your code against the FTC SDK Javadocs: [DcMotor.RunMode](https://javadoc.io/doc/org.firstinspires.ftc/RobotCore/latest/com/qualcomm/robotcore/hardware/DcMotor.RunMode.html).
+:::
+
+:::tip Mentor note: if RUN_TO_POSITION never moves
+Check the order first. The target should be set before `RUN_TO_POSITION`, then power must be nonzero. Also confirm the encoder cable is plugged in and the target sign matches the direction the motor can physically move.
+:::
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.hardware.DcMotor;
+
+@Autonomous(name="Run_To_Position_Demo")
+public class RunToPositionDemo extends LinearOpMode {
+
+    @Override
+    public void runOpMode() {
+        DcMotor liftMotor = hardwareMap.get(DcMotor.class, "lift");
+        liftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        waitForStart();
+
+        // Step 1: Tell the Hub where to go
+        liftMotor.setTargetPosition(1500);
+
+        // Step 2: Activate the Hub's internal PID controller
+        liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        // Step 3: Set a speed limit. The motor starts moving now.
+        liftMotor.setPower(0.6);
+
+        // Wait here while the Hub drives to the target
+        while (opModeIsActive() && liftMotor.isBusy()) {
+            telemetry.addData("Target",   liftMotor.getTargetPosition());
+            telemetry.addData("Position", liftMotor.getCurrentPosition());
+            telemetry.update();
+        }
+
+        // Stop cleanly after arriving
+        liftMotor.setPower(0);
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Before activating `RUN_TO_POSITION` mode, you must define the destination using the `__________` method.
+2. Once the target is reached, the motor continues to draw current to `__________` its position against external forces.
+3. The `setTargetPosition()` method only accepts parameters of the `__________` data type.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`setTargetPosition()`**
+2. **hold**
+3. **`int`**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Use the simulator below to complete the autonomous lift sequence. Fill in the missing target, mode, and power commands, then start the OpMode and watch the lift move to 1200 ticks.
+
+<SimulatorRunGuide />
+
+<Unit10Simulator lesson="run-to-position" />
+
+:::info Connects to the mechanical track
+If the mechanism does not stop in the same place twice, suspect backlash in the transmission before rewriting the control logic.
+
+See [Lesson 6.4: Efficiency Losses, Backlash, and Real Transmission Behavior](/mechanical/module-06/efficiency-and-backlash).
+:::
+
+## A Team Builds Active Position Hold Explicitly
+
+BunyipsLib's holdable actuator captures an encoder position, selects `RUN_TO_POSITION`, and applies power. This lesson changes the target to the scoring height:
+
+```java
+lift.setTargetPosition(SCORE_HEIGHT_TICKS);
+lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+lift.setPower(LIFT_POWER);
+```
+
+The original current-position hold target was replaced with a named scoring target. The controller setup order is unchanged. Adapted from [BunyipsLib's `HoldableActuator.java` at a pinned commit](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/src/main/java/au/edu/sa/mbhs/studentrobotics/bunyipslib/subsystems/HoldableActuator.java) under the [MIT License](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/LICENSE).
+
+<MarkComplete
+  lessonId="unit-10/run-to-position"
+  nextUnit="/docs/unit-10/run-using-encoder"
+  nextUnitName="Lesson 10.4: Maintaining Speed Consistency with RUN_USING_ENCODER"
+/>

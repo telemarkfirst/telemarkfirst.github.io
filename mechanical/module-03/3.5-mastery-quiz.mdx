@@ -1,0 +1,151 @@
+---
+id: mastery-quiz
+title: "Module 3 Mastery Quiz: Materials and Structure"
+sidebar_label: "Module 3 · Mastery Quiz"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import ScoredQuiz from '@site/src/components/mechanical/ScoredQuiz';
+import {MASTERY_QUESTIONS} from '@site/src/telemark/mechanicalQuizzes';
+
+# Module 3 Mastery Quiz: Materials and Structure
+
+---
+
+## I. Conceptual Questions
+
+**1. Strength Versus Stiffness:** A frame rail bends 0.2 in under a defensive hit and springs back undamaged. The team reports that nothing failed. Why is this still a design problem?
+
+<details>
+<summary>Show answer</summary>
+
+Strength was adequate: nothing broke or permanently deformed. Stiffness was not. Mechanisms depend on geometry, and 0.2 in of deflection moves whatever the rail carries by 0.2 in relative to everything else. An intake that needs to meet a game element within a small window, or two shafts that must stay parallel, will stop working during the hit even though no part failed. Because nothing breaks, the symptom looks intermittent and gets misdiagnosed as a software or driver problem.
+
+</details>
+
+---
+
+**2. The Cube Law:** A 16 in unsupported rail deflects too much. Compare the effect of adding a support at the midpoint against switching the rail from aluminum to steel.
+
+<details>
+<summary>Show answer</summary>
+
+Deflection scales with the cube of the span, so halving the span to 8 in reduces deflection to one eighth of its original value, roughly an 88% improvement, and the support adds very little weight.
+
+Switching to steel multiplies Young's modulus by roughly 2.9, reducing deflection to about a third, roughly a 66% improvement, while roughly tripling the weight of the member.
+
+The support is both more effective and far lighter. This is why the correct order of operations is span first, orientation second, section depth third, triangulation fourth, and material last.
+
+</details>
+
+---
+
+**3. Orientation:** A 0.5 in by 1.5 in aluminum bar is used as a beam under a vertical load. Quantify the difference between mounting it on edge and mounting it flat, and explain where the difference comes from.
+
+<details>
+<summary>Show answer</summary>
+
+Area moment of inertia for a rectangular section is `I = b * h^3 / 12`, where h is the dimension along the load.
+
+On edge: `0.5 * 1.5^3 / 12 = 0.1406`
+Flat: `1.5 * 0.5^3 / 12 = 0.0156`
+
+The ratio is 9 to 1, so the bar is nine times more flexible lying flat. The difference comes from the height being cubed while the width is only linear. Material placed far from the neutral axis contributes disproportionately to stiffness, and orienting the deep dimension along the load puts the material where it does the most work.
+
+</details>
+
+---
+
+**4. Polycarbonate Selection:** A team plans to use a 1/8 in polycarbonate side plate to support two shafts that must remain parallel. Evaluate this choice.
+
+<details>
+<summary>Show answer</summary>
+
+It is the wrong material for this job. Polycarbonate has a Young's modulus around 2.3 GPa against aluminum's 69 GPa, roughly thirty times less stiff, so the plate will deflect substantially under load and the two shafts will not stay parallel. Non-parallel shafts bind bearings, misalign chain or belt, and increase friction.
+
+Polycarbonate additionally creeps under sustained load, so any fastener clamping through it loosens over time, and the plate slowly deforms permanently.
+
+Polycarbonate is a good choice for guards, funnels, and impact panels, where its toughness is the relevant property and deflection does not matter. For a plate that locates shafts, use aluminum.
+
+</details>
+
+---
+
+**5. Weight Placement:** Explain why one pound added to the base of the drivetrain and one pound added to the end of an extended arm are not equivalent costs.
+
+<details>
+<summary>Show answer</summary>
+
+A pound at the drivetrain base adds mass, which slightly reduces acceleration, but it also adds traction proportionally and lowers the center of gravity, which improves stability. Its net cost is small and it is occasionally worth adding deliberately.
+
+A pound at the end of an arm 18 in from the pivot adds gravity torque that the arm motor must produce at every angle for the entire match, which may require more reduction and therefore a slower arm. It raises the center of gravity when the arm is up, increasing tipping risk. It also increases the load on the pivot, the bearings, and the structure supporting the arm, which often means adding more weight to carry the weight.
+
+This is why weight reduction should start at the top of the robot and at the ends of extended mechanisms.
+
+</details>
+
+---
+
+## II. Review the Design
+
+A team describes a chassis design. **Identify the 2 structural errors and state the fix.**
+
+```text
+The chassis is a rectangle of four aluminum channels, bolted
+at each corner with a single M4 screw through each joint.
+
+The two long side rails span 17 in with no intermediate
+support, and are mounted with the channel lying flat so the
+top surface is available for mounting electronics.
+
+The linear slide tower bolts to the middle of one side rail.
+Under test, the tower leans about 0.3 in when the slide is
+extended, and the whole chassis visibly racks when a robot
+pushes it from the corner.
+```
+
+<details>
+<summary>Show answers</summary>
+
+**Error 1 - The side rails are oriented flat, wasting most of their stiffness.**
+The channel is mounted so its shallow dimension is along the vertical load from the slide tower. Since the depth in the load direction is cubed in the area moment of inertia, rotating the channel on edge produces a very large stiffness gain at zero weight cost. The 17 in unsupported span makes this worse, since deflection scales with the cube of span.
+
+```text
+Fix: mount the side rails on edge so the deep dimension runs
+vertically. Add a cross member under the slide tower to cut
+the effective span. Mount electronics on a separate light
+plate rather than orienting a structural rail for convenience.
+```
+
+**Error 2 - The frame is a pinned rectangle with no triangulation, and each corner has only one fastener.**
+A rectangle with corners that can rotate deforms into a parallelogram, which is exactly the racking the team observed. A single screw at each corner makes it worse, because one fastener through one shear plane acts as a pivot and cannot resist rotation at all.
+
+```text
+Fix: use at least two fasteners per corner joint, spaced as
+far apart as the bracket allows, so the joint resists
+rotation. Add a diagonal or corner gussets to triangulate the
+frame, or tie the side plates together with a top rail to
+form a box.
+```
+
+**On diagnosis order:** the team's instinct will be to switch to steel or thicker channel. Both errors above are fixed with orientation, a cross member, and a second screw per corner, at essentially no weight cost. Material change is the last lever, not the first.
+
+</details>
+
+---
+
+## III. Scored Check
+
+The questions above are for working something through. These are graded, so you can find out whether it stuck. Everything is scored in your browser.
+
+<ScoredQuiz
+  lessonId="module-03/mastery-quiz"
+  questions={MASTERY_QUESTIONS['module-03']}
+/>
+
+<MarkComplete
+  lessonId="module-03/mastery-quiz"
+  nextUnit="/mechanical/module-04"
+  nextUnitName="Module 4: Fasteners, Bearings, and Shafts"
+/>

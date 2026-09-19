@@ -1,0 +1,135 @@
+---
+id: linear-slide-challenge
+title: "Lesson 8.5: Build a Two-Way Linear Slide with Software Limits"
+sidebar_label: "8.5 · Linear Slide"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit8Simulator from '@site/src/components/Unit8Simulator';
+
+# Lesson 8.5: Build a Two-Way Linear Slide with Software Limits
+
+---
+
+## Technical Context
+
+Linear slides are prone to mechanical failure if driven past their physical limits, either bottoming out at the base or over-extending at the top. Using upper and lower `DigitalChannel` touch sensors as **software limiters** prevents the motor from applying power in either dangerous direction, protecting the motor from stall current and the mechanism from structural failure.
+
+---
+
+## How to Keep a Linear Slide Safe in Both Directions
+
+This lesson combines concepts from Units 7 and 8. You must:
+
+1. Map the slide `DcMotor` and both `DigitalChannel` limits in `init()`.
+2. Configure both digital ports as inputs.
+3. Correct the motor's installed direction and select `BRAKE` behavior.
+4. Read both active-low limit states each loop cycle.
+5. Apply conditional logic that **overrides driver input** only in the blocked direction.
+
+A critical hardware nuance: the REV Touch Sensor uses **active-low** logic. `getState()` returns `true` when the sensor is **not** pressed and `false` when it **is** pressed. This means you must use the logical NOT operator (`!`) to invert each signal for intuitive use: `boolean atUpper = !upperLimit.getState()`.
+
+The limiter logic has two safe motion branches. Positive power is allowed only while the upper limit is clear. Negative power is allowed only while the lower limit is clear. Neutral input, a blocked direction, or contradictory sensor data must all produce an explicit zero-power command.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+
+@TeleOp(name="Safe_Slide_Demo")
+public class SafeSlideDemo extends OpMode {
+
+    private DcMotor slideMotor;
+    private DigitalChannel upperLimit;
+    private DigitalChannel lowerLimit;
+
+    @Override
+    public void init() {
+        slideMotor = hardwareMap.get(DcMotor.class, "slide");
+        upperLimit = hardwareMap.get(DigitalChannel.class, "limit_upper");
+        lowerLimit = hardwareMap.get(DigitalChannel.class, "limit_lower");
+
+        upperLimit.setMode(DigitalChannel.Mode.INPUT);
+        lowerLimit.setMode(DigitalChannel.Mode.INPUT);
+        slideMotor.setDirection(DcMotor.Direction.REVERSE);
+        slideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        slideMotor.setPower(0.0);
+    }
+
+    @Override
+    public void loop() {
+        double requestedPower = -gamepad1.left_stick_y;
+        boolean atUpper = !upperLimit.getState();
+        boolean atLower = !lowerLimit.getState();
+        double appliedPower;
+
+        if (requestedPower > 0.0 && !atUpper) {
+            appliedPower = requestedPower;
+        } else if (requestedPower < 0.0 && !atLower) {
+            appliedPower = requestedPower;
+        } else {
+            appliedPower = 0.0;
+        }
+
+        slideMotor.setPower(appliedPower);
+        telemetry.addData("Slide Power", appliedPower);
+        telemetry.addData("At Upper Limit", atUpper);
+        telemetry.addData("At Lower Limit", atLower);
+        telemetry.update();
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Positive slide power must be blocked by the `__________` limit, while negative power must be blocked by the lower limit.
+2. If a touch sensor returns `false` when physically pressed (active-low logic), you must use the `__________` operator in Java to flip the signal for intuitive use.
+3. Every unsafe or neutral request must result in an explicit `setPower(__________)` command.
+
+<details>
+<summary>Show answers</summary>
+
+1. **upper**
+2. **`!`** (the logical NOT operator)
+3. **`0.0`**
+
+</details>
+
+---
+
+## Simulator Practice
+
+Use the simulator below to practice protecting both directions with active-low upper and lower switches and lesson-specific starter code.
+
+<SimulatorRunGuide />
+
+<Unit8Simulator lesson="linear-slide-challenge" />
+
+## A Team Applies Limits Before Power
+
+BunyipsLib's holdable actuator supports lower and upper limits around its motor control. This lesson makes the decision visible in one method:
+
+```java
+double safePower = requestedPower;
+if (requestedPower > 0 && upperLimit.isPressed()) safePower = 0.0;
+if (requestedPower < 0 && lowerLimit.isPressed()) safePower = 0.0;
+motor.setPower(safePower);
+```
+
+The source's command and supplier layers were flattened, and the limit names were changed to match the simulator. The safety order remains: evaluate limits before writing motor power. Adapted from [BunyipsLib's `HoldableActuator.java` at a pinned commit](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/src/main/java/au/edu/sa/mbhs/studentrobotics/bunyipslib/subsystems/HoldableActuator.java) under the [MIT License](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/LICENSE).
+
+<MarkComplete
+  lessonId="unit-08/linear-slide-challenge"
+  nextUnit="/docs/unit-08/mastery-coding-challenge"
+  nextUnitName="Unit 8 Comprehensive Coding Challenge"
+/>

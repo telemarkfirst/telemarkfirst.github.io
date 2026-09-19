@@ -1,0 +1,128 @@
+---
+id: hole-standards
+title: "Lesson 12.1: Clearance, Tap Drills, and the 0.15 mm Rule"
+sidebar_label: "12.1 · Hole Standards"
+sidebar_position: 1
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import LessonTool from '@site/src/components/mechanical/LessonTool';
+import TapDrillReference from '@site/src/components/mechanical/TapDrillReference';
+
+# Lesson 12.1: Clearance, Tap Drills, and the 0.15 mm Rule
+
+---
+
+## Technical Context
+
+This module collects dimensions and practices that the team can standardize instead of deciding again for every part.
+
+Post these values in the build area and use them in CAD templates, drawings, and inspection checks.
+
+---
+
+## The one rule behind all of it
+
+A screw needs room to pass. **The minimum clearance is 0.15 mm per side, so 0.3 mm on the diameter.** Under that, the joint stops behaving like a clamped joint and starts behaving like a pin in a hole.
+
+That number is not arbitrary. It has to absorb four things at once:
+
+| What it absorbs | Typical size |
+| --- | --- |
+| Drill cutting oversize or undersize | 0.05 to 0.1 mm |
+| Position error between two parts | 0.1 mm or worse across a stack |
+| Thread and head runout on the fastener | small, but real |
+| Paint, anodising, burrs, and swarf | small, and always there |
+
+Add those and 0.3 mm on the diameter is the honest floor, not a generous allowance.
+
+:::warning A hole cut exactly to the screw size is not a clearance hole
+An M3 screw through a 3.0 mm hole binds. The parts cannot pull together, so tightening loads the screw in shear instead of clamping the faces, and the joint develops slop the first time it is hit. It also cannot be assembled without persuasion, which is how holes get reamed out with a drill bit at a competition.
+:::
+
+---
+
+## The standard sizes
+
+Memorise the M3 row. It is most of an FTC robot.
+
+| Thread | Tap drill | Close clearance | Free clearance |
+| --- | --- | --- | --- |
+| **M3 x 0.5** | **2.5 mm** | **3.2 mm** | **3.4 mm** |
+| M4 x 0.7 | 3.3 mm | 4.3 mm | 4.5 mm |
+| M5 x 0.8 | 4.2 mm | 5.3 mm | 5.5 mm |
+| M6 x 1.0 | 5.0 mm | 6.4 mm | 6.6 mm |
+
+Two rules generate the whole table:
+
+```text
+tap drill      = major diameter - pitch
+clearance hole = major diameter + 0.2 mm  (close)
+                 major diameter + 0.4 mm  (free)
+```
+
+**Close fit** where the part must locate accurately and you can afford to fight it slightly during assembly. **Free fit** where the part is one of several in a stack, or where a slot would have been better anyway.
+
+<LessonTool
+  toolId="tap-drill"
+  bring="The thread size the joint uses."
+  change="The thread, and compare how close the four diameters actually are."
+  read="The gap between tap drill and clearance. It is smaller than it feels."
+>
+  <TapDrillReference />
+</LessonTool>
+
+---
+
+## When 0.3 mm is not enough
+
+The floor assumes one hole through one part. Add parts and the position errors stack, as in [Lesson 4.4](/mechanical/module-04/spacers-and-stackups).
+
+- **Two plates drilled separately:** use free clearance, or clamp and drill them together.
+- **Three or more holes in a pattern:** make one hole close fit to locate, and slot the rest. Trying to hold position on four holes at once is how a part ends up unusable.
+- **A part you cannot re-make:** slot it. A slot costs nothing at design time and saves the part.
+
+:::tip The slot is the professional answer
+Designing every hole round and then filing one out is the amateur version of the same decision. Deciding in CAD which hole locates and which one adjusts takes thirty seconds and produces a part that assembles.
+:::
+
+---
+
+## Printed and laser cut holes
+
+The 0.15 mm rule is about the fastener. The process adds its own error on top.
+
+- **FDM printed holes come out undersize**, typically 0.1 to 0.3 mm on the diameter. Design them oversize deliberately, or drill after printing.
+- **Laser cut polycarbonate** moves with the kerf and the heat affected edge. Cut a test coupon before committing a plate.
+- **Drilled aluminium comes out oversize**, so a drilled hole is already closer to clearance than the drill size suggests.
+
+Never assume the nominal. Measure one, then design against what your shop actually produces.
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The minimum clearance for a screw is `__________` mm per side.
+2. The M3 clearance hole is `__________` mm and the M3 tap drill is 2.5 mm.
+3. When three or more holes form a pattern, make one hole locate and `__________` the rest.
+
+<details>
+<summary>Show answers</summary>
+
+1. **0.15** (0.3 mm on the diameter)
+2. **3.2** (close fit; 3.4 mm free)
+3. **slot**
+
+</details>
+
+---
+
+## Exercise
+
+Measure the last three holes your team drilled for M3 screws. Record each diameter. Anything under 3.2 mm is a joint that cannot clamp properly, and anything over about 3.6 mm is a joint that will not locate.
+
+<MarkComplete
+  lessonId="module-12/hole-standards"
+  nextUnit="/mechanical/module-12/joint-standards"
+  nextUnitName="Lesson 12.2: Thread Engagement, Fastener Count, and Retention"
+/>

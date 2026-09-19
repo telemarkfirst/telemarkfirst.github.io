@@ -1,0 +1,166 @@
+.diagram {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-hand);
+  background: var(--tm-surface-1);
+  color: var(--tm-text-strong);
+}
+
+.title {
+  margin: 0 0 0.85rem;
+  color: var(--tm-accent);
+  font-family: "Share Tech Mono", monospace;
+  font-size: var(--tm-fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.flow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.node {
+  position: relative;
+  min-height: 88px;
+  padding: 0.85rem;
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-hand);
+  background: var(--tm-surface-3);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.node:nth-child(even) {
+  border-radius: var(--tm-r-hand-alt);
+  transform: translateY(3px);
+}
+
+.node:hover {
+  border-color: var(--tm-border-strong);
+  transform: translateY(-2px) rotate(-0.2deg);
+}
+
+.node::after {
+  content: "";
+  position: absolute;
+  right: -0.5rem;
+  top: 50%;
+  width: 0.5rem;
+  height: 1px;
+  background: var(--tm-accent-a55);
+}
+
+.node:last-child::after {
+  display: none;
+}
+
+.node strong {
+  display: block;
+  color: var(--tm-text-strong);
+  font-family: "Rajdhani", sans-serif;
+  font-size: var(--tm-fs-md);
+  line-height: 1.1;
+}
+
+.node span {
+  display: block;
+  margin-top: 0.4rem;
+  color: var(--tm-text-soft);
+  font-size: var(--tm-fs-sm);
+  line-height: 1.35;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.8rem;
+  height: 1.8rem;
+  margin-bottom: 0.55rem;
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  border-radius: var(--tm-r-lg);
+  color: var(--tm-blue-soft);
+  background: var(--tm-blue-a10);
+  font-family: "Share Tech Mono", monospace;
+  font-size: var(--tm-fs-sm);
+}
+
+.modeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.modeCard {
+  padding: 1rem;
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-hand);
+  background: var(--tm-surface-3);
+}
+
+.modeCard h4 {
+  margin: 0 0 0.65rem;
+  color: var(--tm-accent);
+  font-family: "Share Tech Mono", monospace;
+  font-size: var(--tm-fs-xs);
+}
+
+.modeCard p {
+  margin: 0;
+  color: var(--tm-text);
+  font-size: var(--tm-fs-sm);
+  line-height: 1.45;
+}
+
+.svgWrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  min-width: 560px;
+  height: auto;
+}
+
+.caption {
+  margin: 0.85rem 0 0;
+  color: var(--tm-text-muted);
+  font-size: var(--tm-fs-sm);
+  line-height: 1.45;
+}
+
+.cycle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.cycle .node {
+  min-height: 108px;
+}
+
+@media (max-width: 760px) {
+  .modeGrid,
+  .cycle {
+    grid-template-columns: 1fr;
+  }
+
+  .node::after {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .node,
+  .node:nth-child(even),
+  .node:hover {
+    transform: none;
+    transition: none;
+  }
+}

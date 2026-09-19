@@ -1,0 +1,3 @@
+# Original CAD authoring files are retained locally and are too large for GitHub.
+*.glb
+*.step

@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Telemark Unit 14.3 Simulator</title>
+<style>
+  #sim-right-panel #sim-scene-container {
+    flex: 1 0 clamp(360px, 55vh, 620px);
+    min-height: 360px;
+    background: #020204;
+  }
+
+  #sim-right-panel .u143-panel {
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: clamp(280px, 38vh, 480px);
+    overflow-y: auto;
+    margin: 10px;
+    padding: 12px;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #0b0b0f;
+    color: #e5e7eb;
+    font-family: var(--font-ui, Arial, sans-serif);
+  }
+
+  #sim-scene-container .u143-scene-badge,
+  #sim-scene-container .u143-distance-badge,
+  #sim-scene-container .u143-drag-hint {
+    position: absolute;
+    z-index: 5;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: rgba(4, 4, 7, 0.9);
+    color: #f4f4f5;
+    pointer-events: none;
+    font-weight: 800;
+  }
+
+  #sim-scene-container .u143-scene-badge {
+    top: 12px;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 11px;
+    color: #bbf7d0;
+  }
+
+  #sim-scene-container .u143-distance-badge {
+    right: 12px;
+    bottom: 12px;
+    padding: 10px 13px;
+    font-size: 1.15rem;
+  }
+
+  #sim-scene-container .u143-drag-hint {
+    left: 12px;
+    bottom: 12px;
+    padding: 8px 10px;
+    color: #a5f3fc;
+    font-size: 0.78rem;
+  }
+
+  #sim-right-panel .u143-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0 8px;
+    font-weight: 800;
+  }
+
+  #sim-right-panel .u143-title:first-child {
+    margin-top: 0;
+  }
+
+  #sim-right-panel .u143-controls,
+  #sim-right-panel .u143-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  #sim-right-panel .u143-tag-card,
+  #sim-right-panel .u143-status-card {
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #08080c;
+    color: #9ca3af;
+  }
+
+  #sim-right-panel .u143-tag-card {
+    min-width: 168px;
+    padding: 8px;
+  }
+
+  #sim-right-panel .u143-tag-card.active {
+    border-color: #22cc66;
+    color: #bbf7d0;
+  }
+
+  #sim-right-panel .u143-tag-card.target {
+    border-color: #22d3ee;
+    box-shadow: 0 0 12px rgba(34, 211, 238, 0.18);
+  }
+
+  #sim-right-panel .u143-tag-card.null-meta {
+    border-color: #b91c1c;
+  }
+
+  #sim-right-panel .u143-tag-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 7px;
+    font-weight: 800;
+  }
+
+  #sim-right-panel .u143-button,
+  #sim-right-panel .u143-toggle,
+  #sim-right-panel .u143-input,
+  #sim-right-panel .u143-range {
+    border: 1px solid #374151;
+    border-radius: 8px;
+    background: #101018;
+    color: #e5e7eb;
+    padding: 7px 9px;
+    font: inherit;
+  }
+
+  #sim-right-panel .u143-range {
+    width: 100%;
+    padding: 0;
+    margin-top: 7px;
+  }
+
+  #sim-right-panel .u143-button,
+  #sim-right-panel .u143-toggle {
+    cursor: pointer;
+    font-weight: 700;
+  }
+
+  #sim-right-panel .u143-button {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.12);
+    color: #bfdbfe;
+  }
+
+  #sim-right-panel .u143-toggle.active {
+    border-color: #22cc66;
+    color: #bbf7d0;
+  }
+
+  #sim-right-panel .u143-toggle.danger {
+    border-color: #b91c1c;
+    color: #fecaca;
+  }
+
+  #sim-right-panel .u143-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  #sim-right-panel .u143-status-card {
+    padding: 9px;
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  #sim-right-panel .u143-status-card.large strong {
+    font-size: 1.45rem;
+  }
+
+  #sim-right-panel .u143-status-card.good {
+    border-color: #22cc66;
+    color: #bbf7d0;
+  }
+
+  #sim-right-panel .u143-status-card.bad {
+    border-color: #b91c1c;
+    color: #fecaca;
+  }
+
+  #sim-right-panel .u143-status-card.warn {
+    border-color: #8a6a20;
+    color: #fde68a;
+  }
+
+  #sim-right-panel .u143-callout,
+  #sim-right-panel .u143-warning,
+  #sim-right-panel .u143-success {
+    margin-top: 10px;
+    border-radius: 8px;
+    padding: 9px;
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  #sim-right-panel .u143-callout {
+    border: 1px solid #374151;
+    background: rgba(244, 244, 245, 0.05);
+    color: #e5e7eb;
+  }
+
+  #sim-right-panel .u143-warning {
+    display: none;
+    border: 1px solid #8a6a20;
+    background: rgba(255, 204, 102, 0.08);
+    color: #fde68a;
+  }
+
+  #sim-right-panel .u143-warning.error {
+    border-color: #7f1d1d;
+    background: rgba(239, 68, 68, 0.1);
+    color: #fecaca;
+  }
+
+  #sim-right-panel .u143-success {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #22cc66;
+    background: rgba(34, 204, 102, 0.1);
+    color: #22cc66;
+    font-weight: 800;
+  }
+</style>
+<script src="./simulator_base.js"></script>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+<script>
+window.onSimulatorReady = function () {
+  "use strict";
+
+  const starterCode = `import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+
+@TeleOp(name="Get_Tag_Distance")
+public class GetTagDistance extends OpMode {
+
+    AprilTagProcessor aprilTagProcessor;
+    VisionPortal      visionPortal;
+
+    @Override
+    public void init() {
+        aprilTagProcessor = AprilTagProcessor.easyCreateWithDefaults();
+
+        visionPortal = new VisionPortal.Builder()
+            .setCamera(hardwareMap.get(WebcamName.class, "front_cam"))
+            .addProcessor(aprilTagProcessor)
+            .build();
+
+        telemetry.addData("Status", "Camera Ready");
+    }
+
+    double getTagDistance(int targetId) {
+        // TODO: Loop through the current detection list
+        // TODO: If id matches targetId and metadata is valid, return the forward distance
+        return -1.0;
+    }
+
+    @Override
+    public void loop() {
+        double distance = getTagDistance(22);
+
+        if (distance != -1.0) {
+            telemetry.addData("Distance", distance + " inches");
+        } else {
+            telemetry.addData("Distance", "Tag not found");
+        }
+
+        telemetry.addData("Detections", aprilTagProcessor.getDetections().size());
+        telemetry.update();
+    }
+}`;
+
+  const requirements = [
+    "Call aprilTagProcessor.getDetections()",
+    "Use a for loop to iterate over detections",
+    "Check detection.id against targetId",
+    "Check detection.metadata != null",
+    "Return detection.ftcPose.y when both conditions are met",
+    "Return -1.0 as the not-found sentinel",
+    "Return -1.0 when metadata is null",
+    "Make getTagDistance return double",
+    "Show the distance result with telemetry.addData()"
+  ];
+
+  const tags = [20, 21, 22].map(function (id, index) {
+    return {
+      id: id,
+      index: index,
+      active: id === 22,
+      metadataValid: true,
+      distance: id === 22 ? 24 : 48,
+      x: -1.55 + index * 1.55,
+      mesh: null,
+      outline: null,
+      label: null
+    };
+  });
+
+  const state = {
+    running: false,
+    targetId: 22,
+    result: -1.0,
+    targetDetection: null,
+    lastEval: null,
+    lastSignature: "",
+    processor: null,
+    dragging: false
+  };
+
+  let sceneRoot;
+  let robotGroup;
+  let beamLine;
+  let beamLabel;
+  let noDetectionLabel;
+  let wallGroup;
+  let animationRegistered = false;
+  const aprilTagCallbacks = [];
+
+  function el(id) {
+    return document.getElementById(id);
+  }
+
+  function safeCall(fn) {
+    if (typeof fn !== "function") return undefined;
+    const args = Array.prototype.slice.call(arguments, 1);
+    return fn.apply(null, args);
+  }
+
+  ensureAprilTagHardware();
+
+  setCode(starterCode);
+  setChallenge(
+    "Telemark Unit 14.3 Simulator",
+    "getTagDistance - Pose Data with Sentinel",
+    requirements
+  );
+  setBadges([
+    { icon: "fa-camera", iconClass: "fa-solid fa-camera", label: "AprilTag", active: true },
+    { icon: "fa-ruler", iconClass: "fa-solid fa-ruler", label: "Distance", active: true },
+    { icon: "fa-display", iconClass: "fa-solid fa-display", label: "Telemetry", active: true }
+  ]);
+  setActiveInputs([]);
+
+  const banner = el("sim-success-banner");
+  if (banner) {
+    banner.innerHTML = '<i class="fa-solid fa-circle-check"></i> Challenge Complete! getTagDistance correctly returns pose data with sentinel value.';
+  }
+
+  state.processor = hardwareMap.registerAprilTagProcessor("aprilTagProcessor");
+  hardwareMap.onAprilTagDetection(function (detections) {
+    updateDetectionVisual(detections);
+  });
+
+  createPanel();
+  setupScene();
+  emitDetections();
+  validateCode();
+  updatePanel();
+
+  window.onRun = function () {
+    state.running = true;
+    state.lastSignature = "";
+    validateCode();
+    runTeleOp();
+  };
+
+  window.onStop = function () {
+    state.running = false;
+    updatePanel();
+  };
+
+  window.onReset = function () {
+    state.running = false;
+    state.targetId = 22;
+    state.result = -1.0;
+    state.targetDetection = null;
+    state.lastEval = null;
+    state.lastSignature = "";
+    tags.forEach(function (tag) {
+      tag.active = tag.id === 22;
+      tag.metadataValid = true;
+      tag.distance = tag.id === 22 ? 24 : 48;
+    });
+    const targetInput = el("u143-target");
+    if (targetInput) targetInput.value = "22";
+    safeCall(clearTelemetry);
+    emitDetections();
+    validateCode();
+    updatePanel();
+  };
+
+  if (!animationRegistered && typeof addAnimationCallback === "function") {
+    addAnimationCallback(tick);
+    animationRegistered = true;
+  }
+
+  function ensureAprilTagHardware() {
+    if (typeof hardwareMap.registerAprilTagProcessor !== "function") {
+      hardwareMap.registerAprilTagProcessor = function (name) {
+        const processor = {
+          _name: name,
+          getDetections: function () {
+            return getAprilTagDetections();
+          }
+        };
+        hardwareMap._devices[name] = processor;
+        return processor;
+      };
+    }
+
+    if (typeof hardwareMap.onAprilTagDetection !== "function") {
+      hardwareMap.onAprilTagDetection = function (cb) {
+        aprilTagCallbacks.push(cb);
+      };
+    } else {
+      const original = hardwareMap.onAprilTagDetection.bind(hardwareMap);
+      hardwareMap.onAprilTagDetection = function (cb) {
+        aprilTagCallbacks.push(cb);
+        original(cb);
+      };
+    }
+  }
+
+  function createPanel() {
+    const rightPanel = el("sim-right-panel");
+    const sceneContainer = el("sim-scene-container");
+    if (!rightPanel || !sceneContainer) return;
+
+    ["u143-panel", "u143-scene-badge", "u143-distance-badge", "u143-drag-hint"].forEach(function (id) {
+      const old = el(id);
+      if (old) old.remove();
+    });
+
+    const sceneBadge = document.createElement("div");
+    sceneBadge.id = "u143-scene-badge";
+    sceneBadge.className = "u143-scene-badge";
+    sceneBadge.innerHTML = '<i class="fa-solid fa-circle-play"></i> STREAMING';
+    sceneContainer.appendChild(sceneBadge);
+
+    const distanceBadge = document.createElement("div");
+    distanceBadge.id = "u143-distance-badge";
+    distanceBadge.className = "u143-distance-badge";
+    sceneContainer.appendChild(distanceBadge);
+
+    const dragHint = document.createElement("div");
+    dragHint.id = "u143-drag-hint";
+    dragHint.className = "u143-drag-hint";
+    dragHint.innerHTML = '<i class="fa-solid fa-up-down"></i> Drag field to change target distance';
+    sceneContainer.appendChild(dragHint);
+
+    const panel = document.createElement("div");
+    panel.id = "u143-panel";
+    panel.className = "u143-panel";
+    panel.innerHTML = `
+      <div class="u143-title"><i class="fa-solid fa-sliders"></i> Distance Controls</div>
+      <div class="u143-controls">
+        <label for="u143-target"><i class="fa-solid fa-bullseye"></i> Target ID</label>
+        <input class="u143-input" id="u143-target" type="number" min="20" max="22" value="22" />
+      </div>
+      <div class="u143-controls" id="u143-tag-controls"></div>
+
+      <div class="u143-title"><i class="fa-solid fa-vial"></i> Test Scenarios</div>
+      <div class="u143-presets">
+        <button class="u143-button" type="button" data-preset="valid"><i class="fa-solid fa-circle-check"></i> Tag found, valid metadata, 24in</button>
+        <button class="u143-button" type="button" data-preset="null"><i class="fa-solid fa-ban"></i> Tag found, null metadata</button>
+        <button class="u143-button" type="button" data-preset="missing"><i class="fa-solid fa-magnifying-glass"></i> Tag not in list</button>
+        <button class="u143-button" type="button" data-preset="empty"><i class="fa-solid fa-box-open"></i> Empty detection list</button>
+      </div>
+
+      <div class="u143-title"><i class="fa-solid fa-ruler"></i> getTagDistance Result</div>
+      <div class="u143-summary">
+        <div class="u143-status-card" id="u143-target-card"></div>
+        <div class="u143-status-card large" id="u143-result-card"></div>
+        <div class="u143-status-card" id="u143-pose-card"></div>
+        <div class="u143-status-card" id="u143-status-card"></div>
+        <div class="u143-status-card" id="u143-condition-card"></div>
+        <div class="u143-status-card" id="u143-caller-card"></div>
+      </div>
+
+      <div class="u143-callout">
+        <i class="fa-solid fa-circle-info"></i>
+        What is -1.0? A sentinel value signals "no valid reading" - the caller checks for -1.0 before using the distance.
+      </div>
+      <div class="u143-callout" id="u143-safe-caller"></div>
+      <div class="u143-success" id="u143-success"><i class="fa-solid fa-circle-check"></i> Challenge Complete! getTagDistance correctly returns pose data with sentinel value.</div>
+      <div class="u143-warning" id="u143-warning"></div>
+    `;
+    rightPanel.appendChild(panel);
+
+    renderTagControls();
+
+    const targetInput = el("u143-target");
+    if (targetInput) {
+      targetInput.addEventListener("input", function () {
+        state.targetId = Number(targetInput.value) || 0;
+        state.lastSignature = "";
+        emitDetections();
+        updatePanel();
+      });
+    }
+
+    document.querySelectorAll("[data-preset]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        applyPreset(button.getAttribute("data-preset"));
+      });
+    });
+  }
+
+  function renderTagControls() {
+    const wrap = el("u143-tag-controls");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    tags.forEach(function (tag) {
+      const card = document.createElement("div");
+      card.className = "u143-tag-card";
+      card.id = "u143-tag-card-" + tag.id;
+      card.innerHTML = `
+        <div class="u143-tag-row"><span>ID ${tag.id}</span><i class="fa-solid fa-tag"></i></div>
+        <button class="u143-toggle" type="button" data-toggle-active="${tag.id}"><i class="fa-solid fa-list"></i> In List</button>
+        <button class="u143-toggle" type="button" data-toggle-meta="${tag.id}"><i class="fa-solid fa-database"></i> Set Metadata Null</button>
+        <label for="u143-distance-${tag.id}"><i class="fa-solid fa-ruler-horizontal"></i> <span id="u143-distance-label-${tag.id}">${tag.distance.toFixed(1)} in</span></label>
+        <input class="u143-range" id="u143-distance-${tag.id}" type="range" min="6" max="120" step="1" value="${tag.distance}" data-distance="${tag.id}" />
+      `;
+      wrap.appendChild(card);
+    });
+
+    wrap.querySelectorAll("[data-toggle-active]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        const tag = findTag(Number(button.getAttribute("data-toggle-active")));
+        if (!tag) return;
+        tag.active = !tag.active;
+        state.lastSignature = "";
+        emitDetections();
+        updatePanel();
+      });
+    });
+
+    wrap.querySelectorAll("[data-toggle-meta]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        const tag = findTag(Number(button.getAttribute("data-toggle-meta")));
+        if (!tag) return;
+        tag.metadataValid = !tag.metadataValid;
+        state.lastSignature = "";
+        emitDetections();
+        updatePanel();
+      });
+    });
+
+    wrap.querySelectorAll("[data-distance]").forEach(function (input) {
+      input.addEventListener("input", function () {
+        const tag = findTag(Number(input.getAttribute("data-distance")));
+        if (!tag) return;
+        tag.distance = Number(input.value);
+        state.lastSignature = "";
+        emitDetections();
+        updatePanel();
+      });
+    });
+  }
+
+  function setupScene() {
+    if (!window.THREE || !window.scene) return;
+    if (sceneRoot) window.scene.remove(sceneRoot);
+
+    sceneRoot = new THREE.Group();
+    sceneRoot.name = "unit14_3_scene";
+    window.scene.add(sceneRoot);
+    window.scene.background = new THREE.Color(0x000000);
+    safeCall(setFieldVisible, false);
+    safeCall(setCameraOrbit, {
+      theta: 0.0,
+      phi: 0.16,
+      radius: 7.8,
+      target: { x: 0, y: 0, z: 0 }
+    });
+
+    const ambient = new THREE.AmbientLight(0xffffff, 0.8);
+    sceneRoot.add(ambient);
+    const key = new THREE.DirectionalLight(0xffffff, 1.1);
+    key.position.set(1, 5, 2);
+    sceneRoot.add(key);
+
+    const field = new THREE.Mesh(
+      new THREE.PlaneGeometry(5.8, 5.0),
+      new THREE.MeshBasicMaterial({ color: 0x1a1a2e })
+    );
+    field.rotation.x = -Math.PI / 2;
+    field.position.y = -0.02;
+    sceneRoot.add(field);
+
+    [12, 24, 48, 96].forEach(function (distance) {
+      const ring = makeArc(distanceToZ(distance), 0x334155);
+      sceneRoot.add(ring);
+    });
+
+    wallGroup = new THREE.Group();
+    wallGroup.position.set(0, 0.05, 1.9);
+    sceneRoot.add(wallGroup);
+
+    const wall = new THREE.Mesh(
+      new THREE.BoxGeometry(4.8, 0.25, 0.12),
+      new THREE.MeshStandardMaterial({ color: 0xbab4aa, roughness: 0.8, metalness: 0.02 })
+    );
+    wall.position.y = 0.12;
+    wallGroup.add(wall);
+
+    tags.forEach(function (tag) {
+      tag.mesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.42, 0.42),
+        new THREE.MeshBasicMaterial({ map: makeTagTexture(tag.id), transparent: true, opacity: 1, side: THREE.DoubleSide })
+      );
+      tag.mesh.position.set(tag.x, 0.3, 1.82);
+      tag.mesh.rotation.x = -Math.PI / 2;
+      sceneRoot.add(tag.mesh);
+
+      tag.outline = makeBoxOutline(0.56, 0.56, 0x888888);
+      tag.outline.position.set(tag.x, 0.32, 1.82);
+      tag.outline.rotation.x = -Math.PI / 2;
+      sceneRoot.add(tag.outline);
+
+      tag.label = makeTextSprite("ID " + tag.id, "#e5e7eb");
+      tag.label.position.set(tag.x, 0.5, 1.5);
+      sceneRoot.add(tag.label);
+    });
+
+    robotGroup = new THREE.Group();
+    sceneRoot.add(robotGroup);
+    const robot = new THREE.Mesh(
+      new THREE.BoxGeometry(0.7, 0.28, 0.9),
+      new THREE.MeshStandardMaterial({ color: 0xff6600, roughness: 0.65, metalness: 0.05 })
+    );
+    robot.position.y = 0.14;
+    robotGroup.add(robot);
+    const nose = new THREE.Mesh(
+      new THREE.BoxGeometry(0.32, 0.1, 0.14),
+      new THREE.MeshStandardMaterial({ color: 0xf4f4f5, roughness: 0.5, metalness: 0.1 })
+    );
+    nose.position.set(0, 0.24, 0.52);
+    robotGroup.add(nose);
+
+    beamLine = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
+      new THREE.LineBasicMaterial({ color: 0x22d3ee })
+    );
+    sceneRoot.add(beamLine);
+
+    beamLabel = makeTextSprite("24.0 in", "#a5f3fc");
+    sceneRoot.add(beamLabel);
+
+    noDetectionLabel = makeTextSprite("NO DETECTION", "#fecaca");
+    noDetectionLabel.position.set(0, 0.7, 0);
+    sceneRoot.add(noDetectionLabel);
+
+    wireRobotDrag();
+  }
+
+  function wireRobotDrag() {
+    const container = el("sim-scene-container");
+    if (!container) return;
+    container.addEventListener("pointerdown", function (event) {
+      state.dragging = true;
+      updateDistanceFromPointer(event);
+    });
+    window.addEventListener("pointermove", function (event) {
+      if (!state.dragging) return;
+      updateDistanceFromPointer(event);
+    });
+    window.addEventListener("pointerup", function () {
+      state.dragging = false;
+    });
+    window.addEventListener("pointercancel", function () {
+      state.dragging = false;
+    });
+  }
+
+  function updateDistanceFromPointer(event) {
+    const container = el("sim-scene-container");
+    const tag = findTag(state.targetId);
+    if (!container || !tag) return;
+    const rect = container.getBoundingClientRect();
+    const t = Math.max(0, Math.min(1, (event.clientY - rect.top) / Math.max(1, rect.height)));
+    tag.distance = Math.round((6 + t * 114) * 10) / 10;
+    tag.active = true;
+    tag.metadataValid = true;
+    const input = el("u143-distance-" + tag.id);
+    if (input) input.value = String(tag.distance);
+    state.lastSignature = "";
+    emitDetections();
+  }
+
+  function makeTagTexture(id) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, 128, 128);
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(8, 8, 112, 112);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(22, 22, 84, 84);
+    ctx.fillStyle = "#000000";
+    for (let r = 0; r < 4; r++) {
+      for (let c = 0; c < 4; c++) {
+        if (((id * 7 + r * 5 + c * 3) % 2) === 0) ctx.fillRect(34 + c * 15, 34 + r * 15, 12, 12);
+      }
+    }
+    ctx.fillStyle = "#111111";
+    ctx.font = "bold 20px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(String(id), 64, 116);
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  function makeBoxOutline(width, height, color) {
+    const points = [
+      new THREE.Vector3(-width / 2, -height / 2, 0),
+      new THREE.Vector3(width / 2, -height / 2, 0),
+      new THREE.Vector3(width / 2, height / 2, 0),
+      new THREE.Vector3(-width / 2, height / 2, 0),
+      new THREE.Vector3(-width / 2, -height / 2, 0)
+    ];
+    return new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), new THREE.LineBasicMaterial({ color: color }));
+  }
+
+  function makeArc(z, color) {
+    const points = [];
+    const radius = Math.max(0.2, 1.9 - z);
+    for (let i = 0; i <= 64; i++) {
+      const angle = Math.PI * (i / 64);
+      points.push(new THREE.Vector3(Math.cos(angle) * radius, 0.01, 1.9 - Math.sin(angle) * radius));
+    }
+    return new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), new THREE.LineBasicMaterial({ color: color }));
+  }
+
+  function makeTextSprite(text, color) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 512;
+    canvas.height = 128;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "rgba(0,0,0,0.72)";
+    roundRect(ctx, 10, 18, 492, 92, 18);
+    ctx.fill();
+    ctx.fillStyle = color || "#ffffff";
+    ctx.font = "bold 42px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, 256, 64);
+    const texture = new THREE.CanvasTexture(canvas);
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false }));
+    sprite.scale.set(1.0, 0.25, 1);
+    sprite.userData.canvas = canvas;
+    return sprite;
+  }
+
+  function updateTextSprite(sprite, text, color) {
+    if (!sprite || !sprite.material || !sprite.material.map) return;
+    const canvas = sprite.material.map.image;
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "rgba(0,0,0,0.72)";
+    roundRect(ctx, 10, 18, 492, 92, 18);
+    ctx.fill();
+    ctx.fillStyle = color || "#ffffff";
+    ctx.font = "bold 42px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, 256, 64);
+    sprite.material.map.needsUpdate = true;
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function distanceToZ(distance) {
+    return 1.65 - ((Math.max(6, Math.min(120, distance)) - 6) / 114) * 3.5;
+  }
+
+  function tick() {
+    updateDetectionVisual(getAprilTagDetections());
+    updatePanel();
+  }
+
+  function getAprilTagDetections() {
+    const detections = tags.filter(function (tag) {
+      return tag.active;
+    }).map(function (tag) {
+      return {
+        id: tag.id,
+        metadata: tag.metadataValid ? { name: "Tag " + tag.id } : null,
+        ftcPose: {
+          x: tag.x,
+          y: Number(tag.distance),
+          z: 0,
+          range: Number(tag.distance),
+          bearing: 0,
+          yaw: 0
+        }
+      };
+    });
+    detections.size = function () {
+      return detections.length;
+    };
+    return detections;
+  }
+
+  function emitDetections() {
+    const detections = getAprilTagDetections();
+    aprilTagCallbacks.forEach(function (cb) {
+      try {
+        cb(detections);
+      } catch (err) {
+        console.error("[AprilTag callback error]", err);
+      }
+    });
+  }
+
+  function updateDetectionVisual() {
+    const targetTag = findTag(state.targetId);
+    const valid = state.result !== -1.0 && state.targetDetection && state.targetDetection.metadata !== null;
+    const nullMeta = targetTag && targetTag.active && !targetTag.metadataValid;
+
+    tags.forEach(function (tag) {
+      const active = tag.active;
+      const target = tag.id === state.targetId;
+      if (tag.mesh) tag.mesh.material.opacity = active ? 1 : 0.25;
+      if (tag.outline) {
+        tag.outline.visible = active || target;
+        tag.outline.material.color.setHex(target && valid ? 0x22d3ee : target && nullMeta ? 0xef4444 : active ? 0x888888 : 0x444444);
+        const pulse = target && valid ? 1 + Math.sin(performance.now() * 0.012) * 0.08 : 1;
+        tag.outline.scale.set(pulse, pulse, pulse);
+      }
+    });
+
+    if (robotGroup) {
+      const distance = targetTag ? targetTag.distance : 24;
+      robotGroup.position.set(0, 0, distanceToZ(distance));
+    }
+
+    if (beamLine) {
+      const visible = !!targetTag && targetTag.active && state.result !== -1.0;
+      beamLine.visible = visible;
+      if (visible) {
+        const z = distanceToZ(targetTag.distance);
+        const geometry = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(0, 0.18, z + 0.5),
+          new THREE.Vector3(targetTag.x, 0.18, 1.62)
+        ]);
+        beamLine.geometry.dispose();
+        beamLine.geometry = geometry;
+        beamLine.material.color.setHex(targetTag.metadataValid ? 0x22d3ee : 0xef4444);
+      }
+    }
+
+    if (beamLabel && targetTag) {
+      beamLabel.visible = state.result !== -1.0;
+      beamLabel.position.set(targetTag.x * 0.5, 0.35, (distanceToZ(targetTag.distance) + 1.62) * 0.5);
+      updateTextSprite(beamLabel, targetTag.distance.toFixed(1) + " in", "#a5f3fc");
+    }
+
+    if (noDetectionLabel) {
+      noDetectionLabel.visible = state.result === -1.0;
+      updateTextSprite(noDetectionLabel, nullMeta ? "NULL METADATA - returning -1.0" : "NO DETECTION", "#fecaca");
+    }
+
+    const badge = el("u143-distance-badge");
+    if (badge) {
+      const good = state.result !== -1.0;
+      badge.style.color = good ? "#bbf7d0" : "#fecaca";
+      badge.style.borderColor = good ? "#22cc66" : "#b91c1c";
+      badge.innerHTML = good
+        ? '<i class="fa-solid fa-ruler"></i> ' + state.result.toFixed(1) + " in"
+        : '<i class="fa-solid fa-circle-xmark"></i> -1.0';
+    }
+  }
+
+  function callGetTagDistance(requestedTargetId) {
+    const requested = Number(requestedTargetId);
+    const targetId = Number.isFinite(requested) ? requested : Number(state.targetId);
+    state.targetId = targetId;
+    const targetInput = el("u143-target");
+    if (targetInput && String(targetInput.value) !== String(targetId)) targetInput.value = String(targetId);
+
+    const body = extractMethodBody(getCodeSafe(), "getTagDistance");
+    const shape = analyzeDistanceCode(body);
+    const detections = getAprilTagDetections();
+    const signature = JSON.stringify({
+      targetId: targetId,
+      detections: detections.map(function (d) { return [d.id, d.metadata !== null, d.ftcPose.y]; }),
+      shape: shape.signature
+    });
+
+    const evaluation = evaluateDistance(detections, targetId, shape);
+    state.result = evaluation.result;
+    state.targetDetection = evaluation.detection;
+    state.lastEval = evaluation;
+    state.lastSignature = signature;
+    return evaluation.result;
+  }
+
+  function evaluateDistance(detections, targetId, shape) {
+    if (!shape.returnsDouble || !shape.hasLoop || !shape.hasPoseYReturn) {
+      return { result: -1.0, detection: null, idMatches: false, metadataValid: false, shape: shape };
+    }
+
+    for (let i = 0; i < detections.length; i++) {
+      const detection = detections[i];
+      const idMatches = detection.id === targetId;
+      const metadataValid = detection.metadata !== null;
+      const condition = shape.usesOr
+        ? (shape.hasIdCheck && idMatches) || (shape.hasMetadataCheck && metadataValid)
+        : shape.hasIdCheck && shape.hasMetadataCheck
+          ? idMatches && metadataValid
+          : shape.hasIdCheck
+            ? idMatches
+            : metadataValid;
+      if (condition) {
+        return {
+          result: shape.returnsPoseX ? Number(detection.ftcPose.x) : Number(detection.ftcPose.y),
+          detection: detection,
+          idMatches: idMatches,
+          metadataValid: metadataValid,
+          shape: shape
+        };
+      }
+    }
+
+    return { result: shape.hasSentinel ? -1.0 : 0.0, detection: null, idMatches: false, metadataValid: false, shape: shape };
+  }
+
+  function runTeleOp() {
+    const code = getCodeSafe();
+    const opBody = extractOpModeBody(code);
+    const initBody = extractMethodBody(opBody, "init");
+    const loopBody = extractMethodBody(opBody, "loop");
+    if (!loopBody) {
+      failStudentExecution("loop() was not found.");
+      return;
+    }
+
+    let initFn;
+    let loopFn;
+    try {
+      initFn = new Function(
+        "hardwareMap",
+        "createAprilTagProcessor",
+        "createVisionPortalBuilder",
+        "callGetTagDistance",
+        "getAprilTagDetections",
+        "addTelemetry",
+        "updateTelemetry",
+        '"use strict"; let aprilTagProcessor; let visionPortal;\n' + transpileStudentBody(initBody || "")
+      );
+      loopFn = new Function(
+        "hardwareMap",
+        "createAprilTagProcessor",
+        "createVisionPortalBuilder",
+        "callGetTagDistance",
+        "getAprilTagDetections",
+        "addTelemetry",
+        "updateTelemetry",
+        '"use strict"; let aprilTagProcessor; let visionPortal;\n' + transpileStudentBody(loopBody)
+      );
+    } catch (err) {
+      failStudentExecution("compile error: " + err.message);
+      return;
+    }
+
+    try {
+      clearTelemetry();
+      initFn(hardwareMap, createAprilTagProcessor, createVisionPortalBuilder, callGetTagDistance, getAprilTagDetections, addTelemetry, updateTelemetry);
+      updateTelemetry();
+    } catch (err) {
+      failStudentExecution("init() runtime error: " + err.message);
+      return;
+    }
+
+    const runFrame = function () {
+      try {
+        clearTelemetry();
+        loopFn(hardwareMap, createAprilTagProcessor, createVisionPortalBuilder, callGetTagDistance, getAprilTagDetections, addTelemetry, updateTelemetry);
+        validateCode();
+      } catch (err) {
+        failStudentExecution("loop() runtime error: " + err.message);
+      }
+    };
+
+    if (typeof _simStartLoop === "function") _simStartLoop(runFrame);
+    else window.setInterval(runFrame, 50);
+  }
+
+  function createAprilTagProcessor() {
+    state.processor = hardwareMap.registerAprilTagProcessor("aprilTagProcessor");
+    return state.processor;
+  }
+
+  function createVisionPortalBuilder() {
+    return {
+      setCamera: function () { return this; },
+      addProcessor: function () { return this; },
+      build: function () { return { stopStreaming: function () {}, resumeStreaming: function () {} }; }
+    };
+  }
+
+  function transpileStudentBody(body) {
+    let js = body || "";
+    js = js
+      .replace(/\bAprilTagProcessor\s*\.\s*easyCreateWithDefaults\s*\(\s*\)/g, "createAprilTagProcessor()")
+      .replace(/\bnew\s+VisionPortal\s*\.\s*Builder\s*\(\s*\)/g, "createVisionPortalBuilder()")
+      .replace(/\.setCamera\s*\(\s*hardwareMap\s*\.\s*get\s*\(\s*WebcamName\.class\s*,\s*"front_cam"\s*\)\s*\)/g, '.setCamera("front_cam")')
+      .replace(/\.addProcessor\s*\(\s*aprilTagProcessor\s*\)/g, ".addProcessor()")
+      .replace(/\baprilTagProcessor\s*\.\s*getDetections\s*\(\s*\)\s*\.\s*size\s*\(\s*\)/g, "getAprilTagDetections().length")
+      .replace(/\baprilTagProcessor\s*\.\s*getDetections\s*\(\s*\)/g, "getAprilTagDetections()")
+      .replace(/\bgetTagDistance\s*\(/g, "callGetTagDistance(")
+      .replace(/\btelemetry\s*\.\s*addData\s*\(/g, "addTelemetry(")
+      .replace(/\btelemetry\s*\.\s*update\s*\(\s*\)/g, "updateTelemetry()")
+      .replace(/\bhardwareMap\s*\.\s*get\s*\(\s*(\w+)\.class\s*,/g, 'hardwareMap.get("$1",')
+      .replace(/\b(?:final\s+)?(?:double|int|boolean|String|float|long|byte|short|char|AprilTagProcessor|VisionPortal|AprilTagDetection|WebcamName)\s+(?=[A-Za-z_$])/g, "let ");
+    if (typeof _simTranspile === "function") js = _simTranspile(js);
+    return js;
+  }
+
+  function updatePanel() {
+    renderTagControlState();
+    renderSummary();
+  }
+
+  function renderTagControlState() {
+    tags.forEach(function (tag) {
+      const card = el("u143-tag-card-" + tag.id);
+      if (!card) return;
+      card.classList.toggle("active", tag.active);
+      card.classList.toggle("target", tag.id === state.targetId);
+      card.classList.toggle("null-meta", !tag.metadataValid);
+      const activeButton = card.querySelector("[data-toggle-active]");
+      const metaButton = card.querySelector("[data-toggle-meta]");
+      const input = el("u143-distance-" + tag.id);
+      const label = el("u143-distance-label-" + tag.id);
+      if (activeButton) activeButton.classList.toggle("active", tag.active);
+      if (metaButton) metaButton.classList.toggle("danger", !tag.metadataValid);
+      if (input && Number(input.value) !== Number(tag.distance)) input.value = String(tag.distance);
+      if (label) label.textContent = tag.distance.toFixed(1) + " in";
+    });
+  }
+
+  function renderSummary() {
+    const targetTag = findTag(state.targetId);
+    const inList = !!(targetTag && targetTag.active);
+    const metadataValid = !!(targetTag && targetTag.active && targetTag.metadataValid);
+    const poseAvailable = metadataValid;
+    const idMatches = !!(state.targetDetection && state.targetDetection.id === state.targetId);
+    const good = state.result !== -1.0;
+
+    setCard("u143-target-card", '<i class="fa-solid fa-bullseye"></i> Target ID<br><strong>Searching for ID: ' + state.targetId + "</strong>", "warn");
+    setCard("u143-result-card", '<i class="fa-solid ' + (good ? "fa-ruler" : "fa-circle-xmark") + '"></i> getTagDistance()<br><strong>' + (good ? state.result.toFixed(1) + " inches" : "-1.0 (not found)") + "</strong>", good ? "good" : "bad");
+    setCard("u143-pose-card", '<i class="fa-solid fa-location-dot"></i> ftcPose.y Raw<br><strong>ftcPose.y = ' + (targetTag ? targetTag.distance.toFixed(1) : "unavailable") + "</strong>", poseAvailable ? "good" : "bad");
+    setCard("u143-status-card", '<i class="fa-solid fa-list-check"></i> Target Detection<br><strong>In list: ' + inList + "<br>Metadata valid: " + metadataValid + "<br>ftcPose available: " + poseAvailable + "</strong>", poseAvailable ? "good" : inList ? "bad" : "warn");
+    setCard("u143-condition-card", '<i class="fa-solid fa-code"></i> Conditions<br><strong>detection.id == targetId: ' + idMatches + "<br>detection.metadata != null: " + metadataValid + "<br>Both true: " + (idMatches && metadataValid) + "</strong>", idMatches && metadataValid ? "good" : "bad");
+
+    const direct = good ? "robot is " + state.result.toFixed(1) + " inches from wall - safe to use" : "robot is -1.0 inches from wall - driving at -1.0 power";
+    setCard("u143-caller-card", '<i class="fa-solid fa-triangle-exclamation"></i> Without Check<br><strong>' + direct + "</strong>", good ? "good" : "bad");
+    const safeCaller = el("u143-safe-caller");
+    if (safeCaller) {
+      safeCaller.innerHTML = good
+        ? '<i class="fa-solid fa-shield-halved"></i> With check: distance is valid, caller may use ' + state.result.toFixed(1) + " inches."
+        : '<i class="fa-solid fa-shield-halved"></i> With check: -1.0 detected, caller skips the drive command.';
+    }
+  }
+
+  function setCard(id, html, status) {
+    const card = el(id);
+    if (!card) return;
+    card.classList.toggle("good", status === "good");
+    card.classList.toggle("bad", status === "bad");
+    card.classList.toggle("warn", status === "warn");
+    card.innerHTML = html;
+  }
+
+  function applyPreset(name) {
+    tags.forEach(function (tag) {
+      tag.active = false;
+      tag.metadataValid = true;
+      tag.distance = tag.id === 22 ? 24 : 48;
+    });
+    const configuredTarget = getConfiguredTargetId();
+    state.targetId = findTag(configuredTarget) ? configuredTarget : 22;
+
+    if (name === "valid") {
+      setTag(state.targetId, true, true, 24);
+    } else if (name === "null") {
+      setTag(state.targetId, true, false, 24);
+    } else if (name === "missing") {
+      const alt = state.targetId === 20 ? 21 : 20;
+      setTag(alt, true, true, 36);
+    }
+
+    const targetInput = el("u143-target");
+    if (targetInput) targetInput.value = String(state.targetId);
+    state.lastSignature = "";
+    emitDetections();
+    updatePanel();
+  }
+
+  function setTag(id, active, metadataValid, distance) {
+    const tag = findTag(id);
+    if (!tag) return;
+    tag.active = active;
+    tag.metadataValid = metadataValid;
+    if (typeof distance === "number") tag.distance = distance;
+  }
+
+  function findTag(id) {
+    return tags.find(function (tag) {
+      return tag.id === id;
+    });
+  }
+
+  function getConfiguredTargetId() {
+    const loopBody = extractMethodBody(extractOpModeBody(getCodeSafe()), "loop");
+    const match = /getTagDistance\s*\(\s*(-?\d+)\s*\)/.exec(loopBody);
+    if (match) return Number(match[1]);
+    return Number(state.targetId) || 22;
+  }
+
+  function validateCode() {
+    const code = stripComments(getCodeSafe());
+    const methodBody = extractMethodBody(code, "getTagDistance");
+    const loopBody = extractMethodBody(extractOpModeBody(code), "loop");
+    const shape = analyzeDistanceCode(methodBody);
+    const checks = [
+      /aprilTagProcessor\s*\.\s*getDetections\s*\(\s*\)/.test(methodBody),
+      /for\s*\([\s\S]*?AprilTagDetection\s+\w+\s*:[\s\S]*?getDetections\s*\(\s*\)/.test(methodBody) ||
+        /for\s*\([\s\S]*?;\s*[\s\S]*?;\s*[\s\S]*?\)/.test(methodBody),
+      shape.hasIdCheck,
+      shape.hasMetadataCheck,
+      shape.hasPoseYReturn && shape.hasIdCheck && shape.hasMetadataCheck && !shape.usesOr,
+      shape.hasSentinel,
+      shape.hasMetadataCheck && shape.hasSentinel,
+      shape.returnsDouble,
+      /telemetry\s*\.\s*addData\s*\([^;]*(distance|Distance|getTagDistance)/i.test(loopBody)
+    ];
+
+    checks.forEach(function (passed, index) {
+      safeCall(setRequirement, index, !!passed);
+    });
+
+    const success = el("u143-success");
+    if (success) success.style.display = checks.every(Boolean) ? "flex" : "none";
+    updateWarning(code, methodBody, loopBody, shape);
+    return checks;
+  }
+
+  function analyzeDistanceCode(methodBody) {
+    const full = getCodeSafe();
+    const returnsDouble = /\bdouble\s+getTagDistance\s*\(\s*int\s+targetId\s*\)/.test(full);
+    const hasIdCheck = /detection\s*\.\s*id\s*(?:==|\.equals\s*\()\s*targetId/.test(methodBody) ||
+      /targetId\s*(?:==|\.equals\s*\()\s*detection\s*\.\s*id/.test(methodBody);
+    const hasMetadataCheck = /detection\s*\.\s*metadata\s*!=\s*null/.test(methodBody) ||
+      /null\s*!=\s*detection\s*\.\s*metadata/.test(methodBody);
+    const hasLoop = /for\s*\(/.test(methodBody);
+    const hasPoseYReturn = /return\s+detection\s*\.\s*ftcPose\s*\.\s*y\s*;/.test(methodBody);
+    const returnsPoseX = /return\s+detection\s*\.\s*ftcPose\s*\.\s*x\s*;/.test(methodBody);
+    const hasSentinel = /return\s+-1(?:\.0)?\s*;/.test(methodBody);
+    const hasZeroSentinel = /return\s+0(?:\.0)?\s*;/.test(methodBody);
+    const usesOr = /\|\|/.test(methodBody);
+    const separateIfs = /if\s*\([^)]*detection\s*\.\s*id[\s\S]*?\)\s*\{?[\s\S]*?if\s*\([^)]*metadata/.test(methodBody);
+    return {
+      returnsDouble: returnsDouble,
+      hasIdCheck: hasIdCheck,
+      hasMetadataCheck: hasMetadataCheck,
+      hasLoop: hasLoop,
+      hasPoseYReturn: hasPoseYReturn,
+      returnsPoseX: returnsPoseX,
+      hasSentinel: hasSentinel,
+      hasZeroSentinel: hasZeroSentinel,
+      usesOr: usesOr,
+      separateIfs: separateIfs,
+      signature: [returnsDouble, hasIdCheck, hasMetadataCheck, hasLoop, hasPoseYReturn, returnsPoseX, hasSentinel, hasZeroSentinel, usesOr].join(":")
+    };
+  }
+
+  function updateWarning(code, methodBody, loopBody, shape) {
+    const warning = el("u143-warning");
+    if (!warning) return;
+    let message = "";
+    let type = "warn";
+
+    if (shape.hasZeroSentinel && !shape.hasSentinel) {
+      message = "Use -1.0 not 0.0 as the sentinel - 0.0 could be a valid distance so it cannot signal not found";
+      type = "error";
+    } else if (!shape.hasMetadataCheck) {
+      message = "Check metadata != null before accessing ftcPose - ftcPose may be unavailable when metadata is null causing a NullPointerException";
+      type = "error";
+    } else if (shape.returnsPoseX) {
+      message = "Return ftcPose.y not ftcPose.x - y is the forward distance, x is the lateral offset";
+      type = "error";
+    } else if (!shape.returnsDouble) {
+      message = "Return type must be double - ftcPose.y is a decimal value and -1.0 requires a floating point type";
+      type = "error";
+    } else if (!shape.hasSentinel) {
+      message = "Add return -1.0 after the loop - if no matching tag is found the method must return the sentinel value";
+      type = "error";
+    } else if (shape.separateIfs) {
+      message = "Combine the ID check and metadata check with && in one if statement for cleaner code";
+    } else if (!/telemetry\s*\.\s*update\s*\(\s*\)/.test(code)) {
+      message = "Call telemetry.update() to send data to the Driver Station";
+    } else if (!/distance\s*!=\s*-1(?:\.0)?/.test(loopBody) && !/-1(?:\.0)?\s*!=\s*distance/.test(loopBody)) {
+      message = "Always check if getTagDistance() returned -1.0 before using the value - driving based on a sentinel value will cause unexpected behavior";
+    }
+
+    warning.classList.toggle("error", type === "error");
+    warning.style.display = message ? "block" : "none";
+    warning.innerHTML = message ? '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(message) : "";
+    safeCall(clearHints);
+    if (message) safeCall(addHint, '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(message), type === "error" ? "error" : "warn");
+  }
+
+  function showStudentError(message) {
+    const warning = el("u143-warning");
+    if (warning) {
+      warning.classList.add("error");
+      warning.style.display = "block";
+      warning.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(message);
+    }
+    safeCall(addHint, '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(message), "error");
+    if (typeof _simShowTelemetryError === "function") _simShowTelemetryError(message);
+    else {
+      safeCall(addTelemetry, "ERROR", message);
+      safeCall(updateTelemetry);
+    }
+  }
+
+  function failStudentExecution(message) {
+    if (typeof stopExecution === "function") stopExecution();
+    showStudentError(message);
+  }
+
+  function getCodeSafe() {
+    if (typeof getCode !== "function") return starterCode;
+    try {
+      return getCode();
+    } catch (err) {
+      return starterCode;
+    }
+  }
+
+  function extractOpModeBody(code) {
+    const match = /\bclass\s+([A-Za-z_$][\w$]*)\s+extends\s+OpMode\b/.exec(code);
+    return match ? extractClassBody(code, match[1]) : extractClassBody(code, "GetTagDistance");
+  }
+
+  function extractClassBody(code, name) {
+    const match = new RegExp("\\bclass\\s+" + name + "\\b[^\\{]*\\{").exec(code);
+    if (!match) return "";
+    let index = match.index + match[0].length;
+    let depth = 1;
+    for (; index < code.length; index++) {
+      if (code[index] === "{") depth++;
+      else if (code[index] === "}") {
+        depth--;
+        if (depth === 0) return code.slice(match.index + match[0].length, index);
+      }
+    }
+    return "";
+  }
+
+  function extractMethodBody(scope, name) {
+    if (!scope) return "";
+    const re = new RegExp("\\b(?:public\\s+|private\\s+|protected\\s+)?(?:double|boolean|void|int|String)\\s+" + name + "\\s*\\([^)]*\\)\\s*\\{");
+    const match = re.exec(scope);
+    if (!match) return "";
+    let index = match.index + match[0].length;
+    let depth = 1;
+    for (; index < scope.length; index++) {
+      if (scope[index] === "{") depth++;
+      else if (scope[index] === "}") {
+        depth--;
+        if (depth === 0) return scope.slice(match.index + match[0].length, index);
+      }
+    }
+    return "";
+  }
+
+  function stripComments(code) {
+    return String(code || "")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\/\/.*$/gm, "");
+  }
+
+  function escapeHTML(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+};
+</script>
+</body>
+</html>

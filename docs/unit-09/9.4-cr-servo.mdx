@@ -1,0 +1,104 @@
+---
+id: cr-servo
+title: "Lesson 9.4: Using CRServos for Intake-Style Mechanisms"
+sidebar_label: "9.4 · CRServo"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit9Simulator from '@site/src/components/Unit9Simulator';
+
+# Lesson 9.4: Using CRServos for Intake-Style Mechanisms
+
+---
+
+## Technical Context
+
+**Continuous Rotation (CR) servos** are used for high-speed intakes or spinning mechanisms where positional precision is not required. They provide a compact, lighter alternative to a full DC motor when you need continuous rotation but don't have a free motor port: or when the mechanism is small enough that a servo's current draw is acceptable.
+
+---
+
+## How CRServos Differ from Standard Servos
+
+Unlike standard positional servos, a `CRServo` does not have a target angle. It has **no concept of "position"**: instead, it spins continuously at a speed determined by its power value. For this reason, the SDK exposes it through the `setPower()` method, exactly like a `DcMotor`:
+
+- **`1.0`**: full speed forward
+- **`0.0`**: stopped
+- **`-1.0`**: full speed reverse
+
+Because it uses `setPower()` instead of `setPosition()`, you must also remember that a `CRServo` will **not hold any position** when set to `0.0`: it simply stops spinning. There is no equivalent of `ZeroPowerBehavior.BRAKE` for a CR servo.
+
+Look up the device with `CRServo.class`, not `Servo.class`. The generic `hardwareMap.get()` call may still compile with the wrong requested type, but the Robot Controller cannot return a positional `Servo` interface for hardware configured as a CR servo and will report a runtime configuration or type error.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
+
+@TeleOp(name="CRServo_Demo")
+public class CRServoDemo extends OpMode {
+
+    // Must declare as CRServo: not Servo
+    private CRServo intake;
+
+    @Override
+    public void init() {
+        // Must get as CRServo.class from the hardwareMap
+        intake = hardwareMap.get(CRServo.class, "intake_servo");
+        intake.setPower(0);
+        telemetry.addData("CR Intake", "Ready");
+    }
+
+    @Override
+    public void loop() {
+        // Trigger directly drives the servo speed: 0.0 to 1.0
+        intake.setPower(gamepad1.right_trigger);
+
+        // Left trigger runs it in reverse for ejecting
+        if (gamepad1.left_trigger > 0.1) {
+            intake.setPower(-gamepad1.left_trigger);
+        }
+
+        telemetry.addData("Intake Power", intake.getPower());
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. A CR Servo is commanded using the `__________` method instead of `setPosition()`.
+2. To stop a CR Servo, the power must be set to `__________`.
+3. If a CR Servo rotates the wrong direction for an intake, you can invoke the `__________` method to flip it without changing your power logic.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`setPower()`**
+2. **`0.0`**
+3. **`setDirection()`**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Use the simulator below to practice mapping a `CRServo`, running it forward with `B`, reversing with `X`, and stopping it when neither button is held.
+
+<SimulatorRunGuide />
+
+<Unit9Simulator lesson="cr-servo" />
+
+<MarkComplete
+  lessonId="unit-09/cr-servo"
+  nextUnit="/docs/unit-09/dual-servo-challenge"
+  nextUnitName="Lesson 9.5: Synchronizing Dual-Servo Grippers with Independent Position Offsets"
+/>

@@ -1,0 +1,118 @@
+---
+id: string-literals
+title: "Lesson 3.1: Using Strings to Match Hardware Names Exactly"
+sidebar_label: "3.1 · String Literals"
+sidebar_position: 1
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit3Simulator from '@site/src/components/Unit3Simulator';
+
+# Lesson 3.1: Using Strings to Match Hardware Names Exactly
+
+---
+
+## Technical Context
+
+The Control Hub utilizes a registry to link Java objects to physical I/O ports. Using `String` variables to store configuration names prevents **"Device Not Found" errors** caused by typos or case-sensitivity mismatches during the `hardwareMap.get()` call.
+
+---
+
+## Why Strings Matter for Hardware Names
+
+In Java, a `String` is an object used to hold a sequence of characters. While primitive types like `int` or `double` start with lowercase letters, `String` is capitalized because it is a class within the Java library. When you initialize hardware, the SDK requires a string parameter that must match the name defined in the robot's configuration file **exactly**. Storing these names in variables at the top of your class ensures that if a hardware port name changes, you only need to update it in one location rather than searching through hundreds of lines of code.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+
+@TeleOp(name="String_Mapping")
+public class StringMapping extends OpMode {
+
+    // Declaring a String variable to hold the hardware configuration name
+    // By convention, hardware names are often stored as String literals
+    String motorName = "drive_motor";
+    DcMotor frontMotor;
+
+    @Override
+    public void init() {
+        // Passing the String variable into the hardwareMap.get method
+        frontMotor = hardwareMap.get(DcMotor.class, motorName);
+        telemetry.addData("Status", "Mapped: " + motorName);
+    }
+
+    @Override
+    public void loop() {}
+}
+```
+
+## Configuration Values from ByteForce's Panels Project
+
+The FTControl/Panels example project exposes values of several types so they can be edited from its dashboard. Notice that the string remains quoted while numeric values do not:
+
+```java
+@IgnoreConfigurable
+@Configurable
+public class TestJava {
+    public static int number = 0;
+    public static double doubleTest = 1.5;
+    public static String testString = "Test String!";
+}
+```
+
+This is library demonstration code rather than a suggested robot class, but it shows the same Java distinction used by hardware names and telemetry labels. Excerpted from [ByteForce's FTControl `TestJava.java` at a pinned commit](https://github.com/ftcontrol/ftcontrol-old/blob/fc8d96412ccd32ca1a450c3c9bb24fdcb0f7d749/library/TeamCode/src/main/java/org/firstinspires/ftc/teamcode/TestJava.java). **Based on FTControl bylazar.com.** Reuse is noncommercial and subject to the repository's [FTControl License v1.0](https://github.com/ftcontrol/ftcontrol-old/blob/fc8d96412ccd32ca1a450c3c9bb24fdcb0f7d749/LICENSE.md).
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. A group of characters used to store text, such as a hardware name, is known as a/an `__________`.
+2. Because it is defined as a class rather than a primitive, the name of this datatype must begin with a/an `__________` letter.
+3. Java is `__________`, meaning the String `"Motor"` is considered a different value than `"motor"`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`String`**
+2. **uppercase** (capital) letter: by Java convention all class names use PascalCase
+3. **case-sensitive**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+**Robot Scenario:** Your team has named a Servo `"claw_servo"` in the configuration app. Create a `String` variable to store this name and use it to map the hardware.
+
+<SimulatorRunGuide />
+
+<Unit3Simulator lesson="string-literals" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+String configName = "claw_servo";
+
+@Override
+public void init() {
+    claw = hardwareMap.get(Servo.class, configName);
+    telemetry.addData("Status", "Claw Map Successful");
+}
+```
+
+</details>
+
+<MarkComplete
+  lessonId="unit-03/string-literals"
+  nextUnit="/docs/unit-03/double-precision"
+  nextUnitName="Lesson 3.2: Storing Motor Power Levels with double Precision"
+/>

@@ -1,0 +1,36 @@
+---
+id: mastery-coding-challenge
+title: "Unit 3 Project Stage: Shared Robot Configuration"
+sidebar_label: "Unit 3 · Coding Challenge"
+sidebar_position: 6
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import MasterySimulator from '@site/src/components/MasterySimulator';
+
+# Stage 2: Shared Robot Configuration
+
+Your saved DECODE project now adds `RobotConfig.java` without changing `CompetitionTeleOp.java`. Use the earlier passing snapshot when you need a lifecycle refresher.
+
+## Your Task
+
+Turn `RobotConfig` into the single source of truth for values later subsystems will share:
+
+1. Make the utility class `final` with a private constructor.
+2. Add `static final String` hardware names.
+3. Add `double` constants for mechanism power, joystick deadzone, and target flywheel velocity.
+4. Represent mechanism state with appropriate `boolean` and `int` values.
+5. Read at least one configuration value from `CompetitionTeleOp` so the constant is actually used.
+
+Choose clear names and keep each value as a single source of truth.
+
+## Coding Challenge Simulator
+
+<MasterySimulator unit={3} project />
+
+<MarkComplete
+  lessonId="unit-03/mastery-coding-challenge"
+  completesUnit="unit-03"
+  nextUnit="/docs/unit-04"
+  nextUnitName="Unit 4: Gamepad Input"
+/>

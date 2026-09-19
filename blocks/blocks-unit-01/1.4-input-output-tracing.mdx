@@ -1,0 +1,37 @@
+---
+id: input-output-tracing
+title: "Lesson 1.4: Inputs, Outputs, and Value Tracing"
+sidebar_label: "1.4 · Input, Output, and Tracing"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 1.4: Inputs, Outputs, and Value Tracing
+
+An **input** is information a program or operation receives. An **output** is information it sends out. In the practice runner, blocks provide inputs to other blocks, and the print block sends visible output.
+
+A trace records important values in execution order. It answers questions such as: What was `score` before this command? Which expression produced the next value? What was printed?
+
+Consider this program:
+
+1. Set `score` to 4.
+2. Print `score`.
+3. Change `score` by 3.
+4. Print `score`.
+
+Its outputs are `4` and `7`. The first print does not change when a later command changes the variable.
+
+## Guided practice
+
+Build that program, predict both outputs, and use Step to verify the trace. Then set `bonus` to 2 and change `score` by the value stored in `bonus`.
+
+Make a small table with one row per instruction. Include the instruction number, `score`, `bonus`, and any new output. If the actual trace differs from your table, find the first row that differs before editing the program.
+
+<BlockPractice lessonId="blocks-unit-01/input-output-tracing" />
+
+<MarkComplete
+  lessonId="blocks-unit-01/input-output-tracing"
+  nextUnit="/blocks/blocks-unit-01/score-tracker-challenge"
+  nextUnitName="Lesson 1.5: Score Tracker Challenge"
+/>

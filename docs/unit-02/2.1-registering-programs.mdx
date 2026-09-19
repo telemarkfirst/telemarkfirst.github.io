@@ -1,0 +1,108 @@
+---
+id: registering-programs
+title: "Lesson 2.1: Getting Your OpModes to Show Up with @TeleOp and @Autonomous"
+sidebar_label: "2.1 · @TeleOp & @Autonomous"
+sidebar_position: 1
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit2Simulator from '@site/src/components/Unit2Simulator';
+
+# Lesson 2.1: Getting Your OpModes to Show Up with @TeleOp and @Autonomous
+
+---
+
+## Technical Context
+
+Sometimes valid Java classes fail to appear on the Driver Station menu. This is often due to incorrect annotation. In a competition environment, precise registration ensures the drive team can distinguish between driver-controlled programs and sensor-dependent autonomous routines, preventing the accidental execution of the wrong logic.
+
+---
+
+## What Are Annotations?
+
+Annotations in the FTC SDK are metadata tags that start with the `@` symbol. When the Robot Controller app starts, it scans the TeamCode package for classes that extend `OpMode` and possess the `@TeleOp` or `@Autonomous` annotation. This process registers the class into the SDK's internal registry, allowing the Driver Station to build its user interface menu.
+
+Because `LinearOpMode` extends `OpMode`, both TeleOp and Autonomous classes are still discovered through this same registration system.
+
+Using parameters like `name` and `group` within the annotation provides human-readable labels and organized folders for the drivers. Adding `@Disabled` does **not** hide the class from the Java compiler; the code is still compiled. It tells the FTC SDK not to make that OpMode available in the Driver Station's selectable list. Remove or comment out `@Disabled` when the OpMode is ready to run, as shown in the [official FTC sample](https://github.com/FIRST-Tech-Challenge/FtcRobotController/blob/master/FtcRobotController/src/main/java/org/firstinspires/ftc/robotcontroller/external/samples/RobotAutoDriveByTime_Linear.java).
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+// Importing the SDK classes required for OpMode registration
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+
+// REGISTER: This class appears as "DriveMain" in the TeleOp menu
+@TeleOp(name="DriveMain", group="Competition")
+public class ManualControl extends OpMode {
+
+    @Override
+    public void init() {
+        // Initialization logic for the Control Hub
+        telemetry.addData("Status", "Registered and Initialized");
+    }
+
+    @Override
+    public void loop() {
+        // Continuous hardware updates
+    }
+}
+```
+
+---
+
+## Practice
+
+1. To register a program for the 30-second pre-programmed phase, the class must use the `__________` annotation.
+2. If you want to keep code in your project but hide it from the Driver Station menu, you must add the `__________` annotation.
+3. The `name` parameter inside the annotation defines the `__________` that will be visible to the drivers.
+
+<details>
+<summary>Show answers</summary>
+
+1. `@Autonomous`
+2. `@Disabled`
+3. The **label** (the text that appears in the Driver Station menu)
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Your team has a dedicated program for testing a new intake mechanism. Register this class as an Autonomous program named `"Intake_Test"` so it appears in the correct folder on the Driver Station.
+
+<SimulatorRunGuide />
+
+<Unit2Simulator lesson="registering-programs" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+@Autonomous(name="Intake_Test")
+public class IntakeDiagnostic extends OpMode {
+    @Override
+    public void init() {
+        telemetry.addData("System", "Intake Logic Loaded");
+    }
+
+    @Override
+    public void loop() {
+        // Logic for motor testing
+    }
+}
+```
+
+</details>
+
+<MarkComplete
+  lessonId="unit-02/registering-programs"
+  nextUnit="/docs/unit-02/init-method"
+  nextUnitName="Lesson 2.2: Initializing Peripheral Hardware within the init() Method"
+/>

@@ -1,0 +1,398 @@
+/* Shared styling for every engineering calculator.
+   Matches the DocDiagrams visual language: dark surface, cyan accent,
+   mono labels, slightly irregular corner radii. */
+
+.shell {
+  margin: 1.75rem 0;
+  padding: 1.1rem 1.15rem 1.25rem;
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-surface-1);
+  color: var(--tm-text-strong);
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.9rem;
+}
+
+.title {
+  margin: 0;
+  color: var(--tm-accent);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--tm-text-muted);
+  font-size: var(--tm-fs-sm);
+}
+
+.inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.75rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-surface-3);
+}
+
+.fieldLabel {
+  color: var(--tm-text);
+  font-size: var(--tm-fs-xs);
+  letter-spacing: 0.03em;
+}
+
+.fieldHint {
+  color: var(--tm-text-muted);
+  font-size: var(--tm-fs-2xs);
+}
+
+.input,
+.select {
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--tm-accent-a20);
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-bg);
+  color: var(--tm-text-strong);
+  font-family: var(--tm-font-mono);
+  font-size: var(--tm-fs-base);
+}
+
+.input:focus,
+.select:focus {
+  border-color: var(--tm-accent-a55);
+  outline: none;
+}
+
+.results {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.7rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--tm-accent-a20);
+}
+
+.result {
+  padding: 0.7rem 0.75rem;
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-surface-3);
+}
+
+.resultValue {
+  display: block;
+  color: var(--tm-accent);
+  font-family: var(--tm-font-display);
+  font-size: var(--tm-fs-xl);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.resultLabel {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--tm-text-muted);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.resultNote {
+  display: block;
+  margin-top: 0.3rem;
+  color: var(--tm-text-soft);
+  font-size: var(--tm-fs-xs);
+}
+
+.verdict {
+  margin-top: 0.9rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid;
+  border-radius: 12px;
+  font-size: var(--tm-fs-sm);
+}
+
+.verdictGood {
+  border-color: var(--tm-accent);
+  background: var(--tm-accent-a08);
+  color: var(--tm-text-strong);
+}
+
+.verdictWarn {
+  border-color: var(--tm-warn);
+  background: rgba(251, 191, 36, 0.08);
+  color: var(--tm-warn);
+}
+
+.verdictBad {
+  border-color: var(--tm-danger);
+  background: rgba(248, 113, 113, 0.09);
+  color: var(--tm-danger);
+}
+
+.footnote {
+  margin: 0.9rem 0 0;
+  color: var(--tm-text-muted);
+  font-size: var(--tm-fs-xs);
+  line-height: 1.5;
+}
+
+/* Table used by reference-style widgets */
+.table {
+  width: 100%;
+  margin-top: 0.9rem;
+  border-collapse: collapse;
+  font-size: var(--tm-fs-sm);
+}
+
+.table th,
+.table td {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--tm-accent-a12);
+  text-align: left;
+}
+
+.table th {
+  color: var(--tm-accent);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tableRowActive td {
+  background: var(--tm-accent-a12);
+  color: var(--tm-text-strong);
+}
+
+/* Row-editing widgets (weight budget, decision matrix) */
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.row {
+  display: grid;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.rowActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.button {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--tm-border-strong);
+  border-radius: var(--tm-r-sm);
+  background: transparent;
+  color: var(--tm-accent);
+  cursor: pointer;
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.button:hover {
+  border-color: var(--tm-accent-a55);
+  background: var(--tm-accent-a12);
+}
+
+.removeButton {
+  padding: 0.3rem 0.55rem;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  border-radius: var(--tm-r-sm);
+  background: transparent;
+  color: var(--tm-danger);
+  cursor: pointer;
+  font-size: var(--tm-fs-sm);
+  line-height: 1;
+}
+
+.removeButton:hover {
+  background: rgba(248, 113, 113, 0.12);
+}
+
+@media (max-width: 600px) {
+  .inputs,
+  .results {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* Slider inputs, used where dragging a value teaches more than typing it. */
+.fieldValue {
+  float: right;
+  color: var(--tm-accent);
+  font-family: var(--tm-font-mono);
+  font-size: var(--tm-fs-xs);
+  font-weight: 600;
+}
+
+.range {
+  width: 100%;
+  height: 22px;
+  margin: 0.1rem 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-surface-2);
+}
+
+.range::-moz-range-track {
+  height: 4px;
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-surface-2);
+}
+
+.range::-webkit-slider-thumb {
+  width: 15px;
+  height: 15px;
+  margin-top: -5.5px;
+  border: 2px solid var(--tm-bg);
+  border-radius: 50%;
+  background: var(--tm-accent);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.range::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+  border: 2px solid var(--tm-bg);
+  border-radius: 50%;
+  background: var(--tm-accent);
+}
+
+.range:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid rgba(34, 211, 238, 0.8);
+  outline-offset: 2px;
+}
+
+/* Result values ease between states so a changed number is noticed. */
+.resultValue {
+  transition: color 150ms ease;
+}
+
+/* Preset scenario buttons */
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.85rem;
+}
+
+.presetLabel {
+  align-self: center;
+  margin-right: 0.15rem;
+  color: var(--tm-text-muted);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.preset {
+  padding: 0.32rem 0.7rem;
+  border: 1px solid var(--tm-blue-a32);
+  border-radius: var(--tm-r-sm);
+  background: transparent;
+  color: var(--tm-blue-soft);
+  cursor: pointer;
+  font-size: var(--tm-fs-xs);
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.preset:hover {
+  border-color: rgba(96, 165, 250, 0.7);
+  background: var(--tm-blue-a10);
+  color: var(--tm-text-strong);
+}
+
+.presetActive {
+  border-color: var(--tm-accent-a55);
+  background: var(--tm-accent-a12);
+  color: var(--tm-text-strong);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .range::-webkit-slider-thumb,
+  .resultValue,
+  .preset {
+    transition: none;
+  }
+}
+
+/* Wide tables (morphological chart, requirements list) scroll inside their own
+   box on narrow screens rather than pushing the whole page sideways. */
+.tableScroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+/* Record list: one requirement per block, statement full width, supporting
+   fields wrapping beneath it. Replaces a six-column table that could not show
+   a readable sentence at any width. */
+.records {
+  display: flex;
+  flex-direction: column;
+  margin-top: 0.9rem;
+}
+
+.record {
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--tm-accent-a12);
+}
+
+.recordHead {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.recordFields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.recordField {
+  display: flex;
+  flex: 1 1 8rem;
+  flex-direction: column;
+  gap: 0.2rem;
+}

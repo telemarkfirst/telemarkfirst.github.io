@@ -1,0 +1,145 @@
+---
+id: control-system-layout
+title: "Lesson 9.1: The FTC Control System Layout and Port Map"
+sidebar_label: "9.1 · Control System"
+sidebar_position: 1
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 9.1: The FTC Control System Layout and Port Map
+
+---
+
+## Technical Context
+
+The control system connects the physical robot to the software configuration. A motor plugged into a different port than the code expects can look like a software defect, so both groups need one shared port map.
+
+This lesson covers the physical layout. The software track covers how code addresses it.
+
+---
+
+## The Signal Chain
+
+Power and control flow through a fixed chain, and knowing it turns troubleshooting from guesswork into a sequence of checks:
+
+```text
+Battery
+  -> main power switch
+  -> Control Hub
+       -> motor ports        -> motors
+       -> servo ports        -> servos
+       -> encoder inputs     -> motor encoders
+       -> I2C ports          -> sensors
+       -> digital / analog   -> sensors
+       -> USB                -> webcam
+       -> expansion cable    -> Expansion Hub (if used)
+Driver Station phone or device
+  -> wireless link           -> Control Hub
+```
+
+When something does not respond, walk the chain from the battery outward. Check power, connectors, ports, and configuration before replacing a component.
+
+---
+
+## Ports and What They Carry
+
+**Motor ports** supply high current and receive the encoder signal on a separate connector. A motor that runs but reports no encoder counts usually has the power connected and the encoder cable not.
+
+**Servo ports** supply a low current PWM signal. Servos draw their power from the hub's servo power rail, which is shared, so many servos on one hub can exceed what the rail supplies.
+
+**I2C ports** carry addressed sensor communication. Multiple devices can share a bus, but each needs a distinct address, and two devices with the same address on one bus will conflict.
+
+**Digital and analog ports** carry simple sensor signals such as limit switches and potentiometers.
+
+**USB** connects a webcam and is also how the hub is programmed over a wired connection.
+
+:::warning Confirm the current season's rules for the control system
+Legal components, allowed motor and servo counts, wiring requirements, and battery rules are defined in the game manual and change between seasons. Nothing in this module overrides the manual. Check it before designing a wiring layout.
+:::
+
+---
+
+## Label Everything
+
+Label every wire at both ends with the name used in the software configuration.
+
+```text
+Motor port 0   "left_front"
+Motor port 1   "left_back"
+Motor port 2   "right_front"
+Motor port 3   "right_back"
+```
+
+The labels support configuration and diagnosis.
+
+**Configuration and code must agree.** The Robot Controller configuration maps a port to a name, and the code asks for that name. If the wire moves and the configuration does not, the robot drives sideways and the cause is invisible from the code.
+
+**Diagnosis under time pressure.** Between matches, with five minutes and a robot that will not move, tracing an unlabeled bundle is where the time goes.
+
+Use a label maker or write on heat shrink. Add the labels when you install the wire so both ends are identified before they enter a bundle.
+
+---
+
+## The Port Map Document
+
+Keep one document that lists every port, what is plugged into it, and the configuration name. Post it in the pit and put a copy in the notebook.
+
+| Port | Device | Config name | Notes |
+| --- | --- | --- | --- |
+| Motor 0 | Drive front left | left_front | Encoder connected |
+| Motor 1 | Drive back left | left_back | Encoder connected |
+| Motor 2 | Slide | slide | Encoder connected, brake |
+| Servo 0 | Claw | claw | Range limited in code |
+| I2C 0 | Distance sensor | dist_front | Address default |
+
+Use the document as the source for configuration changes and pit diagnosis instead of relying on one person's memory.
+
+---
+
+## Physical Placement
+
+**Keep the Control Hub accessible.** Ports must be reachable without disassembling the robot, and the status lights must remain visible for diagnosis.
+
+**Protect it from impact and from the mechanism.** Mount it where an extending slide cannot strike it and where an opponent cannot reach it.
+
+**Keep the battery accessible and secured.** It gets swapped between matches, so it needs to come out quickly, and it must be held firmly enough that it cannot move during a match.
+
+**Separate power from signal where practical.** High current motor leads running alongside sensor cables can induce noise, particularly on I2C and encoder lines. Where they must cross, cross at right angles rather than running parallel.
+
+---
+
+:::info Connects to the software track
+The port map you build here is exactly what the code asks for by name.
+
+See [Lesson 7.1: The hardwareMap Object](/docs/unit-07/hardware-map-object).
+:::
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Every wire should be labeled at both ends with the name used in the robot `__________`.
+2. A motor that runs but reports no encoder counts usually has the power connected and the `__________` cable not.
+3. Two I2C devices sharing a bus must have distinct `__________`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **configuration**
+2. **encoder**
+3. **addresses**
+
+</details>
+
+---
+
+## Exercise
+
+Build the port map table for your robot from the physical wiring, without looking at the code. Then compare it against the robot configuration and the code. Any disagreement you find is a failure waiting for a match.
+
+<MarkComplete
+  lessonId="module-09/control-system-layout"
+  nextUnit="/mechanical/module-09/wire-gauge-and-current"
+  nextUnitName="Lesson 9.2: Wire Gauge, Current Capacity, and Voltage Drop"
+/>

@@ -1,0 +1,109 @@
+---
+id: reading-the-game
+title: "Lesson 0.2: Reading a Game Manual Like an Engineer"
+sidebar_label: "0.2 · Reading the Game"
+sidebar_position: 2
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 0.2: Reading a Game Manual Like an Engineer
+
+---
+
+## Technical Context
+
+Treat the game manual as the specification for your robot. Its formal wording can be dense, but it defines the scoring rules, penalties, and physical limits that shape the design. A robot can work well in practice and still be a poor competition design if the team missed one of those details.
+
+Reading it as an engineer means extracting three separate things: what earns points, what costs points, and what the robot is physically allowed to be.
+
+---
+
+## Pass One: Find the Points
+
+Go through the scoring section and build a table. Nothing else, just this table.
+
+| Action | Points | When it counts | Realistic cycle time |
+| --- | --- | --- | --- |
+| Example: element in low goal | 2 | TeleOp | 4 s |
+| Example: element in high goal | 6 | TeleOp | 9 s |
+| Example: element in high goal | 8 | Autonomous | n/a |
+| Example: end game park | 10 | Last 30 s, once | 3 s |
+
+Cycle time belongs in the comparison because point value alone does not determine a good strategy. A six point action that takes nine seconds is worth 0.67 points per second. A two point action that takes four seconds is worth 0.5 points per second. If alignment pushes the high-goal cycle to twelve seconds, both actions return 0.5 points per second.
+
+:::tip Points per second is the real currency
+A two minute match has a fixed number of seconds. Ranking every scoring action by points per second tells you what the robot must be good at. Everything else is optional.
+:::
+
+---
+
+## Pass Two: Find the Penalties
+
+Penalties are negative points that no mechanism can earn back. Read the penalty section specifically looking for things a robot's **shape or behavior** can cause:
+
+- Extension limits during the match, which constrain how far a mechanism may reach outside the frame
+- Protected zones your robot may not enter or contact
+- Rules about controlling more than a certain number of game elements at once
+- Contact rules that make certain robot geometries risky, such as anything that can wedge under an opponent
+
+Every one of these is a design constraint. If the rules cap how many elements you may possess, an intake that scoops up five at a time is a liability, not a feature.
+
+:::warning Read the rule, not the summary
+Team discussion of the rules drifts within days of kickoff. Someone paraphrases a rule, someone else paraphrases the paraphrase, and by week three the team is designing around a rule that does not exist. When a design decision depends on a rule, open the manual and read the actual text out loud.
+:::
+
+---
+
+## Pass Three: Find the Physical Envelope
+
+The manual defines what the robot is allowed to be. Extract these into hard numbers before any CAD work starts:
+
+- Starting size limit and how it is measured
+- Whether and how the robot may expand during the match
+- Allowed materials, motors, servos, and electronics
+- Battery and power requirements
+- Anything about the field that constrains geometry, such as the height of a barrier the robot must cross
+
+Write these on a whiteboard where the build team can see them, in units, with the rule number next to each one. The rule number matters: when someone challenges the constraint in week five, you can find the source in ten seconds.
+
+---
+
+## Team Updates Change Everything
+
+FIRST publishes manual updates throughout the season. An update may change scoring, clarify an ambiguous rule, or affect whether your current strategy is legal.
+
+Assign one person to read every update the day it is released and report anything that touches your design. This is a real job and it takes about fifteen minutes per update.
+
+:::info Official references
+- Game manuals, team updates, and Q and A: [FIRST Tech Challenge Game and Season Info](https://www.firstinspires.org/resource-library/ftc/game-and-season-info)
+:::
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Ranking scoring actions by points divided by the time they take gives you points per `__________`.
+2. Rules that subtract points regardless of how well the robot scores are called `__________`.
+3. When a design decision depends on a rule, you should read the `__________` text rather than a teammate's summary.
+
+<details>
+<summary>Show answers</summary>
+
+1. **second**
+2. **penalties**
+3. **actual** (the manual itself, with the rule number recorded)
+
+</details>
+
+---
+
+## Exercise: Build the Scoring Table
+
+Using this season's manual, fill in the scoring table above with real actions and point values. Leave the cycle time column blank until you measure a prototype in Module 10. Then compare the measurement with your original estimate and update the strategy if needed.
+
+<MarkComplete
+  lessonId="module-00/reading-the-game"
+  nextUnit="/mechanical/module-00/requirements-and-constraints"
+  nextUnitName="Lesson 0.3: Writing Requirements and Separating Them From Constraints"
+/>

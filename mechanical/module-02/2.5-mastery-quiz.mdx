@@ -1,0 +1,133 @@
+---
+id: mastery-quiz
+title: "Module 2 Mastery Quiz: Shop Safety, Tools, and Measurement"
+sidebar_label: "Module 2 · Mastery Quiz"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import ScoredQuiz from '@site/src/components/mechanical/ScoredQuiz';
+import {MASTERY_QUESTIONS} from '@site/src/telemark/mechanicalQuizzes';
+
+# Module 2 Mastery Quiz: Shop Safety, Tools, and Measurement
+
+---
+
+## I. Conceptual Questions
+
+**1. Gloves:** Gloves protect hands from sharp aluminum edges, yet the rule is to remove them before using a drill press. Explain the reasoning.
+
+<details>
+<summary>Show answer</summary>
+
+The two hazards are different. Handling freshly cut stock risks a cut, and a glove prevents it. A rotating spindle risks entanglement, and a glove makes it far worse: bare skin tears free from a catching bit, while a glove is a continuous piece of material that wraps and pulls the whole hand into the tool. The correct practice is to wear gloves while handling stock and remove them before any rotating tool is started.
+
+</details>
+
+---
+
+**2. Tool Selection:** A student measures a shaft with a tape measure, gets 5/16 in, and orders a bearing with a 5/16 in bore. The bearing does not fit. Explain what went wrong at the level of tool choice.
+
+<details>
+<summary>Show answer</summary>
+
+A tape measure resolves to roughly 1/16 in, which is 0.0625 in. A bearing bore fit needs precision on the order of a few thousandths of an inch, roughly twenty times finer than the tool can report. The measurement was not wrong so much as meaningless at the precision the decision required. The shaft could have been anywhere from about 0.28 to 0.34 in and still read as 5/16 in. The correct tool is a caliper, and the correct habit is to match tool resolution to the tolerance the decision needs.
+
+</details>
+
+---
+
+**3. Chip Reading:** During a bandsaw cut in aluminum, the chips come off blue and the cut slows. What is happening and what are the two corrections?
+
+<details>
+<summary>Show answer</summary>
+
+Blue chips indicate excessive heat at the cutting edge. Hot aluminum adheres to the tool, which dulls the effective cutting edge, which generates more heat, which is why the cut slows and the operator's instinct is to push harder and make it worse. The corrections are to reduce the feed rate or speed so less heat is generated, and to add cutting fluid or wax to carry heat away and prevent adhesion. Continuing at the same rate risks welding aluminum to the blade and ruining it.
+
+</details>
+
+---
+
+**4. Two Holes:** Explain why the clearance hole and the tapped hole for the same M3 screw are different sizes, and what happens if the two are swapped.
+
+<details>
+<summary>Show answer</summary>
+
+The clearance hole, at 3.2 mm, lets the screw pass through freely so that tightening pulls the two parts together and the joint is held by clamping force. The tapped hole, drilled at 2.5 mm, leaves material for the tap to cut threads into so the screw can bite.
+
+If they are swapped, both failures are bad. A 2.5 mm clearance hole binds on the screw shank, so the parts never pull tight and the joint relies on the screw in shear. A 3.2 mm hole where a tapped hole was needed leaves the tap nothing to cut, and since you cannot add material back, the part is scrap.
+
+</details>
+
+---
+
+**5. Thread Engagement:** An M3 screw is tapped into 1/8 in aluminum plate. Evaluate this joint and give two alternatives.
+
+<details>
+<summary>Show answer</summary>
+
+1/8 in is 3.175 mm. The guideline for aluminum is at least 1.5 times the screw diameter of engaged thread, which for M3 is 4.5 mm. The plate provides about 70% of the recommended engagement, so the threads will strip at a lower load than the screw itself can carry, and repeated assembly cycles will strip them sooner.
+
+Alternatives include using a through hole with a nut and washer on the back face, tapping into the thicker web of an extrusion rather than the sheet face, installing a threaded insert, or accepting the reduced strength deliberately for a low-load joint and recording that decision.
+
+</details>
+
+---
+
+## II. Review the Shop Procedure
+
+A team member describes how they made a bracket. **Identify the 2 errors and state the correct procedure.**
+
+```text
+1. Cut the 1/8 in aluminum plate to size on the bandsaw.
+2. Measured from the freshly cut edge to lay out four hole
+   positions with a steel rule.
+3. Held the bracket by hand on the drill press table and
+   drilled the four holes at 3.2 mm.
+4. Tapped all four holes M3 using a tap in an adjustable
+   wrench, turning continuously until each was through.
+5. Bolted the bracket to the chassis. Two of the four screws
+   would not thread in.
+```
+
+<details>
+<summary>Show answers</summary>
+
+**Error 1 - The workpiece was not clamped (step 3).**
+Holding a part by hand while drilling is the most common way FTC students are injured. When the bit breaks through the far side it grabs, and the part spins with the operator's fingers on it. Thin sheet is the worst case because breakthrough is sudden.
+
+```text
+3. Clamp the bracket to the drill press table or hold it in a
+   vise. Back it with a sacrificial piece of wood. Ease off
+   the feed as the bit approaches breakthrough.
+```
+
+**Error 2 - The tapped holes were drilled at clearance size (step 3), so tapping could not work.**
+3.2 mm is the M3 clearance size. The M3 tap drill is 2.5 mm. With the hole already at 3.2 mm there is no material for the tap to cut, which is why the screws would not thread. The part cannot be recovered, because material cannot be added back.
+
+```text
+3. Drill the holes that will be tapped at 2.5 mm. Drill only
+   the holes the screws pass through at 3.2 mm. Mark each
+   hole TAP or CL on the drawing first.
+```
+
+**Two further problems worth noting.** In step 2, layout was measured from a freshly cut bandsaw edge, which is neither straight nor square enough to be a reference surface; measure from an original extruded or machined edge. In step 4, an adjustable wrench applies side load to the tap and continuous forward turning packs chips into the flutes, which is how taps snap; use a T-handle tap wrench, cutting fluid, and reverse a quarter turn periodically to break the chip.
+
+</details>
+
+---
+
+## III. Scored Check
+
+The questions above are for working something through. These are graded, so you can find out whether it stuck. Everything is scored in your browser.
+
+<ScoredQuiz
+  lessonId="module-02/mastery-quiz"
+  questions={MASTERY_QUESTIONS['module-02']}
+/>
+
+<MarkComplete
+  lessonId="module-02/mastery-quiz"
+  nextUnit="/mechanical/module-03"
+  nextUnitName="Module 3: Materials and Structure"
+/>

@@ -1,0 +1,113 @@
+---
+id: thread-locking
+title: "Lesson 4.2: Keeping Fasteners Tight Under Vibration"
+sidebar_label: "4.2 · Thread Locking"
+sidebar_position: 2
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import LessonPhoto from '@site/src/components/mechanical/LessonPhoto';
+
+# Lesson 4.2: Keeping Fasteners Tight Under Vibration
+
+---
+
+## Technical Context
+
+Robot fasteners see vibration, impacts, and repeated load reversals. A joint that was secure during assembly can loosen as its clamping force drops.
+
+This lesson covers why that happens and the four practical defenses.
+
+---
+
+## Why Fasteners Loosen
+
+A tightened screw is held by friction in the threads and under the head. Vibration and repeated load reversal cause tiny relative movements at those surfaces, and each movement lets the screw rotate back a fraction of a degree. Thousands of cycles later it is loose.
+
+The rate depends on two things: how much the joint moves, and how much clamping force there was to begin with. A joint that flexes under load loosens fast, which means **loosening is frequently a symptom of a joint that is not stiff enough**, not a fastener problem.
+
+:::tip Fix the joint before adding threadlocker
+If one specific screw keeps backing out, look at whether the parts are moving relative to each other. Threadlocker on a joint that is flexing is a treatment for the symptom. Adding a second fastener or a locating feature removes the cause.
+:::
+
+---
+
+## The Four Defenses
+
+**1. Correct preload.** A screw tightened properly is far more resistant to loosening than one that is merely snug. Check the installation torque before adding another locking method.
+
+**2. Nylon insert lock nuts.** A nut with a nylon collar that deforms around the threads. Highly effective, reusable a handful of times before the nylon wears out, and the standard choice wherever there is room for a nut. If a nylock spins on by hand with no resistance, it is worn out and should be replaced.
+
+**3. Threadlocker.** A liquid anaerobic adhesive applied to the threads before assembly.
+
+   - **Blue (removable)** is the correct choice for nearly all robot use. It holds under vibration and comes apart with hand tools.
+   - **Red (permanent)** requires heat to remove and should be avoided on a robot you will need to service between matches.
+   - Apply a small amount to the threads, not to the head. It needs to be in the engaged thread region.
+   - It needs several hours to cure fully, so it is not a fix applied ten minutes before a match.
+
+**4. Mechanical locking.** Safety wire, cotter pins, and staking are used in aerospace and rarely needed in FTC. The FTC equivalent is a set screw with a flat on the shaft, or a second set screw at 90 degrees.
+
+:::warning Split lock washers are largely ineffective
+The split ring washer is common and does very little on a properly tightened joint. It is not a substitute for a nylock or threadlocker. If a joint matters, use a nylon insert lock nut or blue threadlocker.
+:::
+
+---
+
+## Set Screws and Shaft Hubs
+
+Set screws hold hubs, sprockets, and collars to shafts. A set screw bearing on a round shaft has little resistance to slipping, so this joint needs particular attention.
+
+Practical fixes, in order of effectiveness:
+
+1. **Use a flat on the shaft.** Many FTC shafts come with machined flats. Align the set screw to the flat so it bears on a flat face rather than a curved one. This is the single biggest improvement available.
+2. **Use two set screws at 90 degrees.** The second one resists the rotation that loosens the first.
+3. **Use blue threadlocker on the set screw.**
+4. **Prefer clamping hubs where available.** A hub that clamps around the shaft grips the full circumference rather than a point, and does not depend on a set screw at all.
+
+A set screw on a round shaft has little resistance to slipping or loosening. Add a shaft flat and the appropriate threadlocker where the joint needs to hold torque.
+
+---
+
+## Building a Loosening Check Into Your Routine
+
+Add a fastener check to the between-match routine in the pit, covered fully in Module 11. The short version: after every match, someone with a hex driver checks a fixed list of critical fasteners, in the same order, every time.
+
+Marking is what makes this fast. Draw a line with a paint pen across the screw head onto the part next to it. If the line is broken, the screw has rotated. A pit crew can check thirty marked fasteners visually in under a minute, where checking them by feel takes ten.
+
+---
+
+<LessonPhoto
+  alt="A screw head marked with a paint pen line that no longer aligns with the mark on the part."
+  caption="A witness mark that has moved. The paint pen line across the screw head and onto the bracket no longer lines up, so the fastener has rotated. A pit crew can check thirty of these visually in under a minute."
+  shot="A paint pen witness mark across a screw head and the adjacent part, photographed after the screw has backed out so the two halves of the line are offset."
+  framing="Close, straight down on the screw head, with enough of the bracket in frame to show both halves of the mark."
+/>
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. A screw that repeatedly loosens in the same joint is often a symptom that the joint is not sufficiently `__________`.
+2. On a robot that must be serviced between matches, the correct threadlocker color is `__________`.
+3. The most effective improvement for a set screw on a round shaft is to align it with a `__________` on the shaft.
+
+<details>
+<summary>Show answers</summary>
+
+1. **stiff** (the parts are moving relative to each other)
+2. **blue** (removable)
+3. **flat**
+
+</details>
+
+---
+
+## Exercise
+
+Mark ten critical fasteners on your robot with a paint pen line across the head and onto the adjacent part. Run the robot for a full practice session, then check which lines have moved. Those are the fasteners that need a defense beyond torque.
+
+<MarkComplete
+  lessonId="module-04/thread-locking"
+  nextUnit="/mechanical/module-04/bearings-and-shafts"
+  nextUnitName="Lesson 4.3: Supporting Rotating Shafts With Bearings"
+/>

@@ -1,0 +1,125 @@
+---
+id: design-reviews
+title: "Lesson 10.4: Running Design Reviews That Catch Real Problems"
+sidebar_label: "10.4 · Design Reviews"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 10.4: Running Design Reviews That Catch Real Problems
+
+---
+
+## Technical Context
+
+A design review brings in people who did not do the original work before the next commitment of parts or time. Its purpose is to find specific problems, assign follow-up work, and decide whether the design is ready to advance.
+
+---
+
+## When to Hold One
+
+Reviews are most valuable at the transitions where cost jumps:
+
+- **Concept to prototype.** Before building anything, confirm the concept satisfies the requirements and that alternatives were considered.
+- **Prototype to fabrication.** Before cutting good material, confirm the prototype answered its question and the design reflects what was learned.
+- **Fabrication to competition.** Before the event, confirm the robot passes inspection, is serviceable, and has spares.
+
+Hold the review before the subsystem is finished, while the team can still act on what it finds without major rework.
+
+---
+
+## The Questions That Find Problems
+
+Generic review questions produce generic answers. These are specific enough to be useful, and each maps to an earlier module.
+
+**Requirements.** What requirement does this satisfy, and what is the measured evidence that it does? (Modules 0 and 10)
+
+**Alternatives.** What else was considered, and why did this win? (Modules 0 and 1)
+
+**Loads.** What is the worst case load, at what position, and what is the safety factor? (Modules 6 and 8)
+
+**Structure.** Where is the most flexible part of this, and what happens to the mechanism when it deflects? (Module 3)
+
+**Failure modes.** What is the most likely thing to break, and what happens to the match when it does? (Module 10)
+
+**Serviceability.** How long does it take to replace the part most likely to fail, and can it be done between matches? (Module 11)
+
+**Interfaces.** What does this touch, and has the person responsible for that seen this? (Modules 4, 5, 9)
+
+**Envelope.** Does the robot still fit the starting size with this installed and stowed? (Module 5)
+
+**Electrical.** Where do the cables run, and do they stay slack through the full range of motion? (Module 9)
+
+:::tip Assign the skeptic role
+Name one person whose job is to question assumptions and look for failure modes. Rotate the role so criticism is expected and does not fall to the same person every time.
+:::
+
+---
+
+## Reviewing the Physical Robot, Not Only the Drawing
+
+Include a physical check of the mechanism when one is available.
+
+- Move it through its full range and watch for interference and cable tension
+- Push on it and find what flexes
+- Try to service it: remove the part most likely to fail and time it
+- Turn the transmission by hand with the motor disconnected and feel for bind
+- Check the fasteners you marked in Lesson 4.2
+
+These checks expose motion, stiffness, access, and alignment problems that may not appear in a drawing.
+
+---
+
+## Output: A List With Owners
+
+End the review with a written action list. Give every item three fields:
+
+```text
+ITEM                                    OWNER    BY
+Slide mount plate flexes, causing bind  Priya    Fri
+Motor cable taut at full extension      Andre    Wed
+No spare compliant wheels in the pit    Sam      next mtg
+Arm holds at stall for ~60 s/match      Priya    Fri
+```
+
+Review the list at the start of the next review. An item that reappears three times unaddressed is telling you something about capacity or priority that is worth discussing directly.
+
+:::warning Record concerns before debating them
+Write down each concern and decide how the team will check it. A short inspection or test can close an unfounded item. A valid item needs an owner and a date, even if the group cannot solve it during the meeting.
+:::
+
+---
+
+## Reviews as Notebook Evidence
+
+Photograph or transcribe the review list into the notebook, then record how each item was closed. The team can use that history to improve later reviews, and judges can follow how the design changed.
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Design reviews are most valuable at transitions where the cost of change `__________`.
+2. Naming one person as the explicit `__________` makes finding problems a duty rather than a social risk.
+3. The output of a review is a written list where every item has a description, an `__________`, and a date.
+
+<details>
+<summary>Show answers</summary>
+
+1. **jumps** (increases)
+2. **skeptic** (critic)
+3. **owner**
+
+</details>
+
+---
+
+## Exercise
+
+Run a design review on one subsystem using the question list above, with a named skeptic and hands on the robot. Produce a list with owners and dates, and put it in the notebook. Review the list at your next meeting.
+
+<MarkComplete
+  lessonId="module-10/design-reviews"
+  nextUnit="/mechanical/module-10/mastery-quiz"
+  nextUnitName="Module 10 Mastery Quiz: Prototyping, Testing, and Iteration"
+/>

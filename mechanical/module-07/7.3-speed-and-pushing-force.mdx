@@ -1,0 +1,144 @@
+---
+id: speed-and-pushing-force
+title: "Lesson 7.3: Calculating Drivetrain Speed and Pushing Force"
+sidebar_label: "7.3 · Speed & Force"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import LessonTool from '@site/src/components/mechanical/LessonTool';
+import DrivetrainCalculator from '@site/src/components/mechanical/DrivetrainCalculator';
+
+# Lesson 7.3: Calculating Drivetrain Speed and Pushing Force
+
+---
+
+## Technical Context
+
+Two independent limits determine how hard a robot can push. The motors can only produce so much force at the wheels, and the wheels can only transmit so much force to the floor. The lower of the two governs.
+
+Which one is lower is a design decision, and getting it on the correct side protects your motors.
+
+---
+
+## The Two Limits
+
+**Motor limit.** The total force the motors can deliver at the ground:
+
+```text
+wheel_torque   = motor_stall_torque * total_reduction * efficiency
+motor_force    = number_of_motors * wheel_torque / wheel_radius
+```
+
+**Traction limit.** The force the wheels can transmit before slipping:
+
+```text
+traction_force = mu * weight_on_driven_wheels
+```
+
+The pushing force is the smaller of the two.
+
+---
+
+## Which Side You Want to Be On
+
+**Traction limited is the right answer.** When traction is the binding limit, a pushing match ends with the wheels slipping. The motors keep turning, they stay below stall, and they survive. The driver also gets a predictable limit rather than a mechanism that suddenly stops.
+
+**Motor limited is dangerous.** When the motors are the binding limit, the wheels grip and the motors stall. A stalled motor draws its full stall current, produces no motion, and converts all of that power into heat. Held for a few seconds this is survivable; held for the length of a pushing match it damages motors and can brown out the Control Hub.
+
+The remedy for a motor limited drivetrain is more reduction, which trades top speed for force until the traction limit becomes the binding one.
+
+:::tip Design so traction is the limit, with a little room
+Aim for a motor limit somewhat above the traction limit, not enormously above. A drivetrain with several times the necessary force is over-reduced and slow, and it spent that speed on force it cannot use because the wheels slip first.
+:::
+
+---
+
+## Free Speed
+
+```text
+wheel_rpm  = motor_free_speed / total_reduction
+speed      = wheel_rpm * pi * wheel_diameter / (12 * 60)     [ft/s]
+```
+
+This is a no-load figure. Real robots reach roughly 80% to 90% of it, and in a short FTC field they spend most of their time accelerating rather than at top speed, so top speed matters less than teams assume. A robot that is quick off the line and stops predictably beats a robot with a higher top speed it never reaches.
+
+---
+
+## Try It
+
+<LessonTool
+  toolId="drivetrain"
+  bring="Weighed robot mass, measured wheel diameter, and your motor specs."
+  change="The reduction, until the traction bar is the shorter of the two."
+  read="Which limit binds. Motor limited means the motors stall in a pushing match."
+>
+  <DrivetrainCalculator />
+</LessonTool>
+
+Enter your robot's real numbers: the motor's published stall torque and free speed, your actual total reduction, measured wheel diameter, weighed robot weight, and the coefficient of friction you measured in Lesson 7.2.
+
+---
+
+## Reading the Current Number
+
+The calculator also reports the current drawn at maximum push. This matters because pushing force calculations that ignore current produce a drivetrain that trips the main breaker.
+
+Watch two things:
+
+- **Total drivetrain current at maximum push.** Sustained draw near the main breaker rating will trip it mid-match, which stops the robot entirely.
+- **Everything else running at the same time.** A pushing match usually happens while an intake is also running, so the drivetrain does not have the whole current budget.
+
+:::warning Stall current is not a design operating point
+The published stall current is an instantaneous figure. A drivetrain designed to operate at stall is a drivetrain designed to overheat. If your pushing force calculation requires the motors to be at stall, add reduction so traction becomes the limit first.
+:::
+
+---
+
+## A Worked Sizing Example
+
+Suppose the requirement is a robot that can cross the field in about 3 seconds and hold position against an opponent.
+
+1. **Estimate the traction limit.** A 30 lb robot with all wheels driven and a measured coefficient of friction of 1.0 gives about 30 lbf of traction.
+2. **Size the motors to exceed it modestly.** Choose a reduction whose motor limit lands somewhat above 30 lbf, so traction binds first.
+3. **Check the speed.** Compute free speed with that reduction. If it is far below what the traversal requirement needs, you cannot have both, and something else has to change: lighter robot, more motors, or a revised requirement.
+4. **Check the current.** Confirm that the drivetrain at maximum push, plus the mechanisms that run simultaneously, stays within the electrical budget.
+
+Steps 3 and 4 are where a design either closes or reveals that the requirements were incompatible. Finding that out here, on paper, is the entire point.
+
+---
+
+:::info Connects to the software track
+The reduction you pick here decides what a given power command actually does at the wheel.
+
+See [Lesson 8.1: Using setPower() to Control Motor Speed](/docs/unit-08/set-power).
+:::
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The pushing force of a drivetrain is the `__________` of the motor limit and the traction limit.
+2. A drivetrain that is motor limited will `__________` during a pushing match, drawing full current and heating.
+3. Real robots typically achieve roughly `__________` percent of their calculated free speed.
+
+<details>
+<summary>Show answers</summary>
+
+1. **lower** (smaller, minimum)
+2. **stall**
+3. **80 to 90**
+
+</details>
+
+---
+
+## Exercise
+
+Run your robot's real numbers through the calculator. Determine whether it is motor limited or traction limited. Then verify by experiment: put the robot against a wall at full power and see whether the wheels slip or the motors stall. The calculation and the observation should agree, and when they do not, the input that is wrong is usually the coefficient of friction or the assumed efficiency.
+
+<MarkComplete
+  lessonId="module-07/speed-and-pushing-force"
+  nextUnit="/mechanical/module-07/odometry-pods"
+  nextUnitName="Lesson 7.4: Mounting Odometry Pods for Reliable Localization"
+/>

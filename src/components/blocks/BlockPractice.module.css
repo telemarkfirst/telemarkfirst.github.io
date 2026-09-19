@@ -1,0 +1,159 @@
+.practice {
+  margin: var(--tm-sp-6) 0;
+  border: 1px solid var(--tm-border-strong);
+  border-radius: var(--tm-r-lg);
+  background: var(--tm-surface-1);
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--tm-sp-4);
+  padding: var(--tm-sp-5);
+  border-bottom: 1px solid var(--tm-border);
+}
+
+.header h2,
+.header p { margin: 0; }
+.header p:last-of-type { margin-top: var(--tm-sp-2); color: var(--tm-text-soft); }
+
+.objectives {
+  margin: var(--tm-sp-2) 0 0;
+  padding-left: var(--tm-sp-5);
+  color: var(--tm-text-soft);
+}
+
+.eyebrow {
+  color: var(--tm-accent) !important;
+  font-family: var(--tm-font-mono);
+  font-size: var(--tm-fs-xs);
+  letter-spacing: var(--tm-track-wide);
+  text-transform: uppercase;
+}
+
+.shell:fullscreen {
+  padding: var(--tm-sp-4);
+  background: var(--tm-bg);
+  overflow: auto;
+}
+
+.toolbar,
+.challengeActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tm-sp-2);
+  padding: var(--tm-sp-3) var(--tm-sp-4);
+  border-bottom: 1px solid var(--tm-border);
+  background: var(--tm-surface-2);
+}
+
+.run,
+.utility,
+.next {
+  min-height: 36px;
+  padding: var(--tm-sp-2) var(--tm-sp-4);
+  border: 1px solid var(--tm-accent-a35);
+  border-radius: var(--tm-r-pill);
+  color: var(--tm-text) !important;
+  background: transparent;
+  font: inherit;
+  font-size: var(--tm-fs-sm);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.run {
+  color: var(--tm-text-on-accent) !important;
+  background: var(--tm-accent);
+}
+
+.run:disabled,
+.utility:disabled { cursor: not-allowed; opacity: 0.55; }
+
+.keyboard {
+  margin: 0;
+  padding: var(--tm-sp-2) var(--tm-sp-4);
+  color: var(--tm-text-muted);
+  background: var(--tm-surface-3);
+  font-size: var(--tm-fs-xs);
+}
+
+.workspace {
+  width: 100%;
+  height: 480px;
+}
+
+.workspace :global(.blocklyToolbox),
+.workspace :global(.blocklyToolboxCategoryGroup) {
+  min-width: 155px;
+  border-right: 1px solid var(--tm-border-strong);
+  background: var(--tm-surface-3);
+  color: var(--tm-text-strong);
+}
+
+.workspace :global(.blocklyToolboxCategoryLabel),
+.workspace :global(.blocklyTreeLabel) {
+  color: var(--tm-text-strong) !important;
+  font-family: var(--tm-font-body);
+  font-size: var(--tm-fs-sm);
+}
+
+.workspace :global(.blocklyToolboxCategory) {
+  min-height: 36px;
+}
+
+.workspace :global(.blocklyToolboxSelected) {
+  background: var(--tm-accent-a20) !important;
+}
+
+.workspace :global(.blocklyFlyoutBackground) {
+  fill: var(--tm-surface-2);
+  fill-opacity: 0.98;
+}
+
+.results {
+  display: grid;
+  grid-template-columns: minmax(270px, 1.25fr) repeat(2, minmax(0, 0.9fr));
+  align-items: start;
+  gap: var(--tm-sp-3);
+  padding: var(--tm-sp-4);
+  border-top: 1px solid var(--tm-border);
+  background: var(--tm-surface-2);
+}
+
+.results h3 { margin: 0 0 var(--tm-sp-2); font-size: var(--tm-fs-sm); }
+
+.output {
+  min-height: 110px;
+  margin: 0;
+  padding: var(--tm-sp-3);
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-surface-3);
+}
+
+.output { color: var(--tm-text); white-space: pre-wrap; }
+
+.checks { padding: var(--tm-sp-5); border-top: 1px solid var(--tm-border); }
+.checks h3 { margin-top: 0; }
+.pass,
+.pending { padding: var(--tm-sp-2) 0; }
+.pass { color: var(--tm-success); }
+.pending { color: var(--tm-text-soft); }
+.challengeActions { margin: var(--tm-sp-3) calc(-1 * var(--tm-sp-5)) calc(-1 * var(--tm-sp-5)); border-top: 1px solid var(--tm-border); border-bottom: 0; }
+
+.status,
+.error { margin: 0; padding: var(--tm-sp-3) var(--tm-sp-5); border-top: 1px solid var(--tm-border); }
+.status { color: var(--tm-text-soft); }
+.error { color: var(--tm-danger); background: var(--tm-danger-wash); }
+
+@media (max-width: 760px) {
+  .header { align-items: flex-start; flex-direction: column; }
+  .workspace { height: 430px; }
+  .results { grid-template-columns: 1fr; }
+  .workspace :global(.blocklyToolbox),
+  .workspace :global(.blocklyToolboxCategoryGroup) { min-width: 128px; }
+}

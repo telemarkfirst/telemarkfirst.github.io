@@ -1,0 +1,174 @@
+---
+id: imu-turn
+title: "Lesson 12.5: Implementing an IMU-Corrected 90-Degree Autonomous Turn"
+sidebar_label: "12.5 · IMU Turn"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit12Simulator from '@site/src/components/Unit12Simulator';
+
+# Lesson 12.5: Implementing an IMU-Corrected 90-Degree Autonomous Turn
+
+---
+
+## Why Time-Based Turns Fail at Competition
+
+The simplest autonomous turn is a timed one: apply power to the motors for a fixed number of milliseconds and assume the robot reached the target angle. This works acceptably on a freshly charged battery with a clean, consistent floor surface in your practice space. It fails for three reasons that compound over the course of a competition day.
+
+First, the battery voltage drops with each match, so the same `sleep(500)` call produces a progressively smaller angle as the day goes on. Second, the FTC field tiles have a slight texture variation from panel to panel, and some panels grip the wheels more than others. Third, any contact with another robot or a field element during the turn changes the outcome unpredictably. A time-based turn has no way to detect or correct for any of these factors.
+
+An IMU-corrected turn closes the loop. The robot reads its actual heading each loop cycle, compares it to the target, and adjusts motor power accordingly. It stops when the sensor confirms it has reached the target, not when a timer expires. The result is a turn that is accurate on low batteries, on varying floor surfaces, and after incidental contact.
+
+---
+
+## Proportional Control: Scaling Power to Error
+
+A naive IMU turn implementation applies full power until the heading is within a small tolerance of the target. This overshoots badly because the robot is moving at full speed when it crosses the threshold and continues rotating due to inertia before the motors can respond.
+
+The correct approach is proportional control, often abbreviated as P-control. The motor power is set to a fraction of the remaining error:
+
+```java
+double error = targetAngle - currentAngle;
+double power = Range.clip(error * kP, -maxPower, maxPower);
+```
+
+Where `kP` is a small tuning constant called the proportional gain. When the error is large (far from the target), the power is larger. As the error shrinks on approach, the power scales down automatically. The `Range.clip()` call from the FTC SDK ensures the calculated power never exceeds a safe maximum, regardless of the error magnitude.
+
+One additional subtlety: heading error can wrap around. If the robot is at 170 degrees and the target is -170 degrees, the naive calculation gives an error of -340 degrees, causing the robot to turn the long way around. The `AngleUnit.normalizeRadians()` or equivalent degree normalization logic must be applied to the error so the robot always takes the shorter path.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.util.Range;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+
+@Autonomous(name="IMU_Turn_Practice")
+public class ImuTurnPractice extends LinearOpMode {
+
+    private DcMotor leftDrive, rightDrive;
+    private IMU     imu;
+
+    // Tuning constants. Adjust kP and tolerance during practice.
+    private static final double kP          = 0.012; // proportional gain
+    private static final double MAX_POWER   = 0.5;   // never exceed this during a turn
+    private static final double TOLERANCE   = 1.5;   // degrees. Acceptable error at stop.
+
+    @Override
+    public void runOpMode() {
+        leftDrive  = hardwareMap.get(DcMotor.class, "left_drive");
+        rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
+        leftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        imu = hardwareMap.get(IMU.class, "imu");
+        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
+            RevHubOrientationOnRobot.LogoFacingDirection.UP,
+            RevHubOrientationOnRobot.UsbFacingDirection.FORWARD
+        )));
+
+        waitForStart();
+
+        // Turn to exactly 90 degrees to the right (positive yaw)
+        turnToAngle(90.0);
+
+        // After the turn, the robot is confirmed at the target heading
+        telemetry.addData("Turn", "Complete");
+        telemetry.update();
+
+        sleep(1000);
+    }
+
+    /**
+     * Rotates the robot to the specified heading in degrees using proportional
+     * control. Blocks until the heading is within TOLERANCE of the target
+     * or the OpMode is stopped.
+     */
+    private void turnToAngle(double targetDegrees) {
+        while (opModeIsActive()) {
+            double currentAngle = imu.getRobotYawPitchRollAngles()
+                                     .getYaw(AngleUnit.DEGREES);
+
+            double error = targetDegrees - currentAngle;
+
+            // Normalize error to -180..180 so the robot takes the shorter arc
+            while (error >  180.0) error -= 360.0;
+            while (error < -180.0) error += 360.0;
+
+            // Exit when the error is small enough
+            if (Math.abs(error) < TOLERANCE) {
+                leftDrive.setPower(0.0);
+                rightDrive.setPower(0.0);
+                break;
+            }
+
+            // Proportional power: larger error = more power, smaller error = less power
+            double power = Range.clip(error * kP, -MAX_POWER, MAX_POWER);
+
+            // Positive error turns left (counterclockwise); motors driven accordingly
+            leftDrive.setPower(-power);
+            rightDrive.setPower(power);
+
+            telemetry.addData("Target (deg)",  targetDegrees);
+            telemetry.addData("Current (deg)", "%.2f", currentAngle);
+            telemetry.addData("Error (deg)",   "%.2f", error);
+            telemetry.addData("Power",         "%.3f", power);
+            telemetry.update();
+        }
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The difference between the target heading and the robot's current heading is called the `__________`.
+2. A control strategy where motor power is proportional to the remaining error, scaling down automatically as the robot approaches its target, is called `__________` control.
+3. To prevent the robot from taking the long path around a heading boundary (for example, turning 340 degrees instead of 20 degrees), the heading error must be `__________` to the -180 to 180 range.
+
+<details>
+<summary>Show answers</summary>
+
+1. **error**
+2. **proportional** (P-control)
+3. **normalized**
+
+</details>
+
+---
+
+## Simulator Practice
+
+Use the simulator below to complete the autonomous IMU turn. The editor starts with incomplete starter code, so fill in proportional turn power, stopping logic, and the forward drive phase before running the path.
+
+<SimulatorRunGuide />
+
+<Unit12Simulator lesson="imu-turn" />
+
+## A Team Converts Heading Before Driving
+
+BunyipsLib's field-oriented drive task inverts the current heading before it transforms a requested velocity. An IMU turn uses the same rule: calculate in a consistent frame before commanding motors.
+
+```java
+double headingError = normalizeDegrees(targetHeading - currentHeading);
+double turnPower = Range.clip(headingError * TURN_GAIN, -0.5, 0.5);
+drive.turn(turnPower);
+```
+
+The geometry types were replaced with a scalar heading error, and the names now match this lesson. The preserved idea is to transform the heading difference before applying drive output. Adapted from [BunyipsLib's `FieldOrientableDriveTask.java` at a pinned commit](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/src/main/java/au/edu/sa/mbhs/studentrobotics/bunyipslib/tasks/FieldOrientableDriveTask.java) under the [MIT License](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/LICENSE).
+
+<MarkComplete
+  lessonId="unit-12/imu-turn"
+  nextUnit="/docs/unit-12/mastery-coding-challenge"
+  nextUnitName="Unit 12 Comprehensive Coding Challenge"
+/>

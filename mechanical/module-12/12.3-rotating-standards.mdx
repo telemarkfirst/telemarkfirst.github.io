@@ -1,0 +1,80 @@
+---
+id: rotating-standards
+title: "Lesson 12.3: Standards for Anything That Spins"
+sidebar_label: "12.3 · Rotating Standards"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 12.3: Standards for Anything That Spins
+
+---
+
+## Technical Context
+
+A shaft, a wheel, a sprocket, a spool. Different mechanisms, one set of rules.
+
+---
+
+## The standards
+
+| Standard | Value | Consequence of ignoring it |
+| --- | --- | --- |
+| Bearings per rotating shaft | **two, always** | One support lets the shaft pivot; the wheel wobbles |
+| Cantilever length | **no longer than the bearing spacing** | Reaction forces multiply and the shaft deflects |
+| Bearing spacing | as wide as the design allows | Wider spacing lowers the load at each bearing |
+| Axial constraint | **explicit, on every shaft** | "It probably will not move" is how a shaft exits mid match |
+| Belt wrap on the small pulley | **at least 120 degrees** | Too few teeth in mesh, and it skips |
+| Chain slack | small visible sag on the slack side | Tight destroys bearings; loose throws chain |
+| Drive adjustment | **every chain and belt gets one** | Chain stretches, belts relax, both need take-up |
+| Sprocket and pulley alignment | coplanar, checked with a straight edge | Belts track off and shred |
+
+:::warning Never press a bearing into a printed part
+Printed plastic creeps under sustained load. The interference that holds the bearing relaxes over weeks, and the bore was not round to begin with. Press into aluminium, or retain the bearing with a metal plate or a clamping feature.
+:::
+
+---
+
+## The check that takes ten seconds
+
+With the second bearing not yet installed, the shaft should spin freely. Install the second bearing and it should still spin freely.
+
+If it gets stiff, the two bores are not coaxial. The shaft is now bent slightly to pass through both, which loads the bearings permanently, wastes motor output as friction, and shortens their life. Fixing it now costs a spacer. Fixing it in February costs a match.
+
+---
+
+## Why the cantilever rule exists
+
+A load hanging outboard of two bearings acts through a lever arm. With bearings 1 in apart and the load 3 in out, the reaction at each bearing is several times the applied load, and they act in opposite directions.
+
+The order of fixes is always the same: **widen the spacing first**, because it is free and costs only layout attention. Shorten the cantilever second. Add a third support outboard only if neither is possible.
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Every rotating shaft is supported in `__________` places.
+2. Wrap on the small pulley should be at least `__________` degrees.
+3. A cantilevered load should be no longer than the `__________` between the bearings.
+
+<details>
+<summary>Show answers</summary>
+
+1. **two**
+2. **120**
+3. **spacing**
+
+</details>
+
+---
+
+## Exercise
+
+List every rotating shaft on your robot with its bearing count, spacing, cantilever length, and what stops it moving axially. Any row failing a standard above is a scheduled failure.
+
+<MarkComplete
+  lessonId="module-12/rotating-standards"
+  nextUnit="/mechanical/module-12/margin-standards"
+  nextUnitName="Lesson 12.4: The Design Margins That Survive a Tournament"
+/>

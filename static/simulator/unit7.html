@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Telemark Unit 7 Simulator</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
+<style>
+:root{--bg:#05080d;--panel:#0b1118;--panel-2:#071019;--text:#eaf8ff;--accent:#38bdf8;--accent-2:#22d3ee;--danger:#cc0000;--good:#00cc00;--warn:#ffcc00;--border:#243746}
+*{scrollbar-width:thin;scrollbar-color:#22d3ee #05080d;box-sizing:border-box}
+*::-webkit-scrollbar{width:6px;height:6px}*::-webkit-scrollbar-track{background:#05080d}*::-webkit-scrollbar-thumb{background:#22d3ee;border-radius:3px}*::-webkit-scrollbar-thumb:hover{background:#22d3ee}
+html,body{height:100%;margin:0}
+body{display:flex;height:100vh;overflow:hidden;background:var(--bg);color:var(--text);font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif}
+#editor-container{width:48%;min-width:300px;height:100%;display:flex;flex-direction:column;background:#080d13}
+.editor-header{padding:10px 14px;background:#05080d;border-bottom:1px solid #243746}
+.editor-title{font-weight:700;color:#fff}.editor-subtitle{color:#9aa0a6;font-size:.85rem}
+.code-wrapper{position:relative;flex:1;overflow:hidden;background:var(--bg)}
+#code-editor,#highlighting{position:absolute;inset:0;margin:0;padding:16px;font-family:"Consolas","Courier New",monospace;font-size:13px;line-height:1.6;tab-size:4;white-space:pre;border:0;outline:none}
+#code-editor{color:transparent;background:transparent;caret-color:#fff;z-index:2;resize:none;overflow:auto}
+#highlighting{z-index:1;overflow:hidden}#highlighting code{font-family:inherit;font-size:inherit;line-height:inherit;text-shadow:none}
+#resizer{width:6px;background:#243746;cursor:col-resize;z-index:10;transition:background .2s}#resizer:hover,#resizer.active{background:var(--accent)}
+#ds-container{flex:1;display:flex;flex-direction:column;background:var(--panel-2);min-width:400px;overflow:hidden}
+#ds-scroll{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:10px}
+.badge-strip{display:flex;gap:6px;flex-wrap:wrap}
+.hw-badge{padding:5px 10px;border-radius:6px;font-size:.8rem;font-weight:600;display:flex;align-items:center;gap:5px;border:1px solid var(--border)}
+.hw-badge.active{background:rgba(0,122,204,.15);border-color:var(--accent);color:#fff}
+.hw-badge.inactive{background:#0d1721;color:#64748b}
+.panel-section{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px}
+.panel-title{font-weight:700;color:#fff;font-size:.95rem;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.panel-title i{color:var(--accent)}
+.hw-slot{display:flex;align-items:center;gap:8px;padding:8px;background:#0d1721;border-radius:6px;margin-bottom:6px;font-family:monospace;font-size:.85rem;border:1px solid transparent;transition:.15s}
+.hw-slot.ok{border-color:rgba(0,204,0,.3)}.hw-slot.error{border-color:rgba(204,0,0,.3)}.hw-slot.warn{border-color:rgba(255,204,0,.3)}
+.hw-icon{font-size:1.1rem;width:24px;text-align:center}
+.hw-name{color:#9cdcfe;flex:1;font-family:monospace;font-size:.85rem}
+.hw-type{color:#888;font-size:.78rem;min-width:70px}
+.hw-status{width:20px;text-align:center;font-size:.9rem}
+.hw-dir{font-size:.7rem;padding:2px 5px;border-radius:3px;font-weight:700;margin-left:2px}
+.hw-dir.fwd{background:rgba(0,204,0,.2);color:var(--good)}
+.hw-dir.rev{background:rgba(204,0,0,.2);color:#ff6666}
+.hw-dir.brake{background:rgba(255,204,0,.2);color:var(--warn)}
+.hub-section{margin-bottom:8px}
+.hub-header{padding:6px 10px;background:#0d1721;border-radius:4px;cursor:pointer;font-weight:600;font-size:.85rem;display:flex;justify-content:space-between;align-items:center;color:#cbd5e1}
+.hub-header:hover{background:#101d29}
+.hub-header i{transition:transform .2s;font-size:.75rem;color:#888}
+.hub-header.open i{transform:rotate(90deg)}
+.hub-body{display:none;padding:6px 0 0}.hub-body.open{display:block}
+.port-row{display:flex;align-items:center;gap:6px;padding:4px 8px;font-family:monospace;font-size:.8rem;margin-bottom:3px;background:#161616;border-radius:3px}
+.port-label{color:#888;width:70px;flex-shrink:0}
+.port-device{color:#9cdcfe;flex:1}.port-device.empty{color:#444;font-style:italic}
+.port-device input{background:transparent;border:1px solid #243746;border-radius:3px;color:#7dd3fc;font-family:monospace;font-size:.8rem;padding:2px 6px;width:100%}
+.port-device input:focus{border-color:var(--accent);outline:none}
+.port-device input::placeholder{color:#444;font-style:italic}
+#robot-canvas{display:block;width:100%;height:220px;border-radius:6px;background:#0a0a0a;cursor:grab}
+body.telemark-host-fullscreen #robot-canvas{height:clamp(300px,46vh,560px)}
+#robot-canvas:active{cursor:grabbing}
+/* DS controls */
+.ds-controls{display:flex;gap:8px;flex-shrink:0;padding:8px 10px;border-top:1px solid var(--border);background:var(--panel)}
+.ds-controls button{flex:1;padding:10px;border-radius:6px;border:none;font-size:.9rem;font-weight:700;cursor:pointer;color:#fff;transition:.1s}
+.ds-controls button:active{transform:translateY(1px)}
+.ds-init-btn{background:var(--accent)}.ds-init-btn:hover{background:var(--accent-2)}
+.ds-init-btn:disabled{background:#444;color:#888;cursor:not-allowed;transform:none}
+.ds-stop-btn{background:var(--danger)}.ds-stop-btn:hover{filter:brightness(1.1)}
+.ds-status-bar{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--panel);border-top:1px solid var(--border);flex-shrink:0}
+.ds-state{font-family:monospace;font-weight:700;font-size:.95rem}
+.ds-timer{font-family:monospace;font-size:.9rem;color:#569cd6}
+.ds-title{font-size:1rem;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.telemetry-panel{background:#000;border:2px solid #444;border-radius:8px;min-height:60px;max-height:120px;padding:10px;font-family:monospace;font-size:.88rem;overflow-y:auto;color:#00ff00}
+.telemetry-line{margin:2px 0}.telemetry-key{color:#4ec9b0}
+#hint-container{display:flex;flex-direction:column;gap:6px}
+.hint{background:rgba(255,204,0,.12);border-left:4px solid var(--warn);padding:8px 10px;color:var(--warn);border-radius:4px;font-size:.85rem}
+.hint.error{background:rgba(204,0,0,.12);border-left-color:var(--danger);color:#ff6666}
+.hint.info{background:rgba(0,122,204,.12);border-left-color:var(--accent);color:#6db3f2}
+.hint.good{background:rgba(0,204,0,.12);border-left-color:var(--good);color:#66ff66}
+/* Gamepad */
+.gamepad-float-card{position:fixed;bottom:12px;right:12px;width:380px;min-width:240px;min-height:40px;background:var(--panel);border:1px solid var(--border);border-radius:12px;z-index:1000;display:flex;flex-direction:column;box-shadow:0 6px 24px rgba(0,0,0,.5);overflow:hidden}
+.gamepad-titlebar{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#0d1721;border-bottom:1px solid var(--border);cursor:grab;user-select:none;flex-shrink:0}
+.gamepad-titlebar:active{cursor:grabbing}
+.gamepad-titlebar-label{font-weight:700;font-size:.9rem;color:#fff;display:flex;align-items:center;gap:6px}
+.gamepad-titlebar-label i{color:var(--accent)}
+.gp-collapse-btn{width:24px;height:24px;padding:0;border-radius:4px;background:#333;border:1px solid #555;color:#ccc;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.gp-collapse-btn:hover{background:#444}
+.gamepad-card-body{padding:10px;overflow:hidden;flex:1}
+.gamepad-resize-handle{position:absolute;bottom:0;right:0;width:16px;height:16px;cursor:nwse-resize;z-index:10}
+.gamepad-resize-handle::after{content:'';position:absolute;bottom:3px;right:3px;width:6px;height:6px;border-right:2px solid #666;border-bottom:2px solid #666}
+.controller-wrap{width:100%;position:relative;aspect-ratio:768/512;border-radius:14px;overflow:hidden;background:#0f0f0f;touch-action:none;user-select:none}
+.controller-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+.overlay{position:absolute;border-radius:50%;touch-action:none;user-select:none}
+.stick-zone-left{left:35.5%;top:65.5%;width:17%;height:24%;transform:translate(-50%,-50%);background:transparent}
+.stick-base-left{position:absolute;left:35.5%;top:65.5%;width:14%;height:21%;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;box-shadow:inset 0 0 0 2px rgba(255,255,255,.12)}
+.stick-knob-left{position:absolute;left:35.5%;top:65.5%;width:9%;height:13%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 35% 35%,#444,#121212 70%);border:1px solid rgba(255,255,255,.18);pointer-events:none;box-shadow:0 4px 10px rgba(0,0,0,.45)}
+.stick-zone-right{left:64%;top:65.5%;width:17%;height:24%;transform:translate(-50%,-50%);background:transparent}
+.stick-base-right{position:absolute;left:64%;top:65.5%;width:14%;height:21%;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;box-shadow:inset 0 0 0 2px rgba(255,255,255,.12)}
+.stick-knob-right{position:absolute;left:64%;top:65.5%;width:9%;height:13%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 35% 35%,#444,#121212 70%);border:1px solid rgba(255,255,255,.18);pointer-events:none;box-shadow:0 4px 10px rgba(0,0,0,.45)}
+.button-overlay{border:2px solid rgba(255,255,255,.15);background:rgba(255,255,255,.02);cursor:pointer;transition:.05s}
+.button-overlay.pressed{background:rgba(255,255,255,.18);box-shadow:0 0 0 2px rgba(255,255,255,.25),inset 0 0 20px rgba(255,255,255,.22)}
+.a-btn{left:75.5%;top:49%;width:7%;height:10%;transform:translate(-10%,-10%)}
+.b-btn{left:83%;top:38%;width:7%;height:10%;transform:translate(-10%,-10%)}
+.x-btn{left:68%;top:38%;width:7%;height:10%;transform:translate(-10%,-10%)}
+.y-btn{left:75.5%;top:27%;width:7%;height:10%;transform:translate(-10%,-10%)}
+.small-button{width:5.2%;height:6.4%;border-radius:16px;border:2px solid rgba(255,255,255,.14);pointer-events:auto}
+.back-btn{left:37.5%;top:28%;transform:translate(-10%,-10%)}.start-btn{left:58%;top:28%;transform:translate(-10%,-10%)}
+.bumper-btn{width:14%;height:6%;border-radius:8px;border:2px solid rgba(255,255,255,.15);background:rgba(255,255,255,.02);cursor:pointer}
+.bumper-btn.pressed{background:rgba(255,255,255,.18);box-shadow:0 0 0 2px rgba(255,255,255,.25)}
+.left-bumper-btn{left:20%;top:12%;transform:translate(-50%,-50%)}.right-bumper-btn{left:80%;top:12%;transform:translate(-50%,-50%)}
+.trigger-slider{position:absolute;width:10%;height:14%;background:rgba(0,0,0,.4);border-radius:6px;border:1px solid rgba(255,255,255,.15);cursor:pointer;overflow:hidden}
+.trigger-slider-fill{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,var(--accent-2),var(--accent));transition:height .05s}
+.left-trigger-slider{left:21%;top:0;transform:translate(-50%,0)}.right-trigger-slider{left:79%;top:0;transform:translate(-50%,0)}
+.dpad-container{position:absolute;left:21.5%;top:41%;width:16%;height:24%;transform:translate(-50%,-50%);pointer-events:none}
+.dpad-btn{position:absolute;width:33%;height:33%;background:rgba(40,40,40,.8);border:1px solid rgba(255,255,255,.1);cursor:pointer;pointer-events:auto;display:flex;align-items:center;justify-content:center}
+.dpad-btn:hover{background:rgba(60,60,60,.9)}.dpad-btn.pressed{background:rgba(255,255,255,.2)}
+.dpad-btn svg{width:50%;height:50%;fill:rgba(255,255,255,.5)}.dpad-btn.pressed svg{fill:rgba(255,255,255,.9)}
+.dpad-up{top:0;left:33%;border-radius:4px 4px 0 0}.dpad-down{bottom:0;left:33%;border-radius:0 0 4px 4px}
+.dpad-left{left:0;top:33%;border-radius:4px 0 0 4px}.dpad-right{right:0;top:33%;border-radius:0 4px 4px 0}
+.dpad-center{position:absolute;left:33%;top:33%;width:34%;height:34%;background:rgba(30,30,30,.9);pointer-events:none}
+</style>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+  <script src="./telemark-project.js"></script>
+  <script src="./gamepad-controls.js"></script>
+  <script src='./simulator_base.js' data-telemark-mode='legacy'></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+<link rel="stylesheet" href="./telemark-project.css"/>
+</head>
+<body>
+<div id="editor-container">
+  <div class="editor-header"><div><div class="editor-title">Telemark Unit 7 Simulator</div><div class="editor-subtitle">Hardware Mapping · hardwareMap · Config · Motor Direction · IMU Init</div></div></div>
+  <div class="code-wrapper">
+    <textarea id="code-editor" spellcheck="false" oninput="onCodeChange()" onscroll="syncScroll(this)">@TeleOp(name="HardwareMap_Demo")
+public class HardwareMapDemo extends OpMode {
+
+    DcMotor leftFront, rightFront, leftBack, rightBack;
+    DcMotor arm;
+    Servo claw;
+    IMU imu;
+    ColorSensor colorSensor;
+
+    @Override
+    public void init() {
+        leftFront   = hardwareMap.get(DcMotor.class, "leftFront");
+        rightFront  = hardwareMap.get(DcMotor.class, "rightFront");
+        leftBack    = hardwareMap.get(DcMotor.class, "leftBack");
+        rightBack   = hardwareMap.get(DcMotor.class, "rightBack");
+
+        leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        arm  = hardwareMap.get(DcMotor.class, "arm");
+        claw = hardwareMap.get(Servo.class, "claw");
+
+        arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        imu = hardwareMap.get(IMU.class, "imu");
+        IMU.Parameters parameters = new IMU.Parameters(
+            new RevHubOrientationOnRobot(
+                RevHubOrientationOnRobot.LogoFacingDirection.UP,
+                RevHubOrientationOnRobot.UsbFacingDirection.FORWARD
+            )
+        );
+        imu.initialize(parameters);
+
+        colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
+
+        telemetry.addData("Status", "Hardware Mapped");
+    }
+
+    @Override
+    public void loop() {
+        telemetry.addData("Status", "Running");
+    }
+}</textarea>
+    <pre id="highlighting" aria-hidden="true"><code class="language-java" id="highlighting-content"></code></pre>
+  </div>
+</div>
+<div id="resizer"></div>
+<div id="ds-container">
+  <div id="ds-scroll">
+    <div class="badge-strip" id="badge-strip"></div>
+    <div class="panel-section">
+      <div class="panel-title"><i class="fa-solid fa-plug-circle-check"></i> Hardware Map</div>
+      <div id="hw-map-list"></div>
+    </div>
+    <div class="panel-section">
+      <div class="panel-title"><i class="fa-solid fa-cube"></i> Robot Visualizer <span style="font-size:.75rem;color:#888;font-weight:400;margin-left:auto">drag to orbit · scroll to zoom</span></div>
+      <canvas id="robot-canvas"></canvas>
+    </div>
+    <div class="panel-section">
+      <div class="panel-title"><i class="fa-solid fa-sliders"></i> Robot Controller Config</div>
+      <div id="config-panel"></div>
+    </div>
+    <div class="telemetry-panel" id="telemetry-log"><span style="color:#666">Press INIT to start...</span></div>
+    <div id="hint-container"></div>
+  </div>
+  <div class="ds-status-bar">
+    <div class="ds-title" id="opmode-name">HardwareMap_Demo</div>
+    <div class="ds-state" id="state-indicator" style="color:var(--danger)">STOPPED</div>
+    <div class="ds-timer">Time: <span id="timer-val">0.00</span>s</div>
+  </div>
+  <div class="ds-controls">
+    <button class="ds-init-btn" id="btn-main" onclick="handleMainButton()">INIT</button>
+    <button class="ds-stop-btn" onclick="handleStopButton()">STOP</button>
+  </div>
+</div>
+
+<div class="gamepad-float-card" id="gamepad-float-card">
+  <div class="gamepad-titlebar" id="gamepad-titlebar">
+    <span class="gamepad-titlebar-label"><i class="fa-solid fa-gamepad"></i> Gamepad 1</span>
+    <button class="gp-collapse-btn" id="gp-collapse-btn">&#x2212;</button>
+  </div>
+  <div class="gamepad-card-body" id="gamepad-card-body">
+    <div class="controller-wrap" id="controller-wrap">
+      <img class="controller-img" alt="controller" src="https://resource.logitechg.com/w_776,h_437,ar_16:9,c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/gaming/en/products/f310/f310-feature-3.png">
+      <div class="trigger-slider left-trigger-slider" id="left-trigger-slider"><div class="trigger-slider-fill" id="left-trigger-fill"></div></div>
+      <div class="trigger-slider right-trigger-slider" id="right-trigger-slider"><div class="trigger-slider-fill" id="right-trigger-fill"></div></div>
+      <div class="overlay bumper-btn left-bumper-btn" id="btn-lb"></div><div class="overlay bumper-btn right-bumper-btn" id="btn-rb"></div>
+      <div class="overlay stick-zone-left" id="stick-zone-left"></div><div class="stick-base-left"></div><div class="stick-knob-left" id="stick-knob-left"></div>
+      <div class="overlay stick-zone-right" id="stick-zone-right"></div><div class="stick-base-right"></div><div class="stick-knob-right" id="stick-knob-right"></div>
+      <div class="overlay button-overlay y-btn" id="btn-y"></div><div class="overlay button-overlay x-btn" id="btn-x"></div>
+      <div class="overlay button-overlay a-btn" id="btn-a-visual"></div><div class="overlay button-overlay b-btn" id="btn-b"></div>
+      <div class="overlay button-overlay small-button back-btn" id="btn-back"></div>
+      <div class="overlay button-overlay small-button start-btn" id="btn-start"></div>
+      <div class="dpad-container"><div class="dpad-center"></div>
+        <div class="dpad-btn dpad-up" id="dpad-up"><svg viewBox="0 0 24 24"><path d="M12 4l-8 8h16z"/></svg></div>
+        <div class="dpad-btn dpad-down" id="dpad-down"><svg viewBox="0 0 24 24"><path d="M12 20l8-8H4z"/></svg></div>
+        <div class="dpad-btn dpad-left" id="dpad-left"><svg viewBox="0 0 24 24"><path d="M4 12l8-8v16z"/></svg></div>
+        <div class="dpad-btn dpad-right" id="dpad-right"><svg viewBox="0 0 24 24"><path d="M20 12l-8 8V4z"/></svg></div>
+      </div>
+    </div>
+  </div>
+  <div class="gamepad-resize-handle" id="gamepad-resize-handle"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+var codeEditor = document.getElementById('code-editor');
+var activeHints = [];
+var hwDevices = [];
+var declaredVars = {}; 
+var currentState = 'STOPPED';
+var intervalId = null, timerId = null, runtimeOffset = 0;
+var stopRequested = false;
+var compiledSource = '';
+var compiledProgram = null;
+var compiledRuntime = null;
+var telemetryPending = false;
+var telemetryUpdateVersion = 0;
+var gamepad = {left_stick_x:0,left_stick_y:0,right_stick_x:0,right_stick_y:0,left_trigger:0,right_trigger:0,a:false,b:false,x:false,y:false,left_bumper:false,right_bumper:false,start:false,back:false,dpad_up:false,dpad_down:false,dpad_left:false,dpad_right:false};
+
+var robotConfig = null; 
+var robotConfigInitialized = false;
+var urlParams = new URLSearchParams(window.location.search);
+var customCode = urlParams.get('code');
+var customProjectFiles = null;
+try {
+  var customProject = JSON.parse(urlParams.get('project') || 'null');
+  if (Array.isArray(customProject) && customProject.length) customProjectFiles = customProject;
+} catch (_) { /* Ignore malformed project URLs and use the normal starter. */ }
+
+// UI & Editor Helpers
+function updateCode(t){
+    var el = document.getElementById('highlighting-content');
+    if (t[t.length-1] === '\n') t += ' ';
+    el.innerHTML = t.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    Prism.highlightElement(el);
+}
+function syncScroll(el){
+    var h = document.getElementById('highlighting');
+    h.scrollTop = el.scrollTop;
+    h.scrollLeft = el.scrollLeft;
+}
+function projectSource(){ return codeEditor.__telemarkProject ? codeEditor.__telemarkProject.source() : codeEditor.value; }
+function onCodeChange(){
+    updateCode(codeEditor.value);
+    syncScroll(codeEditor);
+}
+
+TelemarkEditor.attach(codeEditor, {onChange: onCodeChange});
+
+var resizer=document.getElementById('resizer'),leftPanel=document.getElementById('editor-container'),isResizing=false;
+resizer.addEventListener('mousedown',function(){isResizing=true;resizer.classList.add('active')});
+document.addEventListener('mousemove',function(e){
+    if(!isResizing) return;
+    var pct=(e.clientX/window.innerWidth)*100;
+    if(pct>15 && pct<80) leftPanel.style.width=pct+'%';
+});
+document.addEventListener('mouseup',function(){isResizing=false;resizer.classList.remove('active')});
+
+function addHint(m,t){
+    for(var i=0;i<activeHints.length;i++){ if(activeHints[i].msg===m) return; }
+    activeHints.push({msg:m,type:t||'warn'});
+}
+function renderHints(){
+    var c=document.getElementById('hint-container');
+    c.innerHTML='';
+    activeHints.forEach(function(h){
+        var cls='hint';
+        if(h.type==='error') cls+=' error';
+        else if(h.type==='info') cls+=' info';
+        else if(h.type==='good') cls+=' good';
+        c.innerHTML+='<div class="'+cls+'">'+h.msg+'</div>';
+    });
+}
+
+function getMethodBody(code, name) {
+  if (window.TelemarkJava) {
+    try {
+      var method = window.TelemarkJava.findMethod(code, name);
+      return method ? method.body : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  var re = new RegExp('void\\s+' + name + '\\s*\\([^)]*\\)\\s*\\{');
+  var m = re.exec(code);
+  if (!m) return null;
+  var idx = m.index + m[0].length, depth = 1;
+  for (; idx < code.length; idx++) {
+    if (code[idx] === '{') depth++;
+    else if (code[idx] === '}') { 
+        depth--; 
+        if (depth === 0) return code.slice(m.index + m[0].length, idx); 
+    }
+  }
+  return null;
+}
+
+function getRuntime() { return runtimeOffset === 0 ? 0 : (Date.now() - runtimeOffset) / 1000; }
+
+// ── Parse & Analyze ──
+function runAnalysis() {
+  var code = projectSource();
+  hwDevices = [];
+  activeHints = [];
+  declaredVars = {};
+
+  var nameMatch = /@(?:TeleOp|Autonomous)\s*\(\s*name\s*=\s*"([^"]+)"/.exec(code);
+  document.getElementById('opmode-name').textContent = nameMatch ? nameMatch[1] : 'Unnamed OpMode';
+
+  var initBody = getMethodBody(code, 'init') || '';
+  var loopBody = getMethodBody(code, 'loop') || '';
+
+  // Inspect every helper's lifecycle, including a supplied HardwareMap parameter.
+  try {
+    var ast = TelemarkJava.parse(code);
+    var allMethods = ast.classes.reduce(function(list, c) { return list.concat(c.methods); }, []);
+    initBody = allMethods.filter(function(m) { return m.name === 'init'; }).map(function(m) { return m.body; }).join('\n');
+    loopBody = allMethods.filter(function(m) { return m.name !== 'init'; }).map(function(m) { return m.body; }).join('\n');
+    ast.classes.forEach(function(c) {
+      c.fields.forEach(function(f) {
+        if (f.static && f.type === 'String' && typeof f.initialValue === 'string') {
+          var pattern = new RegExp('(\\.\\s*get\\s*\\(\\s*\\w+\\.class\\s*,\\s*)(?:' + c.name + '\\.\\s*)?' + f.name + '(\\s*\\))', 'g');
+          code = code.replace(pattern, function(_, before, after) { return before + JSON.stringify(f.initialValue) + after; });
+          initBody = initBody.replace(pattern, function(_, before, after) { return before + JSON.stringify(f.initialValue) + after; });
+          loopBody = loopBody.replace(pattern, function(_, before, after) { return before + JSON.stringify(f.initialValue) + after; });
+        }
+      });
+    });
+  } catch (_) { /* Incomplete edits are still inspected below. */ }
+  var declTypes = ['DcMotor','Servo','IMU','ColorSensor','DistanceSensor','TouchSensor','CRServo','DigitalChannel','AnalogInput'];
+  declTypes.forEach(function(dtype) {
+    var re = new RegExp('\\b' + dtype + '\\s+([\\w\\s,]+);', 'g');
+    var m;
+    while ((m = re.exec(code)) !== null) {
+      var names = m[1].split(',');
+      names.forEach(function(n) {
+        n = n.trim();
+        if (n && /^\w+$/.test(n)) declaredVars[n] = dtype;
+      });
+    }
+  });
+
+  var hwRe = /(\w+)\s*=\s*\w+\s*\.\s*get\(\s*(\w+)\.class\s*,\s*"([^"]+)"\s*\)/g;
+  var match;
+  while ((match = hwRe.exec(code)) !== null) {
+    var varName = match[1], devType = match[2], configName = match[3];
+    var inInit = initBody.indexOf(match[0]) !== -1;
+    var inLoop = loopBody.indexOf(match[0]) !== -1;
+    if (inLoop) addHint('Never call hardwareMap.get() in loop() — map all hardware in init()', 'error');
+
+    var isDeclared = declaredVars[varName] !== undefined;
+    if (!isDeclared) addHint('Variable "' + varName + '" is used but never declared — add <code>' + devType + ' ' + varName + ';</code> as a field', 'error');
+
+    if (isDeclared && declaredVars[varName] !== devType) {
+      addHint('Variable "' + varName + '" is declared as ' + declaredVars[varName] + ' but mapped as ' + devType, 'error');
+    }
+
+    hwDevices.push({
+      varName: varName, type: devType, configName: configName,
+      direction: 'FORWARD', zeroPower: 'FLOAT', initialized: false,
+      usedInLoop: false, inInit: inInit, isDeclared: isDeclared
+    });
+  }
+
+  if (!robotConfigInitialized) {
+    robotConfig = {};
+    hwDevices.forEach(function(d) { robotConfig[d.configName] = d.type; });
+    robotConfigInitialized = true;
+  }
+
+  hwDevices.forEach(function(d) {
+    d.configExists = robotConfig[d.configName] !== undefined;
+    if (d.configExists && robotConfig[d.configName] !== d.type) {
+      addHint('Type mismatch — "' + d.configName + '" is configured as ' + robotConfig[d.configName] + ' but code requests ' + d.type, 'error');
+    }
+  });
+
+  var names = {};
+  hwDevices.forEach(function(d) {
+    if (names[d.configName]) addHint('Duplicate hardware name "' + d.configName + '" — each device needs a unique name', 'error');
+    names[d.configName] = true;
+  });
+
+  var dirRe = /(\w+)\.setDirection\s*\(\s*DcMotorSimple\.Direction\.(\w+)\s*\)/g;
+  while ((match = dirRe.exec(initBody)) !== null) {
+    var dev = hwDevices.find(function(d) { return d.varName === match[1]; });
+    if (dev) dev.direction = match[2];
+  }
+
+  var zpRe = /(\w+)\.setZeroPowerBehavior\s*\(\s*DcMotor\.ZeroPowerBehavior\.(\w+)\s*\)/g;
+  while ((match = zpRe.exec(initBody)) !== null) {
+    var dev2 = hwDevices.find(function(d) { return d.varName === match[1]; });
+    if (dev2) dev2.zeroPower = match[2];
+  }
+
+  var imuInitRe = /(\w+)\.initialize\s*\(/g;
+  while ((match = imuInitRe.exec(initBody)) !== null) {
+    var imuDev = hwDevices.find(function(d) { return d.varName === match[1] && d.type === 'IMU'; });
+    if (imuDev) imuDev.initialized = true;
+  }
+
+  hwDevices.forEach(function(d) {
+    if (loopBody.indexOf(d.varName) !== -1) d.usedInLoop = true;
+  });
+
+  var driveMotors = hwDevices.filter(function(d) { return d.type === 'DcMotor' && /left|right|front|back/i.test(d.varName); });
+  if (driveMotors.length >= 4) {
+    var hasAnyReverse = driveMotors.some(function(d) { return d.direction === 'REVERSE'; });
+    if (!hasAnyReverse) addHint('Mecanum drives need some motors reversed — typically both left side motors should be REVERSE');
+    driveMotors.forEach(function(d) {
+      if (/left/i.test(d.varName) && d.direction !== 'REVERSE') {
+        addHint('"' + d.varName + '" is a left motor but direction is FORWARD — left side usually needs REVERSE');
+      }
+      if (/right/i.test(d.varName) && d.direction === 'REVERSE') {
+        addHint('"' + d.varName + '" is a right motor but direction is REVERSE — right side is usually FORWARD');
+      }
+    });
+  }
+
+  var imuDev2 = hwDevices.find(function(d) { return d.type === 'IMU'; });
+  if (imuDev2 && !imuDev2.initialized) addHint('IMU must be initialized with .initialize() before use');
+
+  hwDevices.forEach(function(d) {
+    if (!d.usedInLoop && d.inInit) {
+      if (d.type === 'DcMotor' || d.type === 'Servo') {
+        addHint('"' + d.varName + '" is mapped in init() but never used in loop()', 'info');
+      }
+    }
+  });
+
+  for (var vn in declaredVars) {
+    if (loopBody.indexOf(vn + '.') !== -1) {
+      var wasMapped = hwDevices.some(function(d) { return d.varName === vn; });
+      if (!wasMapped) addHint('NullPointerException — "' + vn + '" is used in loop() but never assigned via hardwareMap.get() in init()', 'error');
+    }
+  }
+
+  renderHints();
+  renderBadgeStrip();
+  renderHwMap();
+  renderConfigPanel();
+  updateRobot3D();
+}
+
+// ── Compiled OpMode Lifecycle ──
+function setLifecycle(s, color, btnLabel) {
+  currentState = s;
+  document.getElementById('state-indicator').textContent = s;
+  document.getElementById('state-indicator').style.color = color;
+  var btn = document.getElementById('btn-main');
+  btn.textContent = btnLabel;
+  btn.disabled = (s === 'RUNNING');
+}
+
+function stopAllIntervals() { 
+    clearInterval(intervalId); 
+    clearInterval(timerId); 
+    intervalId = timerId = null; 
+}
+
+function escapeRuntimeText(value) {
+  return String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderCompiledTelemetry(items) {
+  var panel=document.getElementById('telemetry-log');
+  if(!items.length){
+    panel.innerHTML='<span style="color:#666">No telemetry data</span>';
+    return;
+  }
+  panel.innerHTML=items.map(function(item){
+    var value=item.value;
+    if(typeof value==='number'&&value!==Math.floor(value))value=value.toFixed(2);
+    return '<div class="telemetry-line"><span class="telemetry-key">'+escapeRuntimeText(item.key)+'</span>: '+escapeRuntimeText(value)+'</div>';
+  }).join('');
+}
+
+function showExecutionError(context,error) {
+  var message=error&&error.message?error.message:String(error||'Unknown error');
+  document.getElementById('telemetry-log').innerHTML='<div class="telemetry-line" style="color:var(--danger)"><strong>'+escapeRuntimeText(context)+':</strong> '+escapeRuntimeText(message)+'</div>';
+}
+
+function failExecution(context,error) {
+  stopAllIntervals();
+  stopRequested=true;
+  runtimeOffset=0;
+  document.getElementById('timer-val').textContent='0.00';
+  showExecutionError(context,error);
+  setLifecycle('STOPPED','var(--danger)','INIT');
+  return false;
+}
+
+function ensureSdkConstructorStubs() {
+  var imuType=window.IMU||(window.IMU=function IMU(){});
+  if(!imuType.Parameters)imuType.Parameters=function Parameters(orientation){this.orientation=orientation};
+  var orientationType=window.RevHubOrientationOnRobot||(window.RevHubOrientationOnRobot=function RevHubOrientationOnRobot(logo,usb){this.logo=logo;this.usb=usb});
+  orientationType.LogoFacingDirection=orientationType.LogoFacingDirection||{UP:'UP',DOWN:'DOWN',FORWARD:'FORWARD',BACKWARD:'BACKWARD',LEFT:'LEFT',RIGHT:'RIGHT'};
+  orientationType.UsbFacingDirection=orientationType.UsbFacingDirection||{UP:'UP',DOWN:'DOWN',FORWARD:'FORWARD',BACKWARD:'BACKWARD',LEFT:'LEFT',RIGHT:'RIGHT'};
+  window.DistanceUnit=window.DistanceUnit||{MM:'MM',CM:'CM',METER:'METER',INCH:'INCH'};
+}
+
+function createHardwareRuntime() {
+  ensureSdkConstructorStubs();
+  telemetryPending=false;
+  telemetryUpdateVersion=0;
+  var runtime=TelemarkSimulatorBase.createRuntime({
+    gamepad:gamepad,
+    getRuntime:getRuntime,
+    isStopRequested:function(){return stopRequested},
+    opModeIsActive:function(){return currentState==='RUNNING'&&!stopRequested},
+    onTelemetry:function(){telemetryPending=true},
+    onTelemetryUpdate:renderCompiledTelemetry,
+    onDirection:function(direction,state){
+      var mapped=hwDevices.find(function(device){return device.configName===state.name});
+      if(mapped)mapped.direction=String(direction);
+      updateRobot3D();
+    }
+  });
+  var baseGet=runtime.hardwareMap.get.bind(runtime.hardwareMap);
+  runtime.hardwareMap.get=function(type,name){
+    type=String(type);name=String(name);
+    var sdkHardwareTypes=['DcMotor','DcMotorEx','Servo','CRServo','IMU','ColorSensor','DistanceSensor','TouchSensor','DigitalChannel','AnalogInput','WebcamName','Limelight3A'];
+    if(sdkHardwareTypes.indexOf(type)===-1){
+      throw new Error(type+' is a Java helper class, not configured robot hardware. Create it with new '+type+'(), then pass hardwareMap to its init() method.');
+    }
+    if(robotConfig){
+      if(!robotConfig[name])throw new Error('No configured '+type+' named "'+name+'"');
+      if(robotConfig[name]!==type)throw new Error('Hardware "'+name+'" is configured as '+robotConfig[name]+', not '+type);
+    }
+    var device=baseGet(type,name);
+    if(!device.setZeroPowerBehavior)device.setZeroPowerBehavior=function(behavior){device._state.zeroPowerBehavior=String(behavior)};
+    if(!device.initialize)device.initialize=function(parameters){device._state.initialized=true;device._state.parameters=parameters};
+    if(!device.resetYaw)device.resetYaw=function(){device._state.yaw=0};
+    return device;
+  };
+  var rawClear=runtime.clearTelemetry.bind(runtime);
+  var rawUpdate=runtime.updateTelemetry.bind(runtime);
+  runtime.clearTelemetry=function(){rawClear();telemetryPending=false};
+  runtime.updateTelemetry=function(){
+    rawUpdate();
+    rawClear();
+    telemetryPending=false;
+    telemetryUpdateVersion++;
+  };
+  return runtime;
+}
+
+function compileHardwareProgram() {
+  if(!window.TelemarkSimulatorBase)return failExecution('Compiler unavailable',new Error('Telemark simulator base did not load'));
+  compiledRuntime=createHardwareRuntime();
+  compiledProgram=TelemarkSimulatorBase.compileStudentSource(projectSource(),compiledRuntime);
+  compiledSource=projectSource();
+  if(!compiledProgram.ok){
+    var diagnostic=compiledProgram.diagnostics&&compiledProgram.diagnostics[0]||{};
+    var location=diagnostic.line?' (line '+diagnostic.line+', column '+diagnostic.column+')':'';
+    return failExecution('Java compile error',new Error((diagnostic.message||'Unable to compile Java')+location));
+  }
+  if(compiledProgram.kind!=='iterative')return failExecution('OpMode type mismatch',new Error('Unit 7 expects a class that extends OpMode'));
+  return true;
+}
+
+function executeLifecycleMethod(methodName,replaceFrame) {
+  var method=compiledProgram&&compiledProgram.methods&&compiledProgram.methods[methodName];
+  if(!method)return true;
+  if(replaceFrame!==false)compiledRuntime.clearTelemetry();
+  var updateBefore=telemetryUpdateVersion;
+  try{
+    method();
+    if(telemetryPending||telemetryUpdateVersion===updateBefore)compiledRuntime.updateTelemetry();
+    return true;
+  }catch(error){
+    return failExecution(methodName+'() runtime error',error);
+  }
+}
+
+function handleMainButton() {
+  if (currentState === 'STOPPED') {
+    stopAllIntervals();
+    stopRequested=false;
+    runAnalysis();
+    document.getElementById('telemetry-log').innerHTML = '';
+    document.getElementById('timer-val').textContent = '0.00';
+    runtimeOffset = 0;
+    if(!compileHardwareProgram())return;
+    setLifecycle('INIT_LOOP', '#ffcc00', 'START');
+    if(!executeLifecycleMethod('init',true))return;
+    if(compiledProgram.methods.init_loop){
+      intervalId=setInterval(function(){executeLifecycleMethod('init_loop',true)},100);
+    }
+  } else if (currentState === 'INIT_LOOP') {
+    clearInterval(intervalId);intervalId=null;
+    stopRequested=false;
+    runtimeOffset = Date.now();
+    setLifecycle('RUNNING', '#00ff00', 'RUNNING');
+    if(!executeLifecycleMethod('start',true))return;
+    timerId = setInterval(function() { document.getElementById('timer-val').textContent = getRuntime().toFixed(2); }, 50);
+    if(compiledProgram.methods.loop){
+      intervalId = setInterval(function() { executeLifecycleMethod('loop',true); }, 100);
+    }
+  }
+}
+
+function handleStopButton() {
+  if (currentState === 'STOPPED') return;
+  stopAllIntervals();
+  stopRequested=true;
+  executeLifecycleMethod('stop',true);
+  runtimeOffset = 0;
+  document.getElementById('timer-val').textContent = '0.00';
+  setLifecycle('STOPPED', 'var(--danger)', 'INIT');
+}
+
+// ── Badge Strip & UI Renderers ──
+function renderBadgeStrip() {
+  var types = {DcMotor:false,Servo:false,IMU:false,ColorSensor:false,Telemetry:false,DistanceSensor:false,TouchSensor:false};
+  hwDevices.forEach(function(d) { types[d.type] = true; });
+  if (codeEditor.value.indexOf('telemetry.addData') !== -1) types.Telemetry = true;
+  var icons = {DcMotor:'fa-gear',Servo:'fa-gears',IMU:'fa-compass',ColorSensor:'fa-palette',Telemetry:'fa-tower-broadcast',DistanceSensor:'fa-ruler',TouchSensor:'fa-hand-pointer'};
+  var html = '';
+  for (var t in types) {
+    html += '<div class="hw-badge ' + (types[t] ? 'active' : 'inactive') + '"><i class="fa-solid ' + (icons[t]||'fa-microchip') + '"></i> ' + t + '</div>';
+  }
+  document.getElementById('badge-strip').innerHTML = html;
+}
+
+function renderHwMap() {
+  var container = document.getElementById('hw-map-list');
+  if (hwDevices.length === 0) {
+    container.innerHTML = '<div style="color:#666;font-style:italic;font-size:.85rem">No hardware mapped — add hardwareMap.get() calls in init()</div>';
+    return;
+  }
+  var icons = {DcMotor:'fa-gear',Servo:'fa-gears',IMU:'fa-compass',ColorSensor:'fa-palette'};
+  var html = '';
+  hwDevices.forEach(function(d) {
+    var configMatch = robotConfig[d.configName] === d.type;
+    var statusIcon, cls;
+    if (!d.isDeclared) {
+      statusIcon = '<i class="fa-solid fa-circle-xmark" style="color:var(--danger)" title="Variable not declared"></i>';
+      cls = 'error';
+    } else if (!d.inInit) {
+      statusIcon = '<i class="fa-solid fa-circle-xmark" style="color:var(--danger)" title="Not in init()"></i>';
+      cls = 'error';
+    } else if (!configMatch) {
+      statusIcon = '<i class="fa-solid fa-circle-xmark" style="color:var(--danger)" title="Config name mismatch"></i>';
+      cls = 'error';
+    } else {
+      statusIcon = '<i class="fa-solid fa-circle-check" style="color:var(--good)" title="OK"></i>';
+      cls = 'ok';
+    }
+    var dirBadge = '';
+    if (d.type === 'DcMotor') {
+      dirBadge = '<span class="hw-dir ' + (d.direction === 'REVERSE' ? 'rev' : 'fwd') + '">' + (d.direction === 'REVERSE' ? '\u2190 REV' : '\u2192 FWD') + '</span>';
+      if (d.zeroPower === 'BRAKE') dirBadge += '<span class="hw-dir brake">BRAKE</span>';
+    }
+    if (d.type === 'IMU' && d.initialized) dirBadge = '<span class="hw-dir fwd">INIT</span>';
+    html += '<div class="hw-slot ' + cls + '">';
+    html += '<span class="hw-icon"><i class="fa-solid ' + (icons[d.type]||'fa-microchip') + '"></i></span>';
+    html += '<span class="hw-type">' + d.type + '</span>';
+    html += '<span class="hw-name">' + d.varName + ' \u2192 "' + d.configName + '"</span>';
+    html += dirBadge;
+    html += '<span class="hw-status">' + statusIcon + '</span>';
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function renderConfigPanel() {
+  if (!robotConfig) return;
+  var motors = [], servos = [], i2cs = [];
+  for (var name in robotConfig) {
+    var entry = { name: name, type: robotConfig[name] };
+    if (entry.type === 'DcMotor') motors.push(entry);
+    else if (entry.type === 'Servo' || entry.type === 'CRServo') servos.push(entry);
+    else i2cs.push(entry);
+  }
+
+  var portTypeMap = { 'Motor': 'DcMotor', 'Servo': 'Servo', 'I2C': 'IMU' };
+
+  function makePortRows(label, count, entries) {
+    var html = '';
+    var defaultType = portTypeMap[label] || 'DcMotor';
+    for (var i = 0; i < count; i++) {
+      var e = entries[i];
+      html += '<div class="port-row"><span class="port-label">' + label + ' ' + i + '</span>';
+      if (e) {
+        html += '<span class="port-device"><input value="' + e.name + '" data-oldname="' + e.name + '" data-type="' + e.type + '" onchange="renameConfigDevice(this)"/></span>';
+      } else {
+        html += '<span class="port-device"><input value="" placeholder="\u2014 empty \u2014" data-oldname="" data-type="' + defaultType + '" onchange="addConfigDevice(this)"/></span>';
+      }
+      html += '</div>';
+    }
+    return html;
+  }
+
+  var html = '';
+  html += '<div class="hub-section"><div class="hub-header open" onclick="toggleHub(this)"><span>Expansion Hub 0</span><i class="fa-solid fa-chevron-right"></i></div>';
+  html += '<div class="hub-body open">';
+  html += makePortRows('Motor', 4, motors.slice(0, 4));
+  html += makePortRows('Servo', 6, servos.slice(0, 6));
+  html += makePortRows('I2C', 4, i2cs.slice(0, 4));
+  html += '</div></div>';
+  html += '<div class="hub-section"><div class="hub-header" onclick="toggleHub(this)"><span>Expansion Hub 1</span><i class="fa-solid fa-chevron-right"></i></div>';
+  html += '<div class="hub-body">';
+  html += makePortRows('Motor', 4, motors.slice(4));
+  html += makePortRows('Servo', 6, servos.slice(6));
+  html += makePortRows('I2C', 4, i2cs.slice(4));
+  html += '</div></div>';
+  document.getElementById('config-panel').innerHTML = html;
+}
+
+function toggleHub(el) { 
+    el.classList.toggle('open'); 
+    el.nextElementSibling.classList.toggle('open'); 
+}
+
+function renameConfigDevice(input) {
+  var oldName = input.dataset.oldname;
+  var devType = input.dataset.type;
+  var newName = input.value.trim();
+  if (!newName) {
+    delete robotConfig[oldName];
+    runAnalysis();
+    return;
+  }
+  delete robotConfig[oldName];
+  robotConfig[newName] = devType;
+  runAnalysis();
+}
+
+function addConfigDevice(input) {
+  var newName = input.value.trim();
+  if (!newName) return;
+  var devType = input.dataset.type;
+  robotConfig[newName] = devType;
+  runAnalysis();
+}
+
+// ── 3D Robot Setup ──
+var scene, camera, renderer, robotGroup;
+var wheelMeshes = {}, armMesh, clawMesh, labelSprites = {};
+var orbitState = { isDragging: false, prevX: 0, prevY: 0, theta: 0.8, phi: 0.6, radius: 5.5, target: {x:0,y:0.3,z:0}, autoRotate: true };
+
+function initRobot3D() {
+  var canvas = document.getElementById('robot-canvas');
+  var w = canvas.clientWidth, h = canvas.clientHeight;
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0a0a0a);
+  camera = new THREE.PerspectiveCamera(50, w / h, 0.1, 100);
+  updateCameraFromOrbit();
+  renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+  renderer.setSize(w, h, false);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  scene.add(new THREE.AmbientLight(0x444444));
+  var dl = new THREE.DirectionalLight(0xffffff, 0.8);
+  dl.position.set(3, 5, 4);
+  scene.add(dl);
+  var grid = new THREE.GridHelper(6, 12, 0x333333, 0x222222);
+  grid.userData.telemarkThemeRole = 'grid';
+  scene.add(grid);
+
+  robotGroup = new THREE.Group();
+  scene.add(robotGroup);
+
+  var bodyGeo = new THREE.BoxGeometry(1.6, 0.3, 2);
+  var body = new THREE.Mesh(bodyGeo, new THREE.MeshPhongMaterial({ color: 0x333333 }));
+  body.position.y = 0.45;
+  robotGroup.add(body);
+
+  var wheelGeo = new THREE.CylinderGeometry(0.22, 0.22, 0.12, 16);
+  var wpos = { leftFront:[-0.9,0.22,-0.75], rightFront:[0.9,0.22,-0.75], leftBack:[-0.9,0.22,0.75], rightBack:[0.9,0.22,0.75] };
+  for (var wn in wpos) {
+    var wm = new THREE.Mesh(wheelGeo, new THREE.MeshPhongMaterial({ color: 0x555555 }));
+    wm.rotation.z = Math.PI / 2;
+    wm.position.set(wpos[wn][0], wpos[wn][1], wpos[wn][2]);
+    robotGroup.add(wm);
+    wheelMeshes[wn] = wm;
+  }
+
+  armMesh = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.8, 0.15), new THREE.MeshPhongMaterial({ color: 0x555555 }));
+  armMesh.position.set(0, 1, -0.8);
+  robotGroup.add(armMesh);
+
+  clawMesh = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.12, 0.2), new THREE.MeshPhongMaterial({ color: 0x555555 }));
+  clawMesh.position.set(0, 1.4, -0.9);
+  robotGroup.add(clawMesh);
+
+  canvas.addEventListener('pointerdown', function(e) {
+    orbitState.isDragging = true;
+    orbitState.autoRotate = false;
+    orbitState.prevX = e.clientX;
+    orbitState.prevY = e.clientY;
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('pointermove', function(e) {
+    if (!orbitState.isDragging) return;
+    var dx = e.clientX - orbitState.prevX;
+    var dy = e.clientY - orbitState.prevY;
+    orbitState.theta -= dx * 0.008;
+    orbitState.phi = Math.max(0.1, Math.min(Math.PI - 0.1, orbitState.phi - dy * 0.008));
+    orbitState.prevX = e.clientX;
+    orbitState.prevY = e.clientY;
+    updateCameraFromOrbit();
+  });
+  canvas.addEventListener('pointerup', function() { orbitState.isDragging = false; });
+  canvas.addEventListener('pointercancel', function() { orbitState.isDragging = false; });
+  canvas.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    orbitState.autoRotate = false;
+    orbitState.radius = Math.max(2, Math.min(15, orbitState.radius + e.deltaY * 0.01));
+    updateCameraFromOrbit();
+  }, { passive: false });
+
+  if (window.TelemarkSimulatorBase) window.TelemarkSimulatorBase.themeThreeScene(scene);
+  renderer.render(scene, camera);
+}
+
+function resizeRobot3D() {
+  if (!renderer || !camera) return;
+  var canvas = document.getElementById('robot-canvas');
+  var w = canvas.clientWidth, h = canvas.clientHeight;
+  if (!w || !h) return;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h, false);
+}
+
+window.addEventListener('resize', resizeRobot3D);
+window.addEventListener('message', function(event) {
+  if (event.origin !== window.location.origin || event.source !== window.parent || event.data?.type !== 'telemark:simulator-fullscreen-state') return;
+  document.body.classList.toggle('telemark-host-fullscreen', Boolean(event.data.fullscreen));
+  requestAnimationFrame(resizeRobot3D);
+});
+
+function updateCameraFromOrbit() {
+  if (!camera) return;
+  var t = orbitState;
+  camera.position.x = t.target.x + t.radius * Math.sin(t.phi) * Math.sin(t.theta);
+  camera.position.y = t.target.y + t.radius * Math.cos(t.phi);
+  camera.position.z = t.target.z + t.radius * Math.sin(t.phi) * Math.cos(t.theta);
+  camera.lookAt(t.target.x, t.target.y, t.target.z);
+}
+
+function makeTextSprite(text, color) {
+  var c2 = document.createElement('canvas');
+  c2.width = 256; c2.height = 64;
+  var ctx = c2.getContext('2d');
+  ctx.font = 'bold 28px monospace';
+  ctx.fillStyle = color || '#00ff00';
+  ctx.textAlign = 'center';
+  ctx.fillText(text, 128, 40);
+  var tex = new THREE.CanvasTexture(c2);
+  var sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
+  sprite.scale.set(1.2, 0.3, 1);
+  return sprite;
+}
+
+function updateRobot3D() {
+  if (!scene) return;
+  for (var k in labelSprites) robotGroup.remove(labelSprites[k]);
+  labelSprites = {};
+
+  var byVar = {};
+  hwDevices.forEach(function(d) { byVar[d.varName] = d; });
+
+  var wheelSlots = ['leftFront','rightFront','leftBack','rightBack'];
+  var lpos = { leftFront:[-0.9,0.55,-0.75], rightFront:[0.9,0.55,-0.75], leftBack:[-0.9,0.55,0.75], rightBack:[0.9,0.55,0.75] };
+
+  wheelSlots.forEach(function(slot) {
+    var mesh = wheelMeshes[slot];
+    if (!mesh) return;
+    var dev = byVar[slot];
+    if (dev) {
+      mesh.material.color.setHex(dev.direction === 'REVERSE' ? 0x3366cc : 0x00aa00);
+      var label = makeTextSprite(dev.configName, dev.direction === 'REVERSE' ? '#6699ff' : '#00ff00');
+      label.position.set(lpos[slot][0], lpos[slot][1], lpos[slot][2]);
+      robotGroup.add(label);
+      labelSprites[slot] = label;
+    } else {
+      mesh.material.color.setHex(0x555555);
+    }
+  });
+
+  var armDev = hwDevices.find(function(d) { return d.type === 'DcMotor' && wheelSlots.indexOf(d.varName) === -1; });
+  if (armDev) {
+    armMesh.material.color.setHex(0x00aa00);
+    var al = makeTextSprite(armDev.configName, '#00ff00');
+    al.position.set(0, 1.55, -0.8);
+    robotGroup.add(al); labelSprites['arm'] = al;
+  } else { armMesh.material.color.setHex(0x555555); }
+
+  var clawDev = hwDevices.find(function(d) { return d.type === 'Servo'; });
+  if (clawDev) {
+    clawMesh.material.color.setHex(0x0088cc);
+    var cl = makeTextSprite(clawDev.configName, '#22d3ee');
+    cl.position.set(0, 1.7, -0.9);
+    robotGroup.add(cl); labelSprites['claw'] = cl;
+  } else { clawMesh.material.color.setHex(0x555555); }
+
+  renderer.render(scene, camera);
+}
+
+function animateRobot() {
+  requestAnimationFrame(animateRobot);
+  if (orbitState.autoRotate) {
+    orbitState.theta += 0.003;
+    updateCameraFromOrbit();
+  }
+  if (renderer) renderer.render(scene, camera);
+}
+
+// Fallback only: simulator_base owns gamepad input and card interactions.
+if (!window.TelemarkSimulatorBase) {
+// ── Gamepad Logic ──
+function setButtonState(prop,pressed,id){
+    gamepad[prop]=pressed;
+    var el=document.getElementById(id);
+    if(el)el.classList.toggle('pressed',pressed);
+}
+[['btn-a-visual','a'],['btn-b','b'],['btn-x','x'],['btn-y','y'],['btn-lb','left_bumper'],['btn-rb','right_bumper'],['btn-back','back'],['btn-start','start'],['dpad-up','dpad_up'],['dpad-down','dpad_down'],['dpad-left','dpad_left'],['dpad-right','dpad_right']].forEach(function(p){
+    var el=document.getElementById(p[0]);
+    if(!el) return;
+    el.addEventListener('pointerdown',function(e){e.preventDefault();setButtonState(p[1],true,p[0])});
+    el.addEventListener('pointerup',function(){setButtonState(p[1],false,p[0])});
+    el.addEventListener('pointerleave',function(){setButtonState(p[1],false,p[0])});
+    el.addEventListener('pointercancel',function(){setButtonState(p[1],false,p[0])});
+});
+
+function setupTriggerSlider(sid,fid,prop){
+    var s=document.getElementById(sid),f=document.getElementById(fid),d=false;
+    function u(e){
+        var r=s.getBoundingClientRect(),pct=1-Math.max(0,Math.min(1,(e.clientY-r.top)/r.height));
+        gamepad[prop]=pct;
+        f.style.height=pct*100+'%';
+    }
+    s.addEventListener('pointerdown',function(e){d=true;s.setPointerCapture(e.pointerId);u(e)});
+    s.addEventListener('pointermove',function(e){if(d)u(e)});
+    s.addEventListener('pointerup',function(){d=false;gamepad[prop]=0;f.style.height='0%'});
+    s.addEventListener('pointercancel',function(){d=false;gamepad[prop]=0;f.style.height='0%'});
+}
+setupTriggerSlider('left-trigger-slider','left-trigger-fill','left_trigger');
+setupTriggerSlider('right-trigger-slider','right-trigger-fill','right_trigger');
+
+var controllerWrap=document.getElementById('controller-wrap');
+function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v))}
+var sticks={
+    left:{zone:document.getElementById('stick-zone-left'),knob:document.getElementById('stick-knob-left'),defaultL:'35.5%',defaultT:'65.5%',dragging:false,pointerId:null,setValues:function(sx,sy){gamepad.left_stick_x=sx;gamepad.left_stick_y=sy}},
+    right:{zone:document.getElementById('stick-zone-right'),knob:document.getElementById('stick-knob-right'),defaultL:'64%',defaultT:'65.5%',dragging:false,pointerId:null,setValues:function(sx,sy){gamepad.right_stick_x=sx;gamepad.right_stick_y=sy}}
+};
+function resetStick(s){
+    s.dragging=false;
+    s.pointerId=null;
+    s.setValues(0,0);
+    s.knob.style.left=s.defaultL;
+    s.knob.style.top=s.defaultT;
+    s.knob.style.transform='translate(-50%,-50%)';
+}
+function updateStickFromPointer(s,cx,cy){
+    var wr=controllerWrap.getBoundingClientRect(),zr=s.zone.getBoundingClientRect(),centerX=zr.left+zr.width/2,centerY=zr.top+zr.height/2,dx=cx-centerX,dy=cy-centerY,maxR=Math.min(zr.width,zr.height)*.36,dist=Math.hypot(dx,dy),sc=dist>maxR?maxR/dist:1,cdx=dx*sc,cdy=dy*sc;
+    // Screen Y and FTC stick Y use the same sign: up is negative.
+    s.setValues(clamp(cdx/maxR,-1,1),clamp(cdy/maxR,-1,1));
+    s.knob.style.left=(zr.left-wr.left+zr.width/2+cdx)/wr.width*100+'%';
+    s.knob.style.top=(zr.top-wr.top+zr.height/2+cdy)/wr.height*100+'%';
+    s.knob.style.transform='translate(-50%,-50%)';
+}
+Object.values(sticks).forEach(function(s){
+    s.zone.addEventListener('pointerdown',function(e){e.preventDefault();s.dragging=true;s.pointerId=e.pointerId;s.zone.setPointerCapture(e.pointerId);updateStickFromPointer(s,e.clientX,e.clientY)});
+});
+window.addEventListener('pointermove',function(e){
+    Object.values(sticks).forEach(function(s){if(s.dragging&&s.pointerId===e.pointerId)updateStickFromPointer(s,e.clientX,e.clientY)});
+});
+function handlePointerEnd(e){
+    Object.values(sticks).forEach(function(s){if(s.dragging&&s.pointerId===e.pointerId)resetStick(s)});
+}
+window.addEventListener('pointerup',handlePointerEnd);
+window.addEventListener('pointercancel',handlePointerEnd);
+window.addEventListener('blur',function(){Object.values(sticks).forEach(resetStick)});
+
+// UI Float Card
+(function(){
+    var card=document.getElementById('gamepad-float-card'),tb=document.getElementById('gamepad-titlebar'),cb=document.getElementById('gp-collapse-btn'),body=document.getElementById('gamepad-card-body'),rh=document.getElementById('gamepad-resize-handle'),collapsed=false,sw=null,sh=null;
+    cb.addEventListener('click',function(e){
+        e.stopPropagation();
+        collapsed=!collapsed;
+        if(collapsed){
+            sw=card.style.width||null;
+            sh=card.style.height||null;
+            body.style.display='none';
+            rh.style.display='none';
+            card.style.height='auto';
+            cb.textContent='+';
+        }else{
+            body.style.display='';
+            rh.style.display='';
+            if(sw)card.style.width=sw;
+            if(sh)card.style.height=sh;
+            cb.textContent='\u2212';
+        }
+    });
+    var dr=false,dox=0,doy=0;
+    tb.addEventListener('pointerdown',function(e){
+        if(e.target===cb)return;
+        dr=true;
+        var r=card.getBoundingClientRect();
+        dox=e.clientX-r.left;
+        doy=e.clientY-r.top;
+        tb.setPointerCapture(e.pointerId);
+        e.preventDefault();
+    });
+    tb.addEventListener('pointermove',function(e){
+        if(!dr)return;
+        card.style.left=Math.max(0,Math.min(window.innerWidth-card.offsetWidth,e.clientX-dox))+'px';
+        card.style.top=Math.max(0,Math.min(window.innerHeight-40,e.clientY-doy))+'px';
+        card.style.right='auto';
+        card.style.bottom='auto';
+    });
+    tb.addEventListener('pointerup',function(){dr=false});
+    tb.addEventListener('pointercancel',function(){dr=false});
+    
+    var cr=false,crx=0,cry=0,crw=0,crh=0;
+    rh.addEventListener('pointerdown',function(e){
+        cr=true;
+        crx=e.clientX;
+        cry=e.clientY;
+        crw=card.offsetWidth;
+        crh=card.offsetHeight;
+        rh.setPointerCapture(e.pointerId);
+        e.preventDefault();
+        e.stopPropagation();
+    });
+    rh.addEventListener('pointermove',function(e){
+        if(!cr)return;
+        card.style.width=Math.max(240,crw+(e.clientX-crx))+'px';
+        card.style.height=Math.max(80,crh+(e.clientY-cry))+'px';
+    });
+    rh.addEventListener('pointerup',function(){cr=false});
+    rh.addEventListener('pointercancel',function(){cr=false});
+})();
+}
+
+// Boot Sequence
+window.addEventListener('load', function() {
+  if (customProjectFiles) {
+    codeEditor.value = customProjectFiles[0].source;
+  } else if (customCode) {
+    codeEditor.value = customCode;
+  }
+  TelemarkProject.attach(codeEditor, onCodeChange, {initialFiles: customProjectFiles});
+  updateCode(codeEditor.value);
+  initRobot3D();
+  animateRobot();
+});
+if (window.TelemarkSimulatorBase) window.TelemarkSimulatorBase.installLegacy({
+  state: gamepad,
+  onThemeChange: function(theme) {
+    if (scene) window.TelemarkSimulatorBase.themeThreeScene(scene, theme);
+  }
+});
+</script>
+</body>
+</html>

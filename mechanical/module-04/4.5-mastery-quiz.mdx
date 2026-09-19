@@ -1,0 +1,141 @@
+---
+id: mastery-quiz
+title: "Module 4 Mastery Quiz: Fasteners, Bearings, and Shafts"
+sidebar_label: "Module 4 · Mastery Quiz"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import ScoredQuiz from '@site/src/components/mechanical/ScoredQuiz';
+import {MASTERY_QUESTIONS} from '@site/src/telemark/mechanicalQuizzes';
+
+# Module 4 Mastery Quiz: Fasteners, Bearings, and Shafts
+
+---
+
+## I. Conceptual Questions
+
+**1. How a Joint Carries Load:** Explain why a bolted joint that is snug but not properly tightened develops slop, even when the screw is far stronger than the load requires.
+
+<details>
+<summary>Show answer</summary>
+
+A properly tightened screw stretches slightly, and that stretch clamps the two parts together. The friction between the clamped faces carries the load, and the parts do not move relative to each other.
+
+A snug screw generates little clamping force, so friction is negligible and the load transfers to the screw in shear. Because the clearance hole is larger than the screw, the parts shift until the hole wall contacts the screw shank. That shift is the slop, and it occurs regardless of screw strength: the screw is not failing, the joint is simply not clamped.
+
+</details>
+
+---
+
+**2. Symptom Versus Cause:** A team applies blue threadlocker to a screw that keeps backing out. It loosens again two matches later. What is the likely underlying cause and how should it be diagnosed?
+
+<details>
+<summary>Show answer</summary>
+
+Repeated loosening in one specific location usually means the joint itself is moving: the parts flex or shift relative to each other under load, and each cycle of movement lets the screw rotate back slightly. Threadlocker resists rotation but does not prevent the relative motion causing it, so it delays the failure rather than fixing it.
+
+Diagnosis: load the mechanism by hand and watch the joint for relative movement between the parts, and check whether the joint has only one fastener, which allows rotation about it. The fixes are structural: add a second fastener spaced away from the first, add a locating feature such as a dowel or a shoulder, or stiffen the flexing member.
+
+</details>
+
+---
+
+**3. Set Screws:** Why is a set screw bearing directly on a round shaft unreliable, and what are the ordered remedies?
+
+<details>
+<summary>Show answer</summary>
+
+A set screw on a round shaft contacts a curved surface at essentially a point, so it holds by digging into the shaft rather than by clamping. Torque reversals rock the hub slightly against that point contact, and the set screw backs out.
+
+Start by aligning the set screw with a machined flat so it bears on a positive surface. A second set screw at 90 degrees can resist the rotation that loosens the first, and blue threadlocker can retain the threads. A clamping hub provides a stronger alternative because it grips the shaft around its circumference.
+
+</details>
+
+---
+
+**4. Bearing Spacing:** A shaft carries a sprocket cantilevered 3 in beyond its two bearings, which are 1 in apart. Explain why this is a poor arrangement and what to change.
+
+<details>
+<summary>Show answer</summary>
+
+A cantilevered load acts through a lever arm against the bearing pair. With bearings only 1 in apart and the load 3 in outboard, the reaction forces at each bearing are several times the applied load, and they act in opposite directions. That accelerates bearing wear, deflects the shaft, and lets the sprocket tip out of plane, which throws chain.
+
+Increase the bearing spacing first because tripling it cuts the reactions by roughly a factor of three. Next, shorten the cantilever by moving the sprocket inboard. If the cantilever is unavoidable, add a third support outboard of the load so the sprocket sits between supports.
+
+</details>
+
+---
+
+**5. Stack-Up Tolerance:** A stack contains six parts, each held to plus or minus 0.1 mm. What is the worst case position error, and give two design changes that reduce it.
+
+<details>
+<summary>Show answer</summary>
+
+In the worst case the errors all accumulate in the same direction, giving plus or minus 0.6 mm.
+
+First, replace four 6 mm spacers with one 24 mm spacer to remove three tolerances from the chain. Then add a deliberate adjustment, such as a clamping collar, slotted mount, or shim pack, so you can absorb accumulated error during assembly.
+
+</details>
+
+---
+
+## II. Review the Assembly
+
+A team describes a drivetrain shaft assembly. **Identify the 2 errors and state the fix.**
+
+```text
+The dead axle passes through a single flanged bearing pressed
+into the 3D printed side plate. The wheel is mounted on the
+outboard end of the axle, 2 in outside the bearing.
+
+The wheel is retained by a set screw hub on the round axle,
+with no flat. A stack of five washers sets the wheel spacing
+from the plate.
+
+After two practice sessions the wheel has developed visible
+wobble and the hub has rotated on the axle.
+```
+
+<details>
+<summary>Show answers</summary>
+
+**Error 1 - A single bearing supporting a cantilevered wheel, pressed into printed plastic.**
+One bearing cannot resist tipping, so the wheel 2 in outboard pivots about it, which is the observed wobble. The problem is compounded by pressing the bearing into a 3D printed plate: printed plastic creeps under sustained load, so the interference holding the bearing relaxes and the bore deforms out of round.
+
+```text
+Fix: support the axle in two bearings, spaced as far apart as
+the design allows, and keep the wheel between or close to the
+supports. Press the bearings into aluminum, or retain them in
+the printed part with a metal plate or clamping feature rather
+than by interference alone.
+```
+
+**Error 2 - A set screw on a round axle with no flat, plus washers used as spacers.**
+A set screw contacting a curved surface holds by point contact and backs out under load reversal, which is why the hub rotated. Separately, five washers is an uncontrolled stack: washer thickness varies and is not a specified dimension, so the wheel spacing is unpredictable and contributes to the misalignment.
+
+```text
+Fix: use an axle with a machined flat and align the set screw
+to it, or use a clamping hub. Add blue threadlocker to the set
+screw. Replace the five washers with a single spacer of the
+specified length, and write the stack-up into the notebook.
+```
+
+</details>
+
+---
+
+## III. Scored Check
+
+The questions above are for working something through. These are graded, so you can find out whether it stuck. Everything is scored in your browser.
+
+<ScoredQuiz
+  lessonId="module-04/mastery-quiz"
+  questions={MASTERY_QUESTIONS['module-04']}
+/>
+
+<MarkComplete
+  lessonId="module-04/mastery-quiz"
+  nextUnit="/mechanical/module-05"
+  nextUnitName="Module 5: CAD With Onshape"
+/>

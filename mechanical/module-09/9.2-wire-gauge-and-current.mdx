@@ -1,0 +1,132 @@
+---
+id: wire-gauge-and-current
+title: "Lesson 9.2: Wire Gauge, Current Capacity, and Voltage Drop"
+sidebar_label: "9.2 · Wire Gauge"
+sidebar_position: 2
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import LessonTool from '@site/src/components/mechanical/LessonTool';
+import WireGaugeCalculator from '@site/src/components/mechanical/WireGaugeCalculator';
+
+# Lesson 9.2: Wire Gauge, Current Capacity, and Voltage Drop
+
+---
+
+## Technical Context
+
+Wire has resistance. Current through resistance produces heat and loses voltage, and both matter on a robot running motors near their limits from a battery that is already sagging.
+
+Two separate checks decide the gauge, and a wire can pass one and fail the other.
+
+---
+
+## Check One: Can It Carry the Current
+
+Every gauge has a practical current limit above which it heats unacceptably. Smaller gauge numbers mean thicker wire and higher capacity.
+
+This check protects the wire and everything near it. An undersized wire carrying motor current gets hot, softens its insulation, and eventually fails, sometimes as a short.
+
+## Check Two: Does It Drop Too Much Voltage
+
+```text
+V_drop = I * R_total
+R_total = resistance_per_foot * 2 * one_way_length
+```
+
+The factor of 2 is because current flows out and back. A three foot run to a motor is six feet of wire in the circuit.
+
+This check protects performance. Voltage lost in the wire is voltage the motor does not get, and since both free speed and stall torque scale with voltage, a large drop makes the motor measurably weaker. A common target is to keep the drop under about 3% of system voltage.
+
+:::tip Both checks, every time
+A wire can pass the current check and fail the voltage drop check on a long run, and it can pass the drop check on a short run while being too thin to carry the current. Run both.
+:::
+
+---
+
+## Try It
+
+<LessonTool
+  toolId="wire-gauge"
+  bring="Sustained current and the run length measured along the actual route."
+  change="The length, and watch the drop scale with it."
+  read="The smallest gauge passing both checks. Drop uses twice the run."
+>
+  <WireGaugeCalculator />
+</LessonTool>
+
+Enter the current the circuit actually draws in sustained operation, not the stall current, and measure the run length along the route the wire takes rather than the straight line distance.
+
+---
+
+## Where the Big Currents Are
+
+| Circuit | Character of the load |
+| --- | --- |
+| Battery to main switch to hub | The entire robot's current, the heaviest run |
+| Hub to drive motors | High, and highest during pushing |
+| Hub to mechanism motors | High while lifting, low otherwise |
+| Servo power | Moderate, shared across the servo rail |
+| Sensors | Very small |
+
+The battery run carries everything and deserves the most attention. Motor runs matter individually, and the drive motors matter most because a pushing match holds them near their maximum for seconds at a time.
+
+:::warning The season's rules specify wiring requirements
+Required gauges, connector types, and fusing between the battery, main switch, and power distribution are defined in the game manual and are checked at inspection. Read the current manual before choosing anything for the main power path. The calculator above is an engineering tool, not a legality check.
+:::
+
+---
+
+## Battery Voltage Sag
+
+An FTC battery has internal resistance, so its terminal voltage falls under load. Add wiring drop on top and the voltage reaching a motor during a hard push can be noticeably below nominal.
+
+Consequences:
+
+- Motors are weaker exactly when they are working hardest
+- If voltage falls far enough, the Control Hub can reset, which stops the robot entirely for several seconds
+- The effect worsens as the battery discharges over a tournament day, which is why problems appear in late matches
+
+Mitigations: keep the battery run short and thick, keep connections tight and clean, charge and rotate batteries through the day, and design mechanisms with torque margin so they do not need full voltage to function.
+
+---
+
+## Connections Are the Usual Culprit
+
+More FTC electrical failures come from connections than from wire.
+
+- **A poor crimp** has high resistance, heats under load, and gets worse over time. A good crimp cannot be pulled off by hand.
+- **A partly seated connector** works on the bench and disconnects when the robot is hit.
+- **Corroded or dirty contacts** add resistance.
+- **A connector under mechanical stress** from a cable being pulled by robot motion eventually fails, which is why Lesson 9.3 exists.
+
+Test every crimp with a firm pull when it is made. It takes one second and it prevents a category of failure that is very hard to diagnose later.
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Voltage drop must be calculated using `__________` times the one way run length, because current flows out and back.
+2. A common target for acceptable voltage drop is under about `__________` percent of system voltage.
+3. More FTC electrical failures originate in `__________` than in the wire itself.
+
+<details>
+<summary>Show answers</summary>
+
+1. **two** (double)
+2. **3**
+3. **connections** (crimps and connectors)
+
+</details>
+
+---
+
+## Exercise
+
+Measure the run length of your battery to hub cable and each drive motor cable along the route the wire actually takes. Run each through the calculator using a realistic sustained current. Then pull-test every crimp on those runs.
+
+<MarkComplete
+  lessonId="module-09/wire-gauge-and-current"
+  nextUnit="/mechanical/module-09/routing-and-strain-relief"
+  nextUnitName="Lesson 9.3: Routing, Strain Relief, and Surviving Robot Motion"
+/>

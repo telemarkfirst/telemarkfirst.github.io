@@ -1,0 +1,35 @@
+---
+id: mastery-coding-challenge
+title: "Unit 2 Project Stage: CompetitionTeleOp Lifecycle"
+sidebar_label: "Unit 2 · Coding Challenge"
+sidebar_position: 7
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import MasterySimulator from '@site/src/components/MasterySimulator';
+
+# Stage 1: CompetitionTeleOp Lifecycle
+
+This is the first stage of one browser-saved DECODE robot project. You will keep editing the same files through Unit 15. A passing stage saves a read-only snapshot you can preview, copy, or export later.
+
+## Your Task
+
+Complete `CompetitionTeleOp.java` as a registered iterative OpMode:
+
+1. Use `init()` for a one-time ready message.
+2. Use `start()` to reset the match clock.
+3. Use `loop()` to read `gamepad1` and publish live telemetry.
+4. Keep `stop()` as the one safe shutdown path.
+
+Later stages will delegate drivetrain and mechanism work through these lifecycle methods, so keep this file focused on coordination.
+
+## Coding Challenge Simulator
+
+<MasterySimulator unit={2} project />
+
+<MarkComplete
+  lessonId="unit-02/mastery-coding-challenge"
+  completesUnit="unit-02"
+  nextUnit="/docs/unit-03"
+  nextUnitName="Unit 3: Java Variables"
+/>

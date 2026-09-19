@@ -1,0 +1,95 @@
+---
+id: for-loops
+title: "Lesson 6.2: Using for Loops to Repeat Robot Actions Cleanly"
+sidebar_label: "6.2 · for Loops"
+sidebar_position: 2
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit6Simulator from '@site/src/components/Unit6Simulator';
+
+# Lesson 6.2: Using for Loops to Repeat Robot Actions Cleanly
+
+---
+
+## Technical Context
+
+Repetitive mechanical tasks: such as pulsing an intake or cycling a scoring mechanism: are prone to "logic bloat" if written line-by-line. Using a `for` loop ensures code efficiency and allows the programmer to adjust the number of iterations (e.g., 3 gear-clearing pulses) in a single parameter change rather than rewriting blocks of code.
+
+---
+
+## When a for Loop Is Better Than Repeating Code
+
+The `for` loop follows the syntax `for(initialization; condition; update)`. It instantiates a local `int` counter that increments after each pass. In FTC robotics, this is frequently used to cycle mechanisms for a fixed number of iterations rather than relying on inconsistent time-based logic.
+
+The three parts of the `for` header do distinct jobs:
+- **Initialization**: runs once before the loop starts, creating the counter (e.g., `int i = 0`)
+- **Condition**: checked before every iteration; the loop stops when this is `false` (e.g., `i < 5`)
+- **Update**: runs at the end of every iteration, advancing the counter (e.g., `i++`)
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.hardware.DcMotor;
+
+@Autonomous(name="Pulse_Demo")
+public class PulseDemo extends LinearOpMode {
+
+    @Override
+    public void runOpMode() {
+        DcMotor scoringMotor = hardwareMap.get(DcMotor.class, "scoring");
+
+        waitForStart();
+
+        // Example: Pulsing a scoring motor 5 times
+        for (int i = 0; i < 5; i++) {
+            scoringMotor.setPower(1.0);
+            sleep(100); // 100ms on-pulse
+            scoringMotor.setPower(0.0);
+            sleep(100); // 100ms pause between pulses
+
+            telemetry.addData("Pulse", i + 1);
+            telemetry.update();
+        }
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. In the `for` loop header, the `__________` section is executed exactly once before the loop begins.
+2. To repeat a block of code exactly 10 times starting at `i = 0`, the condition should be written as `i < __________`.
+3. The `__________` statement is executed at the end of every iteration, typically used to increase the counter.
+
+<details>
+<summary>Show answers</summary>
+
+1. **initialization** (e.g., `int i = 0`)
+2. **`10`**
+3. **update** (e.g., `i++`)
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Use the simulator below to practice writing a `for` loop that repeats a fixed robot action exactly three times.
+
+<SimulatorRunGuide />
+
+<Unit6Simulator lesson="for-loops" />
+
+<MarkComplete
+  lessonId="unit-06/for-loops"
+  nextUnit="/docs/unit-06/runtime-timing"
+  nextUnitName="Lesson 6.3: Managing Timed Transitions using getRuntime() Loop Comparisons"
+/>

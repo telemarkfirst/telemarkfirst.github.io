@@ -1,0 +1,127 @@
+---
+id: lifts
+title: "Lesson 13.2: Cascading, Continuous, and the Rigging That Decides"
+sidebar_label: "13.2 · Lift Architectures"
+sidebar_position: 2
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import LessonTool from '@site/src/components/mechanical/LessonTool';
+import SlideCalculator from '@site/src/components/mechanical/SlideCalculator';
+
+# Lesson 13.2: Cascading, Continuous, and the Rigging That Decides
+
+---
+
+## Technical Context
+
+Many FTC games require the robot to place an element above its starting height, so the scoring mechanism needs additional vertical reach.
+
+Several common lift arrangements use similar rails and bearings. The rigging that connects their stages determines extension speed, cable load, and how the mechanism responds when a stage binds.
+
+---
+
+## The two architectures
+
+**Cascading.** Each stage pulls the next one. Stage 1 rises, and through its rigging stage 2 rises relative to stage 1, and so on. The stages move at different speeds: with n moving stages, the top stage moves n times as fast as the first.
+
+**Continuous (also called rigged for equal extension).** Every stage is tied to move the same amount at the same time, usually by one cable path threaded through all of them.
+
+The consequences fall out of that one difference:
+
+| | Cascading | Continuous |
+| --- | --- | --- |
+| Top stage speed | n times the base stage | Same as every other stage |
+| Force at the spool | Highest: the whole stack in one path | Lower: load shared across the rigging |
+| If one stage binds | The stack above it stops with it | The whole lift stops |
+| Extension per rotation | Multiplied by stage count | Not multiplied |
+| Cable length change | Different per stage, easy to mis-rig | Uniform, easier to reason about |
+
+The tempting summary is that cascading is faster and continuous is stronger. That is roughly true, and it is worth understanding **why**, because it tells you when the summary breaks.
+
+---
+
+## Why cascading is faster and costs more force
+
+A cascading lift is a mechanical advantage trade, run backwards. Pulling one cable a distance d raises the top stage n·d. Work is conserved, so the force needed at the cable is n times the force you would need to lift that load directly, less friction losses which are never small in a slide.
+
+This is the same trade as gearing for speed. Nothing is free: **a lift that extends three times as fast for each spool rotation pulls three times as hard on the cable, the spool, and the motor.**
+
+In a cascading lift, inspect the spool, cable, and cable termination for the multiplied load. With three moving stages, those parts carry three times the directly lifted load before friction is included.
+
+---
+
+## Sizing the motor for the lift you actually built
+
+Work out the force at the spool, not the weight of the payload:
+
+1. **Total lifted mass.** Include the payload, end effector, and every moving stage above the first.
+2. **Multiply by the stage count** if cascading.
+3. **Add friction.** Slides bind under side load. A 30 to 50 percent allowance is normal, more if the lift is cantilevered.
+4. **Convert to torque** at the spool radius, then divide by the gear ratio.
+5. **Compare against 60 percent of stall torque**, per the margin standard in [Module 12](/mechanical/module-12/margin-standards). A lift held at stall cooks a motor in one match.
+
+<LessonTool
+  toolId="slide"
+  bring="Your target extension, the mass being lifted, and the stage count."
+  change="The stage count, and watch what happens to the force at the cable."
+  read="The cable force, not the payload weight. That is the number the spool and the termination actually carry."
+>
+  <SlideCalculator />
+</LessonTool>
+
+---
+
+## Rigging is where lifts actually fail
+
+Both architectures depend on a cable path that is right in **both** directions. A lift that is pulled up by a cable and falls down under gravity works until it does not: the moment a stage binds on the way down, the cable goes slack, jumps the pulley, and the lift is finished for the match.
+
+Two habits prevent most of it:
+
+- **Rig both directions.** A return cable, or constant force springs, keep tension at all times. Gravity is not a reliable actuator when a stage can stick.
+- **Keep wrap on every pulley.** The same 120 degree rule from [Lesson 12.3](/mechanical/module-12/rotating-standards) applies: below that, a slack cable walks off the pulley.
+
+:::warning The failure that ends matches
+A slack cable can jump its pulley and stop the lift even when every part is strong enough for the load. Maintain tension throughout the full travel instead of treating this as a motor-sizing problem.
+:::
+
+---
+
+## Choosing between them
+
+Ask what the game demands:
+
+- **Height in a hurry, moderate load.** Cascading. Accept the cable force and size the spool and termination for it.
+- **Heavy payload, or a lift that must hold position.** Continuous. The lower cable force and the shared load are worth the slower extension.
+- **Extension past roughly three stages.** Whatever the architecture, expect deflection to dominate. A tall lift is a cantilever beam, and its stiffness falls with the cube of the length, which is [Lesson 3.3](/mechanical/module-03/stiffness-and-deflection) rather than a lift problem.
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. In a cascading lift with n moving stages, the top stage moves \_\_\_\_\_\_\_\_ times as fast as the first.
+2. That speed is paid for with \_\_\_\_\_\_\_\_ times the force at the cable.
+3. A continuous lift ties every stage to the same \_\_\_\_\_\_\_\_.
+4. The most common lift failure is the cable coming off its pulley under \_\_\_\_\_\_\_\_.
+
+<details>
+<summary>Show answers</summary>
+
+1. n
+2. n
+3. extension (movement)
+4. slack
+
+</details>
+
+---
+
+## Exercise
+
+Take the lift height your game needs and your robot's retracted height. Work out how many stages you need, then compute the cable force for both architectures using the calculator above. Write one sentence saying which you would build and what you gave up by choosing it.
+
+<MarkComplete
+  lessonId="module-13/lifts"
+  nextUnit="/mechanical/module-13/linkages"
+  nextUnitName="Lesson 13.3: Four-Bars, Virtual Four-Bars, and Keeping Things Level"
+/>

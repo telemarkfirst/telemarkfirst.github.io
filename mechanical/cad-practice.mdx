@@ -1,0 +1,208 @@
+---
+id: cad-practice
+title: "CAD Practice Exercises"
+sidebar_label: "CAD Practice"
+sidebar_position: -0.5
+---
+
+import CadExercise from '@site/src/components/mechanical/CadExercise';
+import CadChecker from '@site/src/components/mechanical/CadChecker';
+
+# CAD Practice Exercises
+
+Use these exercises to practice the skills introduced in Module 5. Each one adds a new constraint and includes measurements you can check without waiting for a mentor to review the file.
+
+They are tool agnostic. The wording assumes Onshape because it is free for FTC teams and runs in a browser, but every exercise works in Fusion, SolidWorks, or Inventor.
+
+:::info Before you start
+Work through [Lesson 5.2](/mechanical/module-05/sketches-and-constraints) first. The exercises assume you can create and recognize a fully defined sketch.
+:::
+
+## Check your file before you ask anyone to look at it
+
+Export the part and drop it below. The check reads the file in your browser, measures what is actually in it, and tells you which of the exercise's stated numbers it matched.
+
+Two formats, two different answers. **STEP** carries exact geometry, so hole diameters are read as modelled and a 3.0 mm hole where a 3.2 mm clearance hole belongs is caught immediately. **STL** is triangles, so it can measure volume, mass, and whether the solid closes, but every curve in it is a polygon and reads slightly small. Send STEP for sizes, STL for mass and watertightness, and both when you want the full picture.
+
+<CadChecker />
+
+The check measures the submitted geometry. It can confirm that a plate is 80 mm long and that its holes have the required diameter, but it cannot decide whether the plate is appropriate for your robot. Review function and fit separately.
+
+:::info Official references
+- Community design guides for the mechanisms these exercises are drawn from: [Game Manual 0: Design Skills](https://gm0.org/en/latest/docs/design-skills/index.html)
+:::
+
+:::tip Use real hardware numbers
+When an exercise names a fastener or bearing, use dimensions from the vendor's current drawing. The model should match the part the team can buy and measure.
+:::
+
+---
+
+## Stage 1: Sketching and single parts
+
+<CadExercise
+  number="1.1"
+  title="Fully defined mounting plate"
+  difficulty="Starter"
+  minutes={20}
+  brief="Model a flat aluminum plate with a pattern of mounting holes. The goal is not the plate. The goal is finishing with a sketch that has no free geometry left in it."
+  requirements={[
+    'Plate is 80 mm wide, 40 mm tall, 3 mm thick.',
+    'Four M3 clearance holes at 3.2 mm diameter, one in each corner, inset 6 mm from both edges.',
+    'One 8 mm bore centered in the plate.',
+    'All external corners filleted at 3 mm radius.',
+  ]}
+  acceptance={[
+    'The sketch reports as fully defined, with no blue or under-constrained geometry.',
+    'Changing the plate width to 100 mm keeps all four holes 6 mm from their nearest edges.',
+    'Changing the width does not move the 8 mm bore off center.',
+    'The feature tree has named features, not Extrude 1 and Extrude 2.',
+  ]}
+  trap="Four separate hole positions can produce the correct first version but fail when the plate width changes. Use symmetry and equal constraints so the sketch records the intended relationship and keeps the holes aligned after an edit."
+/>
+
+<CadExercise
+  number="1.2"
+  title="Adapter plate between two hole patterns"
+  difficulty="Starter"
+  minutes={25}
+  brief="Model the one custom part that lets a component with an awkward bolt pattern mount to a build system rail. This is the part that saves a team from making a custom robot."
+  requirements={[
+    'One face carries a 4 hole pattern on a 32 mm square, for M3 clearance.',
+    'The opposite face carries a 2 hole pattern spaced 48 mm apart, matching a rail, also M3 clearance.',
+    'Plate thickness 4 mm. Overall size no larger than 70 mm by 70 mm.',
+    'At least one of the rail holes is a slot with 4 mm of adjustment.',
+  ]}
+  acceptance={[
+    'Both hole patterns are driven by dimensions you can change in one place.',
+    'The slot is a real slot feature, not two holes joined by a rectangle.',
+    'No hole breaks through into another, and the minimum material between any two holes is at least 3 mm.',
+    'You can state, out loud, which hole is your reference and why.',
+  ]}
+  trap="Use the slot to provide intentional adjustment. Two fixed hole patterns can be difficult to align when part and assembly tolerances accumulate, while a short slot lets you set the final position without modifying the finished plate."
+/>
+
+---
+
+## Stage 2: Assemblies and motion
+
+<CadExercise
+  number="2.1"
+  title="Dead axle wheel assembly"
+  difficulty="Intermediate"
+  minutes={35}
+  brief="Assemble a wheel on a non-rotating axle supported by two bearings. This is the assembly that teaches why Lesson 4.3 insists on two supports."
+  requirements={[
+    'An 8 mm axle, two 8 mm bore bearings, one wheel, and two side plates.',
+    'Bearings are pressed into the side plates, spaced at least 30 mm apart.',
+    'The wheel sits between the bearings, not outboard of them.',
+    'Spacers set the wheel position so it is centered between the plates.',
+  ]}
+  acceptance={[
+    'The wheel spins in the assembly using a revolute mate, and the axle does not.',
+    'The spacer stack adds up to the plate spacing exactly, with no gap and no interference.',
+    'Dragging the wheel along the axle direction does nothing, because axial movement is constrained.',
+    'You can list the stack-up from the inside face of one plate to the inside face of the other.',
+  ]}
+  trap="Calculate the spacer stack before adding mates. If its total does not match the plate spacing, the assembly will contain either a gap or interference even when the wheel has the correct revolute mate."
+/>
+
+<CadExercise
+  number="2.2"
+  title="Arm with a range of motion check"
+  difficulty="Intermediate"
+  minutes={40}
+  brief="Build a pivoting arm on a chassis and drive it through its full travel to find where it collides. Finding the collision is the deliverable, not avoiding it."
+  requirements={[
+    'A chassis block roughly 400 mm by 350 mm by 100 mm as a stand-in.',
+    'An arm 450 mm long on a pivot mounted to the chassis.',
+    'A simple end effector block at the far end, 60 mm by 60 mm.',
+    'Arm travel from 0 to 120 degrees measured from horizontal.',
+  ]}
+  acceptance={[
+    'The arm is mated with a revolute mate and can be dragged through its full travel.',
+    'You have stepped through at least five positions and run interference detection at each.',
+    'You have recorded the angle at which the first collision occurs, or confirmed there is none.',
+    'The model is checked at 0 degrees, which is the worst case for both reach and gravity torque.',
+  ]}
+  trap="Do not check only the endpoints. An arm can clear at 0 and 120 degrees but strike the chassis at an intermediate angle. Step through the range and run interference checks at several positions."
+/>
+
+<CadExercise
+  number="2.3"
+  title="Two stage linear slide"
+  difficulty="Advanced"
+  minutes={50}
+  brief="Model a two stage slide and mate it so the stages extend together in the correct proportion. This is where slider mates and their relationships get real."
+  requirements={[
+    'A fixed base stage and two moving stages.',
+    'Total extension of at least 500 mm from the retracted length.',
+    'Stage overlap of at least 60 mm at full extension.',
+    'A spool of your chosen diameter mounted at the base.',
+  ]}
+  acceptance={[
+    'Both stages move with slider mates, not fastened mates.',
+    'At full extension every stage still overlaps its neighbor by at least 60 mm.',
+    'The retracted assembly fits inside your season starting envelope.',
+    'You can state whether this rigging is cascading or continuous, and what that does to the force.',
+  ]}
+  trap="Overlap at full extension. It is easy to hit a travel target by letting the stages nearly separate, which produces a slide that binds and deflects badly under load. The overlap requirement is the real constraint, and it is what forces the retracted length to be longer than you first want."
+/>
+
+---
+
+## Stage 3: Design intent under change
+
+<CadExercise
+  number="3.1"
+  title="Survive the requirement change"
+  difficulty="Advanced"
+  minutes={30}
+  brief="Take your Exercise 2.1 wheel assembly and change the wheel diameter and the plate spacing. A well built model absorbs this in two edits. A poorly built one has to be rebuilt."
+  requirements={[
+    'Change the wheel diameter from its original value to 96 mm.',
+    'Change the plate spacing by 12 mm.',
+    'Do not delete and remodel any part.',
+  ]}
+  acceptance={[
+    'The assembly rebuilds with no errors and no orphaned mates.',
+    'The wheel is still centered between the plates after the spacing change.',
+    'The spacer stack still adds up, or you have identified exactly which spacer must change and by how much.',
+    'Total edit time was under ten minutes.',
+  ]}
+  trap="This exercise tests how the earlier model responds to change. If the edit requires extensive repair, inspect where the model recorded fixed positions instead of relationships and revise those features."
+/>
+
+<CadExercise
+  number="3.2"
+  title="Drawing someone else can build from"
+  difficulty="Advanced"
+  minutes={30}
+  brief="Produce a fabrication drawing for the adapter plate from Exercise 1.2 and hand it to a teammate who has not seen the model."
+  requirements={[
+    'Every hole is marked as either clearance or tapped, with its size.',
+    'Material and thickness are stated.',
+    'Tolerances are given only where they matter, not on every dimension.',
+    'At least one view shows the slot with its travel dimensioned.',
+  ]}
+  acceptance={[
+    'A teammate can identify which holes to tap without asking you.',
+    'No dimension on the drawing is missing a unit.',
+    'The drawing states which edge is the reference for layout.',
+    'Your teammate produced the part correctly on the first attempt.',
+  ]}
+  trap="Tolerancing everything. Putting a tight tolerance on every dimension tells the fabricator that nothing matters more than anything else, so they either spend the effort everywhere or guess. Lesson 11.1 covers choosing tolerance from function, and this drawing is where that becomes concrete."
+/>
+
+---
+
+## Where to go next
+
+Once you can finish Stage 3 comfortably, model your team's actual robot. Start with the drivetrain, add each mechanism as it is designed, and keep the master assembly current. Module 5.3 covers checking the starting envelope before parts are fabricated.
+
+:::info Related lessons
+- [Lesson 5.2: Fully Defined Sketches](/mechanical/module-05/sketches-and-constraints)
+- [Lesson 5.3: Assemblies, Mates, and Range of Motion](/mechanical/module-05/assemblies-and-mates)
+- [Lesson 4.4: Planning Spacer Stack-Ups](/mechanical/module-04/spacers-and-stackups)
+- [Lesson 11.1: Tolerances, Clearance Fits, and Press Fits](/mechanical/module-11/tolerances-and-fits)
+:::

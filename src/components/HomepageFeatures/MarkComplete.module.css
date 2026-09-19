@@ -1,0 +1,290 @@
+/* MarkComplete.module.css */
+
+/* ── Idle / not signed in ────────────────────────────────── */
+.completeBox {
+  margin: 3rem 0 1rem;
+  border: 1px solid var(--tm-accent-a20);
+  border-radius: var(--tm-r-hand);
+  background: var(--tm-surface-2);
+  padding: 1.75rem 2rem;
+  position: relative;
+}
+
+.completeBox::before {
+  content: '';
+  position: absolute;
+  top: 14px; left: 16px;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--tm-accent);
+}
+
+.completeBox::after {
+  content: '';
+  position: absolute;
+  bottom: 14px; right: 18px;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--tm-blue-soft);
+}
+
+.completeInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.completeText { flex: 1; }
+
+.completeTitle {
+  font-family: var(--tm-font-display);
+  font-weight: 700;
+  font-size: var(--tm-fs-md);
+  color: var(--tm-text-strong);
+  margin: 0 0 6px;
+}
+
+.completeDesc {
+  font-size: var(--tm-fs-sm);
+  color: var(--tm-text-muted);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.completeActions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+/* ── Buttons ─────────────────────────────────────────────── */
+.signInBtn {
+  font-family: var(--tm-font-display);
+  font-weight: 700;
+  font-size: var(--tm-fs-sm);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 12px 24px;
+  background: var(--tm-accent);
+  color: var(--tm-text-on-accent);
+  border: none;
+  border-radius: var(--tm-r-hand);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.signInBtn:hover {
+  background: var(--tm-blue-soft);
+  transform: translateY(-1px);
+}
+
+.completeBtn {
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 10px 22px;
+  background: transparent;
+  color: var(--tm-text-muted);
+  border: 1px solid var(--tm-border-strong);
+  border-radius: var(--tm-r-lg);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.completeBtn:hover:not(:disabled) {
+  border-color: var(--tm-text-muted);
+  color: var(--tm-text-strong);
+}
+
+.completeBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* When signed in, the primary button gets the cyan treatment */
+.completeBox:not(:has(.signInBtn)) .completeBtn {
+  color: var(--tm-accent);
+  border-color: var(--tm-accent);
+}
+
+.completeBox:not(:has(.signInBtn)) .completeBtn:hover:not(:disabled) {
+  background: var(--tm-accent-a12);
+}
+
+/* ── Success state ────────────────────────────────────────── */
+.successBox {
+  margin: 3rem 0 1rem;
+  border: 1px solid var(--tm-blue-a32);
+  border-radius: var(--tm-r-hand);
+  background: var(--tm-surface-2);
+  padding: 1.75rem 2rem;
+  position: relative;
+}
+
+.successBox::before {
+  content: '';
+  position: absolute;
+  top: 14px; left: 16px;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--tm-blue-soft);
+}
+
+.successBox::after {
+  content: '';
+  position: absolute;
+  bottom: 14px; right: 18px;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--tm-accent);
+}
+
+.successHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.successIcon {
+  font-size: var(--tm-fs-md);
+  color: var(--tm-blue-soft);
+  font-family: monospace;
+}
+
+.successTitle {
+  font-family: var(--tm-font-display);
+  font-weight: 700;
+  font-size: var(--tm-fs-md);
+  color: var(--tm-blue-soft);
+}
+
+.savedBadge {
+  font-family: var(--tm-font-label);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  background: var(--tm-blue-a10);
+  border: 1px solid var(--tm-blue-a32);
+  color: var(--tm-blue-soft);
+  border-radius: var(--tm-r-lg);
+}
+
+.successMsg {
+  font-size: var(--tm-fs-sm);
+  color: var(--tm-text-muted);
+  margin: 0 0 1.25rem;
+  line-height: 1.6;
+}
+
+.nextBtn {
+  display: inline-block;
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-xs);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 12px 28px;
+  background: var(--tm-accent);
+  border-radius: var(--tm-r-hand);
+  color: var(--tm-text-on-accent) !important;
+  text-decoration: none;
+  font-weight: 700;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.nextBtn:hover {
+  background: var(--tm-blue-soft);
+  transform: translateY(-1px);
+  text-decoration: none;
+  color: var(--tm-text-on-accent);
+}
+
+.successActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.actionBtn {
+  padding: 10px 18px;
+  border: 1px solid var(--tm-blue-a32);
+  border-radius: var(--tm-r-lg);
+  background: transparent;
+  color: var(--tm-blue-soft);
+  cursor: pointer;
+  font-family: var(--tm-font-label);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: border-color 0.2s, background-color 0.2s, color 0.2s;
+}
+
+.actionBtn:hover:not(:disabled) {
+  border-color: var(--tm-accent);
+  background: var(--tm-accent-a08);
+  color: var(--tm-text-strong);
+}
+
+.unmarkBtn {
+  padding: 0.5rem 0.8rem;
+  border: 1px solid var(--tm-blue-a32);
+  border-radius: var(--tm-r-pill);
+  background: transparent;
+  color: var(--tm-blue-soft);
+  cursor: pointer;
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: border-color 0.2s, background-color 0.2s, color 0.2s;
+}
+
+.unmarkBtn:hover:not(:disabled) {
+  border-color: var(--tm-accent);
+  background: var(--tm-accent-a08);
+  color: var(--tm-text-strong);
+}
+
+.unmarkBtn:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.unmarkBtn:focus-visible {
+  outline: 3px solid var(--tm-border-strong);
+  outline-offset: 3px;
+}
+
+.actionBtn:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.actionBtn:focus-visible {
+  outline: 3px solid var(--tm-border-strong);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signInBtn,
+  .completeBtn,
+  .nextBtn,
+  .actionBtn,
+  .unmarkBtn {
+    transition: none;
+  }
+
+  .signInBtn:hover,
+  .nextBtn:hover {
+    transform: none;
+  }
+}

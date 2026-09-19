@@ -1,0 +1,201 @@
+---
+id: inheritance
+title: "Lesson 13.2: Extending Parent Classes for Modular Hardware Subsystems"
+sidebar_label: "13.2 · Inheritance"
+sidebar_position: 2
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit13Simulator from '@site/src/components/Unit13Simulator';
+
+# Lesson 13.2: Extending Parent Classes for Modular Hardware Subsystems
+
+---
+
+## When Encapsulation Alone Is Not Enough
+
+Lesson 13.1 showed how to move a single mechanism into its own class. Many robots use multiple mechanisms that share structural similarity. A robot might have two independent arms, both of which use a `DcMotor` and a `DigitalChannel`, both of which need the same zero-power behavior configured, and both of which expose the same general interface of `move()` and `stop()`. Without inheritance, you write two classes that are nearly identical, maintaining two copies of the same logic. When a bug appears or the configuration changes, you fix it in one place and forget to fix it in the other.
+
+Inheritance provides a formal mechanism for expressing this shared structure. You write a parent class that contains everything common to all mechanisms of a given type, then write child classes that add only what is different. A bug fix in the parent class propagates automatically to every child.
+
+---
+
+## The extends Keyword and the "Is-A" Relationship
+
+In Java, the `extends` keyword creates an inheritance relationship. When you write `class ArmMechanism extends BaseMotorMechanism`, you are declaring that `ArmMechanism` is a more specific version of `BaseMotorMechanism`. Every `ArmMechanism` object inherits all of the methods and member variables of `BaseMotorMechanism` without needing to redeclare them.
+
+The relationship is described as "is-a": an `ArmMechanism` is a `BaseMotorMechanism`. This is different from the "has-a" relationship of composition where one class holds a reference to another. Inheritance is the right choice when child classes represent specialized versions of the same thing. Composition is the right choice when one class uses another as a component.
+
+Two access modifiers are critical here. Variables in the parent class marked `private` are not accessible to child classes. Variables marked `protected` are accessible to child classes but still hidden from all other code. For hardware objects that child classes may need to interact with directly, `protected` is the appropriate choice.
+
+---
+
+## The super() Call
+
+When a child class has a constructor, Java requires that the parent class constructor runs first. This is enforced through the `super()` call, which must be the first statement in the child constructor. If the parent constructor requires arguments, those arguments must be passed through `super()`. If the parent has no constructor (relying on the default), the `super()` call can be omitted and Java inserts it implicitly.
+
+In FTC mechanism classes, where initialization is typically handled by an `init(HardwareMap hwMap)` method rather than a constructor, `super()` calls are less common. The more important inheritance pattern is calling `super.init(hwMap)` at the start of the child's `init()` method to ensure the parent's hardware mapping runs before any child-specific setup.
+
+---
+
+## Annotated Code
+
+<AnnotatedCode
+  title="A specialized mechanism inherits shared behavior"
+  java={String.raw`class MotorMechanism {
+    protected DcMotor motor;
+
+    public void stop() {
+        motor.setPower(0.0);
+    }
+}
+
+class Lift extends MotorMechanism {
+    public void raise() {
+        motor.setPower(0.7);
+    }
+}`}
+  python={String.raw`class MotorMechanism:
+    def stop(self):
+        self.motor.set_power(0.0)
+
+class Lift(MotorMechanism):
+    def raise_lift(self):
+        self.motor.set_power(0.7)`}
+/>
+
+Java writes the relationship with `extends`. Python places the parent class in parentheses. In both versions, `Lift` receives `stop()` from `MotorMechanism`.
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+
+/**
+ * Parent class defining a generic single-motor mechanism.
+ * Child classes inherit the motor and basic power control.
+ */
+public class BaseMotorMechanism {
+
+    // protected: child classes can access this, external code cannot
+    protected DcMotor motor;
+
+    public void init(HardwareMap hwMap, String motorName) {
+        motor = hwMap.get(DcMotor.class, motorName);
+        motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motor.setPower(0);
+    }
+
+    public void stop() {
+        motor.setPower(0);
+    }
+}
+```
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+
+/**
+ * Child class for a specific arm mechanism.
+ * Inherits motor mapping and stop() from BaseMotorMechanism.
+ * Adds arm-specific lift and lower behavior.
+ */
+public class ArmMechanism extends BaseMotorMechanism {
+
+    private static final double LIFT_POWER  =  0.7;
+    private static final double LOWER_POWER = -0.4;
+
+    @Override
+    public void init(HardwareMap hwMap, String motorName) {
+        // Ensure the parent's init runs first to map the motor
+        super.init(hwMap, motorName);
+        // Child-specific setup can follow here
+        motor.setDirection(DcMotor.Direction.REVERSE);
+    }
+
+    public void lift() {
+        motor.setPower(LIFT_POWER);
+    }
+
+    public void lower() {
+        motor.setPower(LOWER_POWER);
+    }
+
+    // stop() is inherited from BaseMotorMechanism. No need to rewrite it.
+}
+```
+
+```java
+// Usage in an OpMode:
+private ArmMechanism arm = new ArmMechanism();
+
+@Override
+public void init() {
+    arm.init(hardwareMap, "arm_motor");
+}
+
+@Override
+public void loop() {
+    if (gamepad1.dpad_up)   arm.lift();
+    else if (gamepad1.dpad_down) arm.lower();
+    else                    arm.stop(); // inherited method
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The Java keyword used to create a child class from a parent is `__________`.
+2. To call a parent class method from within a child class, you use the `__________` keyword followed by a dot and the method name.
+3. A parent class variable marked `__________` is accessible to child classes but hidden from all unrelated code.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`extends`**
+2. **`super`**
+3. **`protected`**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+You have a `BaseServoMechanism` parent class that maps a `Servo` and provides a `setPosition(double pos)` method. Write a `GrabberMechanism` child class that extends it and adds two constants, `OPEN_POS = 0.1` and `CLOSED_POS = 0.9`, along with `open()` and `close()` methods that call `setPosition()`.
+
+<SimulatorRunGuide />
+
+<Unit13Simulator lesson="inheritance" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+public class GrabberMechanism extends BaseServoMechanism {
+
+    public static final double OPEN_POS   = 0.1;
+    public static final double CLOSED_POS = 0.9;
+
+    public void open() {
+        setPosition(OPEN_POS);
+    }
+
+    public void close() {
+        setPosition(CLOSED_POS);
+    }
+}
+```
+
+</details>
+
+<MarkComplete
+  lessonId="unit-13/inheritance"
+  nextUnit="/docs/unit-13/override"
+  nextUnitName="Lesson 13.3: Overriding Behavior with @Override for Custom Implementations"
+/>

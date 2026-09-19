@@ -1,0 +1,134 @@
+---
+id: efficiency-and-backlash
+title: "Lesson 6.4: Efficiency Losses, Backlash, and Real Transmission Behavior"
+sidebar_label: "6.4 · Efficiency"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 6.4: Efficiency Losses, Backlash, and Real Transmission Behavior
+
+---
+
+## Technical Context
+
+The calculations in this module assume ideal transmission. Real mechanisms deliver less torque than predicted, run slower than predicted, and have play in them that the math does not show.
+
+Knowing where those losses come from tells you which ones are worth fixing.
+
+---
+
+## Where the Losses Are
+
+| Source | Typical effect | What to do |
+| --- | --- | --- |
+| Gear mesh | A few percent per stage | Reduce stage count where possible |
+| Chain | A few percent, worse when dry or over-tensioned | Lubricate, do not overtighten |
+| Timing belt | Small, worse when over-tensioned | Tension correctly |
+| Bearings | Small when aligned, large when not | Fix alignment first |
+| Misalignment | Can be very large | The highest value fix on most robots |
+| String and pulleys on a slide | Substantial | Larger pulleys, cleaner routing |
+| Binding from flex | Varies with load, hard to predict | Stiffen the structure |
+
+The important point is that the last four are not fixed properties of the components. They are consequences of how well the mechanism was built, and they vary enormously between a careful assembly and a rushed one.
+
+:::tip Measure efficiency rather than assuming it
+Compare the mechanism's actual no-load speed against the calculated free speed. A mechanism running at 60% of its calculated free speed with no load is telling you that friction is consuming a large share of the motor's output, and that is a build quality problem you can find and fix.
+:::
+
+---
+
+## Preload and Over-Tensioning
+
+The most common self-inflicted efficiency loss on an FTC robot is over-tightening. A chain tensioned until it is rigid, a belt tightened until it rings, or a bearing pressed into a bore that pinches all convert motor power into heat and wear.
+
+Symptoms of over-tension:
+
+- The mechanism turns stiffly by hand with the motor disconnected
+- Bearings get warm after running
+- Predicted speed is much higher than measured speed
+- Components wear visibly within a few sessions
+
+Turn the mechanism by hand with the motor disconnected. It should feel smooth and light. A point that binds or requires force is consuming motor output and needs inspection.
+
+---
+
+## Backlash
+
+Backlash is the free play in a transmission: the amount the output can move before the input starts moving it. It comes from clearance between gear teeth, slack in chain, play in a shaft-to-hub connection, and clearance in bearings.
+
+Some backlash is necessary. Gears meshed with zero clearance bind as they heat and expand.
+
+Backlash matters for two reasons:
+
+**Position accuracy.** An encoder on the motor measures the motor's position, not the mechanism's. With backlash in between, the mechanism's true position is uncertain by the amount of that play. This is a problem the software team will report as a mechanism that "does not stop in the same place," and its cause is mechanical.
+
+**Impact loading.** When a mechanism reverses direction, the drivetrain accelerates through the backlash and then strikes the other side of the tooth. That impact is much harsher than a steady load and is a common cause of stripped gears and broken printed parts.
+
+:::warning Backlash accumulates through the stages
+Each stage adds its own play, and the total referred to the output is the sum. This is another reason to prefer fewer stages, and a reason to put encoders as close to the output as practical when position accuracy matters.
+:::
+
+---
+
+## Back-Driving
+
+A transmission is **back-drivable** if a force on the output can turn the motor. High reductions are often not back-drivable, and that has consequences in both directions.
+
+Not back-drivable is good when a mechanism must hold a position without consuming power, since the reduction holds it mechanically.
+
+Not back-drivable is bad when something must be moved by hand: an arm that cannot be lowered manually is a problem in the pit, and a mechanism that cannot yield when hit will break rather than move.
+
+Decide this deliberately rather than discovering it. If an arm must hold position for most of a match, low back-drivability plus a counterbalance is a good combination. If a mechanism will be struck by other robots, it needs to be able to give.
+
+---
+
+## Building Margin In From the Start
+
+Everything in this lesson is a reason that the number from a calculator is optimistic. Practical margins for FTC design:
+
+- **Gearboxes:** assume roughly 95% per stage, and verify by measurement
+- **Slides and string systems:** assume 75% or less until measured
+- **Arms with multiple stages:** assume 80% or less
+- **Required torque:** design for a safety factor of at least 2 over the calculated worst case
+- **Battery:** expect real voltage below nominal, especially late in a tournament day
+
+A design that only works with perfect efficiency and a fresh battery does not work.
+
+---
+
+:::info Connects to the software track
+Backlash is why a position-controlled mechanism does not stop in the same place twice. That symptom gets reported as a software bug.
+
+See [Lesson 10.3: Using RUN_TO_POSITION](/docs/unit-10/run-to-position).
+:::
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Turning a mechanism by hand with the motor disconnected reveals losses from friction and `__________`.
+2. An encoder mounted on the motor cannot detect the mechanism's true position to better than the transmission's `__________`.
+3. A transmission that cannot be turned by a force applied at the output is not `__________`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **binding** (misalignment or over-tension)
+2. **backlash**
+3. **back-drivable**
+
+</details>
+
+---
+
+## Exercise
+
+Disconnect the motor from one mechanism and turn the transmission by hand. Note whether it feels smooth or notchy, and how much free play there is before the output moves. Then measure the mechanism's actual no-load speed and compare it against the calculated free speed. Record both findings.
+
+<MarkComplete
+  lessonId="module-06/efficiency-and-backlash"
+  nextUnit="/mechanical/module-06/mastery-quiz"
+  nextUnitName="Module 6 Mastery Quiz: Power Transmission"
+/>

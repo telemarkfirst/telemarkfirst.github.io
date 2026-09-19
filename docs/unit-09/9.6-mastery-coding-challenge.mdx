@@ -1,0 +1,33 @@
+---
+id: mastery-coding-challenge
+title: "Unit 9 Project Stage: Launcher Trigger Servo"
+sidebar_label: "Unit 9 · Coding Challenge"
+sidebar_position: 6
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import MasterySimulator from '@site/src/components/MasterySimulator';
+
+# Stage 8: Launcher Trigger Servo
+
+Continue in `Launcher.java`. Add the positional servo that releases one ready artifact while preserving the non-blocking TeleOp lifecycle.
+
+## Your Task
+
+1. Add and map a private `Servo` trigger.
+2. Put its rest and fire positions in `RobotConfig`.
+3. Detect the A-button rising edge and call `launcher.launch()` once.
+4. Return the trigger from `Launcher.update()` after a runtime deadline.
+
+The positional servos should behave as a synchronized pair while the CRServo remains speed-controlled.
+
+## Coding Challenge Simulator
+
+<MasterySimulator unit={9} project />
+
+<MarkComplete
+  lessonId="unit-09/mastery-coding-challenge"
+  completesUnit="unit-09"
+  nextUnit="/docs/unit-10"
+  nextUnitName="Unit 10: Encoders & Precision"
+/>

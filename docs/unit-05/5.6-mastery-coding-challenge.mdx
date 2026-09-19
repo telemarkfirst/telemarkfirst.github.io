@@ -1,0 +1,31 @@
+---
+id: mastery-coding-challenge
+title: "Unit 5 Project Stage: Intake and Transfer Logic"
+sidebar_label: "Unit 5 · Coding Challenge"
+sidebar_position: 6
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import MasterySimulator from '@site/src/components/MasterySimulator';
+
+# Stage 4: Intake and Transfer Logic
+
+The shared project adds `Intake.java` and `Transfer.java`. Each class owns its motor while `CompetitionTeleOp.java` decides which public command to call.
+
+## Your Task
+
+1. Map private motors in each subsystem's `init(HardwareMap)` method.
+2. Give Intake `collect()`, `reverse()`, and `stop()` commands.
+3. Give Transfer `forward()`, `reverse()`, and `stop()` commands.
+4. In the TeleOp, use an `if` / `else if` / `else` chain: right bumper runs both forward, left bumper reverses both, and the neutral branch stops both.
+
+## Coding Challenge Simulator
+
+<MasterySimulator unit={5} project />
+
+<MarkComplete
+  lessonId="unit-05/mastery-coding-challenge"
+  completesUnit="unit-05"
+  nextUnit="/docs/unit-06"
+  nextUnitName="Unit 6: Loops & Iteration"
+/>

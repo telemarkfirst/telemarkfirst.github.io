@@ -1,0 +1,137 @@
+---
+id: touch-sensor
+title: "Lesson 11.1: Reading Touch Sensor Binary States via DigitalChannel"
+sidebar_label: "11.1 · Touch Sensor"
+sidebar_position: 1
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit11Simulator from '@site/src/components/Unit11Simulator';
+
+# Lesson 11.1: Reading Touch Sensor Binary States via DigitalChannel
+
+---
+
+## Why Mechanisms Need Limit Switches
+
+A motor that does not know where it is will keep driving until something stops it physically. For a linear slide or a rotating arm, that physical stop is the robot's own frame, and the moment the mechanism hits it, the motor is stalling against a hard wall. Stall current is the highest current a motor can draw, and sustained stall causes heat buildup, gear damage, and can trip the protection circuitry on the Control Hub port. A touch sensor mounted at the mechanism's physical limit solves this problem before it becomes a hardware failure.
+
+The principle is simple: the robot checks the sensor before applying power in a dangerous direction. If the sensor says the mechanism has reached its limit, the code blocks movement in that direction even if the driver is still holding the joystick.
+
+---
+
+## How the SDK Represents a Digital Signal
+
+The `DigitalChannel` class is the SDK's interface for any sensor that operates on a binary electrical signal. The pin is either HIGH (the circuit is open) or LOW (the circuit is closed). For the REV Touch Sensor, pressing the button shorts the internal circuit to ground, pulling the signal LOW.
+
+This creates what engineers call active-low logic: `getState()` returns `true` when the sensor is not pressed (circuit open, pin pulled HIGH by a resistor), and `false` when it is pressed (circuit closed, pin driven LOW). Because this is the inverse of what most programmers expect, the standard practice is to invert the result using the `!` operator. Wrapping the call as `!limitSwitch.getState()` gives you a `boolean` where `true` means "the sensor is physically pressed," which is far easier to reason about inside an `if` statement.
+
+One additional required step separates digital sensors from analog ones: the digital pin on the Control Hub is bidirectional. It can either send a signal as an output or receive one as an input. You must declare the intended direction by calling `setMode(DigitalChannel.Mode.INPUT)` immediately after mapping the sensor. Skipping this step can leave the pin misconfigured, causing the sensor to appear frozen at a single value.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+
+@TeleOp(name="Touch_Sensor_Demo")
+public class TouchSensorDemo extends LinearOpMode {
+
+    @Override
+    public void runOpMode() {
+        DcMotor        liftMotor    = hardwareMap.get(DcMotor.class,     "lift_motor");
+        DigitalChannel limitSwitch  = hardwareMap.get(DigitalChannel.class, "limit_bottom");
+
+        // Required: configure the pin direction before the match starts
+        limitSwitch.setMode(DigitalChannel.Mode.INPUT);
+        liftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        waitForStart();
+
+        while (opModeIsActive()) {
+            double power = -gamepad1.left_stick_y;
+
+            // Active-low: getState() is false when pressed, so ! gives us
+            // a true "is pressed" boolean that reads naturally in code
+            boolean isAtBottom = !limitSwitch.getState();
+
+            // Block downward movement if the bottom limit has been reached
+            if (isAtBottom && power < 0) {
+                power = 0.0;
+                telemetry.addData("Safety", "BOTTOM LIMIT REACHED");
+            }
+
+            liftMotor.setPower(power);
+            telemetry.addData("At Bottom", isAtBottom);
+            telemetry.addData("Power",     power);
+            telemetry.update();
+        }
+    }
+}
+```
+
+## Normalizing an Active-Low Touch Sensor
+
+Some switches report the opposite electrical state from the meaning a mechanism wants. BunyipsLib wraps a `TouchSensor` and makes that inversion configurable:
+
+```java
+public class InvertibleTouchSensor implements TouchSensor {
+    private final TouchSensor sensor;
+    private boolean inverted = true;
+
+    public void setInverted(boolean inverted) {
+        this.inverted = inverted;
+    }
+
+    @Override
+    public double getValue() {
+        return inverted ? 1 - sensor.getValue() : sensor.getValue();
+    }
+
+    @Override
+    public boolean isPressed() {
+        return inverted != sensor.isPressed();
+    }
+}
+```
+
+The wrapper lets the rest of the robot use `isPressed()` consistently even if the physical wiring is active-low. Excerpted from [BunyipsLib's `InvertibleTouchSensor.java` at a pinned commit](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/src/main/java/au/edu/sa/mbhs/studentrobotics/bunyipslib/hardware/InvertibleTouchSensor.java) under the [MIT License](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/LICENSE).
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. To configure a digital sensor pin to receive incoming signals, you must call `sensor.setMode(DigitalChannel.Mode.__________);` during initialization.
+2. The REV Touch Sensor uses active-low logic, meaning `getState()` returns `__________` when the button is physically pressed.
+3. To obtain an intuitive "is pressed" boolean from a touch sensor, you apply the `__________` operator to the `getState()` return value.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`INPUT`**
+2. **`false`**
+3. **`!`** (logical NOT)
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Use the simulator below to complete the lift touch-sensor safety routine. The editor starts with incomplete starter code, so fill in the missing sensor read and downward-motion lockout before running the OpMode.
+
+<SimulatorRunGuide />
+
+<Unit11Simulator lesson="touch-sensor" />
+
+<MarkComplete
+  lessonId="unit-11/touch-sensor"
+  nextUnit="/docs/unit-11/potentiometer"
+  nextUnitName="Lesson 11.2: Scaling Analog Voltage from Potentiometers using Range.scale"
+/>

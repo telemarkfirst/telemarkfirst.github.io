@@ -1,0 +1,192 @@
+---
+id: limelight
+title: "Lesson 15.1: Tuning Vision Pipelines on the Limelight 3A Interface"
+sidebar_label: "15.1 · Limelight 3A"
+sidebar_position: 1
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit15Simulator from '@site/src/components/Unit15Simulator';
+
+# Lesson 15.1: Tuning Vision Pipelines on the Limelight 3A Interface
+
+---
+
+## Why a Dedicated Vision Coprocessor Changes the Architecture
+
+In Unit 14, vision processing ran on the Control Hub itself. The `VisionPortal` delivered frames from the webcam to pipeline code running alongside the Robot Controller's other work. This can work well for tasks such as reading an AprilTag ID or comparing zone saturation values. A computationally heavy pipeline can consume CPU time and affect the timing budget available to other Robot Controller tasks.
+
+The Limelight 3A moves its vision processing onto the camera's own processor and pipeline environment. In an FTC control system, its USB-C communication port connects through the Control Hub's **USB** infrastructure (directly or through a compatible USB hub), not an I2C port. The SDK receives structured results such as target coordinates, classification labels, and AprilTag poses after the Limelight has processed the image. This can reduce vision-processing load on the Control Hub, although the robot code still needs to poll results and coordinate them with motion logic.
+
+---
+
+## Pipeline Slots and pipelineSwitch()
+
+The Limelight can store up to ten vision pipelines simultaneously, numbered 0 through 9. Each pipeline is configured in the Limelight web interface and saved to a numbered slot. A pipeline might use the Limelight's built-in AprilTag detection, a color detection filter, or a neural network model trained on your game piece.
+
+From Java code, you activate a pipeline by calling `limelight.pipelineSwitch(int index)` with the slot number of the pipeline you want. Call this method in `init()` or during a state transition, not repeatedly in every loop iteration. This keeps the correct pipeline running without the overhead of reloading it constantly. If the Limelight is already on the requested pipeline, the call is a no-op.
+
+:::info Official references
+- Limelight FTC programming guide: [FTC Java and Blockly Programming Guide](https://docs.limelightvision.io/docs/docs-limelight/apis/ftc-programming)
+- FTC wiring guide: [Configuring an External Webcam](https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/configuring_external_webcam/configuring-external-webcam.html)
+- FTC SDK hardware API: [Limelight3A Javadocs](https://javadoc.io/doc/org.firstinspires.ftc/Hardware/latest/com/qualcomm/hardware/limelightvision/Limelight3A.html)
+:::
+
+---
+
+## Reading Results: LLResult and Validation
+
+The primary method for retrieving data is `limelight.getLatestResult()`, which returns an `LLResult` snapshot of the latest completed analysis. In FTC SDK 10.3 and later, it returns an `LLResult` even before useful data is available. Check `result.isValid()` before using fields such as `getTx()`, `getTy()`, or `getTa()`.
+
+:::tip Common robot failure: valid results disappear on the field
+Look for lighting changes, wrong pipeline slots, target exposure problems, and camera mounting shifts. Save snapshots from the actual field and tune against those images instead of only tuning in the shop.
+:::
+
+The three primary target fields are:
+
+- **`getTx()`**: horizontal offset of the target from the Limelight's crosshair in degrees. Negative means the target is to the left, positive means right.
+- **`getTy()`**: vertical offset of the target from the crosshair in degrees.
+- **`getTa()`**: area of the target as a percentage of the total frame. Larger values mean the target is closer.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.util.Range;
+
+@TeleOp(name="Limelight_Demo")
+public class LimelightDemo extends OpMode {
+
+    private Limelight3A limelight;
+    private DcMotor     leftDrive, rightDrive;
+
+    // Pipeline slot 0: color tracking pipeline configured on the Limelight web UI
+    private static final int  COLOR_PIPELINE    = 0;
+    private static final double kP_STEER        = 0.025;
+    private static final double MAX_STEER_POWER = 0.4;
+
+    @Override
+    public void init() {
+        limelight  = hardwareMap.get(Limelight3A.class, "limelight");
+        leftDrive  = hardwareMap.get(DcMotor.class,     "left_drive");
+        rightDrive = hardwareMap.get(DcMotor.class,     "right_drive");
+        rightDrive.setDirection(DcMotor.Direction.REVERSE);
+
+        // Activate the desired pipeline once at initialization
+        limelight.pipelineSwitch(COLOR_PIPELINE);
+        limelight.start();
+
+        telemetry.addData("Limelight", "Pipeline " + COLOR_PIPELINE + " active");
+    }
+
+    @Override
+    public void loop() {
+        LLResult result = limelight.getLatestResult();
+
+        if (result.isValid()) {
+            double tx = result.getTx(); // degrees left (-) or right (+)
+            double ty = result.getTy();
+            double ta = result.getTa(); // target area as % of frame
+
+            // Simple proportional steering: drive toward the target
+            double steerPower = Range.clip(tx * kP_STEER, -MAX_STEER_POWER, MAX_STEER_POWER);
+            double drivePower = -gamepad1.left_stick_y;
+
+            leftDrive.setPower(drivePower - steerPower);
+            rightDrive.setPower(drivePower + steerPower);
+
+            telemetry.addData("Target Tx (deg)", "%.2f", tx);
+            telemetry.addData("Target Ty (deg)", "%.2f", ty);
+            telemetry.addData("Target Area (%)",  "%.2f", ta);
+            telemetry.addData("Steer Power",      "%.3f", steerPower);
+        } else {
+            // No valid target. Use driver controls only, with no assist.
+            leftDrive.setPower(-gamepad1.left_stick_y);
+            rightDrive.setPower(-gamepad1.left_stick_y);
+            telemetry.addData("Limelight", "No target visible");
+        }
+
+        telemetry.update();
+    }
+
+    @Override
+    public void stop() {
+        limelight.stop();
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. To switch the active vision pipeline on the Limelight to slot 2, call `limelight.__________( 2 )`.
+2. The method that retrieves the latest completed frame result from the Limelight is `limelight.__________()`.
+3. Before accessing target data such as `getTx()`, you must confirm the result is not `null` and that `result.__________()` returns true.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`pipelineSwitch`**
+2. **`getLatestResult`**
+3. **`isValid`**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+The drive team wants the robot to automatically steer toward a target using Limelight pipeline slot 1. Keep the starter code's joystick search mode when no valid target is visible. Once a valid target is visible, if `Tx` is greater than 3.0 degrees to the right, rotate the drivetrain right at 0.2 power. If `Tx` is less than -3.0 degrees to the left, rotate left at 0.2 power. If the target is within the 3-degree dead band, stop both motors.
+
+<SimulatorRunGuide />
+
+<Unit15Simulator lesson="limelight" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+// In init():
+limelight.pipelineSwitch(1);
+
+// In loop():
+LLResult result = limelight.getLatestResult();
+
+if (result.isValid()) {
+    double tx = result.getTx();
+
+    if (tx > 3.0) {
+        leftDrive.setPower(0.2);
+        rightDrive.setPower(-0.2);
+        telemetry.addData("Steering", "Right");
+    } else if (tx < -3.0) {
+        leftDrive.setPower(-0.2);
+        rightDrive.setPower(0.2);
+        telemetry.addData("Steering", "Left");
+    } else {
+        leftDrive.setPower(0.0);
+        rightDrive.setPower(0.0);
+        telemetry.addData("Steering", "Centered");
+    }
+    telemetry.addData("Tx (deg)", "%.2f", tx);
+} else {
+    telemetry.addData("AutoLock", "Searching with joystick");
+}
+```
+
+</details>
+
+<MarkComplete
+  lessonId="unit-15/limelight"
+  nextUnit="/docs/unit-15/pedro-pathing"
+  nextUnitName="Lesson 15.2: Controlling a Pedro 3 Follower"
+/>

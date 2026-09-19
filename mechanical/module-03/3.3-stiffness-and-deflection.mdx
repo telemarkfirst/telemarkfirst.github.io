@@ -1,0 +1,153 @@
+---
+id: stiffness-and-deflection
+title: "Lesson 3.3: Stiffness, Deflection, and Why Beam Depth Wins"
+sidebar_label: "3.3 · Stiffness"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import LessonTool from '@site/src/components/mechanical/LessonTool';
+import {TriangulationDiagram} from '@site/src/components/mechanical/EngineeringDiagrams';
+import DeflectionCalculator from '@site/src/components/mechanical/DeflectionCalculator';
+
+# Lesson 3.3: Stiffness, Deflection, and Why Beam Depth Wins
+
+---
+
+## Technical Context
+
+A mechanism can stop working even when no part has fractured. A rail, plate, or shaft may deflect enough under load to move bearings out of alignment or change the geometry at a handoff.
+
+Check deflection during design so the mechanism keeps its required alignment under load. One relationship explains which dimensions matter most.
+
+---
+
+## The Deflection Relationship
+
+For a cantilever beam with a load at the free end:
+
+```text
+deflection = (F * L^3) / (3 * E * I)
+```
+
+For a beam supported at both ends with a load in the middle:
+
+```text
+deflection = (F * L^3) / (48 * E * I)
+```
+
+Where `F` is the load, `L` is the span, `E` is Young's modulus of the material, and `I` is the area moment of inertia of the cross section.
+
+Three consequences follow immediately, and all three are actionable.
+
+---
+
+## Consequence 1: Span Dominates Everything
+
+Deflection scales with the **cube** of the span. Doubling an unsupported length makes it eight times more flexible.
+
+This is why adding a support in the middle of a long rail is dramatically more effective than making the rail thicker. Halving the span reduces deflection to one eighth, before you have added a single gram of material to the beam itself.
+
+The first question about a flexible part is always: can I shorten the unsupported span or add a support?
+
+---
+
+## Consequence 2: Depth Dominates the Cross Section
+
+For a rectangular section, the area moment of inertia is:
+
+```text
+I = (b * h^3) / 12
+```
+
+Where `b` is the width and `h` is the height in the load direction. The equation cubes the height but not the width.
+
+Take a 1/2 in by 1 1/2 in bar. Loaded on edge, with the 1.5 in dimension along the load, it is `(0.5 * 1.5^3)/12`. Loaded flat, it is `(1.5 * 0.5^3)/12`. The ratio is 9 to 1: the same bar is nine times more flexible lying flat.
+
+This is why orientation is a design decision, and why a well-oriented aluminum beam beats a badly oriented steel one despite steel's much higher modulus.
+
+:::tip Hollow beats solid per unit weight
+Material far from the neutral axis contributes most of the stiffness, so material near the center does relatively little. Be precise about what this buys: a 0.5 by 1.5 in section with a 1/16 in wall keeps roughly 42% of the stiffness of solid stock while using only about 31% of the material. The tube is genuinely less stiff, and it delivers about 1.35 times more stiffness per unit weight, which is why build systems use tube and channel rather than solid bar.
+
+The lesson is not that hollow is stiffer. It is that when weight is the constraint, a deeper hollow section beats a smaller solid one every time.
+:::
+
+---
+
+## Consequence 3: Material Is the Weakest Lever
+
+Switching from aluminum to steel multiplies `E` by about 2.9, so deflection drops to about a third. That is real, but it also roughly triples the weight of that member.
+
+Compare that with adding a support to halve the span, which reduces deflection to one eighth and adds almost nothing. Or with reorienting a channel, which can produce a factor of nine at zero cost.
+
+The order of operations for a flexible part:
+
+1. Shorten the span or add a support
+2. Reorient the section so its depth is along the load
+3. Use a deeper section
+4. Triangulate
+5. Only then, consider a stiffer material
+
+---
+
+## Triangulation
+
+A rectangular frame with pinned corners has no resistance to racking: it deforms into a parallelogram. A triangle cannot change shape without changing the length of a side, which is why a diagonal brace transforms a flexible frame.
+
+In practice on an FTC robot:
+
+- A diagonal across a tall side plate stops the plate from racking
+- A gusset at a corner is a short triangle and does the same job locally
+- A top rail tying two side plates together converts two flexible plates into a box, which is far stiffer than either alone
+
+Look for the rectangle that can become a parallelogram. That is where the robot flexes.
+
+<TriangulationDiagram />
+
+---
+
+## Try It
+
+Compare a section on edge against the same section lying flat, and watch what happens to the deflection. Then try halving the span.
+
+<LessonTool
+  toolId="deflection"
+  bring="Section dimensions, the span, and the load the beam actually carries."
+  change="The height and the span, and watch the cube law do its work."
+  read="The penalty for rotating. Orientation is free stiffness."
+>
+  <DeflectionCalculator />
+</LessonTool>
+
+:::warning Real joints flex more than beams
+This calculator models an ideal beam. On a real robot, a large share of the total deflection comes from bolted joints: holes are slightly oversized, so parts shift before they load, and a single bolt through a single shear plane lets a joint rotate. Two fasteners spaced apart resist rotation far better than one, even when one is strong enough.
+:::
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Deflection scales with the span raised to the power of `__________`, which is why adding a mid support is so effective.
+2. In the area moment of inertia for a rectangular section, the dimension that is cubed is the `__________`.
+3. A rectangular frame with pinned corners deforms into a parallelogram unless it is `__________`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **three** (the cube)
+2. **height** (the depth in the load direction)
+3. **triangulated** (braced with a diagonal or gusset)
+
+</details>
+
+---
+
+## Exercise
+
+Find the most flexible part of your robot by pushing on it by hand. Work down the order of operations above and identify the cheapest change that would fix it. In most cases it is a support or a reorientation, not a material change.
+
+<MarkComplete
+  lessonId="module-03/stiffness-and-deflection"
+  nextUnit="/mechanical/module-03/weight-budget"
+  nextUnitName="Lesson 3.4: Holding the Robot to a Weight Budget"
+/>

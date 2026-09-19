@@ -1,0 +1,93 @@
+---
+id: trigger-inputs
+title: "Lesson 4.3: Using Triggers for Gradual Braking Control"
+sidebar_label: "4.3 · Trigger Inputs"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit4Simulator from '@site/src/components/Unit4Simulator';
+
+# Lesson 4.3: Using Triggers for Gradual Braking Control
+
+---
+
+## Technical Context
+
+Unlike buttons, the Triggers on the gamepad are **analog**, allowing for graduated control over hardware. Implementing progressive braking or variable intake speeds using triggers prevents the "shock loading" of gears and chains that occurs during instantaneous full-power activation, significantly extending the life of the robot's mechanical components.
+
+---
+
+## Why Triggers Work Well for Fine Control
+
+Triggers are accessed as `gamepad1.left_trigger` and `gamepad1.right_trigger`. Unlike the joysticks, triggers return a `double` ranging only from `0.0` (not pressed) to `1.0` (fully pressed). Because they provide a resolution of fractional values, they are ideal for use as multipliers in drive logic. For example, multiplying the drivetrain's output power by the inverse of a trigger value allows a driver to "feather" the brakes to perform precise alignment with game elements.
+
+---
+
+## Annotated Code
+
+```java
+@TeleOp(name="Trigger_Brake_Demo")
+public class TriggerBrake extends OpMode {
+
+    @Override
+    public void init() {
+        telemetry.addLine("Hold Right Trigger to adjust intake speed.");
+    }
+
+    @Override
+    public void loop() {
+        // Triggers return 0.0 to 1.0; used here to define intake motor power
+        double intakePower = gamepad1.right_trigger;
+
+        telemetry.addData("Intake Power Setting", "%.2f", intakePower);
+        // Note: Logic to apply this to a DcMotor would follow in Unit 8
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The minimum value returned by a gamepad trigger is `__________`.
+2. Unlike the joysticks, triggers cannot return `__________` values.
+3. To display a trigger value rounded to two decimal places on the Driver Station, use a/an `__________` string in telemetry.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`0.0`**
+2. **negative**
+3. **format** string (e.g., `"%.2f"`)
+
+</details>
+
+---
+
+## Simulator Challenge
+
+**Robot Scenario:** The drive team wants to use the Left Trigger to control the robot's "Slow Mode." Create a variable that stores the trigger value and use it to report the current "Speed Limit" to the drivers.
+
+<SimulatorRunGuide />
+
+<Unit4Simulator lesson="trigger-inputs" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+@Override
+public void loop() {
+    double brakeForce = gamepad1.left_trigger;
+    telemetry.addData("Speed Limit (Brake Force)", "%.2f", brakeForce);
+}
+```
+
+</details>
+
+<MarkComplete
+  lessonId="unit-04/trigger-inputs"
+  nextUnit="/docs/unit-04/sensitivity-curves"
+  nextUnitName="Lesson 4.4: Reducing Stick Sensitivity using the squareInputWithSign() Method"
+/>

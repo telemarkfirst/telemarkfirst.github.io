@@ -1,0 +1,114 @@
+---
+id: ticks-to-distance
+title: "Lesson 10.2: Calculating Distances based on Ticks Per Revolution Data"
+sidebar_label: "10.2 · Ticks to Distance"
+sidebar_position: 2
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit10Simulator from '@site/src/components/Unit10Simulator';
+
+# Lesson 10.2: Calculating Distances based on Ticks Per Revolution Data
+
+---
+
+## From Raw Numbers to Real Distances
+
+Raw ticks are useful for monitoring, but you cannot tell your robot to "drive 24 inches" using ticks alone without a conversion. This lesson covers exactly how to build that conversion so your autonomous code talks in real-world units rather than abstract encoder counts.
+
+The math only requires two pieces of information: how many ticks your motor produces per full output shaft revolution, and how far the robot travels per revolution of that shaft.
+
+---
+
+## The Conversion Formula Explained
+
+Here is how the chain works. Once the shaft completes one full revolution, a wheel of diameter `d` travels a distance equal to its circumference, or `Math.PI * d`. So if you know how many ticks equal one revolution, you can calculate distance like this:
+
+```
+rotations  = ticks / ticksPerRevolution
+distance   = rotations * (Math.PI * wheelDiameter)
+```
+
+The SDK stores the configured motor resolution in `motor.getMotorType().getTicksPerRev()`. That is useful when code intentionally follows the Robot Controller motor configuration. For an autonomous distance routine, it is also common to declare a named `TICKS_PER_REV` constant beside the wheel diameter so every conversion input is visible and reviewable. If the motor or gearbox changes, update the Robot Controller configuration and this constant together.
+
+One subtle but important point: `getCurrentPosition()` returns an `int`, but `ticksPerRev` should be stored as a `double`. If you divide an `int` by an `int` in Java, you get integer division. Java discards the remainder, and you lose precision. Storing one of the values as a `double` promotes the entire calculation to floating point automatically.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+
+@TeleOp(name="Ticks_To_Distance_Demo")
+public class TicksToDistanceDemo extends OpMode {
+
+    private DcMotor driveMotor;
+
+    // Wheel diameter in inches. Measure your actual wheel.
+    private static final double TICKS_PER_REV = 537.7;
+    private static final double WHEEL_DIAMETER_IN = 3.78;
+
+    @Override
+    public void init() {
+        driveMotor = hardwareMap.get(DcMotor.class, "left_drive");
+        driveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
+
+    @Override
+    public void loop() {
+        driveMotor.setPower(-gamepad1.left_stick_y);
+
+        // Convert raw ticks into rotations, then into inches
+        double rotations = driveMotor.getCurrentPosition() / TICKS_PER_REV;
+        double distanceIn = rotations * (Math.PI * WHEEL_DIAMETER_IN);
+
+        telemetry.addData("Ticks Per Rev",  TICKS_PER_REV);
+        telemetry.addData("Rotations",      "%.2f", rotations);
+        telemetry.addData("Distance (in)",  "%.2f", distanceIn);
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. To find how far a wheel has traveled, you must multiply the number of rotations by the wheel's `__________`.
+2. A readable autonomous conversion stores motor resolution in a named `__________` constant.
+3. Dividing an `int` by a `double` in Java results in a `__________` data type, preserving the decimal portion of the result.
+
+<details>
+<summary>Show answers</summary>
+
+1. **circumference** (`Math.PI * diameter`)
+2. **`TICKS_PER_REV`**
+3. **`double`**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Use the simulator below to complete the winch conversion code. Fill in the missing lines so raw encoder ticks become motor rotations and cable length in inches.
+
+<SimulatorRunGuide />
+
+<Unit10Simulator lesson="ticks-to-distance" />
+
+:::info Connects to the mechanical track
+The gear ratio and wheel diameter in this conversion are decisions made on the mechanical side.
+
+See [Lesson 6.2: Calculating Gear Ratios Across Multiple Stages](/mechanical/module-06/gear-ratios).
+:::
+
+<MarkComplete
+  lessonId="unit-10/ticks-to-distance"
+  nextUnit="/docs/unit-10/run-to-position"
+  nextUnitName="Lesson 10.3: Automating Targeted Movement with RUN_TO_POSITION"
+/>

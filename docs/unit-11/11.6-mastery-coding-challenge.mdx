@@ -1,0 +1,32 @@
+---
+id: mastery-coding-challenge
+title: "Unit 11 Project Stage: Artifact Capacity and Interlocks"
+sidebar_label: "Unit 11 · Coding Challenge"
+sidebar_position: 6
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import MasterySimulator from '@site/src/components/MasterySimulator';
+
+# Stage 10: Artifact Capacity and Interlocks
+
+Finish `ArtifactSensors.java`, then use its state to coordinate Intake, Transfer, and Launcher. The robot may control at most three artifacts at once.
+
+## Your Task
+
+1. Map the storage sensors in `ArtifactSensors.init()` and read them in `update()`.
+2. Count sensor transitions rather than counting every loop where a sensor remains active.
+3. Clamp or guard the stored count from zero through three.
+4. Expose `hasCapacity()` and a ready-artifact query.
+5. Stop intake or transfer when storage is full, and launch only when an artifact is ready.
+
+## Coding Challenge Simulator
+
+<MasterySimulator unit={11} project />
+
+<MarkComplete
+  lessonId="unit-11/mastery-coding-challenge"
+  completesUnit="unit-11"
+  nextUnit="/docs/unit-12"
+  nextUnitName="Unit 12: IMU & Rotation"
+/>

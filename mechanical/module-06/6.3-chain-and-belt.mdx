@@ -1,0 +1,145 @@
+---
+id: chain-and-belt
+title: "Lesson 6.3: Sizing Chain and Timing Belt Drives"
+sidebar_label: "6.3 · Chain & Belt"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import LessonTool from '@site/src/components/mechanical/LessonTool';
+import LessonPhoto from '@site/src/components/mechanical/LessonPhoto';
+import {WrapAngleDiagram} from '@site/src/components/mechanical/EngineeringDiagrams';
+import ChainLengthCalculator from '@site/src/components/mechanical/ChainLengthCalculator';
+
+# Lesson 6.3: Sizing Chain and Timing Belt Drives
+
+---
+
+## Technical Context
+
+Gears must touch, which means the center distance is fixed by the gears themselves. Chain and belt transmit torque across a distance you choose, which is why they appear wherever a motor cannot sit next to the thing it drives.
+
+Chain and belt come in discrete lengths, so the chosen center distance still needs to match an available loop or include adjustment.
+
+---
+
+## Chain Versus Belt
+
+| | Roller chain | Timing belt |
+| --- | --- | --- |
+| Tolerance to misalignment | Moderate | Low |
+| Noise | Higher | Very low |
+| Maintenance | Needs tension checks and lubrication | Essentially none |
+| Backlash | Some, increases as it stretches | Very low |
+| Failure mode | Stretches gradually, then throws | Skips teeth or shreds |
+| Weight | Higher | Lower |
+| Debris tolerance | Good | Poor |
+
+For most FTC applications, timing belt is the better default: quieter, lighter, no lubrication, and no stretch. Chain earns its place where the load is high, the environment is dirty, or the exact center distance cannot be controlled well.
+
+---
+
+## The Length Relationship
+
+For a two sprocket or two pulley drive:
+
+```text
+L = 2C/p + (N1 + N2)/2 + p*((N2 - N1)/(2*pi))^2 / C
+```
+
+Where `L` is length in pitches (links for chain, teeth for belt), `C` is center distance, `p` is the pitch, and `N1` and `N2` are the tooth counts.
+
+The first term is the two straight runs. The second accounts for the teeth wrapped around each pulley. The third is a correction for the fact that the wrap is not exactly half on each when the pulleys differ in size.
+
+**Roller chain must have an even number of links** to close without an offset link, so always round up to an even count.
+
+**Belts come in fixed tooth counts**, so the practical workflow is reversed: pick a stock belt, then compute the center distance it needs and put the shafts there.
+
+---
+
+## Try It
+
+<LessonTool
+  toolId="chain-belt"
+  bring="Tooth counts and the centre distance you want between the shafts."
+  change="The centre distance, and watch the wrap angle on the small pulley."
+  read="Order the rounded length, then place the shafts at the centre distance it needs."
+>
+  <ChainLengthCalculator />
+</LessonTool>
+
+---
+
+## Design In Adjustment
+
+Even with the math done correctly, the assembly needs adjustment, for three reasons: the stock length rarely lands exactly on your target center distance, chain stretches over its life, and belts relax after their first hours of running.
+
+Three ways to provide it, in order of preference:
+
+1. **Slotted motor mount.** The motor plate moves along the slot to tension the drive. Simple, robust, adjustable without disassembly.
+2. **Idler pulley or tensioner.** A wheel bearing on the slack side, on a slot or a spring. Necessary when the shafts cannot move.
+3. **Adjustable standoffs or shims.** Workable but slow to change.
+
+:::warning A drive with no adjustment will fail
+A chain installed at exactly the right tension is loose within a few hours of running, and a loose chain skips teeth and then throws. If your design has no way to take up slack, it has a scheduled failure.
+:::
+
+---
+
+## Tension and Wrap
+
+**Tension.** Too loose and the chain or belt skips. Too tight and it loads the bearings heavily, wastes power to friction, and shortens the life of everything involved. For chain, a common target is a small amount of visible sag on the slack side, roughly a half inch of deflection on a typical FTC span. For timing belt, tension until the slack side stops fluttering and no further.
+
+**Wrap angle** is how many degrees of the small pulley the belt contacts. More wrap means more teeth in mesh and more torque before it skips. Keep the wrap on the small pulley above roughly 120 degrees where you can. Increasing the center distance, using a larger small pulley, or adding an idler on the slack side all help.
+
+<WrapAngleDiagram />
+
+:::tip Flanges on one pulley, not both
+Timing belts track sideways slightly. A flange on one pulley keeps the belt located. Flanges on both pulleys of a two pulley drive can fight each other and cause the belt to ride up and wear its edges.
+:::
+
+---
+
+## Alignment
+
+Both chain and belt need the two sprockets or pulleys in the same plane. This is a stack-up problem, covered in Lesson 4.4, and belts are the least forgiving component on the robot in this respect.
+
+The check: lay a straight edge across the faces of both pulleys. Any visible step is worth correcting with a spacer change before running the drive.
+
+---
+
+<LessonPhoto
+  alt="A timing belt riding up the flange of a pulley because the two pulleys are not coplanar."
+  caption="A belt tracking off. The two pulleys are not in the same plane, so the belt walks sideways and rides the flange, wearing its edge until it shreds."
+  shot="A timing belt riding hard against a pulley flange on a misaligned drive, ideally with a straight edge laid across both pulley faces showing the step."
+  framing="Side view along the belt run, straight edge in frame, close enough to see the belt edge contacting the flange."
+/>
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Roller chain must be an `__________` number of links to close without an offset link.
+2. The wrap angle on the small pulley should generally be kept above about `__________` degrees.
+3. A drive with no way to take up slack will fail because chain stretches and belts `__________` after initial run time.
+
+<details>
+<summary>Show answers</summary>
+
+1. **even**
+2. **120**
+3. **relax** (loosen)
+
+</details>
+
+---
+
+## Exercise
+
+Take one chain or belt drive on your robot. Measure the center distance and count the teeth, then use the calculator to check whether the installed length matches what the geometry requires. Then check whether the drive has any means of adjustment, and add one if it does not.
+
+<MarkComplete
+  lessonId="module-06/chain-and-belt"
+  nextUnit="/mechanical/module-06/efficiency-and-backlash"
+  nextUnitName="Lesson 6.4: Efficiency Losses, Backlash, and Real Transmission Behavior"
+/>

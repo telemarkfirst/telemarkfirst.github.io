@@ -1,0 +1,438 @@
+.page {
+  min-height: calc(100vh - var(--ifm-navbar-height));
+  padding: var(--tm-sp-8) var(--tm-sp-5);
+  background: var(--tm-bg);
+  color: var(--tm-text);
+}
+
+.content {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.55fr);
+  gap: var(--tm-sp-7);
+  align-items: end;
+  padding-bottom: var(--tm-sp-7);
+  border-bottom: 1px solid var(--tm-border);
+}
+
+.eyebrow,
+.sectionLabel,
+.unitLabel {
+  margin: 0 0 var(--tm-sp-2);
+  color: var(--tm-accent);
+  font-family: var(--tm-font-mono);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.hero h1 {
+  max-width: 760px;
+  margin: 0;
+  color: var(--tm-text-strong);
+  font-family: var(--tm-font-display);
+  font-size: var(--tm-fs-3xl);
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+}
+
+.heroLead {
+  max-width: 68ch;
+  margin: var(--tm-sp-5) 0 0;
+  color: var(--tm-text-soft);
+  font-size: var(--tm-fs-md);
+  line-height: 1.7;
+}
+
+.heroActions,
+.assignActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tm-sp-3);
+  align-items: center;
+}
+
+.heroActions {
+  margin-top: var(--tm-sp-6);
+}
+
+.primaryAction,
+.secondaryAction,
+.printAction {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  padding: var(--tm-sp-2) var(--tm-sp-5);
+  border: 1px solid var(--tm-accent);
+  border-radius: var(--tm-r-sm);
+  font: inherit;
+  font-size: var(--tm-fs-sm);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.primaryAction {
+  background: var(--tm-accent);
+  color: var(--tm-text-on-accent) !important;
+}
+
+.secondaryAction,
+.printAction {
+  background: transparent;
+  color: var(--tm-text-strong) !important;
+}
+
+.printAction {
+  border-color: var(--tm-border-strong);
+}
+
+.primaryAction:hover,
+.secondaryAction:hover,
+.printAction:hover {
+  border-color: var(--tm-accent-bright);
+  text-decoration: none;
+}
+
+.secondaryAction:hover,
+.printAction:hover {
+  background: var(--tm-accent-a08);
+  color: var(--tm-accent) !important;
+}
+
+.primaryAction:focus-visible,
+.secondaryAction:focus-visible,
+.printAction:focus-visible {
+  outline: 3px solid var(--tm-accent-a55);
+  outline-offset: 3px;
+}
+
+.heroNote {
+  padding: var(--tm-sp-5);
+  border: 1px solid var(--tm-accent-a35);
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-accent-a08);
+}
+
+.heroNote strong {
+  color: var(--tm-text-strong);
+  font-family: var(--tm-font-display);
+  font-size: var(--tm-fs-md);
+}
+
+.heroNote p {
+  margin: var(--tm-sp-3) 0 0;
+  color: var(--tm-text-soft);
+  font-size: var(--tm-fs-sm);
+  line-height: 1.65;
+}
+
+.workflow {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.65fr) minmax(0, 1.35fr);
+  gap: var(--tm-sp-7);
+  align-items: start;
+  margin-top: var(--tm-sp-7);
+  padding: var(--tm-sp-6);
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-surface-1);
+}
+
+.workflow h2,
+.trackHeader h2 {
+  margin: 0;
+  color: var(--tm-text-strong);
+  font-family: var(--tm-font-display);
+  font-size: var(--tm-fs-2xl);
+  letter-spacing: -0.025em;
+}
+
+.workflow > div > p:last-child,
+.trackHeader p:last-child {
+  margin: var(--tm-sp-3) 0 0;
+  color: var(--tm-text-soft);
+  line-height: 1.6;
+}
+
+.workflow ol {
+  display: grid;
+  gap: var(--tm-sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.workflow li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--tm-sp-4);
+  align-items: start;
+  padding: var(--tm-sp-4);
+  border: 1px solid var(--tm-border-hair);
+  border-radius: var(--tm-r-md);
+  background: var(--tm-surface-2);
+}
+
+.workflow li > span {
+  color: var(--tm-blue-soft);
+  font-family: var(--tm-font-mono);
+  font-size: var(--tm-fs-xs);
+}
+
+.workflow strong,
+.assignRow strong {
+  display: block;
+  color: var(--tm-text-strong);
+}
+
+.workflow li p {
+  margin: var(--tm-sp-1) 0 0;
+  color: var(--tm-text-soft);
+  font-size: var(--tm-fs-sm);
+}
+
+.trackSection {
+  scroll-margin-top: calc(var(--ifm-navbar-height) + var(--tm-sp-5));
+  margin-top: var(--tm-sp-8);
+}
+
+.trackHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--tm-sp-5);
+  align-items: end;
+  margin-bottom: var(--tm-sp-5);
+}
+
+.trackCount {
+  flex: 0 0 auto;
+  padding: var(--tm-sp-2) var(--tm-sp-3);
+  border: 1px solid var(--tm-border-strong);
+  border-radius: var(--tm-r-sm);
+  color: var(--tm-text-soft);
+  font-family: var(--tm-font-mono);
+  font-size: var(--tm-fs-xs);
+}
+
+.assessmentList {
+  display: grid;
+  gap: var(--tm-sp-5);
+}
+
+.assessmentCard {
+  scroll-margin-top: calc(var(--ifm-navbar-height) + var(--tm-sp-5));
+  overflow: hidden;
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-surface-1);
+}
+
+.assessmentCard:nth-child(even) {
+  border-radius: var(--tm-r-sm);
+}
+
+.assessmentHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(210px, 0.36fr);
+  gap: var(--tm-sp-5);
+  align-items: start;
+  padding: var(--tm-sp-6);
+}
+
+.assessmentHeader h3 {
+  margin: 0;
+  color: var(--tm-text-strong);
+  font-family: var(--tm-font-display);
+  font-size: var(--tm-fs-xl);
+  letter-spacing: -0.02em;
+}
+
+.unitDescription {
+  max-width: 68ch;
+  margin: var(--tm-sp-3) 0 0;
+  color: var(--tm-text-soft);
+  line-height: 1.6;
+}
+
+.assessmentMeta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--tm-sp-2);
+}
+
+.assessmentMeta span {
+  padding: var(--tm-sp-1) var(--tm-sp-3);
+  border: 1px solid var(--tm-blue-a32);
+  border-radius: var(--tm-r-sm);
+  color: var(--tm-blue-soft);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+}
+
+.assignRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--tm-sp-5);
+  align-items: center;
+  padding: var(--tm-sp-4) var(--tm-sp-6);
+  border-block: 1px solid var(--tm-border-hair);
+  background: var(--tm-surface-2);
+}
+
+.assignRow > div:first-child {
+  min-width: 0;
+}
+
+.assignRow > div:first-child span {
+  display: block;
+  margin-top: var(--tm-sp-1);
+  overflow: hidden;
+  color: var(--tm-text-soft);
+  font-size: var(--tm-fs-sm);
+  text-overflow: ellipsis;
+}
+
+.assignActions {
+  flex: 0 0 auto;
+}
+
+.assignActions .primaryAction,
+.assignActions .secondaryAction {
+  min-height: 38px;
+  padding: var(--tm-sp-2) var(--tm-sp-4);
+  font-size: var(--tm-fs-xs);
+}
+
+.extension {
+  margin: var(--tm-sp-6) var(--tm-sp-6) 0;
+  padding: var(--tm-sp-5);
+  border: 1px solid var(--tm-accent-a20);
+  border-radius: var(--tm-r-md);
+  background: var(--tm-accent-a08);
+}
+
+.extension h4,
+.reviewGrid h4 {
+  margin: 0;
+  color: var(--tm-text-strong);
+  font-family: var(--tm-font-display);
+  font-size: var(--tm-fs-md);
+}
+
+.extension > p:last-child {
+  margin: var(--tm-sp-3) 0 0;
+  line-height: 1.7;
+}
+
+.reviewGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--tm-sp-6);
+  padding: var(--tm-sp-6);
+}
+
+.reviewGrid section {
+  min-width: 0;
+}
+
+.reviewGrid ul {
+  display: grid;
+  gap: var(--tm-sp-3);
+  margin: var(--tm-sp-4) 0 0;
+  padding-left: 1.15rem;
+}
+
+.reviewGrid li {
+  padding-left: var(--tm-sp-1);
+  color: var(--tm-text-soft);
+  line-height: 1.6;
+}
+
+.reviewGrid li::marker {
+  color: var(--tm-accent);
+}
+
+@media (max-width: 800px) {
+  .page {
+    padding: var(--tm-sp-6) var(--tm-sp-4);
+  }
+
+  .hero,
+  .workflow,
+  .assessmentHeader,
+  .reviewGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .assessmentMeta {
+    justify-content: flex-start;
+  }
+
+  .assignRow {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .assignActions {
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .heroActions,
+  .assignActions,
+  .trackHeader {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .primaryAction,
+  .secondaryAction,
+  .printAction {
+    width: 100%;
+  }
+
+  .workflow,
+  .assessmentHeader,
+  .assignRow,
+  .reviewGrid {
+    padding: var(--tm-sp-4);
+  }
+
+  .extension {
+    margin: var(--tm-sp-4) var(--tm-sp-4) 0;
+    padding: var(--tm-sp-4);
+  }
+}
+
+@media print {
+  .page {
+    padding: 0;
+  }
+
+  .heroActions,
+  .workflow,
+  .assignActions {
+    display: none;
+  }
+
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .trackSection {
+    margin-top: var(--tm-sp-6);
+  }
+
+  .assessmentCard {
+    break-inside: avoid;
+  }
+}
+

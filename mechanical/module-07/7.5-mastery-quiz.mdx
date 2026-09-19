@@ -1,0 +1,144 @@
+---
+id: mastery-quiz
+title: "Module 7 Mastery Quiz: Drivetrains"
+sidebar_label: "Module 7 · Mastery Quiz"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import ScoredQuiz from '@site/src/components/mechanical/ScoredQuiz';
+import {MASTERY_QUESTIONS} from '@site/src/telemark/mechanicalQuizzes';
+
+# Module 7 Mastery Quiz: Drivetrains
+
+---
+
+## I. Conceptual Questions
+
+**1. Contact Patch:** A student proposes wider drive wheels to increase pushing force. Evaluate the proposal.
+
+<details>
+<summary>Show answer</summary>
+
+The maximum friction force is `mu * N`, the coefficient of friction times the normal force. Contact patch area does not appear, so to first order a wider wheel does not increase pushing force. The proposal will not solve the stated problem.
+
+Wider wheels do help in other ways: the same load spread over more area reduces wear and tread compression, and a wider wheel behaves better on uneven surfaces. If pushing force is the actual goal, the levers are a higher friction tread compound, more weight on the driven wheels, or, if the drivetrain is motor limited rather than traction limited, more reduction.
+
+</details>
+
+---
+
+**2. Which Limit:** Explain why a traction limited drivetrain is preferable to a motor limited one, in terms of what physically happens during a pushing match.
+
+<details>
+<summary>Show answer</summary>
+
+In a traction limited drivetrain, the wheels reach their friction limit and slip while the motors keep turning below stall. Current stays moderate, the motors do not overheat, and the driver experiences a predictable limit.
+
+In a motor limited drivetrain, the wheels grip and the motors stall. A stalled motor draws full stall current, produces no motion, and converts all of that electrical power into heat. Sustained over a pushing match this damages motors and can sag the battery enough to brown out the Control Hub, which stops the whole robot.
+
+The fix for a motor limited drivetrain is more reduction: trade top speed for force until traction becomes the binding limit.
+
+</details>
+
+---
+
+**3. Weight and Acceleration:** A team adds 5 lb of ballast low in the chassis and finds that pushing force improved but acceleration did not. Explain.
+
+<details>
+<summary>Show answer</summary>
+
+Traction is `mu * N`, so adding weight increases the maximum force the wheels can transmit proportionally. Pushing force improves, provided the drivetrain was traction limited rather than motor limited.
+
+Acceleration is force divided by mass. The added weight increased the available force and increased the mass by the same proportion, so the ratio is roughly unchanged. The ballast bought pushing force and stability, not quickness. Placing it low was correct: it lowers the center of gravity and reduces weight transfer without adding tipping risk.
+
+</details>
+
+---
+
+**4. Unloaded Wheel:** A six wheel robot's middle wheels lift slightly during hard acceleration. Give two separate problems this causes.
+
+<details>
+<summary>Show answer</summary>
+
+First, traction: a wheel carrying no normal force transmits no friction force, so the drivetrain temporarily has four effective wheels rather than six, and the available traction drops at exactly the moment of maximum demand.
+
+Second, odometry: a powered wheel with no load spins freely, and its encoder reports counts that do not correspond to travel. If the software uses drive encoders for position, the estimate is corrupted during acceleration, which is the motion where accuracy matters most. This is one of the reasons dedicated odometry pods are used instead of drive encoders.
+
+</details>
+
+---
+
+**5. Pod Geometry:** An autonomous routine works on one robot and drifts on its identical twin. Both use the same code. Give the most likely mechanical causes.
+
+<details>
+<summary>Show answer</summary>
+
+The software depends on three measured mechanical properties, and each robot has its own values. Odometry wheel diameter differs between physical wheels, and a 1% diameter error is roughly 1 in of error over an 8 ft traverse. Pod offsets from the tracking center differ if the pods were mounted by hand rather than to a controlled pattern, and offset errors show up as heading drift that grows with each turn. Pod perpendicularity differs if a pod is mounted a few degrees off axis, which mixes in a component of the other axis and accumulates with travel.
+
+The fix is to measure each robot's wheel diameters and pod offsets individually and configure the software with the measured values rather than shared nominal ones.
+
+</details>
+
+---
+
+## II. Review the Drivetrain
+
+A team describes its drivetrain. **Identify the 2 errors and state the fix.**
+
+```text
+Four mecanum wheels, chosen because the regional winner last
+season used them. The strategy is to park in one scoring
+position and cycle from a fixed feeding station, then play
+defense in the last thirty seconds.
+
+Robot weight is 32 lb. Four motors at 0.105 N-m stall through
+a 10:1 reduction on 96 mm wheels.
+
+In matches the robot loses every pushing exchange, and the
+drive motors are hot enough to be uncomfortable to touch after
+the last match of the day.
+```
+
+<details>
+<summary>Show answers</summary>
+
+**Error 1 - The drivetrain choice does not follow from the strategy.**
+The strategy described is a fixed cycle path plus defense in the endgame. Neither requires strafing: the robot repeats one route and then needs to push. Mecanum's advantage is maneuverability at the cost of traction, so this team paid the traction cost and bought a capability their strategy does not use, while the defensive phase depends on exactly what they gave up. The reason recorded, that the regional winner used it, copies an answer to a different question.
+
+```text
+Fix: re-run the choice against the team's own requirements.
+A tank drive, or a six wheel drive with a dropped center,
+suits a fixed path plus defensive endgame and provides
+substantially more pushing force at lower weight and cost.
+```
+
+**Error 2 - The drivetrain is motor limited, which is why the motors are hot.**
+Estimate the two limits. Traction with mecanum on tile is meaningfully below a tank drive; even at a generous mu of 0.7 on 32 lb, that is roughly 22 lbf available. Motor force: wheel torque is `0.105 * 10 = 1.05 N-m` per motor, wheel radius is 48 mm or 0.048 m, so each motor contributes about 21.9 N, and four give about 87 N or roughly 20 lbf, before efficiency losses. With efficiency applied the motor limit falls below the traction limit, so the motors stall before the wheels slip. That is precisely the condition that produces sustained stall current and hot motors.
+
+```text
+Fix: increase the total reduction so the motor limit exceeds
+the traction limit and the wheels slip first. Verify by
+running the robot against a wall at full power: the wheels
+should slip rather than the motors stalling. Then re-check
+the resulting free speed against the cycle time requirement.
+```
+
+</details>
+
+---
+
+## III. Scored Check
+
+The questions above are for working something through. These are graded, so you can find out whether it stuck. Everything is scored in your browser.
+
+<ScoredQuiz
+  lessonId="module-07/mastery-quiz"
+  questions={MASTERY_QUESTIONS['module-07']}
+/>
+
+<MarkComplete
+  lessonId="module-07/mastery-quiz"
+  nextUnit="/mechanical/module-08"
+  nextUnitName="Module 8: Mechanisms"
+/>

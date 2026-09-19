@@ -1,0 +1,125 @@
+---
+id: objects-working-together
+title: "Lesson 0.4: How Objects Work Together"
+sidebar_label: "0.4 · Objects Working Together"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 0.4: How Objects Work Together
+
+Useful programs rarely rely on one object. An OpMode coordinates a robot object, and that robot object can hold an arm object, an intake object, and a lift object.
+
+This structure forms a **has-a** relationship. A robot has an arm. In Java, one object represents that relationship by storing a reference to another object in a field.
+
+## One Object Holds Another
+
+<AnnotatedCode
+  title="Robot object with an arm"
+  java={String.raw`public class PracticeRobot {
+    public RobotArm arm;
+
+    public PracticeRobot() {
+        arm = new RobotArm("main arm");
+    }
+
+    public void stopAll() {
+        arm.stop();
+    }
+}`}
+  python={String.raw`class PracticeRobot:
+    def __init__(self):
+        self.arm = RobotArm("main arm")
+
+    def stop_all(self):
+        self.arm.stop()`}
+/>
+
+The `PracticeRobot` object and the `RobotArm` object are separate objects. The `arm` field stores the reference that connects them.
+
+This arrangement is called **composition**. You only need the basic idea now. Unit 13 covers how to design safe class boundaries and decide what each object should expose.
+
+## Follow a Call Across Objects
+
+```java
+public class ArmTeleOp extends OpMode {
+    private PracticeRobot robot;
+
+    @Override
+    public void init() {
+        robot = new PracticeRobot();
+    }
+
+    @Override
+    public void loop() {
+        robot.arm.move(-gamepad1.left_stick_y);
+    }
+}
+```
+
+Two special parts of this example describe its relationship to the FTC SDK:
+
+| Word | Meaning here |
+|---|---|
+| `extends` | Declare that `ArmTeleOp` is a more specific kind of `OpMode` and receives its available members. |
+| `@Override` | Ask Java to check that this method replaces a method defined by `OpMode`. It is an annotation, not a keyword. |
+
+When `loop()` reaches the final line:
+
+1. The OpMode reads its `robot` field.
+2. Java follows that reference to the `PracticeRobot` object.
+3. Java reads the robot's `arm` field.
+4. Java follows that reference to the `RobotArm` object.
+5. Java runs `move(...)` on that arm.
+
+Each dot moves from one object to one of its fields or methods. Read a long expression from left to right and ask which object each part selects.
+
+## Class Definition Versus Running Order
+
+Java does not run a whole class from top to bottom. A class provides definitions. Work happens when code creates an object, calls a constructor, or calls a method.
+
+The FTC SDK creates the OpMode and calls its lifecycle methods. Your OpMode then creates or initializes the objects it needs and calls their methods.
+
+## Terms to Keep
+
+| Term | Meaning |
+|---|---|
+| Has-a relationship | One object uses another object as a part. |
+| Composition | Building an object from references to other objects. |
+| Member | A field, constructor, or method declared by a class. |
+| Dot notation | Syntax that selects a member from an object or class. |
+| Call chain | The sequence of method calls from one object to another. |
+
+## Check Your Understanding
+
+<details>
+<summary>Does PracticeRobot become a RobotArm?</summary>
+
+No. `PracticeRobot` has a `RobotArm`. The two objects have different classes and responsibilities.
+
+</details>
+
+<details>
+<summary>How many objects does new PracticeRobot() create in this example?</summary>
+
+It creates the `PracticeRobot` object, then its constructor creates one `RobotArm` object.
+
+</details>
+
+<details>
+<summary>Which object receives the move call?</summary>
+
+The `RobotArm` object stored in `robot.arm` receives it.
+
+</details>
+
+## Where You Will Use This
+
+[Lessons 13.8 and 13.9](/docs/unit-13) build `RobotHardware.java` and call its subsystem objects from a real TeleOp.
+
+<MarkComplete
+  lessonId="unit-00/objects-working-together"
+  nextUnit="/docs/unit-00/static-and-nested-members"
+  nextUnitName="Lesson 0.5: Instance, Static, and Nested Members"
+/>

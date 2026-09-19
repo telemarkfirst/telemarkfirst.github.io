@@ -1,0 +1,126 @@
+---
+id: wheels-and-traction
+title: "Lesson 7.2: Wheel Selection, Traction, and Weight Transfer"
+sidebar_label: "7.2 · Wheels & Traction"
+sidebar_position: 2
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 7.2: Wheel Selection, Traction, and Weight Transfer
+
+---
+
+## Technical Context
+
+However much torque the motors produce, the robot can only push as hard as the tires can grip. Above that limit the wheels spin and nothing improves.
+
+Understanding that ceiling is what keeps teams from adding motors to solve a traction problem.
+
+---
+
+## The Friction Relationship
+
+The maximum force a wheel can transmit before slipping is:
+
+```text
+F_max = mu * N
+```
+
+Where `mu` is the coefficient of friction between the wheel and the floor, and `N` is the normal force, meaning the weight pressing that wheel down.
+
+Two things follow immediately, and both surprise people.
+
+**Contact patch area does not appear.** A wider wheel does not, to first order, grip better. What a wider wheel does is spread the load, reduce wear, and improve behavior on uneven surfaces. If someone proposes wider wheels to fix a traction problem, the physics does not support it.
+
+**Traction scales with weight on the driven wheels.** Adding weight increases grip proportionally. It also increases the mass to accelerate, which is why adding weight improves pushing force but does not improve acceleration.
+
+---
+
+## Choosing a Wheel
+
+| Wheel type | Grip on field tile | Trade-off |
+| --- | --- | --- |
+| Soft compliant tread | High | Wears faster, higher rolling resistance |
+| Hard plastic tread | Low | Durable, slides easily |
+| Omni wheel | Low in the roller direction | Free motion sideways, poor for pushing |
+| Mecanum | Moderate, directional | Enables strafing, lower net traction |
+| Stealth or dual durometer | High | Cost |
+
+For FTC field tiles, soft compliant treads produce coefficients commonly estimated around 1.0, while hard plastic rollers are considerably lower. These are estimates: the tile surface, its cleanliness, and wheel wear all move the number, which is why measuring your own is worth doing.
+
+:::tip Measure your own coefficient of friction
+Put the robot on a field tile, attach a fish scale or luggage scale to it, and pull horizontally until the wheels slip. The reading at slip, divided by the robot's weight, is your effective coefficient of friction. It takes five minutes and replaces a guess with a measurement.
+:::
+
+---
+
+## Weight Transfer
+
+Weight on each wheel is not constant. When the robot accelerates, weight shifts to the rear wheels; when it decelerates, to the front. When an arm extends forward, weight shifts forward.
+
+For a four wheel robot with all wheels driven, transfer between front and rear does not change total traction, because what one pair loses the other gains. It matters in three specific cases:
+
+**Not all wheels are driven.** If only two wheels are powered and weight transfers away from them, available traction drops.
+
+**A wheel unloads completely.** A wheel with no weight on it contributes no traction and spins freely, which also confuses odometry.
+
+**Tipping.** When enough weight transfers, the robot rotates about the contact line instead of accelerating. An extended arm carrying a game element moves the center of gravity forward and up, which is why tipping happens during scoring rather than during driving.
+
+:::warning An unloaded wheel is worse than no wheel
+A powered wheel with no load spins, wastes current, and produces false encoder counts. If your robot has six wheels and the middle pair unloads on acceleration, the odometry that the software team relies on becomes unreliable exactly during the motions that matter.
+:::
+
+---
+
+## Center of Gravity Placement
+
+Three guidelines that resolve most drivetrain handling problems:
+
+**Keep it low.** A low center of gravity resists tipping and reduces weight transfer. The battery is the single heaviest discrete item on most FTC robots, and putting it low is nearly free.
+
+**Keep it between the driven wheels.** A center of gravity outside the wheelbase makes the robot want to tip in normal driving.
+
+**Account for the worst case, not the resting case.** The robot's center of gravity with the arm extended and loaded is what determines whether it tips. Evaluate that configuration.
+
+---
+
+## Wheel Diameter
+
+Diameter is a transmission choice as much as a traction choice. For a given wheel RPM, a larger wheel travels faster and delivers less force at the ground, exactly as if you had reduced the gear ratio.
+
+```text
+speed = wheel_rpm * pi * diameter
+force = wheel_torque / wheel_radius
+```
+
+Practical implications: a smaller wheel is effectively an extra reduction, useful when torque is short; a larger wheel crosses field seams and small obstacles better and gives more ground clearance. Lesson 7.3 puts both into one calculation.
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The maximum force a wheel can transmit is the coefficient of friction times the `__________` force on that wheel.
+2. Wheel width does not appear in the friction relationship, so a wider wheel primarily improves wear and load `__________` rather than grip.
+3. A wheel that unloads completely during acceleration produces false `__________` counts as well as no traction.
+
+<details>
+<summary>Show answers</summary>
+
+1. **normal** (the weight pressing it down)
+2. **distribution** (spreading)
+3. **encoder** (odometry)
+
+</details>
+
+---
+
+## Exercise
+
+Measure your robot's coefficient of friction with a scale as described above. Then repeat the measurement with the arm extended and loaded. Record both numbers, since the second is the one that applies during scoring.
+
+<MarkComplete
+  lessonId="module-07/wheels-and-traction"
+  nextUnit="/mechanical/module-07/speed-and-pushing-force"
+  nextUnitName="Lesson 7.3: Calculating Drivetrain Speed and Pushing Force"
+/>

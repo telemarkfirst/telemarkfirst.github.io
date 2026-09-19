@@ -1,0 +1,141 @@
+---
+id: intake-logic-challenge
+title: "Lesson 5.5: Build Intake Logic for Multi-Stage Game Piece Sorting"
+sidebar_label: "5.5 · Intake Logic"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit5Simulator from '@site/src/components/Unit5Simulator';
+
+# Lesson 5.5: Build Intake Logic for Multi-Stage Game Piece Sorting
+
+---
+
+## Technical Context
+
+A **"Logic Tree"** is a complex arrangement of decisions that allows the robot to handle variable field conditions autonomously. This prevents failures in game element management by creating specific behaviors for different scenarios: such as varying motor power based on whether a Color Sensor detects a friendly or opposing alliance element.
+
+---
+
+## How to Design a Multi-Stage Intake Decision Tree
+
+This lesson uses an `if` / `else if` / `else` chain to manage a hardware subsystem. The goal is to implement a **state-dependent controller**. The final controller maps the same `DcMotor`, `ColorSensor`, and `DistanceSensor` types used by the coding challenge, reads each sensor once per loop, and sends exactly one motor command on every pass.
+
+The FTC SDK color methods are `red()` and `blue()`. A `DistanceSensor` is read with `getDistance(DistanceUnit.CM)`. Store those readings in variables before making decisions so the logic and telemetry describe the same sensor sample.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+
+@TeleOp(name="Safe_Intake_Decision_Tree")
+public class SafeIntakeDecisionTree extends OpMode {
+
+    private DcMotor intake;
+    private ColorSensor color;
+    private DistanceSensor distance;
+
+    @Override
+    public void init() {
+        intake = hardwareMap.get(DcMotor.class, "intake");
+        color = hardwareMap.get(ColorSensor.class, "intake_color");
+        distance = hardwareMap.get(DistanceSensor.class, "intake_distance");
+        intake.setPower(0.0);
+    }
+
+@Override
+public void loop() {
+    double dist = distance.getDistance(DistanceUnit.CM);
+    int redValue = color.red();
+    int blueValue = color.blue();
+
+    String state;
+
+    if (dist < 10.0 && redValue > blueValue) {
+        intake.setPower(0.8);
+        state = "COLLECT RED";
+    } else if (dist < 10.0 && blueValue > redValue) {
+        intake.setPower(-0.5);
+        state = "EJECT BLUE";
+    } else {
+        // Explicit safe fallback prevents an old power command from surviving.
+        intake.setPower(0.0);
+        state = "STOP";
+    }
+
+    telemetry.addData("State", state);
+    telemetry.addData("Distance (cm)", dist);
+    telemetry.addData("Red / Blue", "%d / %d", redValue, blueValue);
+    telemetry.update();
+}
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. When one `if` statement is placed inside another `if` statement's block, it is referred to as a/an `__________` conditional.
+2. Building a multi-stage logic tree helps robots handle variable conditions in the `__________` phase of a match.
+3. A well-designed logic tree ensures that the `setPower()` method always receives a/an `__________` value between `-1.0` and `1.0`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **nested**
+2. **autonomous**
+3. **valid** (unambiguous / single)
+
+</details>
+
+---
+
+## Simulator Practice
+
+**Robot Scenario:** Finish the red-alliance sorter. Collect red inside 10 cm, eject blue inside 10 cm, and stop for a tie or any sample outside that range.
+
+<SimulatorRunGuide />
+
+<Unit5Simulator lesson="intake-logic-challenge" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+// Compare your result with the annotated decision tree above. Confirm that it
+// uses ColorSensor.red()/blue(), DistanceSensor.getDistance(), &&, and a
+// final intake.setPower(0.0) branch.
+```
+
+</details>
+
+## A Team Makes Every Prerequisite Explicit
+
+Titan Robotics Club checks shared vision prerequisites and then accepts any enabled camera implementation. The same shape works for a sorter with shared safety checks and several acceptable samples:
+
+```java
+if (storageHasRoom && sampleIsClose
+        && (sampleIsRed || sampleIsBlue)) {
+    intake.collect();
+} else {
+    intake.stop();
+}
+```
+
+Vision names were replaced with the sensor names from this lesson, and setup code was omitted. The grouped `&&` and `||` rule is the part carried forward. Adapted from [Team 3543 Titan Robotics Club's `Robot.java` at a pinned commit](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/TeamCode/src/main/java/teamcode/Robot.java) under the [MIT License](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/LICENSE).
+
+<MarkComplete
+  lessonId="unit-05/intake-logic-challenge"
+  nextUnit="/docs/unit-05/mastery-coding-challenge"
+  nextUnitName="Unit 5 Comprehensive Coding Challenge"
+/>

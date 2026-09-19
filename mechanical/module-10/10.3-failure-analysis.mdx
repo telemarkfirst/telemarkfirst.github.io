@@ -1,0 +1,125 @@
+---
+id: failure-analysis
+title: "Lesson 10.3: Root Cause Analysis of Mechanical Failures"
+sidebar_label: "10.3 · Failure Analysis"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 10.3: Root Cause Analysis of Mechanical Failures
+
+---
+
+## Technical Context
+
+Replacing a broken part may get the robot running, but it does not explain the failure. If the load, geometry, or assembly error remains, the replacement faces the same risk.
+
+Root cause analysis is the discipline of finding out why the part was carrying a load it could not survive.
+
+---
+
+## The Broken Part Is Evidence
+
+Before replacing anything, look at the failure itself. Different causes leave different marks.
+
+| What you see | Likely cause |
+| --- | --- |
+| Clean break with no deformation | Brittle failure, often impact or a stress concentration |
+| Bent and stretched before breaking | Overload, the part was undersized for the load |
+| Break at a sharp internal corner | Stress concentration, needed a fillet |
+| Break along printed layer lines | Wrong print orientation for the load |
+| Threads stripped, screw intact | Insufficient thread engagement, or a stripped soft material |
+| Screw sheared | The joint was carrying load in shear rather than by clamping |
+| Elongated hole | The joint was loose and the part shifted under load |
+| Polished or worn surface | Rubbing that was not intended, a bind or misalignment |
+| Discoloration or melted plastic near a motor | Sustained overcurrent, likely a stall condition |
+
+Photograph the broken part before doing anything else. It goes in the notebook, and the photograph is often the only evidence left after the repair.
+
+---
+
+## Ask Why Repeatedly
+
+Ask why repeatedly until the chain reaches a cause the team can change.
+
+```text
+The slide stopped moving.
+  Why? The motor stalled.
+  Why? The slide was binding at full extension.
+  Why? The second stage rail was not parallel to the first.
+  Why? The mounting plate flexed when the slide was loaded.
+  Why? The plate is 1/8 in polycarbonate and spans 9 in
+       unsupported.
+```
+
+The first answer, "the motor stalled," describes the symptom. The final answer identifies the flexible plate that allowed the slide to bind and points to a relevant design change.
+
+:::tip Stop when you reach something you control
+The chain ends when you reach a design decision you can change: a material, a dimension, a support, a fastener count. If the last answer is "because the robot got hit," keep going, since being hit is a normal condition and the design should survive it.
+:::
+
+---
+
+## Distinguish Three Kinds of Failure
+
+**Design failure.** The part was never adequate for the load it sees. Recalculation is needed, not a stronger version of the same part.
+
+**Build failure.** The design was adequate and the part was made or assembled incorrectly: a fastener not tightened, a spacer omitted, a misaligned bearing. The fix is a process change, such as a checklist or a stack-up recorded in the notebook.
+
+**Wear failure.** The part was adequate but has a finite life: compliant wheels, surgical tubing, chain, bearings. The fix is a replacement schedule and spares in the pit, not a redesign.
+
+Classify the failure before choosing a response. Redesigning a normal wear item may add unnecessary work, while treating a design failure as routine wear leaves the cause in place.
+
+---
+
+## The Fix Must Address the Cause
+
+Once the root cause is identified, check that the proposed fix actually removes it.
+
+| Root cause | Fix that addresses it | Fix that does not |
+| --- | --- | --- |
+| Plate flexes, causing bind | Stiffen or support the plate | Bigger motor |
+| Insufficient thread engagement | Nut, insert, or thicker material | More torque on the screw |
+| Sharp corner concentrates stress | Add a fillet | Thicker part with the same corner |
+| Joint loose, hole elongating | Second fastener, tighten properly | Larger screw in the same loose joint |
+| Motor overheats holding a load | Counterbalance or brake | Replace the motor |
+
+The fixes in the right column address the symptom without removing the listed cause.
+
+---
+
+## Record It
+
+A failure analysis entry should contain the symptom, evidence including a photograph, the why chain, the identified root cause, the fix, and verification that the fix worked.
+
+That last part matters: after the fix, re-run the test from Lesson 10.2 and record the new number. A fix that was never verified is a hypothesis.
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. A break at a sharp internal corner with no deformation suggests a stress `__________`.
+2. The why chain should continue until the answer is a design decision the team can `__________`.
+3. A failure caused by a part that has a finite life, such as surgical tubing, is a `__________` failure and calls for a replacement schedule rather than a redesign.
+
+<details>
+<summary>Show answers</summary>
+
+1. **concentration**
+2. **change** (control)
+3. **wear**
+
+</details>
+
+---
+
+## Exercise
+
+Take the most recent thing that broke on your robot. Photograph it if you still have it, then write the why chain until you reach a design decision. Classify it as a design, build, or wear failure, and check that the fix your team applied actually addressed the root cause.
+
+<MarkComplete
+  lessonId="module-10/failure-analysis"
+  nextUnit="/mechanical/module-10/design-reviews"
+  nextUnitName="Lesson 10.4: Running Design Reviews That Catch Real Problems"
+/>

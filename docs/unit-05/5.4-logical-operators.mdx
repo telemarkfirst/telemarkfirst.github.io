@@ -1,0 +1,115 @@
+---
+id: logical-operators
+title: "Lesson 5.4: Combining Sensor Checks with AND and OR Logic"
+sidebar_label: "5.4 · Logical Operators"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit5Simulator from '@site/src/components/Unit5Simulator';
+
+# Lesson 5.4: Combining Sensor Checks with AND and OR Logic
+
+---
+
+## Technical Context
+
+Complex robot behaviors often require data from multiple hardware sources to be true simultaneously before an action is taken. Logical combinations improve performance by adding redundancy: for instance, a launcher should only fire if a game element is detected **AND** the driver confirms the command, preventing "dry firing" that could damage the mechanical tension system.
+
+---
+
+## How AND and OR Change Robot Behavior
+
+Java provides four primary logical operators to combine boolean expressions:
+
+- **`&&`** (Logical AND): requires **both** sides to be `true`
+- **`||`** (Logical OR): requires **at least one** side to be `true`
+- **`!`** (Logical NOT): inverts a boolean value
+- **`^`** (XOR): true only if the sides differ
+
+Using these operators lets you create compound safety gates. For example, `if (isArmRaised && isClawClosed)` can permit a behavior only when both software flags are true. The flags still need to come from trustworthy sensors or state logic; their names alone do not prove the mechanism is safe.
+
+---
+
+## Annotated Code
+
+```java
+@Override
+public void loop() {
+    boolean isLoaded = colorSensor.red() > 100;
+    boolean isAimed  = gamepad1.right_trigger > 0.5;
+
+    // Combining sensor data (isLoaded) with driver intent (isAimed)
+    if (isLoaded && isAimed) {
+        launcher.setPower(1.0); // Fire only if both are true
+    } else {
+        launcher.setPower(0.0);
+    }
+}
+```
+
+## Logical Gates in Robot Initialization
+
+Titan Robotics Club uses `&&` to require both global vision support and camera information, then groups several acceptable camera choices with `||`:
+
+```java
+if (RobotParams.Preferences.useVision && robotInfo.camInfos != null &&
+    (RobotParams.Preferences.useLimelightVision ||
+     RobotParams.Preferences.useWebcamAprilTagVision ||
+     RobotParams.Preferences.useColorBlobVision))
+{
+    vision = new Vision(this);
+}
+```
+
+The parentheses make the intended rule explicit: initialize vision only when the common prerequisites are true **and** at least one vision implementation is enabled. Excerpted from [Team 3543 Titan Robotics Club's `Robot.java` at a pinned commit](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/TeamCode/src/main/java/teamcode/Robot.java) under the [MIT License](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/LICENSE).
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The operator `__________` returns `true` only if condition A **and** condition B are both `true`.
+2. To check if either a sensor is tripped **or** a button is pressed, the `__________` operator should be used.
+3. The `__________` operator is used to invert a boolean value, such as changing "Pressed" to "Not Pressed".
+
+<details>
+<summary>Show answers</summary>
+
+1. **`&&`**
+2. **`||`**
+3. **`!`**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+**Robot Scenario:** Your robot should only activate the drivetrain if the Start button is **NOT** pressed **AND** the Left Trigger is held down more than halfway. (This is a complex safety check.)
+
+<SimulatorRunGuide />
+
+<Unit5Simulator lesson="logical-operators" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+@Override
+public void loop() {
+    if (!gamepad1.start && gamepad1.left_trigger > 0.5) {
+        telemetry.addLine("Drive System Active");
+        drive.setPower(-1 * gamepad1.left_stick_y);
+    } else {
+        drive.setPower(0.0);
+    }
+}
+```
+
+</details>
+
+<MarkComplete
+  lessonId="unit-05/logical-operators"
+  nextUnit="/docs/unit-05/intake-logic-challenge"
+  nextUnitName="Lesson 5.5: Designing a Multi-Stage Intake Logic Tree for Game Element Sorting"
+/>

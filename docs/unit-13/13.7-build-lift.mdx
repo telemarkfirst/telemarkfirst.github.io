@@ -1,0 +1,105 @@
+---
+id: build-lift
+title: "Lesson 13.7: Build MotorMechanism.java and Lift.java"
+sidebar_label: "13.7 · Build Lift"
+sidebar_position: 7
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 13.7: Build `MotorMechanism.java` and `Lift.java`
+
+The lift shares basic motor setup with other powered mechanisms. Put that shared behavior in `MotorMechanism`, then let `Lift` add encoder targets and lift-specific stopping.
+
+## The Parent Class
+
+```java title="MotorMechanism.java"
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+
+public class MotorMechanism {
+    protected DcMotor motor;
+
+    public void init(HardwareMap hardwareMap, String name) {
+        motor = hardwareMap.get(DcMotor.class, name);
+        motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        stop();
+    }
+
+    public void stop() {
+        motor.setPower(0.0);
+    }
+}
+```
+
+`protected` allows `Lift` to use the motor while keeping unrelated OpMode code out.
+
+## The Lift Class
+
+<AnnotatedCode
+  title="Lift.java"
+  java={String.raw`package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+
+public class Lift extends MotorMechanism {
+    public void init(HardwareMap hardwareMap) {
+        super.init(hardwareMap, RobotConfig.LIFT_NAME);
+        motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+
+    public void moveToScore() {
+        motor.setTargetPosition(RobotConfig.LIFT_SCORE_TICKS);
+        motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        motor.setPower(RobotConfig.LIFT_POWER);
+    }
+
+    public boolean isAtTarget() {
+        return !motor.isBusy();
+    }
+
+    public void update() {
+        if (isAtTarget()) stop();
+    }
+
+    @Override
+    public void stop() {
+        motor.setPower(0.0);
+    }
+}`}
+  python={String.raw`class Lift(MotorMechanism):
+    def initialize(self, hardware):
+        super().initialize(hardware, RobotConfig.LIFT_NAME)
+        self.motor.reset_encoder()
+
+    def move_to_score(self):
+        self.motor.set_target(RobotConfig.LIFT_SCORE_TICKS)
+        self.motor.start_move(RobotConfig.LIFT_POWER)
+
+    def is_at_target(self):
+        return not self.motor.is_busy()
+
+    def update(self):
+        if self.is_at_target():
+            self.stop()`}
+/>
+
+`moveToScore()` starts motion and returns. It does not wait in a loop. The OpMode can continue updating its drivetrain, vision, and intake while the lift moves.
+
+`update()` checks progress during each OpMode cycle. This same non-blocking contract will matter in the final autonomous state machine.
+
+## Project Practice
+
+Complete the lift target command and verify the inheritance, override, and status methods.
+
+<Unit13BuildSimulator lesson="lift" />
+
+<MarkComplete
+  lessonId="unit-13/build-lift"
+  nextUnit="/docs/unit-13/build-robot-hardware"
+  nextUnitName="Lesson 13.8: Build RobotHardware.java"
+/>

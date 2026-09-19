@@ -1,0 +1,1899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Telemark Unit 5 Simulator</title>
+  
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg: #05080d;
+      --panel: #0b1118;
+      --panel-2: #071019;
+      --text: #eaf8ff;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-2: #22d3ee;
+      --danger: #cc0000;
+      --good: #00cc00;
+      --warn: #ffcc00;
+      --border: #243746;
+    }
+
+    * { scrollbar-width: thin; scrollbar-color: #22d3ee #05080d; }
+    *::-webkit-scrollbar { width: 6px; height: 6px; }
+    *::-webkit-scrollbar-track { background: #05080d; }
+    *::-webkit-scrollbar-thumb { background: #22d3ee; border-radius: 3px; }
+    *::-webkit-scrollbar-thumb:hover { background: #22d3ee; }
+    *::-webkit-scrollbar-corner { background: #05080d; }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; display: flex; height: 100vh; overflow: hidden;
+      background: var(--bg); color: var(--text);
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    #editor-container {
+      width: 50%; min-width: 320px; height: 100%;
+      display: flex; flex-direction: column; background: #080d13;
+    }
+    .editor-header {
+      padding: 12px 14px; background: #05080d; border-bottom: 1px solid #243746;
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    }
+    .editor-title { font-weight: 700; color: white; }
+    .editor-subtitle { color: #9aa0a6; font-size: 0.9rem; }
+
+    .code-wrapper { position: relative; flex: 1; overflow: hidden; background: var(--bg); }
+    #code-editor, #highlighting {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0; margin: 0; padding: 16px;
+      font-family: "Consolas", "Courier New", monospace; font-size: 13px; line-height: 1.5;
+      tab-size: 4; white-space: pre; border: 0; outline: none;
+    }
+    #code-editor { color: transparent; background: transparent; caret-color: white; z-index: 2; resize: none; overflow: auto; }
+    #highlighting { z-index: 1; overflow: hidden; }
+    #highlighting code { font-family: inherit; font-size: inherit; line-height: inherit; text-shadow: none; }
+    
+    #resizer { width: 6px; background: #243746; cursor: col-resize; z-index: 10; transition: background 0.2s; }
+    #resizer:hover, #resizer.active { background: var(--accent); }
+
+    #ds-container {
+      flex: 1; display: flex; flex-direction: column; background: var(--panel-2);
+      padding: 12px; overflow-y: auto; min-width: 380px; gap: 10px;
+    }
+
+    .panel-section {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+    }
+    .panel-title {
+      font-weight: bold;
+      color: #fff;
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .panel-title i { color: var(--accent); }
+
+    /* Flowchart Canvas */
+    #flowchart-container {
+      background: #0d1721;
+      border-radius: 6px;
+      min-height: 200px;
+      max-height: 350px;
+      overflow: auto;
+    }
+    #flowchart-canvas {
+      display: block;
+    }
+
+    /* Condition Inspector */
+    .condition-row {
+      background: #0d1721;
+      padding: 8px 10px;
+      border-radius: 4px;
+      margin-bottom: 6px;
+      font-family: monospace;
+      font-size: 0.85rem;
+    }
+    .condition-expr {
+      color: #9cdcfe;
+      margin-bottom: 4px;
+    }
+    .condition-breakdown {
+      color: #888;
+      font-size: 0.8rem;
+    }
+    .condition-breakdown .op { color: #c586c0; font-weight: bold; }
+    .condition-breakdown .val-true { color: var(--good); }
+    .condition-breakdown .val-false { color: var(--danger); }
+    .condition-result {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 0.8rem;
+      margin-left: 8px;
+    }
+    .condition-result.true { background: rgba(0,204,0,0.2); color: var(--good); }
+    .condition-result.false { background: rgba(204,0,0,0.2); color: var(--danger); }
+
+    /* Truth Table */
+    .truth-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: monospace;
+      font-size: 0.8rem;
+    }
+    .truth-table th, .truth-table td {
+      padding: 4px 8px;
+      text-align: center;
+      border: 1px solid #243746;
+    }
+    .truth-table th {
+      background: #0d1721;
+      color: #9cdcfe;
+    }
+    .truth-table td { background: #101d29; }
+    .truth-table tr.active td {
+      background: rgba(0,122,204,0.3);
+      color: #fff;
+    }
+    .truth-table .val-t { color: var(--good); }
+    .truth-table .val-f { color: var(--danger); }
+    .truth-table-note {
+      color: #888;
+      font-style: italic;
+      font-size: 0.85rem;
+      padding: 8px;
+    }
+
+    .sensor-group {
+      display: none;
+    }
+    .sensor-group.visible {
+      display: block;
+    }
+    .sensor-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #0d1721;
+      padding: 8px 10px;
+      border-radius: 4px;
+      margin-bottom: 6px;
+    }
+    .sensor-row:last-child {
+      margin-bottom: 0;
+    }
+    .sensor-label {
+      width: 110px;
+      color: #9cdcfe;
+      font-family: monospace;
+      font-size: 0.82rem;
+    }
+    .sensor-slider {
+      flex: 1;
+    }
+    .sensor-value {
+      width: 56px;
+      text-align: right;
+      color: #d4d4d4;
+      font-family: monospace;
+      font-size: 0.82rem;
+    }
+
+    .ds-header { background: var(--panel); padding: 12px; border-radius: 8px; border: 1px solid var(--border); }
+    .ds-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .ds-row:last-child { margin-bottom: 0; }
+    .ds-title { font-size: 1.1rem; font-weight: 700; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ds-state { font-family: monospace; font-weight: 700; font-size: 1rem; color: var(--danger); }
+    .ds-timer { font-family: monospace; font-size: 1rem; color: #569cd6; }
+
+    .controls { display: flex; gap: 8px; }
+    .controls button { flex: 1; padding: 10px; border-radius: 6px; border: none; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: 0.1s ease; user-select: none; }
+    .controls button:active { transform: translateY(1px); }
+    #btn-main { background: var(--accent); color: white; }
+    #btn-main:hover { background: var(--accent-2); }
+    #btn-main:disabled { background: #444; color: #888; cursor: not-allowed; transform: none; }
+    #btn-stop { background: var(--danger); color: white; }
+    #btn-stop:hover { filter: brightness(1.1); }
+
+    .motor-visual {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-family: monospace; font-size: 0.85rem; background: #000; padding: 10px; border-radius: 6px;
+    }
+    .motor-spinning-container { position: relative; width: 70px; height: 70px; }
+    .motor-housing {
+      position: absolute; inset: 0; border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%, #555, #2a2a2a 50%, #1a1a1a 100%);
+      border: 3px solid #3a3a3a;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.6), 0 2px 10px rgba(0,0,0,0.5);
+    }
+    .motor-stator {
+      position: absolute; top: 12%; left: 12%; width: 76%; height: 76%; border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%, #444, #222 70%); border: 2px solid #3d3d3d;
+    }
+    .motor-rotor {
+      position: absolute; top: 50%; left: 50%; width: 60%; height: 60%;
+      transform: translate(-50%, -50%); animation: none;
+    }
+    .motor-rotor.spinning-cw { animation: spin-cw var(--spin-duration, 2s) linear infinite; }
+    .motor-rotor.spinning-ccw { animation: spin-ccw var(--spin-duration, 2s) linear infinite; }
+    @keyframes spin-cw { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+    @keyframes spin-ccw { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(-360deg); } }
+    .rotor-arm { position: absolute; background: #777; border-radius: 2px; }
+    .rotor-arm-h { width: 100%; height: 16%; top: 42%; left: 0; background: linear-gradient(to bottom, #888, #555); }
+    .rotor-arm-v { width: 16%; height: 100%; left: 42%; top: 0; background: linear-gradient(to right, #888, #555); }
+    .motor-hub {
+      position: absolute; top: 50%; left: 50%; width: 14px; height: 14px;
+      transform: translate(-50%, -50%); border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%, #aaa, #555 70%);
+      border: 2px solid #666; box-shadow: 0 1px 4px rgba(0,0,0,0.5); z-index: 2;
+    }
+    .rotor-notch {
+      position: absolute; top: -2px; left: 50%; transform: translateX(-50%);
+      width: 5px; height: 5px; background: #00cc00; border-radius: 50%; box-shadow: 0 0 6px #00cc0088;
+    }
+    .motor-power-label { margin-top: 5px; font-family: monospace; font-size: 0.85rem; display: flex; align-items: center; gap: 4px; }
+    .motor-power-label .label-text { color: #aaa; }
+    .motor-power-label .power-value { color: #00ff00; font-weight: bold; min-width: 40px; text-align: center; }
+
+    .telemetry-panel {
+      background: #000; border: 2px solid #444; border-radius: 8px;
+      min-height: 80px; padding: 10px; font-family: monospace; font-size: 0.9rem; overflow-y: auto; color: #00ff00;
+    }
+    .telemetry-line { margin: 2px 0; }
+    .telemetry-key { color: #4ec9b0; }
+
+    #hint-container { display: flex; flex-direction: column; gap: 6px; }
+    .hint {
+      display: block; background: rgba(255, 204, 0, 0.12); border-left: 4px solid var(--warn);
+      padding: 8px 10px; color: var(--warn); border-radius: 4px; font-size: 0.88rem;
+    }
+    .hint.error { background: rgba(204, 0, 0, 0.12); border-left-color: var(--danger); color: #ff6666; }
+    .hint.info { background: rgba(0, 122, 204, 0.12); border-left-color: var(--accent); color: #6db3f2; }
+
+    /* Floating Gamepad Card */
+    .gamepad-float-card {
+      position: fixed; bottom: 15px; right: 15px; width: 420px; min-width: 280px; min-height: 44px;
+      background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+      z-index: 1000; display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.5); overflow: hidden;
+    }
+    .gamepad-titlebar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 12px; background: #1a1a1a; border-bottom: 1px solid var(--border);
+      cursor: grab; user-select: none; flex-shrink: 0;
+    }
+    .gamepad-titlebar:active { cursor: grabbing; }
+    .gamepad-titlebar-label { font-weight: 700; font-size: 0.9rem; color: #fff; display: flex; align-items: center; gap: 6px; }
+    .gamepad-titlebar-label i { color: var(--accent); }
+    .gamepad-collapse-btn {
+      width: 24px; height: 24px; padding: 0; border-radius: 4px; background: #333;
+      border: 1px solid #555; color: #ccc; font-size: 0.9rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; transition: background 0.15s;
+    }
+    .gamepad-collapse-btn:hover { background: #444; }
+    .gamepad-card-body { padding: 10px; overflow: hidden; flex: 1; }
+    .gamepad-resize-handle {
+      position: absolute; bottom: 0; right: 0; width: 16px; height: 16px; cursor: nwse-resize; z-index: 10;
+    }
+    .gamepad-resize-handle::after {
+      content: ''; position: absolute; bottom: 3px; right: 3px; width: 6px; height: 6px;
+      border-right: 2px solid #666; border-bottom: 2px solid #666;
+    }
+
+    .controller-wrap {
+      width: 100%; position: relative; aspect-ratio: 768 / 512; border-radius: 14px;
+      overflow: hidden; background: #0f0f0f; box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+      touch-action: none; user-select: none;
+    }
+    .controller-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+    .overlay { position: absolute; border-radius: 50%; touch-action: none; user-select: none; }
+
+    .stick-zone-left { left: 35.5%; top: 65.5%; width: 17%; height: 24%; transform: translate(-50%, -50%); background: transparent; }
+    .stick-base-left { position: absolute; left: 35.5%; top: 65.5%; width: 14%; height: 21%; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none; box-shadow: inset 0 0 0 2px rgba(255,255,255,0.12); }
+    .stick-knob-left { position: absolute; left: 35.5%; top: 65.5%; width: 9%; height: 13%; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle at 35% 35%, #444, #121212 70%); border: 1px solid rgba(255,255,255,0.18); pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.45); }
+    .stick-zone-right { left: 64%; top: 65.5%; width: 17%; height: 24%; transform: translate(-50%, -50%); background: transparent; }
+    .stick-base-right { position: absolute; left: 64%; top: 65.5%; width: 14%; height: 21%; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none; box-shadow: inset 0 0 0 2px rgba(255,255,255,0.12); }
+    .stick-knob-right { position: absolute; left: 64%; top: 65.5%; width: 9%; height: 13%; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle at 35% 35%, #444, #121212 70%); border: 1px solid rgba(255,255,255,0.18); pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.45); }
+
+    .deadzone-overlay { position: absolute; border-radius: 50%; background: rgba(255, 204, 0, 0.15); border: 2px dashed rgba(255, 204, 0, 0.5); pointer-events: none; display: none; z-index: 1; }
+    .deadzone-overlay.visible { display: block; }
+    .deadzone-label { position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%); font-size: 0.6rem; color: var(--warn); white-space: nowrap; font-family: monospace; }
+
+    .button-overlay { border: 2px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.02); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15); transition: transform 0.05s ease, background 0.05s ease; cursor: pointer; }
+    .button-overlay.pressed { transform: scale(0.95); background: rgba(255,255,255,0.18); box-shadow: 0 0 0 2px rgba(255,255,255,0.25), inset 0 0 20px rgba(255,255,255,0.22); }
+
+    .a-btn { left: 75.5%; top: 49%; width: 7%; height: 10%; transform: translate(-10%, -10%); }
+    .b-btn { left: 83%; top: 38%; width: 7%; height: 10%; transform: translate(-10%, -10%); }
+    .x-btn { left: 68%; top: 38%; width: 7%; height: 10%; transform: translate(-10%, -10%); }
+    .y-btn { left: 75.5%; top: 27%; width: 7%; height: 10%; transform: translate(-10%, -10%); }
+
+    .small-button { width: 5.2%; height: 6.4%; border-radius: 16px; border: 2px solid rgba(255,255,255,0.14); pointer-events: auto; }
+    .back-btn { left: 37.5%; top: 28%; transform: translate(-10%, -10%); }
+    .start-btn { left: 58%; top: 28%; transform: translate(-10%, -10%); }
+
+    .bumper-btn { width: 14%; height: 6%; border-radius: 8px; border: 2px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.02); cursor: pointer; }
+    .bumper-btn.pressed { background: rgba(255,255,255,0.18); box-shadow: 0 0 0 2px rgba(255,255,255,0.25); }
+    .left-bumper-btn { left: 20%; top: 12%; transform: translate(-50%, -50%); }
+    .right-bumper-btn { left: 80%; top: 12%; transform: translate(-50%, -50%); }
+
+    .trigger-slider { position: absolute; width: 10%; height: 14%; background: rgba(0,0,0,0.4); border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); cursor: pointer; overflow: hidden; }
+    .trigger-slider-fill { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, var(--accent-2), var(--accent)); transition: height 0.05s; }
+    .left-trigger-slider { left: 21%; top: 0%; transform: translate(-50%, 0); }
+    .right-trigger-slider { left: 79%; top: 0%; transform: translate(-50%, 0); }
+
+    .dpad-container { position: absolute; left: 21.5%; top: 41%; width: 16%; height: 24%; transform: translate(-50%, -50%); pointer-events: none; }
+    .dpad-btn { position: absolute; width: 33%; height: 33%; background: rgba(40,40,40,0.8); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; pointer-events: auto; display: flex; align-items: center; justify-content: center; transition: background 0.05s; }
+    .dpad-btn:hover { background: rgba(60,60,60,0.9); }
+    .dpad-btn.pressed { background: rgba(255,255,255,0.2); box-shadow: inset 0 0 10px rgba(255,255,255,0.3); }
+    .dpad-btn svg { width: 50%; height: 50%; fill: rgba(255,255,255,0.5); }
+    .dpad-btn.pressed svg { fill: rgba(255,255,255,0.9); }
+    .dpad-up { top: 0; left: 33%; border-radius: 4px 4px 0 0; }
+    .dpad-down { bottom: 0; left: 33%; border-radius: 0 0 4px 4px; }
+    .dpad-left { left: 0; top: 33%; border-radius: 4px 0 0 4px; }
+    .dpad-right { right: 0; top: 33%; border-radius: 0 4px 4px 0; }
+    .dpad-center { position: absolute; left: 33%; top: 33%; width: 34%; height: 34%; background: rgba(30,30,30,0.9); border-radius: 2px; pointer-events: none; }
+  </style>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+<script src="./telemark-project.js"></script>
+<link rel="stylesheet" href="./telemark-project.css"/>
+  <script src="./gamepad-controls.js"></script>
+  <script src='./simulator_base.js' data-telemark-mode='legacy'></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+
+<div id="editor-container">
+  <div class="editor-header">
+    <div>
+      <div class="editor-title">Telemark Unit 5 Simulator</div>
+      <div class="editor-subtitle">Control Flow · Logic Flow · Condition Inspector · Truth Tables</div>
+    </div>
+  </div>
+  <div class="code-wrapper">
+    <textarea id="code-editor" spellcheck="false" onscroll="syncScroll(this);">@TeleOp(name="TeleOpTest", group="Practice")
+public class TeleOpTest extends OpMode {
+    @Override
+    public void init() {
+        telemetry.addData("Status", "Initialized");
+    }
+
+    @Override
+    public void loop() {
+        telemetry.addData("Status", "Running");
+    }
+
+    @Override
+    public void stop() {
+        telemetry.addData("Status", "Stopped");
+    }
+}</textarea>
+    <pre id="highlighting" aria-hidden="true"><code class="language-java" id="highlighting-content"></code></pre>
+  </div>
+</div>
+
+<div id="resizer"></div>
+
+<div id="ds-container">
+  <div class="ds-header">
+    <div class="ds-row">
+      <div class="ds-title" id="opmode-name">Select OpMode...</div>
+      <div class="ds-state" id="state-indicator">STOPPED</div>
+    </div>
+    <div class="ds-row">
+      <div style="font-size:0.85rem; color:#aaa;" id="warning-label"></div>
+      <div class="ds-timer">Time: <span id="timer-val">0.00</span>s</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="btn-main" onclick="handleMainButton()">INIT</button>
+    <button id="btn-stop" onclick="handleStopButton()">STOP</button>
+  </div>
+  <!-- Logic Flow Visualizer -->
+  <div class="panel-section">
+    <div class="panel-title"><i class="fa-solid fa-diagram-project"></i> Logic Flow Visualizer</div>
+    <div id="flowchart-container">
+      <canvas id="flowchart-canvas"></canvas>
+    </div>
+  </div>
+
+  <!-- Condition Inspector -->
+  <div class="panel-section">
+    <div class="panel-title"><i class="fa-solid fa-magnifying-glass-chart"></i> Condition Inspector</div>
+    <div id="condition-inspector"></div>
+  </div>
+
+  <!-- Truth Table -->
+  <div class="panel-section" id="truth-table-section" style="display:none;">
+    <div class="panel-title"><i class="fa-solid fa-table"></i> Truth Table</div>
+    <div id="truth-table-container"></div>
+  </div>
+
+  <div class="panel-section" id="sensor-panel" style="display:none;">
+    <div class="panel-title"><i class="fa-solid fa-sliders"></i> Mock Sensor Inputs</div>
+
+    <div class="sensor-group" id="distance-sensor-group">
+      <div class="sensor-row">
+        <span class="sensor-label">distance cm</span>
+        <input class="sensor-slider" id="distance-sensor-slider" type="range" min="0" max="30" step="0.1" value="15" />
+        <span class="sensor-value" id="distance-sensor-value">15.0</span>
+      </div>
+    </div>
+
+    <div class="sensor-group" id="color-sensor-group">
+      <div class="sensor-row">
+        <span class="sensor-label">color.blue()</span>
+        <input class="sensor-slider" id="blue-sensor-slider" type="range" min="0" max="255" step="1" value="0" />
+        <span class="sensor-value" id="blue-sensor-value">0</span>
+      </div>
+      <div class="sensor-row">
+        <span class="sensor-label">color.red()</span>
+        <input class="sensor-slider" id="red-sensor-slider" type="range" min="0" max="255" step="1" value="0" />
+        <span class="sensor-value" id="red-sensor-value">0</span>
+      </div>
+    </div>
+  </div>
+
+  
+
+  <div style="display:flex; gap:10px;">
+    <div class="motor-visual" id="motor-visual" style="flex:1;">
+      <div class="motor-spinning-container">
+        <div class="motor-housing"></div>
+        <div class="motor-stator"></div>
+        <div class="motor-rotor" id="motor-rotor">
+          <div class="rotor-arm rotor-arm-h"></div>
+          <div class="rotor-arm rotor-arm-v"></div>
+          <div class="rotor-notch"></div>
+        </div>
+        <div class="motor-hub"></div>
+      </div>
+      <div class="motor-power-label">
+        <span class="label-text">setPower(</span>
+        <span class="power-value" id="motor-power-text">0.00</span>
+        <span class="label-text">)</span>
+      </div>
+    </div>
+    <div class="telemetry-panel" id="telemetry-log" style="flex:2;">
+      <div style="color:#666; font-style:italic;">Telemetry output...</div>
+    </div>
+  </div>
+
+  <div id="hint-container"></div>
+</div>
+
+<!-- Floating Gamepad Card -->
+<div class="gamepad-float-card" id="gamepad-float-card">
+  <div class="gamepad-titlebar" id="gamepad-titlebar">
+    <span class="gamepad-titlebar-label"><i class="fa-solid fa-gamepad"></i> Gamepad 1</span>
+    <button class="gamepad-collapse-btn" id="gamepad-collapse-btn" title="Collapse/Expand">−</button>
+  </div>
+  <div class="gamepad-card-body" id="gamepad-card-body">
+    <div class="controller-wrap" id="controller-wrap">
+      <img class="controller-img" alt="FTC controller" src="https://resource.logitechg.com/w_776,h_437,ar_16:9,c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/gaming/en/products/f310/f310-feature-3.png">
+      <div class="trigger-slider left-trigger-slider" id="left-trigger-slider"><div class="trigger-slider-fill" id="left-trigger-fill"></div></div>
+      <div class="trigger-slider right-trigger-slider" id="right-trigger-slider"><div class="trigger-slider-fill" id="right-trigger-fill"></div></div>
+      <div class="overlay bumper-btn left-bumper-btn" id="btn-lb" title="Left Bumper"></div>
+      <div class="overlay bumper-btn right-bumper-btn" id="btn-rb" title="Right Bumper"></div>
+      <div class="overlay stick-zone-left" id="stick-zone-left"></div>
+      <div class="stick-base-left" id="stick-base-left"></div>
+      <div class="stick-knob-left" id="stick-knob-left"></div>
+      <div class="deadzone-overlay" id="deadzone-left"><span class="deadzone-label" id="deadzone-left-label"></span></div>
+      <div class="overlay stick-zone-right" id="stick-zone-right"></div>
+      <div class="stick-base-right" id="stick-base-right"></div>
+      <div class="stick-knob-right" id="stick-knob-right"></div>
+      <div class="deadzone-overlay" id="deadzone-right"><span class="deadzone-label" id="deadzone-right-label"></span></div>
+      <div class="overlay button-overlay y-btn" id="btn-y" title="Y"></div>
+      <div class="overlay button-overlay x-btn" id="btn-x" title="X"></div>
+      <div class="overlay button-overlay a-btn" id="btn-a-visual" title="A"></div>
+      <div class="overlay button-overlay b-btn" id="btn-b" title="B"></div>
+      <div class="overlay button-overlay small-button back-btn" id="btn-back" title="Back"></div>
+      <div class="overlay button-overlay small-button start-btn" id="btn-start" title="Start"></div>
+      <div class="dpad-container">
+        <div class="dpad-center"></div>
+        <div class="dpad-btn dpad-up" id="dpad-up" title="D-Pad Up"><svg viewBox="0 0 24 24"><path d="M12 4l-8 8h16z"/></svg></div>
+        <div class="dpad-btn dpad-down" id="dpad-down" title="D-Pad Down"><svg viewBox="0 0 24 24"><path d="M12 20l8-8H4z"/></svg></div>
+        <div class="dpad-btn dpad-left" id="dpad-left" title="D-Pad Left"><svg viewBox="0 0 24 24"><path d="M4 12l8-8v16z"/></svg></div>
+        <div class="dpad-btn dpad-right" id="dpad-right" title="D-Pad Right"><svg viewBox="0 0 24 24"><path d="M20 12l-8 8V4z"/></svg></div>
+      </div>
+    </div>
+  </div>
+  <div class="gamepad-resize-handle" id="gamepad-resize-handle"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+
+<script>
+// ─── Globals ────────────────────────────────────────────────────────────────
+var currentState = 'STOPPED', intervalId = null, timerId = null, runtimeOffset = 0;
+var declaredVars = {}, activeHints = [], parsedIfChains = [], allConditions = [];
+var deadzoneThreshold = 0;
+var mockSensors = { distanceCm: 15.0, red: 0, blue: 0 };
+
+var gamepad = {
+  left_stick_x: 0, left_stick_y: 0, right_stick_x: 0, right_stick_y: 0,
+  left_trigger: 0, right_trigger: 0,
+  a: false, b: false, x: false, y: false,
+  left_bumper: false, right_bumper: false, start: false, back: false,
+  dpad_up: false, dpad_down: false, dpad_left: false, dpad_right: false
+};
+
+var GAMEPAD_PROPS = [
+  'left_stick_x', 'left_stick_y', 'right_stick_x', 'right_stick_y',
+  'left_trigger', 'right_trigger', 'left_bumper', 'right_bumper',
+  'dpad_up', 'dpad_down', 'dpad_left', 'dpad_right', 'start', 'back', 'a', 'b', 'x', 'y'
+];
+
+var codeEditor = document.getElementById('code-editor');
+function getProjectSource(){return codeEditor.__telemarkProject ? codeEditor.__telemarkProject.source() : codeEditor.value;}
+
+function loadInitialConfig() {
+  var params = new URLSearchParams(window.location.search);
+  var starterCode = params.get('code');
+  if (starterCode) {
+    codeEditor.value = starterCode;
+  }
+
+  var showMotorVisual = params.get('showMotorVisual');
+  if (showMotorVisual !== null) {
+    var motorVisual = document.getElementById('motor-visual');
+    var normalizedMotor = showMotorVisual.trim().toLowerCase();
+    var shouldShowMotor = ['0', 'false', 'no', 'off'].indexOf(normalizedMotor) === -1;
+    if (motorVisual) {
+      motorVisual.style.display = shouldShowMotor ? '' : 'none';
+    }
+  }
+
+  var showDistanceSensor = params.get('showDistanceSensor');
+  var showColorSensor = params.get('showColorSensor');
+  var distanceVisible = showDistanceSensor && ['0', 'false', 'no', 'off'].indexOf(showDistanceSensor.trim().toLowerCase()) === -1;
+  var colorVisible = showColorSensor && ['0', 'false', 'no', 'off'].indexOf(showColorSensor.trim().toLowerCase()) === -1;
+  updateSensorPanelVisibility(!!distanceVisible, !!colorVisible);
+}
+
+// ─── Resizer ────────────────────────────────────────────────────────────────
+var resizer = document.getElementById('resizer');
+var leftPanel = document.getElementById('editor-container');
+var isResizing = false;
+resizer.addEventListener('mousedown', function() { isResizing = true; resizer.classList.add('active'); });
+document.addEventListener('mousemove', function(e) {
+  if (!isResizing) return;
+  var pct = (e.clientX / window.innerWidth) * 100;
+  if (pct > 20 && pct < 80) leftPanel.style.width = pct + '%';
+});
+document.addEventListener('mouseup', function() { isResizing = false; resizer.classList.remove('active'); });
+
+// ─── Syntax Highlighting ─────────────────────────────────────────────────────
+function updateCode(text) {
+  var el = document.getElementById('highlighting-content');
+  if (text[text.length - 1] === '\n') text += ' ';
+  el.innerHTML = text.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  Prism.highlightElement(el);
+}
+function syncScroll(el) {
+  var h = document.getElementById('highlighting');
+  h.scrollTop = el.scrollTop; h.scrollLeft = el.scrollLeft;
+}
+
+// ─── Smart Editor ────────────────────────────────────────────────────────────
+TelemarkEditor.attach(codeEditor, {
+  onChange: function(editor) {
+    updateCode(editor.value);
+    syncScroll(editor);
+  }
+});
+codeEditor.addEventListener('input', function() {
+  updateCode(codeEditor.value);
+  syncScroll(codeEditor);
+});
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function getRuntime() { return runtimeOffset === 0 ? 0 : (Date.now() - runtimeOffset) / 1000; }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+function updateSensorPanelVisibility(showDistance, showColor) {
+  var panel = document.getElementById('sensor-panel');
+  var distanceGroup = document.getElementById('distance-sensor-group');
+  var colorGroup = document.getElementById('color-sensor-group');
+
+  distanceGroup.classList.toggle('visible', showDistance);
+  colorGroup.classList.toggle('visible', showColor);
+  panel.style.display = showDistance || showColor ? '' : 'none';
+}
+
+function updateSensorDisplays() {
+  document.getElementById('distance-sensor-value').textContent = mockSensors.distanceCm.toFixed(1);
+  document.getElementById('blue-sensor-value').textContent = String(mockSensors.blue);
+  document.getElementById('red-sensor-value').textContent = String(mockSensors.red);
+}
+
+function substituteSensorValues(expr) {
+  var result = expr;
+  result = result.replace(/\b[a-zA-Z_]\w*\.getDistance\(\s*DistanceUnit\.CM\s*\)/g, '(' + mockSensors.distanceCm.toFixed(2) + ')');
+  result = result.replace(/\b[a-zA-Z_]\w*\.blue\(\s*\)/g, '(' + mockSensors.blue + ')');
+  result = result.replace(/\b[a-zA-Z_]\w*\.red\(\s*\)/g, '(' + mockSensors.red + ')');
+  result = result.replace(/\b[a-zA-Z_]\w*\.getAmountRed\(\s*\)/g, '(' + mockSensors.red + ')');
+  return result;
+}
+
+function addHint(msg, type) {
+  type = type || 'warn';
+  for (var i = 0; i < activeHints.length; i++) { if (activeHints[i].msg === msg) return; }
+  activeHints.push({ msg: msg, type: type });
+}
+
+function renderHints() {
+  var c = document.getElementById('hint-container');
+  c.innerHTML = '';
+  activeHints.forEach(function(h) {
+    var cls = 'hint';
+    if (h.type === 'error') cls += ' error';
+    else if (h.type === 'info') cls += ' info';
+    c.innerHTML += '<div class="' + cls + '">' + h.msg + '</div>';
+  });
+}
+
+// ─── Logic Evaluation Engine ─────────────────────────────────────────────────
+function substituteGamepadValues(expr) {
+  var result = expr;
+  for (var i = 0; i < GAMEPAD_PROPS.length; i++) {
+    var prop = GAMEPAD_PROPS[i];
+    var re = new RegExp('gamepad1\\.' + prop.replace(/[_]/g, '_'), 'g');
+    var val = gamepad[prop];
+    result = result.replace(re, typeof val === 'boolean' ? '(' + val + ')' : '(' + val.toFixed(4) + ')');
+  }
+  return result;
+}
+
+function substituteVars(expr) {
+  var result = expr;
+  var varNames = Object.keys(declaredVars).sort(function(a, b) { return b.length - a.length; });
+  for (var i = 0; i < varNames.length; i++) {
+    var name = varNames[i];
+    var val = declaredVars[name].value;
+    var re = new RegExp('\\b' + name + '\\b', 'g');
+    result = result.replace(re, typeof val === 'string' ? '"' + val + '"' : '(' + val + ')');
+  }
+  return result;
+}
+
+function evaluateCondition(condStr) {
+  var expr = condStr.trim();
+  expr = substituteGamepadValues(expr);
+  expr = substituteSensorValues(expr);
+  expr = substituteVars(expr);
+  expr = expr.replace(/Math\.signum/g, 'Math.sign');
+  try {
+    return !!Function('"use strict"; return (' + expr + ');')();
+  } catch (e) {
+    return false;
+  }
+}
+
+function evaluateExpression(expr) {
+  var safeExpr = expr.trim();
+  safeExpr = substituteGamepadValues(safeExpr);
+  safeExpr = substituteSensorValues(safeExpr);
+  safeExpr = substituteVars(safeExpr);
+  safeExpr = safeExpr.replace(/Math\.signum/g, 'Math.sign');
+  
+  var sqMatch = safeExpr.match(/squareInputWithSign\(([^)]+)\)/);
+  if (sqMatch) {
+    try {
+      var innerVal = Function('"use strict"; return (' + sqMatch[1] + ');')();
+      var sqResult = innerVal * innerVal * Math.sign(innerVal);
+      safeExpr = safeExpr.replace(/squareInputWithSign\([^)]+\)/, sqResult);
+    } catch(e) {}
+  }
+  
+  if (/^".*"$/.test(safeExpr)) return safeExpr.slice(1, -1);
+  try { return Function('"use strict"; return (' + safeExpr + ');')(); }
+  catch(e) { return safeExpr; }
+}
+
+function parseValue(valStr, type) {
+  if (type === 'int') { var v = parseFloat(valStr); return isNaN(v) ? 0 : Math.trunc(v); }
+  if (type === 'double') { var v2 = parseFloat(valStr); return isNaN(v2) ? 0 : v2; }
+  if (type === 'boolean') return (valStr === 'true' || valStr === true);
+  if (type === 'String') return String(valStr).replace(/^"(.*)"$/, '$1');
+  return valStr;
+}
+
+function formatValue(val, type) {
+  if (type === 'String') return '"' + val + '"';
+  if (type === 'double') return Number(val).toFixed(2);
+  if (type === 'boolean') return val ? 'true' : 'false';
+  return val;
+}
+
+// ─── If-Chain Parser ─────────────────────────────────────────────────────────
+function parseIfChains(code) {
+  var methodBody = getMethodBody(code, 'loop');
+  if (!methodBody) return [];
+  var segments = splitBodyIntoSegments(methodBody);
+  var chains = [];
+  for (var i = 0; i < segments.length; i++) {
+    if (segments[i].type === 'ifchain') chains.push(segments[i]);
+  }
+  return chains;
+}
+
+function extractAllIfConditions(code) {
+  var conditions = [];
+  var ifRe = /\bif\s*\(/g;
+  var match;
+  
+  while ((match = ifRe.exec(code)) !== null) {
+    var openIdx = code.indexOf('(', match.index);
+    if (openIdx === -1) continue;
+    
+    var depth = 1;
+    var inStr = false;
+    var strCh = null;
+    var escaped = false;
+    var i = openIdx + 1;
+    
+    for (; i < code.length; i++) {
+      var ch = code[i];
+      if (inStr) {
+        if (escaped) { escaped = false; continue; }
+        if (ch === '\\') { escaped = true; continue; }
+        if (ch === strCh) { inStr = false; strCh = null; continue; }
+        continue;
+      }
+      if (ch === '"' || ch === "'") { inStr = true; strCh = ch; continue; }
+      if (ch === '(') depth++;
+      else if (ch === ')') {
+        depth--;
+        if (depth === 0) break;
+      }
+    }
+    
+    if (depth === 0) {
+      conditions.push(code.slice(openIdx + 1, i).trim());
+      ifRe.lastIndex = i + 1;
+    }
+  }
+  
+  return conditions;
+}
+
+function normalizeCondition(cond) {
+  return cond.replace(/\s+/g, ' ').trim();
+}
+
+function extractConditions(code) {
+  var conditions = [];
+  var seen = {};
+  var all = extractAllIfConditions(code);
+  for (var i = 0; i < all.length; i++) {
+    var cond = normalizeCondition(all[i]);
+    if (!seen[cond]) {
+      seen[cond] = true;
+      conditions.push(all[i].trim());
+    }
+  }
+  return conditions;
+}
+
+// ─── Condition Breakdown ─────────────────────────────────────────────────────
+function breakdownCondition(condStr) {
+  var parts = [];
+  var result = evaluateCondition(condStr);
+  
+  // Try to parse && and || at the top level
+  var andParts = splitTopLevel(condStr, '&&');
+  var orParts = splitTopLevel(condStr, '||');
+  
+  if (andParts.length > 1) {
+    var evalParts = andParts.map(function(p) {
+      return { expr: p.trim(), value: evaluateCondition(p) };
+    });
+    return { type: 'and', parts: evalParts, result: result };
+  }
+  
+  if (orParts.length > 1) {
+    var evalParts2 = orParts.map(function(p) {
+      return { expr: p.trim(), value: evaluateCondition(p) };
+    });
+    return { type: 'or', parts: evalParts2, result: result };
+  }
+  
+  return { type: 'simple', expr: condStr, result: result };
+}
+
+function splitTopLevel(str, op) {
+  var parts = [];
+  var depth = 0;
+  var current = '';
+  var opLen = op.length;
+  
+  for (var i = 0; i < str.length; i++) {
+    var ch = str[i];
+    if (ch === '(' || ch === '[') depth++;
+    else if (ch === ')' || ch === ']') depth--;
+    
+    if (depth === 0 && str.substr(i, opLen) === op) {
+      parts.push(current);
+      current = '';
+      i += opLen - 1;
+    } else {
+      current += ch;
+    }
+  }
+  parts.push(current);
+  return parts;
+}
+
+// ─── Truth Table Generator ───────────────────────────────────────────────────
+function extractBooleanVars(condStr) {
+  var vars = [];
+  var seen = {};
+  var buttonProps = ['a', 'b', 'x', 'y', 'left_bumper', 'right_bumper', 'start', 'back', 'dpad_up', 'dpad_down', 'dpad_left', 'dpad_right'];
+  
+  for (var i = 0; i < buttonProps.length; i++) {
+    var prop = buttonProps[i];
+    var re = new RegExp('gamepad1\\.' + prop + '\\b');
+    if (re.test(condStr) && !seen[prop]) {
+      seen[prop] = true;
+      vars.push({ name: 'gamepad1.' + prop, short: prop });
+    }
+  }
+  
+  return vars;
+}
+
+function generateTruthTable(condStr, vars) {
+  if (vars.length === 0 || vars.length > 3) return null;
+  
+  var rows = [];
+  var numRows = Math.pow(2, vars.length);
+  
+  for (var i = 0; i < numRows; i++) {
+    var row = { inputs: [], result: false };
+    var testExpr = condStr;
+    
+    for (var v = 0; v < vars.length; v++) {
+      var bit = (i >> (vars.length - 1 - v)) & 1;
+      row.inputs.push(bit === 1);
+      var re = new RegExp('gamepad1\\.' + vars[v].short + '\\b', 'g');
+      testExpr = testExpr.replace(re, bit === 1 ? 'true' : 'false');
+    }
+    
+    try {
+      row.result = !!Function('"use strict"; return (' + testExpr + ');')();
+    } catch(e) {
+      row.result = false;
+    }
+    rows.push(row);
+  }
+  
+  return rows;
+}
+
+function getCurrentTruthTableRow(vars) {
+  var bits = [];
+  for (var i = 0; i < vars.length; i++) {
+    bits.push(gamepad[vars[i].short] ? 1 : 0);
+  }
+  var index = 0;
+  for (var j = 0; j < bits.length; j++) {
+    index = (index << 1) | bits[j];
+  }
+  return index;
+}
+
+// ─── Flowchart Renderer ──────────────────────────────────────────────────────
+function drawFlowchart() {
+  var canvas = document.getElementById('flowchart-canvas');
+  var container = document.getElementById('flowchart-container');
+  var ctx = canvas.getContext('2d');
+  
+  var chains = parsedIfChains;
+  if (chains.length === 0) {
+    canvas.width = container.clientWidth;
+    canvas.height = 60;
+    ctx.fillStyle = '#666';
+    ctx.font = '14px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('No if/else chains found in loop()', canvas.width / 2, 35);
+    return;
+  }
+  
+  var nodeW = 180, nodeH = 50, gapY = 30, gapX = 40;
+  var totalH = 0;
+  
+  chains.forEach(function(chain) {
+    totalH += chain.branches.length * (nodeH + gapY) + 40;
+  });
+  
+  canvas.width = container.clientWidth;
+  canvas.height = Math.max(200, totalH);
+  
+  var y = 20;
+  var centerX = canvas.width / 2;
+  
+  chains.forEach(function(chain, chainIdx) {
+    var activeBranch = -1;
+    
+    for (var b = 0; b < chain.branches.length; b++) {
+      var branch = chain.branches[b];
+      if (branch.type === 'else') {
+        if (activeBranch === -1) activeBranch = b;
+        break;
+      }
+      if (evaluateCondition(branch.condition)) {
+        activeBranch = b;
+        break;
+      }
+    }
+    
+    for (var i = 0; i < chain.branches.length; i++) {
+      var br = chain.branches[i];
+      var isActive = (i === activeBranch);
+      var x = centerX - nodeW / 2;
+      
+      ctx.save();
+      
+      if (br.type === 'else') {
+        // Rectangle for else
+        ctx.fillStyle = isActive ? '#1a3d1a' : '#1a1a1a';
+        ctx.strokeStyle = isActive ? '#00cc00' : '#444';
+        ctx.lineWidth = isActive ? 3 : 1;
+        ctx.beginPath();
+        ctx.roundRect(x, y, nodeW, nodeH, 6);
+        ctx.fill();
+        ctx.stroke();
+        
+        ctx.fillStyle = isActive ? '#00ff00' : '#666';
+        ctx.font = '12px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('else', centerX, y + nodeH / 2 + 4);
+      } else {
+        // Diamond for if/else if
+        var condResult = evaluateCondition(br.condition);
+        
+        ctx.fillStyle = isActive ? '#1a3d1a' : '#1a1a1a';
+        ctx.strokeStyle = isActive ? '#00cc00' : '#444';
+        ctx.lineWidth = isActive ? 3 : 1;
+        
+        ctx.beginPath();
+        ctx.moveTo(centerX, y);
+        ctx.lineTo(centerX + nodeW / 2, y + nodeH / 2);
+        ctx.lineTo(centerX, y + nodeH);
+        ctx.lineTo(centerX - nodeW / 2, y + nodeH / 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        
+        // Condition text
+        ctx.fillStyle = isActive ? '#fff' : '#888';
+        ctx.font = '10px monospace';
+        ctx.textAlign = 'center';
+        var condText = br.condition.length > 24 ? br.condition.substr(0, 22) + '...' : br.condition;
+        ctx.fillText((br.type === 'else if' ? 'else if: ' : 'if: ') + condText, centerX, y + nodeH / 2 + 3);
+        
+        // Result badge
+        var badgeX = centerX + nodeW / 2 + 10;
+        var badgeY = y + nodeH / 2 - 8;
+        ctx.fillStyle = condResult ? 'rgba(0,204,0,0.3)' : 'rgba(204,0,0,0.3)';
+        ctx.beginPath();
+        ctx.roundRect(badgeX, badgeY, 24, 16, 4);
+        ctx.fill();
+        ctx.fillStyle = condResult ? '#00ff00' : '#ff4444';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(condResult ? '✓' : '✗', badgeX + 12, badgeY + 12);
+      }
+      
+      ctx.restore();
+      
+      // Draw arrow to next
+      if (i < chain.branches.length - 1) {
+        ctx.strokeStyle = '#444';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(centerX, y + nodeH);
+        ctx.lineTo(centerX, y + nodeH + gapY);
+        ctx.stroke();
+        
+        // Arrow head
+        ctx.beginPath();
+        ctx.moveTo(centerX - 4, y + nodeH + gapY - 6);
+        ctx.lineTo(centerX, y + nodeH + gapY);
+        ctx.lineTo(centerX + 4, y + nodeH + gapY - 6);
+        ctx.stroke();
+      }
+      
+      y += nodeH + gapY;
+    }
+    
+    y += 20;
+  });
+}
+
+// ─── Condition Inspector UI ──────────────────────────────────────────────────
+function renderConditionInspector() {
+  var container = document.getElementById('condition-inspector');
+  if (allConditions.length === 0) {
+    container.innerHTML = '<div style="color:#666;font-style:italic;font-size:0.85rem;">No conditions found...</div>';
+    return;
+  }
+  
+  var html = '';
+  allConditions.forEach(function(cond) {
+    var breakdown = breakdownCondition(cond);
+    var result = evaluateCondition(cond);
+    
+    html += '<div class="condition-row">';
+    html += '<div class="condition-expr">' + escapeHtml(cond);
+    html += '<span class="condition-result ' + (result ? 'true' : 'false') + '">' + (result ? 'TRUE' : 'FALSE') + '</span>';
+    html += '</div>';
+    
+    if (breakdown.type === 'and' || breakdown.type === 'or') {
+      html += '<div class="condition-breakdown">';
+      breakdown.parts.forEach(function(p, idx) {
+        if (idx > 0) {
+          html += ' <span class="op">' + (breakdown.type === 'and' ? 'AND' : 'OR') + '</span> ';
+        }
+        html += '<span class="' + (p.value ? 'val-true' : 'val-false') + '">' + escapeHtml(p.expr) + '</span>';
+      });
+      html += ' = <span class="' + (breakdown.result ? 'val-true' : 'val-false') + '">' + breakdown.result + '</span>';
+      html += '</div>';
+    }
+    
+    html += '</div>';
+  });
+  
+  container.innerHTML = html;
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ─── Truth Table UI ──────────────────────────────────────────────────────────
+function renderTruthTable() {
+  var section = document.getElementById('truth-table-section');
+  var container = document.getElementById('truth-table-container');
+  
+  // Find first simple boolean condition
+  var targetCond = null;
+  var targetVars = null;
+  
+  for (var i = 0; i < allConditions.length; i++) {
+    var cond = allConditions[i];
+    // Only pure boolean conditions without Math or comparisons
+    if (!/Math\.|[<>]=?|==|!=/.test(cond)) {
+      var vars = extractBooleanVars(cond);
+      if (vars.length > 0 && vars.length <= 3) {
+        targetCond = cond;
+        targetVars = vars;
+        break;
+      }
+    }
+  }
+  
+  if (!targetCond) {
+    section.style.display = 'none';
+    return;
+  }
+  
+  section.style.display = 'block';
+  var table = generateTruthTable(targetCond, targetVars);
+  if (!table) {
+    container.innerHTML = '<div class="truth-table-note">Too many variables for truth table — simplify your condition</div>';
+    return;
+  }
+  
+  var currentRow = getCurrentTruthTableRow(targetVars);
+  
+  var html = '<table class="truth-table"><thead><tr>';
+  targetVars.forEach(function(v) {
+    html += '<th>' + v.short + '</th>';
+  });
+  html += '<th>Result</th></tr></thead><tbody>';
+  
+  table.forEach(function(row, idx) {
+    html += '<tr class="' + (idx === currentRow ? 'active' : '') + '">';
+    row.inputs.forEach(function(inp) {
+      html += '<td class="' + (inp ? 'val-t' : 'val-f') + '">' + (inp ? 'T' : 'F') + '</td>';
+    });
+    html += '<td class="' + (row.result ? 'val-t' : 'val-f') + '">' + (row.result ? 'T' : 'F') + '</td>';
+    html += '</tr>';
+  });
+  
+  html += '</tbody></table>';
+  html += '<div style="font-size:0.75rem;color:#666;margin-top:6px;">Condition: ' + escapeHtml(targetCond) + '</div>';
+  
+  container.innerHTML = html;
+}
+
+// ─── Static Analysis ─────────────────────────────────────────────────────────
+function runStaticAnalysis() {
+  var code = getProjectSource();
+  activeHints = [];
+  declaredVars = {};
+  deadzoneThreshold = 0;
+  
+  if (!/@TeleOp|@Autonomous/.test(code)) {
+    addHint("Your class won't appear on the Driver Station without an annotation.");
+  }
+  
+  var nameMatch = /@(?:TeleOp|Autonomous)\s*\(\s*name\s*=\s*"([^"]+)"/.exec(code);
+  document.getElementById('opmode-name').textContent = nameMatch ? nameMatch[1] : 'Unnamed OpMode';
+  document.getElementById('warning-label').textContent = /@Disabled/.test(code) ? '<i class="fa-solid fa-triangle-exclamation"></i> @Disabled' : '';
+  
+  // Hint: Assignment in condition
+  if (/if\s*\([^=]*[^!=<>]=[^=][^)]*\)/.test(code) && !/if\s*\([^)]*==[^)]*\)/.test(code)) {
+    // Check more carefully for single =
+    var assignInCond = code.match(/if\s*\(\s*\w+\s*=\s*[^=]/);
+    if (assignInCond) {
+      addHint("Single = is assignment not comparison — use == instead", 'error');
+    }
+  }
+  
+  // Hint: Redundant comparison
+  if (/!\s*gamepad1\.\w+\s*==\s*true/.test(code) || /gamepad1\.\w+\s*==\s*true/.test(code)) {
+    addHint("Redundant comparison — just use gamepad1.button or !gamepad1.button directly");
+  }
+  
+  // Hint: Identical conditions
+  var ifConditions = [];
+  var extractedIfConditions = extractAllIfConditions(code);
+  for (var ic = 0; ic < extractedIfConditions.length; ic++) {
+    var c = normalizeCondition(extractedIfConditions[ic]);
+    if (ifConditions.indexOf(c) !== -1) {
+      addHint("Identical conditions detected — the second will never execute", 'error');
+      break;
+    }
+    ifConditions.push(c);
+  }
+  
+  // Hint: Deep nesting
+  var maxDepth = 0, depth = 0;
+  for (var i = 0; i < code.length; i++) {
+    if (code[i] === '{') { depth++; if (depth > maxDepth) maxDepth = depth; }
+    else if (code[i] === '}') depth--;
+  }
+  if (maxDepth > 6) {
+    addHint("Consider extracting nested logic into boolean variables for readability");
+  }
+  
+  // Detect deadzone
+  var dzMatch = code.match(/Math\.abs\s*\(\s*\w+\s*\)\s*<\s*([\d.]+)/);
+  if (dzMatch) deadzoneThreshold = parseFloat(dzMatch[1]);
+  
+  // Negation hint
+  if (/-\s*gamepad1\.left_stick_y/.test(code) || /-1\s*\*\s*gamepad1\.left_stick_y/.test(code)) {
+    addHint("Y-axis negated: pushing stick up gives positive power", 'info');
+  }
+  
+  // Parse variables
+  var declRegex = /(String|double|boolean|int)\s+([a-zA-Z_]\w*)\s*(?:=\s*([^;]+))?;/g;
+  var match;
+  while ((match = declRegex.exec(code)) !== null) {
+    var type = match[1], name = match[2];
+    var rawVal = match[3] || (type === 'String' ? '""' : (type === 'boolean' ? 'false' : '0'));
+    var val = evaluateExpression(rawVal);
+    declaredVars[name] = { type: type, value: parseValue(val, type) };
+  }
+  
+  // Parse if chains and conditions
+  parsedIfChains = parseIfChains(code);
+  allConditions = extractConditions(code);
+  
+  renderHints();
+  updateDeadzoneOverlays();
+  drawFlowchart();
+  renderConditionInspector();
+  renderTruthTable();
+}
+
+// ─── Method Execution ────────────────────────────────────────────────────────
+function getMethodBody(code, methodName) {
+  var headerRe = new RegExp('\\bvoid\\s+' + methodName + '\\s*\\([^)]*\\)\\s*\\{', 'm');
+  var headerMatch = headerRe.exec(code);
+  if (!headerMatch) return null;
+  var idx = headerMatch.index + headerMatch[0].length;
+  var depth = 1;
+  for (; idx < code.length; idx++) {
+    if (code[idx] === '{') depth++;
+    else if (code[idx] === '}') { if (--depth === 0) return code.slice(headerMatch.index + headerMatch[0].length, idx); }
+  }
+  return null;
+}
+
+function executeMethod(methodName) {
+  if (window.TelemarkSimulatorBase) {
+    var sharedSource = getProjectSource();
+    if (methodName === 'init' || window.__telemarkUnit5Source !== sharedSource) {
+      var sharedTelemetry = [];
+      window.__telemarkUnit5Runtime = TelemarkSimulatorBase.createRuntime({
+        gamepad: gamepad,
+        getRuntime: getRuntime,
+        resetRuntime: function() { runtimeOffset = Date.now(); },
+        onPower: function(power) { updateMotorVisual(power); },
+        onTelemetry: function(key, value) {
+          sharedTelemetry.push('<div class="telemetry-line"><span class="telemetry-key">' + key + '</span>: ' + String(value) + '</div>');
+        },
+        onTelemetryClear: function(event) {
+          sharedTelemetry.length = 0;
+          if (!event || !event.automatic) document.getElementById('telemetry-log').innerHTML = '';
+        },
+        onTelemetryUpdate: function() {
+          if (sharedTelemetry.length) document.getElementById('telemetry-log').innerHTML = sharedTelemetry.join('');
+        }
+      });
+      window.__telemarkUnit5Program = TelemarkSimulatorBase.compileStudentSource(sharedSource, window.__telemarkUnit5Runtime);
+      window.__telemarkUnit5Source = sharedSource;
+      if (!window.__telemarkUnit5Program.ok) {
+        var sharedDiagnostic = window.__telemarkUnit5Program.diagnostics[0];
+        return failJavaExecution(
+          'Java compile error',
+          new Error(sharedDiagnostic.message + ' (line ' + sharedDiagnostic.line + ', column ' + sharedDiagnostic.column + ')')
+        );
+      }
+    }
+    if (!window.__telemarkUnit5Program || !window.__telemarkUnit5Program.ok) return false;
+    var sharedMethod = window.__telemarkUnit5Program.methods[methodName];
+    try {
+      if (sharedMethod) {
+        if (methodName === 'loop' || methodName === 'init_loop') window.__telemarkUnit5Runtime.clearTelemetry();
+        sharedMethod();
+        window.__telemarkUnit5Runtime.updateTelemetry();
+      }
+    } catch (error) {
+      return failJavaExecution(methodName + '() runtime error', error);
+    }
+    Object.keys(window.__telemarkUnit5Program.scope || {}).forEach(function(name) {
+      if (declaredVars[name]) declaredVars[name].value = window.__telemarkUnit5Program.scope[name];
+    });
+    drawFlowchart();
+    renderConditionInspector();
+    renderTruthTable();
+    return true;
+  }
+
+  var code = getProjectSource();
+  var body = getMethodBody(code, methodName);
+  if (!body) return true;
+
+  // Walk through the method body top-to-bottom, executing statements in order.
+  // If-chains are resolved to their active branch; everything else runs directly.
+  var segments = splitBodyIntoSegments(body);
+  var telemetryLines = [];
+
+  for (var s = 0; s < segments.length; s++) {
+    var seg = segments[s];
+    if (seg.type === 'ifchain') {
+      // Find active branch
+      var activeBranch = null;
+      for (var b = 0; b < seg.branches.length; b++) {
+        var br = seg.branches[b];
+        if (br.type === 'else') { activeBranch = br; break; }
+        if (evaluateCondition(br.condition)) { activeBranch = br; break; }
+      }
+      if (activeBranch) {
+        executeLines(activeBranch.body, telemetryLines);
+      }
+    } else {
+      // Plain code line
+      executeLines(seg.code, telemetryLines);
+    }
+  }
+
+  if (telemetryLines.length > 0) {
+    document.getElementById('telemetry-log').innerHTML = telemetryLines.join('');
+  }
+
+  drawFlowchart();
+  renderConditionInspector();
+  renderTruthTable();
+  return true;
+}
+
+// Split a method body into an ordered list of plain-code segments and if-chain segments.
+function splitBodyIntoSegments(body) {
+  var segments = [];
+  var lines = body.split('\n');
+  var plainBuf = '';
+  var i = 0;
+
+  while (i < lines.length) {
+    var line = lines[i];
+    var trimmed = line.trim();
+
+    // Detect start of an if-chain
+    var ifStart = trimmed.match(/^if\s*\(/);
+    if (ifStart) {
+      // Flush accumulated plain code
+      if (plainBuf.trim()) {
+        segments.push({ type: 'plain', code: plainBuf });
+        plainBuf = '';
+      }
+      // Parse the full if / else-if / else chain
+      var chain = { type: 'ifchain', branches: [] };
+      var result = parseOneIfChain(lines, i);
+      chain.branches = result.branches;
+      segments.push(chain);
+      i = result.nextLine;
+      continue;
+    }
+
+    plainBuf += line + '\n';
+    i++;
+  }
+
+  if (plainBuf.trim()) {
+    segments.push({ type: 'plain', code: plainBuf });
+  }
+  return segments;
+}
+
+// Parse one complete if / else-if / else chain starting at line index i.
+// Returns { branches: [...], nextLine: int }
+function parseOneIfChain(lines, startIdx) {
+  var branches = [];
+  var i = startIdx;
+
+  while (i < lines.length) {
+    var trimmed = lines[i].trim();
+
+    // Match: if (COND) { — or — } else if (COND) {
+    // The condition may contain nested parens like Math.abs(x) < 0.1 && Math.abs(y) < 0.1
+    // so we extract the condition using balanced-paren scanning instead of a simple regex.
+    var ifKindMatch = trimmed.match(/^(?:}\s*)?(?:else\s+)?if\s*\(/);
+    if (ifKindMatch) {
+      var btype = /else\s+if/.test(trimmed) ? 'else if' : 'if';
+      // If this is a new top-level `if` but we already have branches, it's a separate chain — stop.
+      if (btype === 'if' && branches.length > 0) break;
+
+      // Extract condition with balanced parens
+      var condStart = trimmed.indexOf('(', ifKindMatch[0].length - 1);
+      var condStr = extractBalancedParen(trimmed, condStart);
+      if (condStr !== null) {
+        i++;
+        // Check if opening { is on this line or if the line ended without one
+        var afterCond = trimmed.substring(condStart + condStr.length + 2).trim(); // +2 for ( and )
+        if (afterCond === '{' || afterCond === '') {
+          var bodyResult = collectBranchBody(lines, i);
+          branches.push({ type: btype, condition: condStr, body: bodyResult.body });
+          i = bodyResult.nextLine;
+          // Check if the closing line had else/else-if on it
+          if (bodyResult.closingLine) {
+            // Insert it so the next iteration can process it
+            lines.splice(i, 0, bodyResult.closingLine);
+          }
+          continue;
+        }
+      }
+      // Condition incomplete (user mid-typing) — skip this line
+      i++;
+      break;
+    }
+
+    // Match else blocks in any of these forms:
+    //   } else {
+    //   else {
+    //   } else
+    //   else
+    if (/^(?:}\s*)?else(?:\s*\{)?\s*$/.test(trimmed) && branches.length > 0) {
+      i++;
+      // If the opening brace is not on this same line, skip a standalone next-line '{'
+      if (!/\{/.test(trimmed)) {
+        if (i < lines.length && lines[i].trim() === '{') i++;
+      }
+      var elseBodyResult = collectBranchBody(lines, i);
+      branches.push({ type: 'else', condition: null, body: elseBodyResult.body });
+      i = elseBodyResult.nextLine;
+      if (elseBodyResult.closingLine) {
+        lines.splice(i, 0, elseBodyResult.closingLine);
+      }
+      continue;
+    }
+
+    // Match closing } with nothing else — end of chain
+    if (/^}/.test(trimmed) && branches.length > 0) {
+      // Check if there's else/else-if text after the }
+      var afterBrace = trimmed.substring(trimmed.indexOf('}') + 1).trim();
+      if (afterBrace) {
+        // Re-process this remainder (e.g. "} else if (...) {" was not caught above)
+        lines[i] = afterBrace;
+        continue;
+      }
+      i++;
+      // Peek ahead for else / else-if on next line
+      if (i < lines.length) {
+        var next = lines[i].trim();
+        if (/^else\s+if\s*\(/.test(next) || /^else/.test(next)) {
+          continue;
+        }
+      }
+      break;
+    }
+
+    // Nothing matched — skip and break
+    if (branches.length === 0) {
+      i++;
+    }
+    break;
+  }
+
+  // Guarantee forward progress
+  if (i <= startIdx) i = startIdx + 1;
+
+  return { branches: branches, nextLine: i };
+}
+
+// Extract the content inside balanced parentheses starting at position parenIdx.
+// Returns the string inside the parens (excluding the parens themselves), or null if unbalanced.
+function extractBalancedParen(str, parenIdx) {
+  if (str[parenIdx] !== '(') return null;
+  var depth = 1;
+  var start = parenIdx + 1;
+  for (var j = start; j < str.length; j++) {
+    if (str[j] === '(') depth++;
+    else if (str[j] === ')') {
+      depth--;
+      if (depth === 0) return str.substring(start, j);
+    }
+  }
+  return null; // unbalanced
+}
+
+// Collect lines of a brace-delimited block body starting after the opening {.
+// Returns { body: string, nextLine: int, closingLine: string|null }
+// closingLine is set if the closing } line had extra text after it (like "} else if ...")
+function collectBranchBody(lines, startIdx) {
+  var depth = 1;
+  var bodyLines = [];
+  var i = startIdx;
+  var closingLine = null;
+
+  for (; i < lines.length; i++) {
+    var line = lines[i];
+    for (var c = 0; c < line.length; c++) {
+      if (line[c] === '{') depth++;
+      else if (line[c] === '}') {
+        depth--;
+        if (depth <= 0) {
+          // Check if there's text after the closing } (like "} else if ..." or "} else {")
+          var remainder = line.substring(c + 1).trim();
+          if (remainder) {
+            closingLine = remainder;
+          }
+          i++;
+          return { body: bodyLines.join('\n'), nextLine: i, closingLine: closingLine };
+        }
+      }
+    }
+    bodyLines.push(line);
+  }
+
+  return { body: bodyLines.join('\n'), nextLine: i, closingLine: null };
+}
+
+// Execute plain code lines — handles assignments, telemetry, motor, deadzone if-guards
+function executeLines(codeBlock, telemetryLines) {
+  var stmts = codeBlock.split(';');
+  for (var si = 0; si < stmts.length; si++) {
+    var line = stmts[si].replace(/[\n\r]/g, ' ').trim();
+    if (!line) continue;
+
+    // Deadzone-style: if (Math.abs(x) < 0.1) x = 0
+    var dzInline = line.match(/^if\s*\(\s*Math\.abs\s*\(\s*(\w+)\s*\)\s*<\s*([\d.]+)\s*\)\s*(\w+)\s*=\s*(.+)$/);
+    if (dzInline) {
+      var dzTestVar = dzInline[1], dzThresh = parseFloat(dzInline[2]);
+      var dzAssignVar = dzInline[3], dzAssignVal = dzInline[4];
+      var dzCurrent = declaredVars[dzTestVar] ? declaredVars[dzTestVar].value : evaluateExpression(dzTestVar);
+      if (typeof dzCurrent === 'number' && Math.abs(dzCurrent) < dzThresh) {
+        var dzVal = evaluateExpression(dzAssignVal);
+        if (declaredVars[dzAssignVar]) declaredVars[dzAssignVar].value = parseValue(dzVal, declaredVars[dzAssignVar].type);
+      }
+      continue;
+    }
+
+    // Variable assignment
+    var assignMatch = line.match(/^(?:String|double|boolean|int)?\s*([a-zA-Z_]\w*)\s*=\s*(.+)$/);
+    if (assignMatch) {
+      var varName = assignMatch[1], expr = assignMatch[2];
+      var val = evaluateExpression(expr);
+      if (declaredVars[varName]) {
+        declaredVars[varName].value = parseValue(val, declaredVars[varName].type);
+      } else {
+        declaredVars[varName] = { type: 'double', value: val };
+      }
+    }
+
+    // Motor power
+    var powerMatch = line.match(/\.setPower\(([^)]+)\)/);
+    if (powerMatch) updateMotorVisual(evaluateExpression(powerMatch[1].trim()));
+
+    // Telemetry
+    var lineMatch = line.match(/telemetry\.addLine\s*\(\s*"([^"]*)"\s*\)/);
+    if (lineMatch) {
+      telemetryLines.push('<div class="telemetry-line">' + escapeHtml(lineMatch[1]) + '</div>');
+    }
+
+    // Telemetry
+    var telMatch = line.match(/telemetry\.addData\s*\(\s*"([^"]+)"\s*,\s*([^)]+)\s*\)/);
+    if (telMatch) {
+      var key = telMatch[1], param = telMatch[2].trim();
+      var tval = evaluateExpression(param);
+      if (typeof tval === 'number' && !Number.isInteger(tval)) tval = tval.toFixed(2);
+      if (typeof tval === 'boolean') tval = tval ? 'true' : 'false';
+      telemetryLines.push('<div class="telemetry-line"><span class="telemetry-key">' + key + '</span>: ' + tval + '</div>');
+    }
+  }
+}
+
+// ─── Deadzone Overlay ────────────────────────────────────────────────────────
+function updateDeadzoneOverlays() {
+  var leftDz = document.getElementById('deadzone-left');
+  var rightDz = document.getElementById('deadzone-right');
+  var leftLabel = document.getElementById('deadzone-left-label');
+  var rightLabel = document.getElementById('deadzone-right-label');
+  
+  if (deadzoneThreshold > 0) {
+    var pct = deadzoneThreshold * 100;
+    var dzW = deadzoneThreshold * 14, dzH = deadzoneThreshold * 21;
+    
+    leftDz.classList.add('visible');
+    leftDz.style.cssText = 'left:35.5%;top:65.5%;width:' + dzW + '%;height:' + dzH + '%;transform:translate(-50%,-50%);';
+    leftLabel.textContent = 'Deadzone: ±' + pct.toFixed(0) + '%';
+    
+    rightDz.classList.add('visible');
+    rightDz.style.cssText = 'left:64%;top:65.5%;width:' + dzW + '%;height:' + dzH + '%;transform:translate(-50%,-50%);';
+    rightLabel.textContent = 'Deadzone: ±' + pct.toFixed(0) + '%';
+  } else {
+    leftDz.classList.remove('visible');
+    rightDz.classList.remove('visible');
+  }
+}
+
+// ─── Motor Visual ────────────────────────────────────────────────────────────
+function updateMotorVisual(power) {
+  var p = parseFloat(power);
+  if (isNaN(p)) p = 0;
+  p = Math.max(-1, Math.min(1, p));
+  
+  var rotor = document.getElementById('motor-rotor');
+  var powerText = document.getElementById('motor-power-text');
+  powerText.innerText = p.toFixed(2);
+  powerText.style.color = p === 0 ? '#888' : (p > 0 ? '#00ff00' : '#ffcc00');
+  
+  if (Math.abs(p) < 0.001) {
+    rotor.className = 'motor-rotor';
+    rotor.style.removeProperty('--spin-duration');
+  } else {
+    var duration = Math.max(0.15, 0.3 / Math.abs(p));
+    rotor.style.setProperty('--spin-duration', duration + 's');
+    rotor.className = 'motor-rotor ' + (p > 0 ? 'spinning-cw' : 'spinning-ccw');
+  }
+}
+
+// ─── Lifecycle ───────────────────────────────────────────────────────────────
+function setLifecycle(s, color, btnLabel) {
+  currentState = s;
+  document.getElementById('state-indicator').textContent = s;
+  document.getElementById('state-indicator').style.color = color;
+  var btn = document.getElementById('btn-main');
+  btn.textContent = btnLabel;
+  btn.disabled = (s === 'RUNNING');
+  if (s === 'RUNNING') {
+    timerId = setInterval(function() { document.getElementById('timer-val').textContent = getRuntime().toFixed(2); }, 50);
+  }
+}
+
+function stopAllIntervals() { clearInterval(intervalId); clearInterval(timerId); intervalId = timerId = null; }
+
+function failJavaExecution(context, error) {
+  stopAllIntervals();
+  runtimeOffset = 0;
+  document.getElementById('timer-val').textContent = '0.00';
+  updateMotorVisual(0);
+  document.getElementById('telemetry-log').textContent =
+    context + ': ' + (error && error.message ? error.message : String(error));
+  setLifecycle('STOPPED', '#cc0000', 'INIT');
+  return false;
+}
+
+function handleMainButton() {
+  if (currentState === 'STOPPED') {
+    runStaticAnalysis();
+    document.getElementById('telemetry-log').innerHTML = '';
+    document.getElementById('timer-val').textContent = '0.00';
+    runtimeOffset = 0; updateMotorVisual(0);
+    if (!executeMethod('init')) return;
+    setLifecycle('INIT_LOOP', '#ffcc00', 'START');
+    intervalId = setInterval(function() { executeMethod('init_loop'); }, 100);
+  } else if (currentState === 'INIT_LOOP') {
+    stopAllIntervals();
+    if (!executeMethod('start')) return;
+    if (runtimeOffset === 0) runtimeOffset = Date.now();
+    setLifecycle('RUNNING', '#00ff00', 'RUNNING');
+    intervalId = setInterval(function() { executeMethod('loop'); }, 100);
+  }
+}
+
+function handleStopButton() {
+  if (currentState === 'STOPPED') return;
+  stopAllIntervals();
+  executeMethod('stop');
+  runtimeOffset = 0;
+  document.getElementById('timer-val').textContent = '0.00';
+  updateMotorVisual(0);
+  setLifecycle('STOPPED', '#cc0000', 'INIT');
+}
+
+// Fallback only: simulator_base owns gamepad input and card interactions.
+if (!window.TelemarkSimulatorBase) {
+// ─── Gamepad Controls ────────────────────────────────────────────────────────
+function setButtonState(prop, pressed, elementId) {
+  gamepad[prop] = pressed;
+  var el = document.getElementById(elementId);
+  if (el) el.classList.toggle('pressed', pressed);
+  if (currentState === 'RUNNING') {
+    drawFlowchart();
+    renderConditionInspector();
+    renderTruthTable();
+  }
+}
+
+var buttonMap = [
+  ['btn-a-visual', 'a'], ['btn-b', 'b'], ['btn-x', 'x'], ['btn-y', 'y'],
+  ['btn-lb', 'left_bumper'], ['btn-rb', 'right_bumper'],
+  ['btn-back', 'back'], ['btn-start', 'start'],
+  ['dpad-up', 'dpad_up'], ['dpad-down', 'dpad_down'],
+  ['dpad-left', 'dpad_left'], ['dpad-right', 'dpad_right']
+];
+
+buttonMap.forEach(function(pair) {
+  var id = pair[0], prop = pair[1];
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('pointerdown', function(e) { e.preventDefault(); setButtonState(prop, true, id); });
+  el.addEventListener('pointerup', function() { setButtonState(prop, false, id); });
+  el.addEventListener('pointerleave', function() { setButtonState(prop, false, id); });
+  el.addEventListener('pointercancel', function() { setButtonState(prop, false, id); });
+});
+
+// ─── Trigger Sliders ─────────────────────────────────────────────────────────
+function setupTriggerSlider(sliderId, fillId, prop) {
+  var slider = document.getElementById(sliderId);
+  var fill = document.getElementById(fillId);
+  var isDragging = false;
+  
+  function updateTrigger(e) {
+    var rect = slider.getBoundingClientRect();
+    var y = e.clientY - rect.top;
+    var pct = 1 - Math.max(0, Math.min(1, y / rect.height));
+    gamepad[prop] = pct;
+    fill.style.height = (pct * 100) + '%';
+  }
+  
+  slider.addEventListener('pointerdown', function(e) {
+    isDragging = true;
+    slider.setPointerCapture(e.pointerId);
+    updateTrigger(e);
+  });
+  slider.addEventListener('pointermove', function(e) { if (isDragging) updateTrigger(e); });
+  slider.addEventListener('pointerup', function() { isDragging = false; gamepad[prop] = 0; fill.style.height = '0%'; });
+  slider.addEventListener('pointercancel', function() { isDragging = false; gamepad[prop] = 0; fill.style.height = '0%'; });
+}
+
+setupTriggerSlider('left-trigger-slider', 'left-trigger-fill', 'left_trigger');
+setupTriggerSlider('right-trigger-slider', 'right-trigger-fill', 'right_trigger');
+
+// ─── Joysticks ───────────────────────────────────────────────────────────────
+var controllerWrap = document.getElementById('controller-wrap');
+var sticks = {
+  left: {
+    zone: document.getElementById('stick-zone-left'),
+    knob: document.getElementById('stick-knob-left'),
+    defaultL: '35.5%', defaultT: '65.5%',
+    dragging: false, pointerId: null,
+    setValues: function(sx, sy) {
+      gamepad.left_stick_x = sx;
+      gamepad.left_stick_y = sy;
+      if (currentState === 'RUNNING') { drawFlowchart(); renderConditionInspector(); }
+    }
+  },
+  right: {
+    zone: document.getElementById('stick-zone-right'),
+    knob: document.getElementById('stick-knob-right'),
+    defaultL: '64%', defaultT: '65.5%',
+    dragging: false, pointerId: null,
+    setValues: function(sx, sy) {
+      gamepad.right_stick_x = sx;
+      gamepad.right_stick_y = sy;
+    }
+  }
+};
+
+function resetStick(stick) {
+  stick.dragging = false;
+  stick.pointerId = null;
+  stick.setValues(0, 0);
+  stick.knob.style.left = stick.defaultL;
+  stick.knob.style.top = stick.defaultT;
+  stick.knob.style.transform = 'translate(-50%, -50%)';
+}
+
+function updateStickFromPointer(stick, clientX, clientY) {
+  var wrapRect = controllerWrap.getBoundingClientRect();
+  var zoneRect = stick.zone.getBoundingClientRect();
+  var centerX = zoneRect.left + zoneRect.width / 2;
+  var centerY = zoneRect.top + zoneRect.height / 2;
+  var dx = clientX - centerX, dy = clientY - centerY;
+  var maxR = Math.min(zoneRect.width, zoneRect.height) * 0.36;
+  var dist = Math.hypot(dx, dy), scale = dist > maxR ? maxR / dist : 1;
+  var clampedDx = dx * scale, clampedDy = dy * scale;
+  
+  // Screen Y and FTC stick Y use the same sign: up is negative.
+  stick.setValues(clamp(clampedDx / maxR, -1, 1), clamp(clampedDy / maxR, -1, 1));
+  
+  var knobCx = (zoneRect.left - wrapRect.left + zoneRect.width / 2 + clampedDx) / wrapRect.width * 100;
+  var knobCy = (zoneRect.top - wrapRect.top + zoneRect.height / 2 + clampedDy) / wrapRect.height * 100;
+  stick.knob.style.left = knobCx + '%';
+  stick.knob.style.top = knobCy + '%';
+  stick.knob.style.transform = 'translate(-50%, -50%)';
+}
+
+Object.values(sticks).forEach(function(stick) {
+  stick.zone.addEventListener('pointerdown', function(e) {
+    e.preventDefault();
+    stick.dragging = true;
+    stick.pointerId = e.pointerId;
+    stick.zone.setPointerCapture(e.pointerId);
+    updateStickFromPointer(stick, e.clientX, e.clientY);
+  });
+});
+
+window.addEventListener('pointermove', function(e) {
+  Object.values(sticks).forEach(function(stick) {
+    if (stick.dragging && stick.pointerId === e.pointerId) updateStickFromPointer(stick, e.clientX, e.clientY);
+  });
+});
+
+function handlePointerEnd(e) {
+  Object.values(sticks).forEach(function(stick) {
+    if (stick.dragging && stick.pointerId === e.pointerId) resetStick(stick);
+  });
+}
+window.addEventListener('pointerup', handlePointerEnd);
+window.addEventListener('pointercancel', handlePointerEnd);
+window.addEventListener('blur', function() { Object.values(sticks).forEach(resetStick); });
+}
+
+function setupSensorSlider(sliderId, valueId, prop, formatter) {
+  var slider = document.getElementById(sliderId);
+  if (!slider) return;
+
+  slider.addEventListener('input', function() {
+    var rawValue = slider.value;
+    mockSensors[prop] = prop === 'distanceCm' ? parseFloat(rawValue) : parseInt(rawValue, 10);
+    document.getElementById(valueId).textContent = formatter(mockSensors[prop]);
+    if (currentState === 'RUNNING') {
+      drawFlowchart();
+      renderConditionInspector();
+      renderTruthTable();
+    }
+  });
+}
+
+setupSensorSlider('distance-sensor-slider', 'distance-sensor-value', 'distanceCm', function(value) {
+  return value.toFixed(1);
+});
+setupSensorSlider('blue-sensor-slider', 'blue-sensor-value', 'blue', function(value) {
+  return String(value);
+});
+setupSensorSlider('red-sensor-slider', 'red-sensor-value', 'red', function(value) {
+  return String(value);
+});
+
+if (!window.TelemarkSimulatorBase) {
+// ─── Floating Gamepad Card ───────────────────────────────────────────────────
+(function() {
+  var card = document.getElementById('gamepad-float-card');
+  var titlebar = document.getElementById('gamepad-titlebar');
+  var collapseBtn = document.getElementById('gamepad-collapse-btn');
+  var cardBody = document.getElementById('gamepad-card-body');
+  var resizeHandle = document.getElementById('gamepad-resize-handle');
+  
+  var isCollapsed = false, savedW = null, savedH = null;
+  
+  collapseBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    isCollapsed = !isCollapsed;
+    if (isCollapsed) {
+      savedW = card.style.width || null;
+      savedH = card.style.height || null;
+      cardBody.style.display = 'none';
+      resizeHandle.style.display = 'none';
+      card.style.height = 'auto';
+      collapseBtn.textContent = '+';
+    } else {
+      cardBody.style.display = '';
+      resizeHandle.style.display = '';
+      if (savedW) card.style.width = savedW;
+      if (savedH) card.style.height = savedH;
+      collapseBtn.textContent = '−';
+    }
+  });
+  
+  var isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
+  titlebar.addEventListener('pointerdown', function(e) {
+    if (e.target === collapseBtn) return;
+    isDragging = true;
+    var rect = card.getBoundingClientRect();
+    dragOffsetX = e.clientX - rect.left;
+    dragOffsetY = e.clientY - rect.top;
+    titlebar.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  titlebar.addEventListener('pointermove', function(e) {
+    if (!isDragging) return;
+    var newX = Math.max(0, Math.min(window.innerWidth - card.offsetWidth, e.clientX - dragOffsetX));
+    var newY = Math.max(0, Math.min(window.innerHeight - 44, e.clientY - dragOffsetY));
+    card.style.left = newX + 'px';
+    card.style.top = newY + 'px';
+    card.style.right = 'auto';
+    card.style.bottom = 'auto';
+  });
+  titlebar.addEventListener('pointerup', function() { isDragging = false; });
+  titlebar.addEventListener('pointercancel', function() { isDragging = false; });
+  
+  var isCardResizing = false, resizeStartX = 0, resizeStartY = 0, resizeStartW = 0, resizeStartH = 0;
+  resizeHandle.addEventListener('pointerdown', function(e) {
+    isCardResizing = true;
+    resizeStartX = e.clientX; resizeStartY = e.clientY;
+    resizeStartW = card.offsetWidth; resizeStartH = card.offsetHeight;
+    resizeHandle.setPointerCapture(e.pointerId);
+    e.preventDefault(); e.stopPropagation();
+  });
+  resizeHandle.addEventListener('pointermove', function(e) {
+    if (!isCardResizing) return;
+    var dx = e.clientX - resizeStartX, dy = e.clientY - resizeStartY;
+    card.style.width = Math.max(280, resizeStartW + dx) + 'px';
+    card.style.height = Math.max(100, resizeStartH + dy) + 'px';
+  });
+  resizeHandle.addEventListener('pointerup', function() { isCardResizing = false; });
+  resizeHandle.addEventListener('pointercancel', function() { isCardResizing = false; });
+})();
+}
+
+// ─── Boot ────────────────────────────────────────────────────────────────────
+window.addEventListener('load', function() {
+  loadInitialConfig();
+  updateCode(codeEditor.value);
+  updateSensorDisplays();
+});
+
+// Live update on gamepad changes
+setInterval(function() {
+  if (currentState === 'RUNNING') {
+    drawFlowchart();
+    renderConditionInspector();
+    renderTruthTable();
+  }
+}, 100);
+if (window.TelemarkSimulatorBase) window.TelemarkSimulatorBase.installLegacy({state: gamepad});
+</script>
+</body>
+</html>

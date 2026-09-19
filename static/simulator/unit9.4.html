@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Telemark Unit 9.4 Simulator</title>
+    <script src="simulator_base.js"></script>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+<script src="./telemark-project.js"></script>
+<link rel="stylesheet" href="./telemark-project.css"/>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+<script>
+(function () {
+    "use strict";
+
+    const SPINNER_RADIUS = 0.72;
+    const SPINNER_WIDTH = 2.65;
+    const FLOOR_Y = 0.0;
+
+    let scoreTarget = null;
+    let spinnerCenter = null;
+
+    let robotGroup = null;
+    let spinnerGroup = null;
+    let spinnerMesh = null;
+    let powerArcMesh = null;
+    let directionSprite = null;
+    let scoreBoardEl = null;
+    let statusEl = null;
+
+    let spinnerPower = 0;
+    let spinnerAngle = 0;
+    let scoredCount = 0;
+    let animationCallbackId = -1;
+
+    const sphereMeshes = [];
+    const sphereStates = [];
+    const sphereHomes = [];
+    const sphereVelocities = [];
+    const sphereLaunchData = [];
+
+    function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    function signOf(value) {
+        if (value > 0) return 1;
+        if (value < 0) return -1;
+        return 0;
+    }
+
+    function makeTextSprite(text, options) {
+        const cfg = Object.assign({
+            width: 512,
+            height: 160,
+            font: "bold 64px monospace",
+            color: "#ffffff",
+            background: "rgba(0,0,0,0.45)",
+            border: "rgba(255,255,255,0.18)",
+            radius: 20,
+            scaleX: 2.8,
+            scaleY: 0.85
+        }, options || {});
+
+        const canvas = document.createElement("canvas");
+        canvas.width = cfg.width;
+        canvas.height = cfg.height;
+        const ctx = canvas.getContext("2d");
+
+        if (cfg.background) {
+            roundRect(ctx, 8, 8, canvas.width - 16, canvas.height - 16, cfg.radius, cfg.background, cfg.border);
+        }
+
+        ctx.fillStyle = cfg.color;
+        ctx.font = cfg.font;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.needsUpdate = true;
+        const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
+        const sprite = new THREE.Sprite(material);
+        sprite.scale.set(cfg.scaleX, cfg.scaleY, 1);
+        return sprite;
+    }
+
+    function updateTextSprite(sprite, text, options) {
+        if (!sprite || !sprite.material || !sprite.material.map) return;
+        const cfg = Object.assign({
+            color: "#ffffff",
+            background: "rgba(0,0,0,0.45)",
+            border: "rgba(255,255,255,0.18)",
+            width: 512,
+            height: 160,
+            font: "bold 64px monospace",
+            radius: 20
+        }, options || {});
+        const canvas = sprite.material.map.image;
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (cfg.background) {
+            roundRect(ctx, 8, 8, canvas.width - 16, canvas.height - 16, cfg.radius, cfg.background, cfg.border);
+        }
+
+        ctx.fillStyle = cfg.color;
+        ctx.font = cfg.font;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+        sprite.material.map.needsUpdate = true;
+    }
+
+    function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+        if (fill) {
+            ctx.fillStyle = fill;
+            ctx.fill();
+        }
+        if (stroke) {
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = stroke;
+            ctx.stroke();
+        }
+    }
+
+    function ensureOverlay() {
+        const container = document.getElementById("sim-scene-container");
+        if (!container) return;
+
+        if (document.getElementById("spinner-scene-overlay-style")) return;
+
+        const style = document.createElement("style");
+        style.id = "spinner-scene-overlay-style";
+        style.textContent = `
+            .spinner-scene-overlay {
+                position: absolute;
+                z-index: 12;
+                border: 1px solid rgba(255,255,255,0.12);
+                background: rgba(10, 10, 18, 0.82);
+                color: #f0f0f0;
+                border-radius: 10px;
+                padding: 8px 12px;
+                font: 700 0.9rem "IBM Plex Sans", Arial, sans-serif;
+                backdrop-filter: blur(2px);
+                box-shadow: 0 6px 18px rgba(0,0,0,0.28);
+                pointer-events: none;
+            }
+            .spinner-scene-overlay i {
+                margin-right: 6px;
+            }
+            .spinner-score {
+                left: 12px;
+                top: 12px;
+            }
+            .spinner-state {
+                right: 12px;
+                bottom: 12px;
+            }
+            .spinner-state.forward { color: #22d3ee; border-color: rgba(34,211,238,0.45); }
+            .spinner-state.reverse { color: #8ab4ff; border-color: rgba(80,140,255,0.45); }
+            .spinner-state.stopped { color: #cccccc; border-color: rgba(255,255,255,0.16); }
+        `;
+        document.head.appendChild(style);
+
+        scoreBoardEl = document.createElement("div");
+        scoreBoardEl.className = "spinner-scene-overlay spinner-score";
+        container.appendChild(scoreBoardEl);
+
+        statusEl = document.createElement("div");
+        statusEl.className = "spinner-scene-overlay spinner-state stopped";
+        container.appendChild(statusEl);
+
+        updateScoreBoard();
+        updateStatusOverlay();
+    }
+
+    function updateScoreBoard() {
+        if (scoreBoardEl) {
+            scoreBoardEl.innerHTML = '<i class="fa-solid fa-box-open"></i> Scored: ' + scoredCount;
+        }
+    }
+
+    function updateStatusOverlay() {
+        if (!statusEl) return;
+        const direction = signOf(spinnerPower);
+        statusEl.className = "spinner-scene-overlay spinner-state " + (direction > 0 ? "forward" : direction < 0 ? "reverse" : "stopped");
+        if (direction > 0) {
+            statusEl.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Forward · Power ' + spinnerPower.toFixed(2);
+        } else if (direction < 0) {
+            statusEl.innerHTML = '<i class="fa-solid fa-rotate-left"></i> Reverse · Power ' + spinnerPower.toFixed(2);
+        } else {
+            statusEl.innerHTML = '<i class="fa-solid fa-pause"></i> Stopped · Power 0.00';
+        }
+    }
+
+    function buildScene() {
+        const scene = window.scene;
+        if (!scene) return;
+
+        window.setFieldVisible(false);
+        window.setCameraOrbit({
+            radius: 9.4,
+            theta: 0.52,
+            phi: 1.02,
+            target: { x: 0, y: 1.35, z: 0.1 }
+        });
+
+        ensureOverlay();
+
+        const floor = new THREE.Mesh(
+            new THREE.PlaneGeometry(18, 16),
+            new THREE.MeshPhongMaterial({ color: 0x14141b, shininess: 5 })
+        );
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = FLOOR_Y;
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+        const grid = new THREE.GridHelper(18, 18, 0x303040, 0x1f1f2a);
+        grid.position.y = FLOOR_Y + 0.01;
+        scene.add(grid);
+
+        robotGroup = new THREE.Group();
+        scene.add(robotGroup);
+
+        const body = new THREE.Mesh(
+            new THREE.BoxGeometry(3.4, 1.25, 2.8),
+            new THREE.MeshPhongMaterial({ color: 0x2a2a2a })
+        );
+        body.position.set(0, 0.96, 0);
+        body.castShadow = true;
+        body.receiveShadow = true;
+        robotGroup.add(body);
+
+        const topPlate = new THREE.Mesh(
+            new THREE.BoxGeometry(3.0, 0.12, 2.4),
+            new THREE.MeshPhongMaterial({ color: 0x383838 })
+        );
+        topPlate.position.set(0, 1.6, 0);
+        topPlate.castShadow = true;
+        topPlate.receiveShadow = true;
+        robotGroup.add(topPlate);
+
+        const intakeGroup = new THREE.Group();
+        robotGroup.add(intakeGroup);
+
+        const intakeFloor = new THREE.Mesh(
+            new THREE.BoxGeometry(2.3, 0.08, 1.6),
+            new THREE.MeshPhongMaterial({ color: 0x17171d, transparent: true, opacity: 0.72 })
+        );
+        intakeFloor.position.set(0, 0.74, 1.38);
+        intakeFloor.rotation.x = -0.16;
+        intakeFloor.receiveShadow = true;
+        intakeGroup.add(intakeFloor);
+
+        const intakeSideMat = new THREE.MeshPhongMaterial({
+            color: 0x555566,
+            transparent: true,
+            opacity: 0.42,
+            side: THREE.DoubleSide
+        });
+        [-1.18, 1.18].forEach(function (x) {
+            const rail = new THREE.Mesh(
+                new THREE.BoxGeometry(0.08, 0.52, 1.62),
+                intakeSideMat
+            );
+            rail.position.set(x, 0.98, 1.38);
+            rail.castShadow = true;
+            rail.receiveShadow = true;
+            intakeGroup.add(rail);
+        });
+
+        const intakeMouth = new THREE.Mesh(
+            new THREE.BoxGeometry(2.55, 0.12, 0.12),
+            new THREE.MeshPhongMaterial({ color: 0xff6600, emissive: 0x331200 })
+        );
+        intakeMouth.position.set(0, 1.06, 2.2);
+        intakeMouth.castShadow = true;
+        intakeGroup.add(intakeMouth);
+
+        const wheelOffsets = [
+            [-1.45, 0.48, 1.18],
+            [1.45, 0.48, 1.18],
+            [-1.45, 0.48, -1.18],
+            [1.45, 0.48, -1.18]
+        ];
+        wheelOffsets.forEach(function (offset) {
+            const wheel = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.42, 0.42, 0.28, 28),
+                new THREE.MeshPhongMaterial({ color: 0x111111 })
+            );
+            wheel.rotation.z = Math.PI / 2;
+            wheel.position.set(offset[0], offset[1], offset[2]);
+            wheel.castShadow = true;
+            robotGroup.add(wheel);
+        });
+
+        spinnerGroup = new THREE.Group();
+        spinnerCenter = new THREE.Vector3(0, 1.55, 1.55);
+        scoreTarget = new THREE.Vector3(0, 2.2, -2.55);
+
+        spinnerGroup.position.copy(spinnerCenter);
+        scene.add(spinnerGroup);
+
+        spinnerMesh = new THREE.Mesh(
+            new THREE.CylinderGeometry(SPINNER_RADIUS, SPINNER_RADIUS, SPINNER_WIDTH, 48, 1, false),
+            new THREE.MeshPhongMaterial({
+                color: 0xff6600,
+                emissive: 0x331200,
+                shininess: 45,
+                transparent: true,
+                opacity: 0.46,
+                side: THREE.DoubleSide
+            })
+        );
+        spinnerMesh.rotation.z = Math.PI / 2;
+        spinnerMesh.castShadow = true;
+        spinnerMesh.receiveShadow = true;
+        spinnerGroup.add(spinnerMesh);
+
+        for (let i = 0; i < 8; i++) {
+            const stripe = new THREE.Mesh(
+                new THREE.BoxGeometry(SPINNER_WIDTH + 0.08, 0.08, SPINNER_RADIUS * 1.82),
+                new THREE.MeshPhongMaterial({
+                    color: 0x5c2500,
+                    transparent: true,
+                    opacity: 0.68
+                })
+            );
+            stripe.position.set(0, 0, 0);
+            stripe.rotation.x = (i / 8) * Math.PI;
+            stripe.castShadow = true;
+            spinnerGroup.add(stripe);
+        }
+
+        const spinnerCap = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.18, 0.18, SPINNER_WIDTH + 0.22, 24),
+            new THREE.MeshPhongMaterial({ color: 0x777777 })
+        );
+        spinnerCap.rotation.z = Math.PI / 2;
+        spinnerCap.castShadow = true;
+        spinnerGroup.add(spinnerCap);
+
+        const arcBase = new THREE.Mesh(
+            new THREE.RingGeometry(0.98, 1.12, 64, 1, 0, Math.PI * 2),
+            new THREE.MeshBasicMaterial({ color: 0x333333, side: THREE.DoubleSide, transparent: true, opacity: 0.42 })
+        );
+        arcBase.position.copy(spinnerCenter).add(new THREE.Vector3(0, 0, 0.08));
+        scene.add(arcBase);
+
+        powerArcMesh = new THREE.Mesh(
+            new THREE.RingGeometry(0.98, 1.12, 64, 1, -Math.PI / 2, 0.001),
+            new THREE.MeshBasicMaterial({ color: 0xff6600, side: THREE.DoubleSide, transparent: true, opacity: 0.95 })
+        );
+        powerArcMesh.position.copy(spinnerCenter).add(new THREE.Vector3(0, 0, 0.09));
+        scene.add(powerArcMesh);
+
+        directionSprite = makeTextSprite("STOP", {
+            width: 512,
+            height: 128,
+            font: "bold 54px monospace",
+            color: "#f0f0f0",
+            background: "rgba(12,12,18,0.66)",
+            border: "rgba(255,255,255,0.14)",
+            scaleX: 2.3,
+            scaleY: 0.56
+        });
+        directionSprite.position.copy(spinnerCenter).add(new THREE.Vector3(0, 1.05, 0.18));
+        scene.add(directionSprite);
+
+        buildScoringContainer(scene);
+        buildGameElements(scene);
+        updatePowerArc();
+    }
+
+    function buildScoringContainer(scene) {
+        const stand = new THREE.Mesh(
+            new THREE.BoxGeometry(0.55, 1.5, 0.55),
+            new THREE.MeshPhongMaterial({ color: 0x555555 })
+        );
+        stand.position.set(0, 0.94, -2.55);
+        stand.castShadow = true;
+        stand.receiveShadow = true;
+        scene.add(stand);
+
+        const trayBase = new THREE.Mesh(
+            new THREE.BoxGeometry(2.3, 0.18, 1.8),
+            new THREE.MeshPhongMaterial({ color: 0x7a7a7a })
+        );
+        trayBase.position.set(0, 1.75, -2.55);
+        trayBase.castShadow = true;
+        trayBase.receiveShadow = true;
+        scene.add(trayBase);
+
+        const trayOffsets = [
+            [0, 2.06, -3.36, 2.3, 0.62, 0.16],
+            [0, 2.06, -1.74, 2.3, 0.62, 0.16],
+            [-1.07, 2.06, -2.55, 0.16, 0.62, 1.8],
+            [1.07, 2.06, -2.55, 0.16, 0.62, 1.8]
+        ];
+        trayOffsets.forEach(function (cfg) {
+            const wall = new THREE.Mesh(
+                new THREE.BoxGeometry(cfg[3], cfg[4], cfg[5]),
+                new THREE.MeshPhongMaterial({ color: 0x999999 })
+            );
+            wall.position.set(cfg[0], cfg[1], cfg[2]);
+            wall.castShadow = true;
+            wall.receiveShadow = true;
+            scene.add(wall);
+        });
+    }
+
+    function buildGameElements(scene) {
+        const homes = [
+            new THREE.Vector3(-1.45, 0.22, 3.3),
+            new THREE.Vector3(-0.45, 0.22, 2.85),
+            new THREE.Vector3(0.55, 0.22, 3.42),
+            new THREE.Vector3(1.45, 0.22, 2.95)
+        ];
+
+        const sphereGeometry = new THREE.SphereGeometry(0.22, 24, 24);
+        for (let i = 0; i < homes.length; i++) {
+            const sphere = new THREE.Mesh(
+                sphereGeometry,
+                new THREE.MeshPhongMaterial({
+                    color: 0x9147ff,
+                    emissive: 0x24053f,
+                    shininess: 50
+                })
+            );
+            sphere.castShadow = true;
+            sphere.receiveShadow = true;
+            sphere.position.copy(homes[i]);
+            scene.add(sphere);
+
+            sphereMeshes.push(sphere);
+            sphereHomes.push(homes[i].clone());
+            sphereVelocities.push(new THREE.Vector3());
+            sphereLaunchData.push(null);
+            sphereStates.push("idle");
+        }
+    }
+
+    function updatePowerArc() {
+        if (!powerArcMesh) return;
+
+        const absPower = Math.abs(spinnerPower);
+        const length = Math.max(0.001, absPower * Math.PI * 1.7);
+        const start = spinnerPower >= 0 ? -Math.PI / 2 : -Math.PI / 2 - length;
+        powerArcMesh.geometry.dispose();
+        powerArcMesh.geometry = new THREE.RingGeometry(0.98, 1.12, 64, 1, start, length);
+        powerArcMesh.material.color.setHex(spinnerPower >= 0 ? 0x22d3ee : 0x60a5fa);
+        powerArcMesh.visible = absPower > 0.001;
+
+        if (!directionSprite) return;
+        if (spinnerPower > 0.001) {
+            updateTextSprite(directionSprite, "CW  \u2192", {
+                color: "#22d3ee",
+                background: "rgba(5,8,13,0.8)",
+                border: "rgba(34,211,238,0.25)",
+                font: "bold 54px monospace"
+            });
+        } else if (spinnerPower < -0.001) {
+            updateTextSprite(directionSprite, "\u2190  CCW", {
+                color: "#8ab4ff",
+                background: "rgba(6,10,18,0.76)",
+                border: "rgba(90,140,255,0.28)",
+                font: "bold 54px monospace"
+            });
+        } else {
+            updateTextSprite(directionSprite, "STOP", {
+                color: "#f0f0f0",
+                background: "rgba(12,12,18,0.66)",
+                border: "rgba(255,255,255,0.14)",
+                font: "bold 54px monospace"
+            });
+        }
+    }
+
+    function updateSpinnerVisual(name, value) {
+        if (name !== "spinner") return;
+        spinnerPower = clamp(Number(value) || 0, -1, 1);
+        updatePowerArc();
+        updateStatusOverlay();
+    }
+
+    function resetSphere(index) {
+        sphereStates[index] = "idle";
+        sphereLaunchData[index] = null;
+        sphereVelocities[index].set(0, 0, 0);
+        sphereMeshes[index].position.copy(sphereHomes[index]);
+    }
+
+    function setInitialVisualState() {
+        spinnerPower = 0;
+        spinnerAngle = 0;
+        scoredCount = 0;
+        if (spinnerGroup) spinnerGroup.rotation.x = 0;
+        updatePowerArc();
+        updateScoreBoard();
+        updateStatusOverlay();
+
+        for (let i = 0; i < sphereMeshes.length; i++) {
+            resetSphere(i);
+        }
+    }
+
+    function updateSpheres() {
+        if (!spinnerCenter || !scoreTarget) return;
+
+        const spinnerXZ = new THREE.Vector3(spinnerCenter.x, 0, spinnerCenter.z);
+        const containerTarget = scoreTarget.clone();
+
+        for (let i = 0; i < sphereMeshes.length; i++) {
+            const sphere = sphereMeshes[i];
+            const velocity = sphereVelocities[i];
+            const state = sphereStates[i];
+
+            if (state === "scored") {
+                continue;
+            }
+
+            if (state === "launched" && sphereLaunchData[i]) {
+                sphereLaunchData[i].t += 0.026 + Math.abs(spinnerPower) * 0.033;
+                const t = clamp(sphereLaunchData[i].t, 0, 1);
+                const start = sphereLaunchData[i].start;
+                const control = sphereLaunchData[i].control;
+                const end = sphereLaunchData[i].end;
+
+                const p0 = start.clone().multiplyScalar((1 - t) * (1 - t));
+                const p1 = control.clone().multiplyScalar(2 * (1 - t) * t);
+                const p2 = end.clone().multiplyScalar(t * t);
+                sphere.position.copy(p0.add(p1).add(p2));
+
+                if (t >= 1) {
+                    sphereStates[i] = "scored";
+                    sphereLaunchData[i] = null;
+                    velocity.set(0, 0, 0);
+                    sphere.position.copy(end);
+                    scoredCount += 1;
+                    updateScoreBoard();
+                }
+                continue;
+            }
+
+            const offsetXZ = new THREE.Vector3(sphere.position.x, 0, sphere.position.z).sub(spinnerXZ);
+            const distance = offsetXZ.length();
+            const direction = distance > 0.0001 ? offsetXZ.clone().normalize() : new THREE.Vector3(1, 0, 0);
+
+            if (spinnerPower > 0.05) {
+                if (distance < 4.2) {
+                    const pullDir = new THREE.Vector3(spinnerCenter.x - sphere.position.x, 0, spinnerCenter.z - sphere.position.z);
+                    if (pullDir.length() > 0.001) {
+                        pullDir.normalize();
+                        velocity.addScaledVector(pullDir, 0.012 + Math.abs(spinnerPower) * 0.022);
+                    }
+                }
+
+                if (distance < 0.78) {
+                    sphereStates[i] = "launched";
+                    sphereLaunchData[i] = {
+                        t: 0,
+                        start: sphere.position.clone(),
+                        control: new THREE.Vector3(
+                            (sphere.position.x + containerTarget.x) * 0.32,
+                            3.45,
+                            (sphere.position.z + containerTarget.z) * 0.42
+                        ),
+                        end: containerTarget.clone().add(new THREE.Vector3((i - 1.5) * 0.28, 0.02, (i % 2 === 0 ? -0.16 : 0.16)))
+                    };
+                    velocity.set(0, 0, 0);
+                    continue;
+                }
+            } else if (spinnerPower < -0.05) {
+                if (distance < 3.8) {
+                    velocity.addScaledVector(direction, 0.016 + Math.abs(spinnerPower) * 0.026);
+                }
+            } else {
+                velocity.multiplyScalar(0.86);
+            }
+
+            velocity.multiplyScalar(0.94);
+            sphere.position.add(velocity);
+
+            const intakeLift = spinnerPower > 0.05
+                ? clamp((2.55 - sphere.position.z) / 1.25, 0, 1)
+                : 0;
+            sphere.position.y = 0.22 + intakeLift * 0.78;
+
+            sphere.position.x = clamp(sphere.position.x, -7.2, 7.2);
+            sphere.position.z = clamp(sphere.position.z, -5.4, 6.4);
+        }
+    }
+
+    function animateScene() {
+        if (spinnerGroup) {
+            spinnerAngle += spinnerPower * 0.12;
+            spinnerGroup.rotation.x = spinnerAngle;
+        }
+        updateSpheres();
+    }
+
+    function preprocessJavaCode(code) {
+        let processed = code;
+        processed = processed.replace(/\bspinner\s*\.\s*setPower\s*\(/g, 'setCRServoPower("spinner", ');
+        processed = processed.replace(/\bgamepad1\s*\.\s*b\b/g, "gamepad.b");
+        processed = processed.replace(/\bgamepad1\s*\.\s*x\b/g, "gamepad.x");
+        processed = processed.replace(/\btelemetry\s*\.\s*addData\s*\(/g, "addTelemetry(");
+        processed = processed.replace(/\btelemetry\s*\.\s*update\s*\(\s*\)/g, "updateTelemetry()");
+        return processed;
+    }
+
+    function extractBranchBody(loopBody, buttonName) {
+        const re = new RegExp(
+            '(?:if|else\\s+if)\\s*\\(\\s*(?:gamepad1|gamepad)\\s*\\.\\s*' +
+                buttonName +
+                '\\s*\\)\\s*\\{([\\s\\S]*?)\\}',
+            'i'
+        );
+        const match = loopBody.match(re);
+        return match ? match[1] : "";
+    }
+
+    function extractElseBody(loopBody) {
+        const match = loopBody.match(/\belse\s*\{([\s\S]*?)\}/i);
+        return match ? match[1] : "";
+    }
+
+    function parsePowerCalls(body) {
+        const values = [];
+        const re = /\bspinner\s*\.\s*setPower\s*\(\s*(-?\d*\.?\d+)\s*\)/g;
+        let match;
+        while ((match = re.exec(body)) !== null) {
+            values.push(Number(match[1]));
+        }
+        return values;
+    }
+
+    function branchHasPositivePower(body) {
+        return parsePowerCalls(body).some(function (value) { return value > 0; });
+    }
+
+    function branchHasNegativePower(body) {
+        return parsePowerCalls(body).some(function (value) { return value < 0; });
+    }
+
+    function branchHasZeroPower(body) {
+        return parsePowerCalls(body).some(function (value) { return value === 0; });
+    }
+
+    function firstNonZeroSign(values) {
+        for (let i = 0; i < values.length; i++) {
+            if (values[i] > 0) return 1;
+            if (values[i] < 0) return -1;
+        }
+        return 0;
+    }
+
+    function setRequirementStatesFromCode(code) {
+        const initBody = window._simGetMethodBody(code, "init") || "";
+        const loopBody = window._simGetMethodBody(code, "loop") || "";
+        const bBranchBody = extractBranchBody(loopBody, "b");
+        const xBranchBody = extractBranchBody(loopBody, "x");
+        const elseBody = extractElseBody(loopBody);
+
+        const req1 = /\bhardwareMap\s*\.\s*get\(\s*CRServo\.class\s*,\s*"spinner"\s*\)/.test(initBody);
+        const req2 = branchHasPositivePower(bBranchBody);
+        const req3 = branchHasNegativePower(xBranchBody);
+        const req4 = branchHasZeroPower(elseBody);
+        const req5 = /\btelemetry\s*\.\s*addData\s*\(/.test(code);
+
+        window.setRequirement(0, req1);
+        window.setRequirement(1, req2);
+        window.setRequirement(2, req3);
+        window.setRequirement(3, req4);
+        window.setRequirement(4, req5);
+
+        configureHints(code, initBody, loopBody, bBranchBody, xBranchBody, elseBody);
+    }
+
+    function configureHints(code, initBody, loopBody, bBranchBody, xBranchBody, elseBody) {
+        const allLiteralPowers = parsePowerCalls(code);
+
+        if (/\bhardwareMap\s*\.\s*get\(\s*Servo\.class\s*,\s*"spinner"\s*\)/.test(code) || /\bspinner\s*\.\s*setPosition\s*\(/.test(code)) {
+            window.addHint("CRServo uses setPower() not setPosition() — it spins continuously like a motor", "error");
+        }
+
+        if (/\bhardwareMap\s*\.\s*get\(\s*CRServo\.class\s*,\s*"spinner"\s*\)/.test(loopBody) || /\bhardwareMap\s*\.\s*get\(\s*Servo\.class\s*,\s*"spinner"\s*\)/.test(loopBody)) {
+            window.addHint("Map hardware in init() not loop()", "error");
+        }
+
+        if (!elseBody || !branchHasZeroPower(elseBody)) {
+            window.addHint("What happens when neither button is pressed? Add an else to stop the spinner", "warn");
+        }
+
+        const bSigns = firstNonZeroSign(parsePowerCalls(bBranchBody));
+        const xSigns = firstNonZeroSign(parsePowerCalls(xBranchBody));
+        if (bSigns !== 0 && xSigns !== 0 && bSigns === xSigns) {
+            window.addHint("B should run forward (positive) and X should run reverse (negative)", "error");
+        }
+
+        if (allLiteralPowers.some(function (value) { return Math.abs(value) > 1.0; })) {
+            window.addHint("CRServo power must be between -1.0 and 1.0", "error");
+        }
+
+        if (allLiteralPowers.some(function (value) { return value === 1 || value === -1; })) {
+            window.addHint("The challenge specifies 60% power — use 0.6 not 1.0", "warn");
+        }
+
+        if (!/\btelemetry\s*\.\s*update\s*\(\s*\)/.test(code)) {
+            window.addHint("Call telemetry.update() to send data to the Driver Station", "warn");
+        }
+
+        if (!/\btelemetry\s*\.\s*addData\s*\(/.test(code)) {
+            window.addHint("Add telemetry.addData(...) so the Driver Station reports spinner state", "warn");
+        }
+
+        if (!/\bif\s*\(\s*gamepad1\s*\.\s*b\s*\)/.test(code) && !/\bif\s*\(\s*gamepad\s*\.\s*b\s*\)/.test(code)) {
+            window.addHint("Use the B button branch to run the spinner forward", "info");
+        }
+
+        if (!/\belse\s+if\s*\(\s*gamepad1\s*\.\s*x\s*\)/.test(code) && !/\belse\s+if\s*\(\s*gamepad\s*\.\s*x\s*\)/.test(code)) {
+            window.addHint("Use the X button branch to run the spinner in reverse", "info");
+        }
+    }
+
+    window.setCRServoPower = function (name, value) {
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) return;
+        if (numeric < -1 || numeric > 1) {
+            window.addHint("CRServo power must be between -1.0 and 1.0", "error");
+        }
+        const crServo = window.hardwareMap.get("CRServo", name);
+        if (crServo) {
+            crServo.setPower(numeric);
+        }
+    };
+
+    window.onSimulatorReady = function () {
+        const starterCode = `@TeleOp(name="CRServo_Spinner")
+public class CRServoSpinner extends OpMode {
+
+    CRServo spinner;
+
+    @Override
+    public void init() {
+        // TODO: Map "spinner" as a CRServo
+        telemetry.addData("Status", "Initialized");
+    }
+
+    @Override
+    public void loop() {
+        // TODO: If B is pressed, run spinner forward at 0.6 power
+        // TODO: Else if X is pressed, run spinner reverse at -0.6 power
+        // TODO: Otherwise stop the spinner with 0.0 power
+        // TODO: Show the spinner state with telemetry
+        telemetry.update();
+    }
+}`;
+
+        window.setCode(starterCode);
+
+        window.setChallenge(
+            "CRServo Spinner Control",
+            "Map a CRServo named spinner, use B for forward and X for reverse, and stop the spinner when neither button is pressed.",
+            [
+                "Map spinner as a CRServo in init()",
+                "Set positive spinner power in the B branch",
+                "Set negative spinner power in the X branch",
+                "Stop the spinner in the else branch",
+                "Send telemetry with telemetry.addData(...)"
+            ]
+        );
+
+        window.setHeader(
+            "Telemark Unit 9.4 Simulator",
+            "Control a continuous-rotation spinner with forward, reverse, and stop"
+        );
+
+        window.setBadges([
+            { iconClass: "fa-solid fa-arrows-rotate", label: "CRServo", active: true },
+            { iconClass: "fa-solid fa-tower-broadcast", label: "Telemetry", active: true },
+            { iconClass: "fa-solid fa-gamepad", label: "Gamepad", active: true }
+        ]);
+
+        window.setActiveInputs(["b", "x"]);
+        window.hardwareMap.registerCRServo("spinner");
+        window.hardwareMap.onCRServoPower(function (name, value) {
+            updateSpinnerVisual(name, value);
+        });
+
+        buildScene();
+        setInitialVisualState();
+
+        const successBanner = document.getElementById("sim-success-banner");
+        if (successBanner) {
+            successBanner.innerHTML = '<i class="fa-solid fa-circle-check"></i> Challenge Complete! Your spinner is working correctly.';
+        }
+
+        if (animationCallbackId >= 0) {
+            window.removeAnimationCallback(animationCallbackId);
+        }
+        animationCallbackId = window.addAnimationCallback(animateScene);
+    };
+
+    window.onRun = function () {
+        window.clearHints();
+        setInitialVisualState();
+
+        const code = window.getCode();
+        setRequirementStatesFromCode(code);
+
+        const processedCode = preprocessJavaCode(code);
+
+        window.transpileAndRun(
+            processedCode,
+            function (initFn) {
+                try {
+                    initFn();
+                } catch (e) {
+                    window._simShowTelemetryError("Init error: " + e.message);
+                }
+            },
+            function (loopFn) {
+                window._simStartLoop(function () {
+                    try {
+                        loopFn();
+                    } catch (e) {
+                        window._simShowTelemetryError("Loop error: " + e.message);
+                    }
+                });
+            }
+        );
+    };
+
+    window.onStop = function () {
+        spinnerPower = 0;
+        updatePowerArc();
+        updateStatusOverlay();
+        const crServo = window.hardwareMap.get("CRServo", "spinner");
+        if (crServo) {
+            crServo.setPower(0);
+        }
+    };
+
+    window.onReset = function () {
+        window.onStop();
+        window.clearHints();
+        setInitialVisualState();
+    };
+})();
+</script>
+</body>
+</html>

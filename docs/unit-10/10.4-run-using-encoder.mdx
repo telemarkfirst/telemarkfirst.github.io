@@ -1,0 +1,119 @@
+---
+id: run-using-encoder
+title: "Lesson 10.4: Maintaining Speed Consistency with RUN_USING_ENCODER"
+sidebar_label: "10.4 · RUN_USING_ENCODER"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit10Simulator from '@site/src/components/Unit10Simulator';
+import {MotorModesDiagram} from '@site/src/components/DocDiagrams';
+
+# Lesson 10.4: Maintaining Speed Consistency with RUN_USING_ENCODER
+
+---
+
+## The Problem with Voltage-Based Speed Control
+
+Suppose an autonomous segment is tuned with a freshly charged battery, then runs more slowly later as battery voltage and mechanism load change. In `RUN_WITHOUT_ENCODER`, `setPower()` requests open-loop motor effort rather than a measured wheel speed, so a timed drive can cover a different distance as conditions change.
+
+`RUN_USING_ENCODER` reduces this problem by letting the Hub use encoder feedback while commanding motor speed. It can improve consistency across battery levels, but it cannot overcome traction loss, incorrect motor configuration, bad wiring, or a mechanism that is physically overloaded.
+
+---
+
+## What Velocity Control Actually Does
+
+When this mode is active, the Hub monitors how fast the encoder is actually ticking and compares it against a target speed derived from your `setPower()` value. If the motor slows down because the battery dropped or the robot hit a bump, the Hub automatically increases the voltage to compensate and bring the speed back to the target. If it speeds up, the Hub backs off the voltage.
+
+The result is that `setPower(0.5)` behaves more like a request for roughly half of the motor's configured achievable speed. That request is still limited by battery voltage, motor type configuration, load, friction, and how well the built-in velocity controller is tuned for the mechanism.
+
+<MotorModesDiagram />
+
+:::info Official references
+- FTC SDK API: [DcMotor.RunMode](https://javadoc.io/doc/org.firstinspires.ftc/RobotCore/latest/com/qualcomm/robotcore/hardware/DcMotor.RunMode.html)
+- REV control system docs: [REV DUO Control System](https://docs.revrobotics.com/duo-control)
+:::
+
+:::tip Common robot failure: "RUN_USING_ENCODER made the drive worse"
+Check that the configured motor type matches the real motor and gearbox. A wrong ticks-per-revolution value makes velocity feedback chase the wrong target, which can feel like surging or uneven drive power.
+:::
+
+One trade-off worth knowing: `RUN_USING_ENCODER` cannot use `setTargetPosition()`. If you need to move to a specific tick position, you want `RUN_TO_POSITION` from Lesson 10.3. These two modes serve different purposes: velocity consistency and positional targeting.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+
+@TeleOp(name="Run_Using_Encoder_Demo")
+public class RunUsingEncoderDemo extends OpMode {
+
+    private DcMotor leftDrive;
+    private DcMotor rightDrive;
+
+    @Override
+    public void init() {
+        leftDrive  = hardwareMap.get(DcMotor.class, "left_drive");
+        rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
+
+        // Enable velocity PID on both drive motors
+        leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        rightDrive.setDirection(DcMotor.Direction.REVERSE);
+
+        telemetry.addData("Status", "Velocity control active");
+    }
+
+    @Override
+    public void loop() {
+        // setPower now commands velocity, not raw voltage
+        double drive = -gamepad1.left_stick_y;
+        leftDrive.setPower(drive);
+        rightDrive.setPower(drive);
+
+        telemetry.addData("Commanded Velocity", drive);
+        telemetry.addData("Left Ticks",  leftDrive.getCurrentPosition());
+        telemetry.addData("Right Ticks", rightDrive.getCurrentPosition());
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. `RUN_USING_ENCODER` uses internal `__________` logic on the Control Hub to maintain motor speed.
+2. This mode improves drivetrain consistency because the robot travels at a fixed `__________` rather than a fixed voltage.
+3. In this mode, the `setPower()` method effectively sets the motor's targeted `__________`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **PID**
+2. **velocity**
+3. **velocity** (speed / ticks per second)
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Use the simulator below to complete the Unit 8.2 mecanum drive again, this time with `RUN_USING_ENCODER` configured on all four drive motors. Fill in the missing motor direction and encoder-mode setup, then drive with the gamepad.
+
+<SimulatorRunGuide />
+
+<Unit10Simulator lesson="run-using-encoder" />
+
+<MarkComplete
+  lessonId="unit-10/run-using-encoder"
+  nextUnit="/docs/unit-10/drive-and-stop"
+  nextUnitName="Lesson 10.5: Developing a Precise Drive and Stop System for Linear Navigation"
+/>

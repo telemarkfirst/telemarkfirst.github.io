@@ -1,0 +1,115 @@
+---
+id: part-studios
+title: "Lesson 5.3: Part Studios, the Feature List, and Reference Geometry"
+sidebar_label: "5.3 · Part Studios"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 5.3: Part Studios, the Feature List, and Reference Geometry
+
+---
+
+## Technical Context
+
+Lesson 5.2 covered sketches. This lesson covers the Part Studio that contains them, the feature list that turns them into geometry, and the datums used as stable references.
+
+---
+
+## Part Studios
+
+A **Part Studio** is one modelling space that can hold several parts at once. This is the part of Onshape that most surprises people coming from other CAD, and it is the part worth using deliberately.
+
+The alternative, one file per part, forces you to model each part blind and check the fit afterwards. In a Part Studio you sketch the interface once and build both halves from it, so the mating faces cannot disagree.
+
+Use one Part Studio for parts that share geometry:
+
+- A gearbox plate and its spacer, both driven by the same bolt pattern
+- Two halves of a clamp that meet on one surface
+- A bracket and the tube it wraps
+
+Use separate Part Studios when parts share nothing but a bolt. A studio holding nineteen unrelated parts rebuilds slowly and no one can find anything in it.
+
+:::tip In-context modelling is the point
+If a plate's holes come from a sketch that also positions the motor, moving the motor moves the holes. That is a Part Studio doing the job it exists for. Two separate files would have silently gone out of alignment.
+:::
+
+---
+
+## Parametric Modelling and the Feature List
+
+**Parametric** means the model is a recipe, not a drawing. Each feature records *how* it was made, and the model is rebuilt by replaying that recipe from the top. Change an early number and everything downstream recomputes.
+
+The **feature list** is that recipe, in order. Reading it top to bottom tells you exactly how the part was built, which is why a tidy feature list is a form of documentation.
+
+Two consequences follow, and both matter:
+
+**Order is real.** A fillet added before a pattern is copied by the pattern. Added after, it is not. Neither is wrong; they produce different parts.
+
+**Failures cascade.** Delete a face that a later feature was attached to, and every feature after it fails. Onshape marks the first failure and everything downstream, which looks alarming and usually has one cause at the top.
+
+| Symptom | Usual cause |
+| --- | --- |
+| Every feature after one point is red | The first red feature lost its reference; fix that one only |
+| The part rebuilds slowly | Long dependency chain, or a pattern of a pattern of a pattern |
+| A dimension change deforms the wrong area | A sketch was attached to a face that moved |
+
+---
+
+## Reference Geometry
+
+**Reference geometry** is construction scaffolding: it has no mass and does not appear in the manufactured part, but it gives features something stable to attach to.
+
+### Planes
+
+Every Part Studio starts with three planes: Top, Front, and Right. They are the origin of everything, and they never move.
+
+Custom planes are worth creating when geometry does not lie on a default plane:
+
+- **Offset**, a plane a set distance from an existing one. A sketch on an offset plane keeps its distance when the base moves.
+- **Angled**, rotated about an edge, for anything mounted on a slope.
+- **Mid-plane**, halfway between two faces, which is what symmetry should usually be built from.
+
+### Axes
+
+An **axis** is a line used as a reference rather than as geometry. Revolve needs one. Circular patterns need one. A shaft's centreline is one whether or not you draw it.
+
+Create axes from the intersection of two planes, from a cylindrical face, or through two points.
+
+:::warning Sketch on planes, not faces
+Use datum planes for sketches that should remain stable through later edits. A sketch attached to a model face can lose its reference when that face is filleted, shelled, or removed. Creating one extra plane can prevent downstream features from failing after those changes.
+:::
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. A single Onshape modelling space that can contain several related parts is called a `__________` `__________`.
+2. The ordered recipe that records how a part was built, and replays to rebuild it, is the `__________` `__________`.
+3. A revolve feature requires an `__________` to spin the sketch about.
+4. A plane created halfway between two faces is a `__________`-plane, and it is the right base for symmetric geometry.
+
+<details>
+<summary>Show answers</summary>
+
+1. **Part Studio**
+2. **feature list**
+3. **axis**
+4. **mid**
+
+</details>
+
+---
+
+## Exercise
+
+Open a part someone else on your team modelled and read its feature list top to bottom without looking at the 3D view. Write down what you think the part is. Then look.
+
+If the list told you, it was built well. If it was forty features named "Extrude 12", you have found this module's real lesson.
+
+<MarkComplete
+  lessonId="module-05/part-studios"
+  nextUnit="/mechanical/module-05/solid-features"
+  nextUnitName="Lesson 5.4: Extrude, Revolve, Sweep, and Loft"
+/>

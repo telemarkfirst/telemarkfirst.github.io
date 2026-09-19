@@ -1,0 +1,145 @@
+---
+id: mechanism-classes
+title: "Lesson 7.5: Keep Shared Hardware Classes Consistent Across OpModes"
+sidebar_label: "7.5 · Mechanism Classes"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit7Simulator from '@site/src/components/Unit7Simulator';
+
+# Lesson 7.5: Keep Shared Hardware Classes Consistent Across OpModes
+
+---
+
+## Technical Context
+
+As robots become complex, putting all hardware mapping in a single OpMode file leads to unmaintainable "spaghetti code." Creating a dedicated **Hardware Class** (or Mechanism Class) allows you to define your hardware once and share it across every Autonomous and TeleOp program on the robot. If a motor port changes, you update one file: not every OpMode.
+
+---
+
+## Why Shared Mechanism Classes Save Time
+
+A mechanism class can use a custom `init()` method that accepts the `HardwareMap` from the parent OpMode. The mechanism does not automatically receive an OpMode's `hardwareMap`; passing the dependency explicitly lets the class perform its own registry lookups and makes it easier to reuse.
+
+Passing `HardwareMap` into the mechanism constructor or `init()` method gives that class the dependency it needs without relying on a global variable. The mechanism class can then keep its hardware names, directions, and run modes together while the OpMode works through a smaller public interface.
+
+---
+
+## Annotated Code
+
+**The mechanism class (separate file):**
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+
+public class IntakeSystem {
+
+    private DcMotor intakeMotor;
+
+    // The OpMode passes its hardwareMap into this method
+    public void init(HardwareMap hwMap) {
+        intakeMotor = hwMap.get(DcMotor.class, "intake");
+        intakeMotor.setDirection(DcMotor.Direction.REVERSE);
+        intakeMotor.setPower(0);
+    }
+
+    // Clean public interface: OpMode never touches the motor directly
+    public void setIntakePower(double power) {
+        intakeMotor.setPower(power);
+    }
+
+    public void stop() {
+        intakeMotor.setPower(0);
+    }
+}
+```
+
+**Using the mechanism inside a TeleOp:**
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+@TeleOp(name="Intake_TeleOp")
+public class IntakeTeleOp extends OpMode {
+
+    private IntakeSystem intake = new IntakeSystem();
+
+    @Override
+    public void init() {
+        // Pass the OpMode's hardwareMap into the mechanism
+        intake.init(hardwareMap);
+        telemetry.addData("Status", "Intake ready");
+    }
+
+    @Override
+    public void loop() {
+        intake.setIntakePower(gamepad1.right_trigger);
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. To share hardware across files, we encapsulate the mapping logic into a `__________` class.
+2. The mechanism's `init()` method must accept a `__________` object as a parameter so it can perform registry lookups.
+3. Encapsulation is a best practice because it isolates hardware "quirks" (like reversed directions) from the `__________` logic.
+
+<details>
+<summary>Show answers</summary>
+
+1. **mechanism** (or hardware) class
+2. **`HardwareMap`**
+3. **main OpMode** (match / driving) logic
+
+</details>
+
+---
+
+## Simulator Practice
+
+Use the simulator below to practice wiring a reusable mechanism class into a TeleOp. The starter project reveals both `SlideTeleOp.java` and the supplied `LinearSlide.java` in the file tabs. Select `LinearSlide.java` to complete the mechanism's mapping and movement methods, then return to `SlideTeleOp.java` to initialize and drive it.
+
+Any additional Java file you create with **+** starts with:
+
+```java
+package org.firstinspires.ftc.teamcode;
+```
+
+The supplied mechanism file keeps its own `DcMotor` and `HardwareMap` imports. Imports apply to one source file only: importing `DcMotor` in the OpMode would not make it available in `LinearSlide.java`. `LinearSlide` itself needs no import in the OpMode because both classes use the same package. These are the [Java package and import rules](https://docs.oracle.com/javase/specs/jls/se24/html/jls-7.html).
+
+All tabs compile and run together, including when a helper tab is open. The **+** card can also import `.java` files, an exported Telemark project, or code from a completed lesson. Code saves in this browser for everyone, including guests; open an older lesson once to save its existing draft into this library. Use **Export** to keep a copy or move your code to another device.
+
+<SimulatorRunGuide />
+
+<Unit7Simulator lesson="mechanism-classes" />
+
+## A Team Gives Hardware One Owner
+
+Titan Robotics Club constructs an actuator inside its subsystem and reads the device name from `RobotParams`. This direct SDK adaptation uses the same boundary:
+
+```java
+public class LinearSlide {
+    private DcMotor motor;
+
+    public void init(HardwareMap hardwareMap) {
+        motor = hardwareMap.get(
+            DcMotor.class, RobotConfig.SLIDE_NAME);
+    }
+}
+```
+
+The framework actuator and its parameter builder were replaced with `DcMotor`. The subsystem still owns the mapping, while configuration owns the name. Adapted from [Team 3543 Titan Robotics Club's subsystem guide at a pinned commit](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/README.md) under the [MIT License](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/LICENSE).
+
+<MarkComplete
+  lessonId="unit-07/mechanism-classes"
+  nextUnit="/docs/unit-07/mastery-coding-challenge"
+  nextUnitName="Unit 7 Comprehensive Coding Challenge"
+/>

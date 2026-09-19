@@ -1,0 +1,145 @@
+---
+id: set-power
+title: "Lesson 8.1: Using setPower() to Control Motor Speed"
+sidebar_label: "8.1 · setPower()"
+sidebar_position: 1
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit8Simulator from '@site/src/components/Unit8Simulator';
+
+# Lesson 8.1: Using setPower() to Control Motor Speed
+
+---
+
+## Technical Context
+
+The Robot Controller manages motor output by sending **pulse-width modulation (PWM)** signals to the Expansion Hub or Control Hub. Sending power levels allows for variable speed control; however, providing too much power to a stalled mechanism, such as an arm pressed against a hard stop, can lead to motor burnout or stripped gears from sustained high-current draw.
+
+---
+
+## What setPower() Is Really Doing
+
+The `setPower(double power)` method is the primary tool for commanding hardware motion. It accepts a `double` parameter ranging from `-1.0` (full reverse) to `1.0` (full forward), where `0.0` signifies a stop command.
+
+Important behaviors to understand:
+- **Values above `1.0` or below `-1.0`** are automatically clamped by the SDK. Passing `1.5` is treated as `1.0`.
+- **The method does not directly control velocity**. It controls the PWM duty cycle (effectively the voltage fraction). Actual speed depends on battery voltage, load, and the motor's run mode.
+- **The command is held** until another `setPower()` call overrides it. If you never call `setPower(0)`, the motor keeps running after your code finishes that loop cycle.
+
+:::info Official references
+- SDK API for motor methods: [FTC RobotCore Javadocs](https://javadoc.io/doc/org.firstinspires.ftc/RobotCore/latest/index.html)
+- REV hardware and control-system context: [REV DUO Control System](https://docs.revrobotics.com/duo-control)
+:::
+
+:::tip Common robot failure: motors hum but do not move
+That is often a stalled mechanism, not a code problem. Stop testing at high power, lift the robot or remove the load, check gear mesh and hard stops, then re-test at low power while watching current draw if your tooling shows it.
+:::
+
+---
+
+## In TeleOp (OpMode)
+
+When a driver is commanding the motor live, `setPower()` belongs in `loop()`. The SDK refreshes the gamepad values between loop cycles, so this is the correct place to read stick or trigger input.
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+
+@TeleOp(name="SetPower_Demo")
+public class SetPowerDemo extends OpMode {
+
+    private DcMotor intake;
+
+    @Override
+    public void init() {
+        intake = hardwareMap.get(DcMotor.class, "intake");
+        intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        intake.setPower(0); // Safe known state before match starts
+        telemetry.addData("Status", "Intake ready");
+    }
+
+    @Override
+    public void loop() {
+        // Capture joystick input and pass it directly to the motor
+        double powerRequest = -gamepad1.left_stick_y;
+        intake.setPower(powerRequest);
+
+        telemetry.addData("Power Sent", powerRequest);
+    }
+}
+```
+
+## In Autonomous (LinearOpMode)
+
+In autonomous, motor power is part of a planned sequence. No gamepad input is read. Instead, the program maps the hardware, waits for the start signal, runs the step, and then stops the motor.
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.hardware.DcMotor;
+
+@Autonomous(name="SetPower_Auto_Demo")
+public class SetPowerAutoDemo extends LinearOpMode {
+
+    private DcMotor driveMotor;
+
+    @Override
+    public void runOpMode() {
+        driveMotor = hardwareMap.get(DcMotor.class, "drive_motor");
+        driveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        driveMotor.setPower(0.0);
+
+        waitForStart();
+
+        driveMotor.setPower(0.5);
+        sleep(1500);
+
+        driveMotor.setPower(0.0);
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The `setPower()` method accepts a `__________` data type as its parameter.
+2. To command a motor to rotate at half-speed in the reverse direction, you would pass the value `__________` to the method.
+3. If the motor power is set to `1.2` in code, the SDK will clamp the value and treat it as `__________`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`double`**
+2. **`-0.5`**
+3. **`1.0`**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Use the simulator below to practice intake power control with lesson-specific starter code and live trigger input.
+
+<SimulatorRunGuide />
+
+<Unit8Simulator lesson="set-power" />
+
+:::info Connects to the mechanical track
+Power is not speed. What a given power command produces at the mechanism depends on the reduction and the load the build team chose.
+
+See [Lesson 6.1: Reading Motor Curves, Free Speed, and Stall Torque](/mechanical/module-06/motor-curves).
+:::
+
+<MarkComplete
+  lessonId="unit-08/set-power"
+  nextUnit="/docs/unit-08/set-direction"
+  nextUnitName="Lesson 8.2: Reversing Mechanical Bias using setDirection(REVERSE)"
+/>

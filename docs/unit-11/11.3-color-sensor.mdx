@@ -1,0 +1,113 @@
+---
+id: color-sensor
+title: "Lesson 11.3: Sampling Alliance Colors with the REV Color Sensor"
+sidebar_label: "11.3 · Color Sensor"
+sidebar_position: 3
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit11Simulator from '@site/src/components/Unit11Simulator';
+
+# Lesson 11.3: Sampling Alliance Colors with the REV Color Sensor
+
+---
+
+## The Challenge of Color Detection Under Field Lighting
+
+RGB color sensing sounds straightforward until you run it at a real competition venue. Stadium lighting varies between arenas, and shadow from the robot itself or from game elements can shift the raw channel values by a significant margin between one match and the next. A threshold that worked in your school gymnasium may completely fail under the bright LEDs of a competition field.
+
+A useful first heuristic is to compare relative color channels instead of matching one exact raw value. A red game element may produce a higher `red()` reading than `blue()` or `green()`, but that relationship can change with sensor distance, ambient light, surface finish, LED intensity, and the sensor's spectral response. Competition code should log samples, require a minimum brightness or channel margin, and test an `UNKNOWN` region instead of assuming the largest channel is always correct.
+
+---
+
+## ColorSensor in the SDK
+
+The `ColorSensor` class provides three primary methods for reading individual color channels: `red()`, `green()`, and `blue()`. Each returns an `int` in the range of 0 to 255. Larger values mean more of that color wavelength is being reflected back to the sensor.
+
+The sensor operates using an internal white LED that illuminates the target surface. The photodetector then measures how much of each wavelength the surface reflects back. This means the proximity of the sensor to the object matters for consistent readings. The REV Color Sensor works best when held a few millimeters to a few centimeters from the target. Mounting it at a fixed, known distance from the scoring area or intake opening produces far more repeatable results than a sensor that can wobble or shift position.
+
+A combined ARGB value is also accessible through `argb()`, which packs all four channels into a single `int`. For most FTC use cases, working with the individual channel methods is cleaner and more readable than unpacking a packed integer.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.hardware.DcMotor;
+
+@TeleOp(name="Color_Sensor_Demo")
+public class ColorSensorDemo extends OpMode {
+
+    private ColorSensor intakeSensor;
+    private DcMotor     intakeMotor;
+
+    @Override
+    public void init() {
+        intakeSensor = hardwareMap.get(ColorSensor.class, "intake_color");
+        intakeMotor  = hardwareMap.get(DcMotor.class,     "intake");
+        telemetry.addData("Status", "Color sensor ready");
+    }
+
+    @Override
+    public void loop() {
+        int r = intakeSensor.red();
+        int g = intakeSensor.green();
+        int b = intakeSensor.blue();
+
+        // Determine alliance color by comparing which component dominates
+        String detectedAlliance;
+        if (r > b && r > g) {
+            detectedAlliance = "RED";
+            intakeMotor.setPower(1.0); // Correct alliance. Collect it.
+        } else if (b > r && b > g) {
+            detectedAlliance = "BLUE";
+            intakeMotor.setPower(-1.0); // Wrong alliance. Eject it.
+        } else {
+            detectedAlliance = "UNKNOWN";
+            intakeMotor.setPower(0.0);
+        }
+
+        telemetry.addData("Alliance Detected", detectedAlliance);
+        telemetry.addData("R / G / B", "%d / %d / %d", r, g, b);
+        telemetry.update();
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. To read the intensity of the blue light channel from a `ColorSensor`, call `colorSensor.__________()`.
+2. The individual channel methods (`red()`, `green()`, `blue()`) each return an `__________` in the range of 0 to 255.
+3. For reliable alliance detection under varying field lighting, the recommended approach is to compare color channels `__________` each other rather than against fixed absolute thresholds.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`blue()`**
+2. **`int`**
+3. **against** (comparing relative channel dominance)
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Use the simulator below to complete the alliance color detector. The editor starts with incomplete starter code, so fill in the color-channel reads and comparison logic before sampling the tiles.
+
+<SimulatorRunGuide />
+
+<Unit11Simulator lesson="color-sensor" />
+
+<MarkComplete
+  lessonId="unit-11/color-sensor"
+  nextUnit="/docs/unit-11/distance-sensor"
+  nextUnitName="Lesson 11.4: Integration of Time-of-Flight Distance Sensors for Obstacle Detection"
+/>

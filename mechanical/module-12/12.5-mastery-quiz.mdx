@@ -1,0 +1,133 @@
+---
+id: mastery-quiz
+title: "Module 12 Mastery Quiz: Shop Standards and Non-Negotiables"
+sidebar_label: "Module 12 · Mastery Quiz"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import ScoredQuiz from '@site/src/components/mechanical/ScoredQuiz';
+import {MASTERY_QUESTIONS} from '@site/src/telemark/mechanicalQuizzes';
+
+# Module 12 Mastery Quiz: Shop Standards and Non-Negotiables
+
+---
+
+## I. Conceptual Questions
+
+**1. Where 0.15 mm comes from:** The clearance standard is 0.15 mm per side. Name the four sources of error it has to absorb, and explain why cutting a hole exactly to the screw diameter fails.
+
+<details>
+<summary>Show answer</summary>
+
+It absorbs drill error, position error between the parts, fastener runout, and surface finish such as paint, anodising, or a leftover burr. Individually small; together they reach roughly 0.3 mm on the diameter.
+
+A hole cut exactly to the screw diameter leaves nothing for any of them. The screw binds on the hole wall, so tightening cannot pull the faces together. The joint then carries load through the screw in shear instead of through friction between clamped faces, and it develops slop the first time it is hit. It also cannot be assembled without force, which is how holes get reamed out with a drill at a competition.
+
+</details>
+
+---
+
+**2. Engagement in thin stock:** An M3 screw is tapped into 1/8 in aluminium. State the standard, whether this meets it, and three ways to fix it.
+
+<details>
+<summary>Show answer</summary>
+
+The standard is at least 1.5 times the screw diameter of engaged thread in aluminium, so 4.5 mm for M3. 1/8 in is 3.175 mm, about 70% of the standard, so the threads strip below the screw's own capacity and strip sooner with each reassembly.
+
+Fixes: use a through hole with a nut and washer; tap into the thicker web of an extrusion rather than the sheet face; install a threaded insert. A fourth option is to accept the reduced strength deliberately for a low load joint and record that decision.
+
+</details>
+
+---
+
+**3. One fastener:** Why is a bracket held by a single screw a defect regardless of how tight the screw is?
+
+<details>
+<summary>Show answer</summary>
+
+A single fastener leaves the bracket free to rotate about it. Torque does not remove that degree of freedom, so no amount of tightening fixes it, and every load cycle works the bracket further out of position. Two fasteners spaced as far apart as the bracket allows resist rotation directly. The fix costs one screw.
+
+</details>
+
+---
+
+**4. Safety factor:** Explain why 2x is the standard and why 6x is also wrong.
+
+<details>
+<summary>Show answer</summary>
+
+Static torque is only what holds the mechanism still. Real operation adds acceleration, impact recovery, a heavier game element than the one on the bench, a battery below nominal, and friction that appears as things wear. A factor of 2 covers those; 1.2 covers none of them and is the number that appears when someone wants the answer to be yes.
+
+6x is a different mistake. Margin on a powered mechanism is bought with reduction, and reduction costs speed proportionally. An arm with six times the necessary torque takes several seconds to raise and loses the cycle it was built for. Two to three, and spend the rest on speed.
+
+</details>
+
+---
+
+**5. The coaxial check:** A shaft spins freely with one bearing installed and stiffly with both. What does that mean, and what does it cost if ignored?
+
+<details>
+<summary>Show answer</summary>
+
+The two bores are not coaxial. The shaft has to bend slightly to pass through both, which loads both bearings permanently and adds friction that never goes away.
+
+Ignored, it wastes motor output continuously, wears the bearings early, and shows up later as a mechanism that is mysteriously slower than the calculation said. The check takes ten seconds during assembly, and the fix at that point is usually a spacer.
+
+</details>
+
+---
+
+## II. Review the Drawing
+
+A student submits this note with a part. **Identify the 3 standards violated.**
+
+```text
+Bracket, 1/8 in aluminium.
+
+- Four M3 holes at 3.0 mm, all located to nominal, no slots.
+- Mounts to the chassis with one M3 screw through the middle hole.
+- The M3 holes on the far face are tapped directly into the 1/8 in plate.
+```
+
+<details>
+<summary>Show answers</summary>
+
+**1. The clearance holes are 3.0 mm.** That is the screw's own diameter, leaving zero clearance against the 0.15 mm per side standard. The screws bind, the joint cannot clamp, and the part will need reaming to assemble.
+
+```text
+Fix: 3.2 mm close fit, or 3.4 mm free fit in a stack.
+```
+
+**2. Four holes located to nominal with no slots.** Position error accumulates across a four hole pattern, so all four cannot be held simultaneously. One hole should locate and the rest should be slotted.
+
+```text
+Fix: one close-fit locating hole, three slots with a few
+millimetres of adjustment.
+```
+
+**3. One screw to the chassis, and tapped threads in 1/8 in plate.** A single fastener is a pivot rather than a joint, and 3.175 mm of engagement is below the 4.5 mm standard for M3 in aluminium.
+
+```text
+Fix: two fasteners spaced apart. Replace the tapped holes with
+through holes and nuts, or tap into a thicker section.
+```
+
+</details>
+
+---
+
+## III. Scored Check
+
+The questions above are for working something through. These are graded, so you can find out whether it stuck. Everything is scored in your browser.
+
+<ScoredQuiz
+  lessonId="module-12/mastery-quiz"
+  questions={MASTERY_QUESTIONS['module-12']}
+/>
+
+<MarkComplete
+  lessonId="module-12/mastery-quiz"
+  nextUnit="/mechanical"
+  nextUnitName="the Mechanical Track Overview"
+/>

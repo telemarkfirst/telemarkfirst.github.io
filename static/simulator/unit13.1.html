@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Telemark Unit 13.1 Simulator</title>
+<style>
+  #sim-right-panel .u131-panel {
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: clamp(190px, 34vh, 330px);
+    overflow-y: auto;
+    margin: 10px;
+    padding: 12px;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #111118;
+    color: #e0e0e0;
+    font-family: var(--font-ui, Arial, sans-serif);
+  }
+
+  #sim-right-panel #sim-scene-container {
+    flex: 1 0 clamp(360px, 58vh, 560px);
+    min-height: 360px;
+  }
+
+  #sim-right-panel .u131-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  #sim-right-panel .u131-class {
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #0d0d12;
+    margin-bottom: 10px;
+  }
+
+  #sim-right-panel .u131-class-header {
+    padding: 8px 10px;
+    background: #181820;
+    border-bottom: 1px solid #2a2a3a;
+    font-weight: 700;
+  }
+
+  #sim-right-panel .u131-section {
+    padding: 8px 10px;
+    border-bottom: 1px solid #242431;
+  }
+
+  #sim-right-panel .u131-section:last-child {
+    border-bottom: 0;
+  }
+
+  #sim-right-panel .u131-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    color: #888;
+    font-size: 0.84rem;
+  }
+
+  #sim-right-panel .u131-item.valid {
+    color: #22cc66;
+  }
+
+  #sim-right-panel .u131-chain {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 8px;
+    align-items: center;
+    margin-top: 8px;
+  }
+
+  #sim-right-panel .u131-node {
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #0d0d12;
+    padding: 8px;
+    text-align: center;
+    color: #888;
+    font-size: 0.8rem;
+  }
+
+  #sim-right-panel .u131-node.active {
+    color: #22cc66;
+    border-color: #22cc66;
+    box-shadow: 0 0 12px rgba(34, 204, 102, 0.24);
+  }
+
+  #sim-right-panel .u131-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  #sim-right-panel .u131-stat {
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #0d0d12;
+    padding: 8px;
+    min-width: 0;
+  }
+
+  #sim-right-panel .u131-label {
+    color: #888;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  #sim-right-panel .u131-value {
+    color: #fff;
+    font-weight: 700;
+    margin-top: 2px;
+  }
+
+  #sim-right-panel .u131-warning {
+    display: none;
+    margin-top: 10px;
+    border: 1px solid #55421d;
+    border-radius: 8px;
+    padding: 8px;
+    background: rgba(255, 204, 102, 0.08);
+    color: #ffcc66;
+    font-size: 0.82rem;
+  }
+
+  #sim-scene-container .u131-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: rgba(7, 7, 10, 0.88);
+    color: #cbd5e1;
+    font-weight: 700;
+    pointer-events: none;
+  }
+
+  #sim-scene-container .u131-success {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 5;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border: 1px solid #22cc66;
+    border-radius: 8px;
+    background: rgba(7, 12, 9, 0.88);
+    color: #22cc66;
+    font-weight: 700;
+    pointer-events: none;
+  }
+</style>
+<script src="./simulator_base.js"></script>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+<script>
+window.onSimulatorReady = function () {
+  "use strict";
+
+  const starterCode = `import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+
+// IntakeMechanism class - encapsulates the intake CRServo
+class IntakeMechanism {
+    // TODO: Declare a private CRServo named intake_servo
+
+    public void init(HardwareMap hwMap) {
+        // TODO: Map "intake_servo" from hwMap
+    }
+
+    public void collect() {
+        // TODO: Set intake power to 0.8
+    }
+
+    public void eject() {
+        // TODO: Set intake power to -0.8
+    }
+
+    public void stop() {
+        // TODO: Set intake power to 0.0
+    }
+}
+
+// OpMode using IntakeMechanism
+@TeleOp(name="Intake_OOP")
+public class IntakeOOP extends OpMode {
+
+    IntakeMechanism intake = new IntakeMechanism();
+
+    @Override
+    public void init() {
+        intake.init(hardwareMap);
+        telemetry.addData("Status", "Initialized");
+    }
+
+    @Override
+    public void loop() {
+        if (gamepad1.a) {
+            intake.collect();
+            telemetry.addData("Intake", "Collecting");
+        } else if (gamepad1.b) {
+            intake.eject();
+            telemetry.addData("Intake", "Ejecting");
+        } else if (gamepad1.y) {
+            intake.stop();
+            telemetry.addData("Intake", "Stopped");
+        } else {
+            telemetry.addData("Intake", "Idle");
+        }
+        telemetry.update();
+    }
+}`;
+
+  const state = {
+    servoPower: 0,
+    method: "idle",
+    pulse: 0,
+    chainTimer: 0,
+    spheres: []
+  };
+
+  let sceneRoot;
+  let roller;
+  let rollerMaterial;
+  let servoDevice;
+  let animationRegistered = false;
+  let intakeBehavior = { collect: 0.8, eject: -0.8, stop: 0 };
+
+  function el(id) {
+    return document.getElementById(id);
+  }
+
+  function safeCall(fn) {
+    if (typeof fn !== "function") return undefined;
+    const args = Array.prototype.slice.call(arguments, 1);
+    return fn.apply(null, args);
+  }
+
+  setCode(starterCode);
+  setChallenge(
+    "Telemark Unit 13.1 Simulator",
+    "Class encapsulation for an intake subsystem.",
+    [
+      "Declare class IntakeMechanism",
+      "Use a private CRServo intake_servo field",
+      "Map intake_servo in public init(HardwareMap hwMap)",
+      "collect() sets power to 0.8",
+      "eject() sets power to -0.8",
+      "stop() sets power to 0",
+      "Declare IntakeMechanism intake in the OpMode",
+      "Call intake.init(hardwareMap) in init()",
+      "Call intake.collect(), intake.eject(), and intake.stop() in loop()"
+    ]
+  );
+  setBadges([
+    { iconClass: "fa-solid fa-cube", label: "OOP", active: true },
+    { iconClass: "fa-solid fa-gear", label: "CRServo", active: true },
+    { iconClass: "fa-solid fa-display", label: "Telemetry", active: true },
+    { iconClass: "fa-solid fa-gamepad", label: "Gamepad", active: true }
+  ]);
+  setActiveInputs(["a", "b", "y"]);
+
+  servoDevice = hardwareMap.registerCRServo("intake_servo");
+  hardwareMap.onCRServoPower(function (name, value) {
+    updateIntakeVisual(name, value);
+  });
+
+  createPanel();
+  setupScene();
+  validateCode();
+  updatePanel();
+
+  window.updateIntakeVisual = updateIntakeVisual;
+  window.callIntakeCollect = callIntakeCollect;
+  window.callIntakeEject = callIntakeEject;
+  window.callIntakeStop = callIntakeStop;
+
+  window.onInit = function () {
+    compileMechanismBehavior();
+    runStudentInit();
+    validateCode();
+    updatePanel();
+  };
+
+  window.onStart = function () {
+    compileMechanismBehavior();
+    startTeleOpLoop();
+  };
+
+  window.onRun = window.onInit;
+
+  window.onStop = function () {
+    callIntakeStop();
+    state.method = "idle";
+    updatePanel();
+  };
+
+  window.onReset = function () {
+    callIntakeStop();
+    resetSpheres();
+    state.method = "idle";
+    state.pulse = 0;
+    state.chainTimer = 0;
+    updatePanel();
+  };
+
+  if (!animationRegistered && typeof addAnimationCallback === "function") {
+    addAnimationCallback(tick);
+    animationRegistered = true;
+  }
+
+  function createPanel() {
+    const rightPanel = el("sim-right-panel");
+    const sceneContainer = el("sim-scene-container");
+    if (!rightPanel || !sceneContainer) return;
+
+    const oldPanel = el("u131-panel");
+    if (oldPanel) oldPanel.remove();
+    const oldBadge = el("u131-state-badge");
+    if (oldBadge) oldBadge.remove();
+    const oldSuccess = el("u131-success");
+    if (oldSuccess) oldSuccess.remove();
+
+    const badge = document.createElement("div");
+    badge.id = "u131-state-badge";
+    badge.className = "u131-badge";
+    badge.innerHTML = '<i class="fa-solid fa-stop"></i> STOPPED';
+    sceneContainer.appendChild(badge);
+
+    const success = document.createElement("div");
+    success.id = "u131-success";
+    success.className = "u131-success";
+    success.innerHTML = '<i class="fa-solid fa-circle-check"></i> Challenge Complete! IntakeMechanism class is correctly encapsulated.';
+    sceneContainer.appendChild(success);
+
+    const panel = document.createElement("div");
+    panel.id = "u131-panel";
+    panel.className = "u131-panel";
+    panel.innerHTML = `
+      <div class="u131-title"><i class="fa-solid fa-cube"></i> IntakeMechanism UML</div>
+      <div class="u131-class">
+        <div class="u131-class-header" id="u131-class">IntakeMechanism</div>
+        <div class="u131-section">
+          <div class="u131-item" id="u131-field"><i class="fa-solid fa-minus"></i> intake_servo : CRServo</div>
+        </div>
+        <div class="u131-section">
+          <div class="u131-item" id="u131-init"><i class="fa-solid fa-plus"></i> init(hwMap : HardwareMap) : void</div>
+          <div class="u131-item" id="u131-collect"><i class="fa-solid fa-plus"></i> collect() : void</div>
+          <div class="u131-item" id="u131-eject"><i class="fa-solid fa-plus"></i> eject() : void</div>
+          <div class="u131-item" id="u131-stop"><i class="fa-solid fa-plus"></i> stop() : void</div>
+        </div>
+      </div>
+      <div class="u131-class">
+        <div class="u131-class-header">IntakeOOP</div>
+        <div class="u131-section">
+          <div class="u131-item" id="u131-op-field"><i class="fa-solid fa-link"></i> has an IntakeMechanism</div>
+          <div class="u131-item" id="u131-op-init"><i class="fa-solid fa-link"></i> intake.init(hardwareMap)</div>
+          <div class="u131-item" id="u131-op-calls"><i class="fa-solid fa-link"></i> collect(), eject(), stop()</div>
+        </div>
+      </div>
+      <div class="u131-title"><i class="fa-solid fa-diagram-project"></i> Method Call Chain</div>
+      <div class="u131-chain">
+        <div class="u131-node" id="u131-chain-gamepad"><i class="fa-solid fa-gamepad"></i><br>gamepad</div>
+        <div><i class="fa-solid fa-arrow-right"></i></div>
+        <div class="u131-node" id="u131-chain-method"><i class="fa-solid fa-cube"></i><br>intake.method()</div>
+        <div class="u131-node" id="u131-chain-servo"><i class="fa-solid fa-gear"></i><br>setPower()</div>
+        <div><i class="fa-solid fa-arrow-right"></i></div>
+        <div class="u131-node" id="u131-chain-result"><i class="fa-solid fa-rotate"></i><br>roller</div>
+      </div>
+      <div class="u131-stats">
+        <div class="u131-stat">
+          <div class="u131-label">Servo Power</div>
+          <div class="u131-value" id="u131-servo-power">0.00</div>
+        </div>
+        <div class="u131-stat">
+          <div class="u131-label">Current Method</div>
+          <div class="u131-value" id="u131-method">idle</div>
+        </div>
+      </div>
+      <div class="u131-warning" id="u131-warning"></div>
+    `;
+    rightPanel.appendChild(panel);
+  }
+
+  function setupScene() {
+    if (!window.THREE || !window.scene) return;
+    if (sceneRoot) window.scene.remove(sceneRoot);
+
+    sceneRoot = new THREE.Group();
+    sceneRoot.name = "unit13_1_scene";
+    window.scene.add(sceneRoot);
+    window.scene.background = new THREE.Color(0x050508);
+    safeCall(setFieldVisible, false);
+    safeCall(setCameraOrbit, {
+      theta: 0,
+      phi: 0.9,
+      radius: 8,
+      target: { x: 0, y: 0.7, z: 1.5 }
+    });
+
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(10, 12),
+      new THREE.MeshStandardMaterial({ color: 0x1a1a2e, roughness: 0.82, metalness: 0.04 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    sceneRoot.add(floor);
+
+    const robot = new THREE.Group();
+    sceneRoot.add(robot);
+
+    const body = new THREE.Mesh(
+      new THREE.BoxGeometry(3.6, 0.9, 3.2),
+      new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.55, metalness: 0.18 })
+    );
+    body.position.y = 0.55;
+    robot.add(body);
+
+    rollerMaterial = new THREE.MeshStandardMaterial({
+      color: 0xff6600,
+      roughness: 0.45,
+      metalness: 0.2,
+      emissive: 0x000000
+    });
+    roller = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.28, 0.28, 3.7, 32),
+      rollerMaterial
+    );
+    roller.rotation.z = Math.PI / 2;
+    roller.position.set(0, 0.62, -1.78);
+    robot.add(roller);
+
+    for (let x = -1.35; x <= 1.35; x += 0.9) {
+      const spoke = new THREE.Mesh(
+        new THREE.BoxGeometry(0.08, 0.76, 0.08),
+        new THREE.MeshBasicMaterial({ color: 0x111111 })
+      );
+      spoke.position.x = x;
+      roller.add(spoke);
+    }
+
+    resetSpheres();
+  }
+
+  function resetSpheres() {
+    if (!window.THREE || !sceneRoot) return;
+    state.spheres.forEach(function (sphere) {
+      sceneRoot.remove(sphere);
+    });
+    state.spheres = [];
+    [[-1.4, -4.0], [0, -5.2], [1.3, -4.6]].forEach(function (pos) {
+      spawnSphere(pos[0], pos[1]);
+    });
+  }
+
+  function spawnSphere(x, z) {
+    const sphere = new THREE.Mesh(
+      new THREE.SphereGeometry(0.22, 24, 24),
+      new THREE.MeshStandardMaterial({ color: 0x9333ea, roughness: 0.45, metalness: 0.1 })
+    );
+    sphere.position.set(x, 0.24, z);
+    sphere.userData.collected = false;
+    sceneRoot.add(sphere);
+    state.spheres.push(sphere);
+  }
+
+  function tick() {
+    if (!window.THREE || !roller) return;
+    roller.rotation.x += state.servoPower * 0.22;
+    state.pulse = Math.max(0, state.pulse - 0.016);
+    state.chainTimer = Math.max(0, state.chainTimer - 0.016);
+
+    if (rollerMaterial) {
+      rollerMaterial.emissive.setHex(state.pulse > 0 ? pulseColor() : 0x000000);
+    }
+
+    state.spheres.forEach(function (sphere) {
+      if (state.servoPower > 0.01 && sphere.visible) {
+        const target = new THREE.Vector3(0, 0.24, -1.78);
+        const direction = target.clone().sub(sphere.position);
+        const dist = direction.length();
+        if (dist < 4.2) {
+          sphere.position.add(direction.normalize().multiplyScalar(0.035 + state.servoPower * 0.02));
+          if (dist < 0.34) {
+            sphere.visible = false;
+            sphere.userData.collected = true;
+          }
+        }
+      }
+
+      if (state.servoPower < -0.01) {
+        if (!sphere.visible) {
+          sphere.visible = true;
+          sphere.position.set((Math.random() - 0.5) * 1.8, 0.24, -2.2);
+        }
+        sphere.position.z -= 0.05;
+      }
+    });
+
+    updatePanel();
+  }
+
+  function pulseColor() {
+    if (state.method === "collect") return 0x0b3d1d;
+    if (state.method === "eject") return 0x3d0b0b;
+    if (state.method === "stop") return 0x222222;
+    return 0x000000;
+  }
+
+  function updateIntakeVisual(name, value) {
+    if (name !== "intake_servo") return;
+    state.servoPower = Number(value) || 0;
+    if (state.servoPower > 0.01) state.method = "collect";
+    else if (state.servoPower < -0.01) state.method = "eject";
+    else state.method = "stop";
+    state.pulse = 0.32;
+    state.chainTimer = 0.45;
+    updatePanel();
+  }
+
+  function callIntakeCollect() {
+    state.method = "collect";
+    if (servoDevice && typeof servoDevice.setPower === "function") servoDevice.setPower(intakeBehavior.collect);
+  }
+
+  function callIntakeEject() {
+    state.method = "eject";
+    if (servoDevice && typeof servoDevice.setPower === "function") servoDevice.setPower(intakeBehavior.eject);
+  }
+
+  function callIntakeStop() {
+    state.method = "stop";
+    if (servoDevice && typeof servoDevice.setPower === "function") servoDevice.setPower(intakeBehavior.stop);
+  }
+
+  function updatePanel() {
+    const powerText = el("u131-servo-power");
+    const methodText = el("u131-method");
+    const badge = el("u131-state-badge");
+    if (powerText) powerText.textContent = state.servoPower.toFixed(2);
+    if (methodText) methodText.textContent = state.method;
+    if (badge) {
+      const info = methodInfo();
+      badge.innerHTML = '<i class="fa-solid ' + info.icon + '"></i> ' + info.label;
+      badge.style.color = info.color;
+      badge.style.borderColor = info.color;
+    }
+
+    ["gamepad", "method", "servo", "result"].forEach(function (name) {
+      const node = el("u131-chain-" + name);
+      if (node) node.classList.toggle("active", state.chainTimer > 0);
+    });
+  }
+
+  function methodInfo() {
+    if (state.method === "collect") return { icon: "fa-arrow-down", label: "COLLECTING", color: "#22cc66" };
+    if (state.method === "eject") return { icon: "fa-arrow-up", label: "EJECTING", color: "#ef4444" };
+    if (state.method === "stop") return { icon: "fa-stop", label: "STOPPED", color: "#cbd5e1" };
+    return { icon: "fa-pause", label: "IDLE", color: "#cbd5e1" };
+  }
+
+  function compileMechanismBehavior() {
+    const code = typeof getCode === "function" ? getCode() : starterCode;
+    const classBody = extractClassBody(code, "IntakeMechanism");
+    intakeBehavior = {
+      collect: extractSetPower(classBody, "collect", 0.8),
+      eject: extractSetPower(classBody, "eject", -0.8),
+      stop: extractSetPower(classBody, "stop", 0)
+    };
+  }
+
+  function extractSetPower(classBody, methodName, fallback) {
+    const body = extractMethodBody(classBody || "", methodName);
+    const match = /setPower\s*\(\s*([-+]?\d+(?:\.\d+)?)\s*\)/.exec(body);
+    return match ? Number(match[1]) : fallback;
+  }
+
+  function runStudentInit() {
+    const code = typeof getCode === "function" ? getCode() : starterCode;
+    const initBody = extractMethodBody(extractOpModeBody(code), "init");
+    if (!initBody) return;
+    const js = initBody
+      .replace(/\bintake\s*\.\s*init\s*\(\s*hardwareMap\s*\)/g, "callIntakeInit()")
+      .replace(/\btelemetry\s*\.\s*addData\s*\(/g, "addTelemetry(")
+      .replace(/\btelemetry\s*\.\s*update\s*\(\s*\)/g, "updateTelemetry()");
+    try {
+      const initFn = new Function("hardwareMap", "callIntakeInit", "addTelemetry", "updateTelemetry", '"use strict";\n' + js);
+      clearTelemetry();
+      initFn(hardwareMap, callIntakeInit, addTelemetry, updateTelemetry);
+      updateTelemetry();
+    } catch (err) {
+      failStudentExecution("init() runtime error: " + err.message);
+    }
+  }
+
+  function callIntakeInit() {
+    state.method = "initialized";
+  }
+
+  function startTeleOpLoop() {
+    const code = typeof getCode === "function" ? getCode() : starterCode;
+    const loopBody = extractMethodBody(extractOpModeBody(code), "loop");
+    if (!loopBody) {
+      failStudentExecution("loop() was not found.");
+      return;
+    }
+
+    const js = transpileLoop(loopBody);
+    let loopFn;
+    try {
+      loopFn = new Function(
+        "gamepad",
+        "addTelemetry",
+        "updateTelemetry",
+        "callIntakeCollect",
+        "callIntakeEject",
+        "callIntakeStop",
+        '"use strict";\n' + js
+      );
+    } catch (err) {
+      failStudentExecution("loop() compile error: " + err.message);
+      return;
+    }
+
+    const runFrame = function () {
+      try {
+        clearTelemetry();
+        loopFn(
+          window.gamepad,
+          addTelemetry,
+          updateTelemetry,
+          callIntakeCollect,
+          callIntakeEject,
+          callIntakeStop
+        );
+        updateTelemetry();
+        validateCode();
+      } catch (err) {
+        failStudentExecution("loop() runtime error: " + err.message);
+      }
+    };
+
+    if (typeof _simStartLoop === "function") _simStartLoop(runFrame);
+    else setInterval(runFrame, 50);
+  }
+
+  function transpileLoop(body) {
+    let js = body
+      .replace(/\bgamepad1\s*\.\s*a\b/g, "gamepad.a")
+      .replace(/\bgamepad1\s*\.\s*b\b/g, "gamepad.b")
+      .replace(/\bgamepad1\s*\.\s*y\b/g, "gamepad.y")
+      .replace(/\bintake\s*\.\s*collect\s*\(\s*\)/g, "callIntakeCollect()")
+      .replace(/\bintake\s*\.\s*eject\s*\(\s*\)/g, "callIntakeEject()")
+      .replace(/\bintake\s*\.\s*stop\s*\(\s*\)/g, "callIntakeStop()")
+      .replace(/\btelemetry\s*\.\s*addData\s*\(/g, "addTelemetry(")
+      .replace(/\btelemetry\s*\.\s*update\s*\(\s*\)/g, "updateTelemetry()");
+    if (typeof _simTranspile === "function") js = _simTranspile(js);
+    return js;
+  }
+
+  function validateCode() {
+    const code = typeof getCode === "function" ? getCode() : starterCode;
+    const classBody = extractClassBody(code, "IntakeMechanism");
+    const loopBody = extractMethodBody(extractOpModeBody(code), "loop");
+    const checks = [
+      /class\s+IntakeMechanism\b/.test(code),
+      /private\s+CRServo\s+intake_servo\s*;/.test(code),
+      /public\s+void\s+init\s*\(\s*HardwareMap\s+hwMap\s*\)[\s\S]*?hwMap\s*\.\s*get\s*\(\s*CRServo\.class\s*,\s*"intake_servo"\s*\)/.test(classBody),
+      /public\s+void\s+collect\s*\(\s*\)[\s\S]*?setPower\s*\(\s*0\.8\s*\)/.test(classBody),
+      /public\s+void\s+eject\s*\(\s*\)[\s\S]*?setPower\s*\(\s*-0\.8\s*\)/.test(classBody),
+      /public\s+void\s+stop\s*\(\s*\)[\s\S]*?setPower\s*\(\s*0(?:\.0)?\s*\)/.test(classBody),
+      /IntakeMechanism\s+intake\b/.test(code),
+      /intake\s*\.\s*init\s*\(\s*hardwareMap\s*\)/.test(code),
+      /intake\s*\.\s*collect\s*\(\s*\)/.test(loopBody) && /intake\s*\.\s*eject\s*\(\s*\)/.test(loopBody) && /intake\s*\.\s*stop\s*\(\s*\)/.test(loopBody)
+    ];
+
+    checks.forEach(function (passed, index) {
+      safeCall(setRequirement, index, !!passed);
+    });
+
+    const ids = [
+      "u131-class",
+      "u131-field",
+      "u131-init",
+      "u131-collect",
+      "u131-eject",
+      "u131-stop",
+      "u131-op-field",
+      "u131-op-init",
+      "u131-op-calls"
+    ];
+    ids.forEach(function (id, index) {
+      const item = el(id);
+      if (item) item.classList.toggle("valid", !!checks[index]);
+    });
+
+    const success = el("u131-success");
+    if (success) success.style.display = checks.every(Boolean) ? "flex" : "none";
+    updateWarning(code, classBody);
+  }
+
+  function updateWarning(code, classBody) {
+    const warning = el("u131-warning");
+    if (!warning) return;
+    let message = "";
+    if (/public\s+CRServo\s+intake_servo/.test(code)) {
+      message = "Make intake_servo private. Encapsulation means hiding mechanism details inside the class.";
+    } else if (/public\s+void\s+init\s*\(\s*\)/.test(code)) {
+      message = "init() needs a HardwareMap parameter: public void init(HardwareMap hwMap).";
+    } else if (/collect\s*\(\s*\)[\s\S]*?setPower\s*\(\s*(?!0\.8\b)([-+]?\d+(?:\.\d+)?)\s*\)/.test(classBody)) {
+      message = "collect() should set power to 0.8.";
+    } else if (/eject\s*\(\s*\)[\s\S]*?setPower\s*\(\s*0\.8\s*\)/.test(classBody)) {
+      message = "eject() should use negative power, -0.8, to run in reverse.";
+    } else if (directServoAccessOutsideClass(code)) {
+      message = "Bypass detected. Use intake.collect(), intake.eject(), or intake.stop() instead of controlling intake_servo directly from the OpMode.";
+    } else if (!/telemetry\s*\.\s*update\s*\(\s*\)/.test(code)) {
+      message = "Call telemetry.update() to send data to the Driver Station.";
+    }
+
+    warning.style.display = message ? "block" : "none";
+    warning.innerHTML = message ? '<i class="fa-solid fa-triangle-exclamation"></i> ' + message : "";
+  }
+
+  function directServoAccessOutsideClass(code) {
+    const classBody = extractClassBody(code, "IntakeMechanism");
+    const withoutClass = classBody ? code.replace(classBody, "") : code;
+    return /intake_servo\s*\.\s*setPower\s*\(/.test(withoutClass);
+  }
+
+  function extractMethodBody(code, name) {
+    const re = new RegExp("\\b(?:public\\s+)?(?:void|boolean|double)\\s+" + name + "\\s*\\([^)]*\\)\\s*\\{");
+    const match = re.exec(code);
+    if (!match) return "";
+    let index = match.index + match[0].length;
+    let depth = 1;
+    for (; index < code.length; index++) {
+      if (code[index] === "{") depth++;
+      if (code[index] === "}") {
+        depth--;
+        if (depth === 0) return code.slice(match.index + match[0].length, index);
+      }
+    }
+    return "";
+  }
+
+  function extractClassBody(code, name) {
+    const re = new RegExp("\\bclass\\s+" + name + "\\b[^{]*\\{");
+    const match = re.exec(code);
+    if (!match) return "";
+    let index = match.index + match[0].length;
+    let depth = 1;
+    for (; index < code.length; index++) {
+      if (code[index] === "{") depth++;
+      if (code[index] === "}") {
+        depth--;
+        if (depth === 0) return code.slice(match.index + match[0].length, index);
+      }
+    }
+    return "";
+  }
+
+  function extractOpModeBody(code) {
+    const match = /\bclass\s+([A-Za-z_$][\w$]*)\s+extends\s+OpMode\b/.exec(code);
+    return match ? extractClassBody(code, match[1]) : extractClassBody(code, "IntakeOOP");
+  }
+
+  function showStudentError(message) {
+    if (typeof _simShowTelemetryError === "function") {
+      _simShowTelemetryError(message);
+    } else {
+      addTelemetry("ERROR", message);
+      updateTelemetry();
+    }
+  }
+
+  function failStudentExecution(message) {
+    if (typeof stopExecution === "function") stopExecution();
+    showStudentError(message);
+  }
+};
+</script>
+</body>
+</html>

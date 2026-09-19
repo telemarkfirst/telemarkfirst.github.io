@@ -1,0 +1,136 @@
+---
+id: mastery-quiz
+title: "Module 1 Mastery Quiz: The Engineering Notebook"
+sidebar_label: "Module 1 · Mastery Quiz"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import ScoredQuiz from '@site/src/components/mechanical/ScoredQuiz';
+import {MASTERY_QUESTIONS} from '@site/src/telemark/mechanicalQuizzes';
+
+# Module 1 Mastery Quiz: The Engineering Notebook
+
+---
+
+## I. Conceptual Questions
+
+**1. Two Audiences:** The notebook serves both the team and the judges. Explain why these two audiences want the same document rather than two different ones.
+
+<details>
+<summary>Show answer</summary>
+
+Both want a record of decisions and the reasoning behind them. The team uses it to recover calculations, test results, and design choices without repeating old work. Judges use the same record to follow how the team developed the robot. A notebook written only for judging tends to summarize the season after the fact and leaves out the detail both audiences need.
+
+</details>
+
+---
+
+**2. Recording Failures:** A team is reluctant to write down a mechanism that failed, on the grounds that it makes the team look bad. Why is this reasoning backwards?
+
+<details>
+<summary>Show answer</summary>
+
+A failed test does not make the team look bad. Recording the conditions, measurement, diagnosis, and next change shows how the team responded to evidence. It also preserves information that a list of successful demonstrations would omit. Judges look for this kind of documented iteration when they evaluate the team's process.
+
+</details>
+
+---
+
+**3. Trial Counts:** Explain why "the intake worked when we tested it" is a weaker statement than "the intake acquired the element on 23 of 25 attempts," beyond simply being less precise.
+
+<details>
+<summary>Show answer</summary>
+
+Mechanisms fail intermittently, and an intermittent failure is invisible in a single trial. A single successful trial cannot distinguish between a mechanism that works 100% of the time and one that works 60% of the time. The 23 of 25 statement establishes a reliability figure that can be compared against a requirement, compared against the previous version to show whether a change helped, and used to predict how many failures to expect across a tournament. It also implies the failures were recorded individually, which is where the diagnostic pattern usually lives.
+
+</details>
+
+---
+
+**4. Matrix Ordering:** Why must criteria be weighted before options are scored, and what specifically goes wrong when a team does it in the other order?
+
+<details>
+<summary>Show answer</summary>
+
+If the options are scored first, the team can see which weights favor a preferred concept. That makes it easy to adjust the weights around the desired result, even unintentionally. Setting them first ties the matrix to the strategy and makes later changes visible.
+
+</details>
+
+---
+
+**5. Close Results:** A decision matrix ranks concept A at 61 points and concept B at 59. A student says the matrix has failed to give a clear answer. What is the correct interpretation?
+
+<details>
+<summary>Show answer</summary>
+
+The two concepts are effectively tied because a 2 point gap is smaller than the uncertainty in subjective 1 to 5 scores. Build rough prototypes of both and use measured results to compare them. The matrix has narrowed the choice, but it does not support declaring A the winner.
+
+</details>
+
+---
+
+## II. Review the Entry
+
+Below is a notebook entry from a team. **Identify the 2 problems and rewrite the affected parts.**
+
+```text
+Date: 3 Nov        Subsystem: Slide
+
+Today we worked on the linear slide. We tried a few things and
+made some good progress. The new version is a lot better than
+the old one and extends much faster now. It seemed pretty
+reliable when we ran it. We will keep working on it next time.
+```
+
+<details>
+<summary>Show answers</summary>
+
+**Problem 1 - No stated problem and no reproducible description of the change.**
+"We tried a few things" does not identify the change. A reader cannot reproduce the version, connect it to the result, or restore it later if another revision performs worse.
+
+```text
+PROBLEM
+Slide took 3.1 s to reach full extension. The cycle time
+requirement allows 2.0 s.
+
+WHAT WE TRIED
+Replaced the 1.0 in spool with a 1.4 in spool, keeping the
+same 312 RPM motor and 3 stage cascade rigging.
+```
+
+**Problem 2 - Results are adjectives, with no numbers and no trial count.**
+"A lot better," "much faster," and "pretty reliable" are opinions. They cannot be compared to the requirement, cannot be compared to the previous version, and give no basis for deciding whether the mechanism is competition ready.
+
+```text
+RESULT
+Extension time 2.2 s, averaged over 10 runs (range 2.1 to 2.4 s).
+Full extension reached 10/10. Two runs showed the third stage
+binding briefly near the top of travel.
+
+NEXT
+Still 0.2 s over the requirement. Check whether the bind at the
+top of travel is costing time. Inspect third stage alignment
+before changing the spool again.
+```
+
+**On the closing line:** "We will keep working on it next time" is not a Next step. A Next step names the specific question the following session will answer.
+
+</details>
+
+---
+
+## III. Scored Check
+
+The questions above are for working something through. These are graded, so you can find out whether it stuck. Everything is scored in your browser.
+
+<ScoredQuiz
+  lessonId="module-01/mastery-quiz"
+  questions={MASTERY_QUESTIONS['module-01']}
+/>
+
+<MarkComplete
+  lessonId="module-01/mastery-quiz"
+  nextUnit="/mechanical/module-02"
+  nextUnitName="Module 2: Shop Safety, Tools, and Measurement"
+/>

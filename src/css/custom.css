@@ -1,0 +1,1002 @@
+/* ============================================
+   TELEMARK THEME
+   Logo palette: black + light blue + aqua
+   ============================================ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  color-scheme: dark;
+
+  /* ════════════════════════════════════════════════════════════════════
+     TELEMARK DESIGN TOKENS
+
+     One source of truth for colour, type, space, radius, and motion.
+     Component stylesheets reference these rather than repeating literals.
+     Before adding a new value here, check whether an existing step works:
+     the point of a scale is that it constrains choices.
+     ════════════════════════════════════════════════════════════════════ */
+
+  /* ── Surfaces, from deepest to most raised ────────────────────────── */
+  --tm-bg:              #05070a;   /* page background */
+  --tm-surface-1:       #090c11;   /* cards on the page */
+  --tm-surface-2:       #0d1117;   /* panels */
+  --tm-surface-3:       #12171f;   /* controls, insets */
+  --tm-surface-4:       #182029;   /* raised, hover */
+
+  /* ── Ink ──────────────────────────────────────────────────────────── */
+  --tm-text-strong:     #f4f7f9;   /* headings */
+  --tm-text:            rgba(228, 235, 241, 0.84);
+  --tm-text-soft:       rgba(228, 235, 241, 0.68);
+  --tm-text-muted:      rgba(206, 216, 226, 0.54);
+  --tm-text-faint:      rgba(206, 216, 226, 0.34);
+  --tm-text-on-accent:  #05080d;
+
+  /* ── Accent: aqua is the primary, blue the secondary ──────────────── */
+  --tm-accent:          #22d3ee;
+  --tm-accent-bright:   #67e8f9;
+  --tm-accent-dim:      #15919f;
+  --tm-blue:            #38bdf8;
+  --tm-blue-soft:       #60a5fa;
+  --tm-indigo:          #818cf8;
+
+  /* Accent washes, used for fills and borders so opacity is not ad hoc */
+  --tm-accent-a08:      rgba(34, 211, 238, 0.08);
+  --tm-accent-a12:      rgba(34, 211, 238, 0.12);
+  --tm-accent-a20:      rgba(34, 211, 238, 0.20);
+  --tm-accent-a35:      rgba(34, 211, 238, 0.35);
+  --tm-accent-a55:      rgba(34, 211, 238, 0.55);
+  --tm-blue-a10:        rgba(96, 165, 250, 0.10);
+  --tm-blue-a32:        rgba(96, 165, 250, 0.32);
+
+  /* ── Semantic ─────────────────────────────────────────────────────── */
+  --tm-success:         #4ade80;
+  --tm-success-wash:    rgba(74, 222, 128, 0.10);
+  --tm-warn:            #fbbf24;
+  --tm-warn-wash:       rgba(251, 191, 36, 0.09);
+  --tm-danger:          #f87171;
+  --tm-danger-wash:     rgba(248, 113, 113, 0.10);
+
+  /* ── Borders ──────────────────────────────────────────────────────── */
+  --tm-border:          rgba(148, 170, 189, 0.14);
+  --tm-border-strong:   rgba(148, 170, 189, 0.30);
+  --tm-border-quiet:    rgba(156, 175, 194, 0.18);
+  --tm-border-hair:     rgba(148, 170, 189, 0.08);
+
+  /* ── Type ─────────────────────────────────────────────────────────── */
+  /* Headings in an editorial serif and text in Inter.
+     Rajdhani, Exo 2 and Share Tech Mono are the three faces every generated
+     "tech" site reaches for, and using all three at once is most of why this
+     looked machine made. A serif for headings is a decision a person makes. */
+  /* The headings were a display serif. It is a good face, but the site sits
+     next to usaco.guide in a student's tabs, and that one is set in a heavy
+     sans throughout: black, tight, plain. The serif read as decoration on a
+     reference site. One family now, weighted rather than contrasted. */
+  --tm-font-display:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* A serif carries a heading at 600. A sans needs the extra weight to hold
+     the same size, so display type states it rather than inheriting. */
+  --tm-weight-display:  800;
+  --tm-font-body:       'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --tm-font-label:      'Inter', -apple-system, sans-serif;
+  --tm-font-mono:       'JetBrains Mono', ui-monospace, monospace;
+
+  --tm-fs-2xs:          0.68rem;
+  --tm-fs-xs:           0.74rem;
+  --tm-fs-sm:           0.84rem;
+  --tm-fs-base:         0.94rem;
+  --tm-fs-md:           1.05rem;
+  --tm-fs-lg:           1.25rem;
+  --tm-fs-xl:           1.6rem;
+  --tm-fs-2xl:          2.1rem;
+  --tm-fs-3xl:          clamp(2.2rem, 5vw, 3.4rem);
+
+  --tm-lh-tight:        1.15;
+  --tm-lh-snug:         1.35;
+  --tm-lh-normal:       1.6;
+
+  /* Label styling recurs across every eyebrow and tag on the site */
+  --tm-track-label:     0.1em;
+  --tm-track-wide:      0.14em;
+
+  /* ── Space, on a 4px base ─────────────────────────────────────────── */
+  --tm-sp-1:            0.25rem;
+  --tm-sp-2:            0.5rem;
+  --tm-sp-3:            0.75rem;
+  --tm-sp-4:            1rem;
+  --tm-sp-5:            1.5rem;
+  --tm-sp-6:            2rem;
+  --tm-sp-7:            3rem;
+  --tm-sp-8:            4rem;
+
+  /* ── Radius ───────────────────────────────────────────────────────── */
+  --tm-r-sm:            8px;
+  --tm-r-md:            12px;
+  --tm-r-lg:            16px;
+  --tm-r-pill:          6px;
+  /* The slightly irregular corner is a Telemark signature. Two variants so
+     alternating cards do not look mechanically identical. */
+  /* Was an asymmetric wobble on every card. Quirk without a reason reads as
+     a template trying to look handmade. */
+  --tm-r-hand:          10px;
+  --tm-r-hand-alt:      10px;
+
+  /* ── Elevation ────────────────────────────────────────────────────── */
+  --tm-shadow-sm:       0 1px 2px rgba(0, 0, 0, 0.4);
+  --tm-shadow-md:       0 6px 18px rgba(0, 0, 0, 0.35);
+  --tm-shadow-glow:     none;
+
+  /* ── Motion ───────────────────────────────────────────────────────── */
+  --tm-dur-fast:        0.12s;
+  --tm-dur:             0.15s;
+  --tm-dur-slow:        0.15s;
+  --tm-ease:            cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── Layout ───────────────────────────────────────────────────────── */
+  /* ch is the width of a zero, which is wider than an average letter, so 68ch
+     set lines of about 82 characters. This lands near 70, which is where the
+     eye stops losing its place on the return sweep. */
+  --tm-measure:         58ch;
+  --tm-page-max:        1180px;
+
+  /* ── Docusaurus bindings ──────────────────────────────────────────── */
+  --ifm-color-primary: var(--tm-accent);
+  --ifm-color-primary-dark: #1bbace;
+  --ifm-color-primary-darker: #19b0c3;
+  --ifm-color-primary-darkest: var(--tm-accent-dim);
+  --ifm-color-primary-light: #43daec;
+  --ifm-color-primary-lighter: #54deee;
+  --ifm-color-primary-lightest: #85e8f3;
+
+  --ifm-code-font-size: 95%;
+  --ifm-font-family-base: var(--tm-font-body);
+  --ifm-font-family-monospace: var(--tm-font-mono);
+
+  /* ── Legacy aliases, kept so older stylesheets keep working ───────── */
+  --telemark-font-display: var(--tm-font-display);
+  --telemark-font-body: var(--tm-font-body);
+  --telemark-font-label: var(--tm-font-label);
+  --telemark-color-black: var(--tm-bg);
+  --telemark-color-surface: var(--tm-surface-2);
+  --telemark-color-surface-raised: var(--tm-surface-4);
+  --telemark-color-heading: var(--tm-text-strong);
+  --telemark-color-body: var(--tm-text);
+  --telemark-color-muted: var(--tm-text-muted);
+  --telemark-color-blue: var(--tm-blue);
+  --telemark-color-blue-light: var(--tm-blue-soft);
+  --telemark-color-aqua: var(--tm-accent);
+  --telemark-color-cyan: var(--tm-accent);
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   LIGHT THEME
+
+   Not the dark palette inverted. Ink goes near black on a warm off white,
+   and the accent darkens to a teal that can actually be read on a light
+   surface: the aqua that works on near black fails contrast completely at
+   this end. Elevation also flips, since a raised panel in daylight is
+   lighter than the page and an inset is darker.
+   ════════════════════════════════════════════════════════════════════════ */
+[data-theme='light'] {
+  color-scheme: light;
+
+  --tm-bg:              #f5f7f9;
+  --tm-surface-1:       #fafbfc;
+  --tm-surface-2:       #fdfdfe;
+  --tm-surface-3:       #eef1f4;
+  --tm-surface-4:       #e4e9ee;
+
+  --tm-text-strong:     #0c1319;
+  --tm-text:            rgba(19, 29, 38, 0.88);
+  --tm-text-soft:       rgba(19, 29, 38, 0.74);
+  --tm-text-muted:      rgba(19, 29, 38, 0.58);
+  --tm-text-faint:      rgba(19, 29, 38, 0.40);
+  --tm-text-on-accent:  #fbfdfe;
+
+  /* Cyan at #22d3ee is roughly 1.6:1 on this background. Teal 700 clears
+     the text threshold while reading as the same colour family. */
+  --tm-accent:          #0e7490;
+  --tm-accent-bright:   #0891b2;
+  --tm-accent-dim:      #155e75;
+  --tm-blue:            #1d4ed8;
+  --tm-blue-soft:       #2563eb;
+  --tm-indigo:          #4338ca;
+
+  --tm-accent-a08:      rgba(14, 116, 144, 0.07);
+  --tm-accent-a12:      rgba(14, 116, 144, 0.11);
+  --tm-accent-a20:      rgba(14, 116, 144, 0.18);
+  --tm-accent-a35:      rgba(14, 116, 144, 0.32);
+  --tm-accent-a55:      rgba(14, 116, 144, 0.5);
+  --tm-blue-a10:        rgba(37, 99, 235, 0.09);
+  --tm-blue-a32:        rgba(37, 99, 235, 0.3);
+
+  --tm-success:         #15803d;
+  --tm-success-wash:    rgba(21, 128, 61, 0.09);
+  --tm-warn:            #a16207;
+  --tm-warn-wash:       rgba(161, 98, 7, 0.09);
+  --tm-danger:          #b91c1c;
+  --tm-danger-wash:     rgba(185, 28, 28, 0.08);
+
+  --tm-border:          rgba(20, 38, 54, 0.16);
+  --tm-border-strong:   rgba(20, 38, 54, 0.3);
+  --tm-border-quiet:    rgba(20, 38, 54, 0.12);
+  --tm-border-hair:     rgba(20, 38, 54, 0.09);
+
+  /* Shadows carry elevation here. On near black they were invisible, so the
+     dark theme leans on borders instead. */
+  --tm-shadow-sm:       0 1px 2px rgba(15, 32, 47, 0.07);
+  --tm-shadow-md:       0 6px 20px rgba(15, 32, 47, 0.1);
+  --tm-shadow-glow:     none;
+
+  --ifm-color-primary: var(--tm-accent);
+  --ifm-background-color: var(--tm-bg);
+  --ifm-font-color-base: var(--tm-text);
+
+  --telemark-color-heading: var(--tm-text-strong);
+  --telemark-color-body: var(--tm-text);
+  --telemark-color-muted: var(--tm-text-muted);
+  --telemark-color-black: var(--tm-bg);
+  --telemark-color-surface: var(--tm-surface-1);
+  --telemark-color-surface-raised: var(--tm-surface-2);
+  --telemark-color-blue: var(--tm-blue);
+  --telemark-color-blue-light: var(--tm-blue-soft);
+  --telemark-color-aqua: var(--tm-accent);
+  --telemark-color-cyan: var(--tm-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --tm-dur-fast: 0.01ms;
+    --tm-dur: 0.01ms;
+    --tm-dur-slow: 0.01ms;
+  }
+}
+
+/* Dark mode overrides — this is the primary mode */
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --ifm-color-primary: #22d3ee;
+  --ifm-background-color: var(--tm-bg);
+  --ifm-background-surface-color: var(--tm-surface-2);
+  --ifm-navbar-background-color: var(--tm-surface-1);
+  --ifm-footer-background-color: #030609;
+  --ifm-toc-border-color: rgba(34, 211, 238, 0.2);
+  --ifm-color-emphasis-300: rgba(56, 189, 248, 0.3);
+}
+
+/* ---- NAVBAR ---- */
+.navbar {
+  height: 72px;
+  padding: 0 2rem;
+  border-bottom: 1px solid var(--tm-border);
+  background: var(--tm-surface-1);
+  box-shadow: none;
+}
+
+.telemark-navbar-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.telemark-navbar-brand,
+.telemark-navbar-account {
+  flex: 0 0 auto;
+}
+
+.telemark-navbar-center {
+  position: absolute;
+  left: 50%;
+  display: flex;
+  gap: 2rem;
+  transform: translateX(-50%);
+}
+
+.telemark-navbar-center .navbar__item {
+  padding: 0;
+}
+
+.telemark-navbar-center .navbar__link {
+  color: var(--tm-text-muted);
+  font-family: var(--telemark-font-label);
+  font-size: var(--tm-fs-xs);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.telemark-navbar-center .navbar__link:hover,
+.telemark-navbar-center .navbar__link--active {
+  color: var(--telemark-color-aqua);
+}
+
+.telemark-navbar-center .navbar__link svg {
+  display: none;
+}
+
+.navbar__title {
+  font-family: var(--telemark-font-display);
+  font-weight: 800;
+  font-size: var(--tm-fs-md);
+  letter-spacing: 2px;
+  text-transform: none;
+  color: var(--telemark-color-aqua);
+}
+
+.navbar-auth-link {
+  border: 1px solid var(--telemark-color-aqua);
+  border-radius: var(--tm-r-sm);
+  background: transparent;
+  color: var(--telemark-color-aqua);
+  font-family: var(--telemark-font-label);
+  font-size: var(--tm-fs-xs);
+  text-transform: none;
+  letter-spacing: 0;
+  padding: 8px 22px !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.navbar-auth-link:hover {
+  background: var(--tm-accent-a12);
+  color: var(--telemark-color-aqua);
+}
+
+/* ---- SIDEBAR ---- */
+.menu {
+  background: var(--tm-surface-2);
+}
+
+.menu__link--active {
+  color: var(--telemark-color-aqua) !important;
+  background: var(--tm-blue-a10);
+  background: var(--tm-accent-a08);
+}
+
+.menu__link:hover {
+  color: var(--telemark-color-aqua);
+  background: var(--tm-accent-a08);
+}
+
+/* ---- MAIN CONTENT AREA ---- */
+.main-wrapper {
+  background: var(--telemark-color-black);
+}
+
+article {
+  background: var(--telemark-color-surface);
+  padding: 2rem;
+}
+
+/* ---- HEADINGS ---- */
+/* The lesson title is the one place the display face belongs, in ink. It was a
+   heavy blue sans while every heading under it was a serif, so the page opened
+   in one voice and continued in another. */
+.theme-doc-markdown h1 {
+  color: var(--tm-text-strong);
+  font-family: var(--tm-font-display);
+  font-weight: var(--tm-weight-display);
+  letter-spacing: -0.03em;
+}
+
+.theme-doc-markdown h2 {
+  color: var(--tm-text-strong);
+  font-family: var(--tm-font-display);
+  padding-bottom: 0.3rem;
+}
+
+.theme-doc-markdown h3 {
+  color: var(--telemark-color-blue-light);
+}
+
+/* ---- CODE BLOCKS ---- */
+.prism-code {
+  border: 1px solid var(--tm-accent-a20);
+  border-radius: var(--tm-r-sm);
+}
+
+code {
+  background: var(--tm-surface-4);
+  color: var(--telemark-color-aqua);
+  border-radius: var(--tm-r-sm);
+  padding: 0.1rem 0.35rem;
+  font-size: 0.88em;
+}
+
+/* ---- BUTTONS (Gatekeeper, etc.) ---- */
+.button--primary {
+  background: var(--telemark-color-aqua);
+  border: 1px solid var(--telemark-color-aqua);
+  border-radius: var(--tm-r-hand);
+  box-shadow: none;
+  color: var(--tm-text-on-accent);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.button--primary:hover {
+  background: var(--telemark-color-blue-light);
+  border-color: var(--telemark-color-blue-light);
+  color: var(--tm-text-on-accent);
+}
+
+/* ---- ADMONITIONS ----
+   Type is signalled by border colour and a background tint rather than a
+   stripe on one edge, so the whole callout is marked rather than an arbitrary
+   side of it. Colours are set once in the doc chrome section below. */
+.theme-admonition {
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-md);
+}
+
+/* ---- FOOTER ---- */
+.footer--dark {
+  --ifm-footer-background-color: var(--tm-bg);
+  --ifm-footer-color: var(--tm-text-muted);
+  --ifm-footer-link-color: var(--tm-text-soft);
+  --ifm-footer-title-color: var(--tm-text-strong);
+}
+
+.footer {
+  border-top: 1px solid var(--tm-accent-a20);
+  padding: 0.85rem 1.5rem;
+  background: var(--tm-bg);
+}
+
+.footer__title {
+  color: var(--tm-text-strong);
+}
+
+.footer__link-item {
+  color: var(--tm-text-soft);
+}
+
+.footer__link-item:hover {
+  color: var(--tm-accent);
+}
+
+.footer .container {
+  max-width: none;
+}
+
+.footer__bottom {
+  margin: 0;
+}
+
+.footer__copyright {
+  color: var(--tm-text-muted);
+  font-family: var(--telemark-font-label);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+}
+
+@media (max-width: 996px) {
+  .navbar {
+    height: 64px;
+    padding: 0 1rem;
+  }
+
+  .telemark-navbar-center {
+    display: none;
+  }
+
+  .telemark-navbar-brand {
+    gap: 0.25rem;
+  }
+
+  .navbar__title {
+    font-size: var(--tm-fs-md);
+  }
+}
+
+/* ---- SCROLLBARS ---- */
+* {
+  scrollbar-color: var(--telemark-color-aqua) transparent;
+  scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--telemark-color-aqua);
+  border-radius: var(--tm-r-lg);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--telemark-color-aqua);
+}
+
+/* ---- SIMULATOR IFRAME ---- */
+.simulator-fullscreen-shell {
+  margin: 1.5rem 0;
+}
+
+.simulator-fullscreen-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.55rem;
+}
+
+.simulator-fullscreen-button {
+  border: 1px solid var(--tm-border-strong);
+  border-radius: var(--tm-r-lg);
+  background: var(--tm-surface-2);
+  color: var(--tm-text-strong);
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.5rem 0.75rem;
+}
+
+.simulator-fullscreen-button:hover {
+  border-color: var(--telemark-color-aqua);
+  color: var(--tm-text-strong);
+}
+
+.simulator-fullscreen-shell:fullscreen {
+  background: var(--telemark-color-black);
+  padding: 0.75rem;
+}
+
+.simulator-fullscreen-shell:fullscreen .simulator-fullscreen-toolbar {
+  margin-bottom: 0.75rem;
+}
+
+.simulator-fullscreen-shell:fullscreen .simulator-wrapper {
+  height: calc(100vh - 4rem);
+  margin: 0;
+  aspect-ratio: auto;
+}
+
+.simulator-fullscreen-shell:fullscreen .telemark-simulator {
+  height: 100%;
+  max-height: none;
+}
+
+.telemark-simulator {
+  aspect-ratio: auto;
+  max-width: 100%;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  transition: height 0.15s ease;
+}
+
+.simulator-wrapper {
+  overflow: hidden;
+  border-radius: var(--tm-r-sm);
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   DOC CHROME
+   The lesson page is where students spend nearly all their time, so it gets
+   the same treatment as the marketing surfaces rather than Docusaurus
+   defaults sitting inside a themed shell.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── Sidebar ─────────────────────────────────────────────────────────── */
+.theme-doc-sidebar-container {
+  border-right: 1px solid var(--tm-border-hair) !important;
+  background: var(--tm-surface-1);
+}
+
+.menu {
+  padding: var(--tm-sp-4) var(--tm-sp-3) var(--tm-sp-7) !important;
+  font-size: var(--tm-fs-sm);
+}
+
+.menu__list-item-collapsible,
+.menu__link {
+  border-radius: var(--tm-r-sm);
+  transition: background var(--tm-dur) var(--tm-ease),
+              color var(--tm-dur) var(--tm-ease);
+}
+
+.menu__link {
+  color: var(--tm-text-soft);
+  line-height: var(--tm-lh-snug);
+}
+
+.menu__link:hover,
+.menu__list-item-collapsible:hover {
+  background: var(--tm-accent-a08);
+  color: var(--tm-text-strong);
+}
+
+.menu__link--active {
+  position: relative;
+  background: var(--tm-accent-a12);
+  color: var(--tm-text-strong);
+  font-weight: 600;
+}
+
+/* A rail on the active item, so position in a 12 module list is obvious */
+.menu__link--active::before {
+  content: '';
+  position: absolute;
+  top: 20%;
+  left: calc(-1 * var(--tm-sp-3));
+  width: 2px;
+  height: 60%;
+  border-radius: var(--tm-r-pill);
+  background: var(--tm-accent);
+}
+
+.menu__list .menu__list {
+  margin-left: var(--tm-sp-2);
+  padding-left: var(--tm-sp-3);
+  border-left: 1px solid var(--tm-border-hair);
+}
+
+.menu__caret:before {
+  opacity: 0.6;
+}
+
+/* ── Breadcrumbs ─────────────────────────────────────────────────────── */
+.breadcrumbs__item--active .breadcrumbs__link {
+  background: var(--tm-accent-a12);
+  color: var(--tm-text-strong);
+}
+
+.breadcrumbs__link {
+  border-radius: var(--tm-r-sm);
+  color: var(--tm-text-muted);
+  font-size: var(--tm-fs-xs);
+  transition: color var(--tm-dur) var(--tm-ease);
+}
+
+.breadcrumbs__link:hover {
+  background: var(--tm-accent-a08);
+  color: var(--tm-text-strong);
+}
+
+/* ── Table of contents ───────────────────────────────────────────────── */
+.table-of-contents {
+  border-left: 1px solid var(--tm-border-hair);
+  font-size: var(--tm-fs-xs);
+}
+
+.table-of-contents__link {
+  color: var(--tm-text-muted);
+  transition: color var(--tm-dur) var(--tm-ease);
+}
+
+.table-of-contents__link:hover,
+.table-of-contents__link--active {
+  color: var(--tm-accent);
+}
+
+.table-of-contents__link--active {
+  font-weight: 600;
+}
+
+/* ── Reading measure and rhythm ──────────────────────────────────────── */
+.theme-doc-markdown {
+  /* A step up from the interface size. Lesson prose is read continuously for
+     twenty minutes at a time, which is a different job from a control label. */
+  font-size: var(--tm-fs-md);
+  line-height: var(--tm-lh-normal);
+}
+
+.theme-doc-markdown p,
+.theme-doc-markdown li {
+  max-width: var(--tm-measure);
+  color: var(--tm-text);
+}
+
+.theme-doc-markdown h2 {
+  /* Ink, not accent. A page of cyan headings competes with the prose it is
+     supposed to be organising. */
+  color: var(--tm-text-strong);
+  margin-top: var(--tm-sp-7);
+  padding-bottom: var(--tm-sp-2);
+}
+
+.theme-doc-markdown h3 {
+  margin-top: var(--tm-sp-5);
+}
+
+.theme-doc-markdown strong {
+  color: var(--tm-text-strong);
+}
+
+/* ── Tables ──────────────────────────────────────────────────────────── */
+.theme-doc-markdown table {
+  display: table;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-md);
+  font-size: var(--tm-fs-sm);
+  overflow: hidden;
+}
+
+.theme-doc-markdown table thead {
+  background: var(--tm-accent-a08);
+}
+
+.theme-doc-markdown table th {
+  border: none;
+  border-bottom: 1px solid var(--tm-border);
+  color: var(--tm-accent);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  font-weight: 700;
+  letter-spacing: var(--tm-track-label);
+  text-transform: none;
+}
+
+.theme-doc-markdown table td {
+  border: none;
+  border-bottom: 1px solid var(--tm-border-hair);
+  color: var(--tm-text);
+}
+
+.theme-doc-markdown table tr:last-child td {
+  border-bottom: none;
+}
+
+.theme-doc-markdown table tbody tr {
+  background: transparent;
+  transition: background var(--tm-dur) var(--tm-ease);
+}
+
+.theme-doc-markdown table tbody tr:hover {
+  background: var(--tm-accent-a08);
+}
+
+/* Wide tables scroll inside their own container rather than the page */
+.theme-doc-markdown > table,
+.theme-doc-markdown .markdown > table {
+  display: block;
+  overflow-x: auto;
+}
+
+/* ── Admonitions ─────────────────────────────────────────────────────── */
+.theme-admonition {
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-md);
+  background: var(--tm-surface-1);
+  font-size: var(--tm-fs-sm);
+}
+
+.theme-admonition h5,
+.theme-admonition [class*='admonitionHeading'] {
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: var(--tm-track-label);
+  text-transform: none;
+}
+
+.alert--info { border-color: var(--tm-accent-a35); background: var(--tm-accent-a08); }
+.alert--success { border-color: rgba(74, 222, 128, 0.35); background: var(--tm-success-wash); }
+.alert--warning { border-color: rgba(251, 191, 36, 0.35); background: var(--tm-warn-wash); }
+.alert--danger { border-color: rgba(248, 113, 113, 0.35); background: var(--tm-danger-wash); }
+
+/* ── Code ────────────────────────────────────────────────────────────── */
+.theme-code-block {
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-md);
+  box-shadow: var(--tm-shadow-sm) !important;
+}
+
+code {
+  border: 1px solid var(--tm-border-hair);
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-surface-3);
+  color: var(--tm-accent-bright);
+  font-size: 0.88em;
+}
+
+a code {
+  color: inherit;
+}
+
+/* ── Details and summary, used by every practice answer ──────────────── */
+.theme-doc-markdown details {
+  border: 1px solid var(--tm-border) !important;
+  border-radius: var(--tm-r-md);
+  background: var(--tm-surface-1) !important;
+}
+
+.theme-doc-markdown details > summary {
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-xs);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* ── Pagination ──────────────────────────────────────────────────────── */
+.pagination-nav__link {
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-md);
+  background: var(--tm-surface-1);
+  transition: border-color var(--tm-dur) var(--tm-ease);
+}
+
+.pagination-nav__link:hover {
+  border-color: var(--tm-border-strong);
+}
+
+.pagination-nav__sublabel {
+  color: var(--tm-text-muted);
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: var(--tm-track-label);
+  text-transform: none;
+}
+
+.pagination-nav__label {
+  color: var(--tm-text-strong);
+  font-family: var(--tm-font-display);
+  font-size: var(--tm-fs-md);
+}
+
+/* ── Focus, consistently, everywhere ─────────────────────────────────── */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--tm-accent);
+  outline-offset: 2px;
+  border-radius: var(--tm-r-sm);
+}
+
+/* ── Scrollbars ──────────────────────────────────────────────────────────
+   Thinned and neutralised rather than restyled. A brightly coloured custom
+   scrollbar is a reinvented standard affordance; this only reduces the
+   default's visual weight so it stops competing with the content. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--tm-border-quiet) transparent;
+}
+
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: var(--tm-r-pill);
+  background: var(--tm-border-quiet);
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--tm-text-faint);
+  background-clip: content-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pagination-nav__link:hover { }
+}
+
+/* ── Quick search launcher placement ─────────────────────────────────── */
+.telemark-navbar-search {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  margin-left: auto;
+  margin-right: var(--tm-sp-3);
+}
+
+@media (max-width: 996px) {
+  /* On narrow screens the launcher label is dropped, keeping the icon */
+  .telemark-navbar-search { margin-right: var(--tm-sp-2); }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   MICRO-INTERACTIONS
+   Every interactive surface should acknowledge the pointer and the keyboard.
+   All of it is built from the duration tokens, which collapse to near-zero
+   under prefers-reduced-motion, so this whole layer turns itself off.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Cards lift slightly and their border warms on hover */
+
+/* Buttons acknowledge the press, not just the hover */
+button,
+.button {
+  transition:
+    background var(--tm-dur) var(--tm-ease),
+    border-color var(--tm-dur) var(--tm-ease),
+    color var(--tm-dur) var(--tm-ease);
+}
+
+button:active:not(:disabled),
+.button:active {
+}
+
+/* Sidebar items slide a touch toward the reader on hover */
+.menu__link {
+  transition:
+    background var(--tm-dur) var(--tm-ease),
+    color var(--tm-dur) var(--tm-ease);
+}
+
+/* Table rows and details summaries respond */
+.theme-doc-markdown details > summary {
+  transition: color var(--tm-dur) var(--tm-ease);
+}
+
+.theme-doc-markdown details > summary:hover { color: var(--tm-accent); }
+
+/* Images and figures settle in rather than snapping */
+.theme-doc-markdown figure {
+  transition: border-color var(--tm-dur) var(--tm-ease);
+}
+
+.theme-doc-markdown figure:hover { border-color: var(--tm-border-strong); }
+
+/* Anchor links on headings fade in with the heading, not on hover alone */
+.hash-link {
+  transition: opacity var(--tm-dur) var(--tm-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button:active:not(:disabled),
+  .button:active { }
+}
+
+/* ── Mobile touch targets ──────────────────────────────────────────────────
+   Measured on a 390px viewport: the menu button was 30px, the drawer close
+   button 21px, and a lesson page carried 49 controls under 40px. The
+   accessible floor is 44px, and below it a thumb misses often enough that
+   navigation feels broken rather than fiddly. */
+@media (max-width: 996px) {
+  .navbar__toggle,
+  .navbar-sidebar__close,
+  .navbar-sidebar__back,
+  .clean-btn[class*='toggle'] {
+    display: flex;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .navbar-sidebar__back {
+    /* Full width: this is the way back to the main menu, and it was set as a
+       small chip in a corner. */
+    width: 100%;
+    padding: var(--tm-sp-3) var(--tm-sp-4);
+    justify-content: flex-start;
+  }
+
+  .navbar-sidebar .menu__link,
+  .navbar-sidebar .navbar__link {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+    padding-block: var(--tm-sp-3);
+  }
+
+  /* The caret that expands a module is its own target and was sharing space
+     with the link label. */
+  .navbar-sidebar .menu__caret {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .theme-doc-sidebar-menu .menu__link {
+    min-height: 44px;
+  }
+
+  /* Breadcrumbs are how you go back up a module on a phone, so they are
+     navigation rather than decoration. Inline links inside lesson prose are
+     left alone: they are exempt, and padding them out would tear the text. */
+  .breadcrumbs__link {
+    display: inline-flex;
+    min-height: 40px;
+    align-items: center;
+    padding-inline: var(--tm-sp-3);
+  }
+}
+.theme-doc-markdown a:not(.button):not([class*="card"]) { text-decoration: underline; text-underline-offset: 0.2em; }
+
+@media (prefers-reduced-motion: reduce) { :is(a, button, input, summary, [role="tab"]) { transition: none; } }

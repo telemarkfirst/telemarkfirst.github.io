@@ -1,0 +1,35 @@
+---
+id: mastery-coding-challenge
+title: "Unit 10 Project Stage: Closed-Loop Flywheel Velocity"
+sidebar_label: "Unit 10 · Coding Challenge"
+sidebar_position: 6
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import MasterySimulator from '@site/src/components/MasterySimulator';
+
+# Stage 9: Closed-Loop Flywheel Velocity
+
+Apply encoder feedback in `Launcher.java`. `setPower()` is still useful for many mechanisms, but a flywheel needs a measured velocity target that stays consistent as conditions change.
+
+## Your Task
+
+1. Change the flywheel to `DcMotorEx` and map it with the exact configured launcher name.
+2. Select `RUN_USING_ENCODER` and set reasonable velocity PIDF coefficients.
+3. Scale the right trigger into a target velocity and call `setVelocity()`.
+4. Read `getVelocity()` and report both target and measured values through telemetry.
+
+Make the conversion readable enough that a teammate can change wheel size without rewriting the routine.
+
+The simulator's small battery readout starts at 13.0 V and drains only while the OpMode is running. Compare an open-loop `setPower()` launcher with `setVelocity()`: the measured open-loop speed will fall with voltage, while a reachable velocity target should remain steady. If that loss continues long enough, the normal code-hint area will explain what the motor command is doing.
+
+## Coding Challenge Simulator
+
+<MasterySimulator unit={10} project />
+
+<MarkComplete
+  lessonId="unit-10/mastery-coding-challenge"
+  completesUnit="unit-10"
+  nextUnit="/docs/unit-11"
+  nextUnitName="Unit 11: Digital & Analog Sensors"
+/>

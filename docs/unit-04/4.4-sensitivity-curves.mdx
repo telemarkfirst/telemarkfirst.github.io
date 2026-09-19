@@ -1,0 +1,106 @@
+---
+id: sensitivity-curves
+title: "Lesson 4.4: Shaping Joystick Sensitivity with squareInputWithSign()"
+sidebar_label: "4.4 · Sensitivity Curves"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit4Simulator from '@site/src/components/Unit4Simulator';
+
+# Lesson 4.4: Shaping Joystick Sensitivity with squareInputWithSign()
+
+---
+
+## Technical Context
+
+Standard linear joystick mapping makes it difficult to perform fine adjustments at low power because small physical movements of the stick result in large percentage changes in motor voltage. By implementing a **squared sensitivity curve**, the robot gains higher granularity at lower speeds, improving the precision of scoring maneuvers while maintaining the ability to reach full speed for field navigation.
+
+---
+
+## How Input Shaping Makes Driving Smoother
+
+Squaring a joystick input (e.g., `0.5 * 0.5 = 0.25`) reduces the output power for the majority of the stick's range. However, a standard square operation turns negative inputs positive (e.g., `-0.5 * -0.5 = 0.25`), which would destroy the driver's ability to reverse the robot. Professional FTC code uses a custom method called `squareInputWithSign()`. This method calculates the square but then uses a conditional `if` statement to check if the original input was negative; if so, it multiplies the result by `-1` to preserve the direction of movement.
+
+---
+
+## Annotated Code
+
+```java
+@TeleOp(name="Sensitivity_Tuning")
+public class SensitivityTuning extends OpMode {
+
+    @Override
+    public void init() {}
+
+    // Method designed to provide fine-grained control at low speeds
+    double squareInputWithSign(double input) {
+        double output = input * input;
+        if (input < 0) {
+            output = output * -1; // Preserve the 'backward' direction
+        }
+        return output;
+    }
+
+    @Override
+    public void loop() {
+        double rawInput = -gamepad1.left_stick_y;
+
+        // Applying the custom method to the joystick data
+        double precisionPower = squareInputWithSign(rawInput);
+
+        telemetry.addData("Input",          rawInput);
+        telemetry.addData("Squared Output", precisionPower);
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Squaring an input improves the robot's `__________` when the joystick is near the center.
+2. If you square a negative joystick value without a sign check, the robot will move `__________` even when the stick is pushed down.
+3. The keyword `__________` is used in a method declaration to indicate it returns a decimal value.
+
+<details>
+<summary>Show answers</summary>
+
+1. **precision** (granularity / sensitivity at low speeds)
+2. **forward** (a negative squared becomes positive, reversing the intended direction)
+3. **`double`**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+**Robot Scenario:** You need to create a custom scaling method for the drive team. Implement a method that **cubes** the input (`input * input * input`) instead of squaring it to provide an even "softer" feel at low speeds. (Note: Cubing naturally preserves the sign!)
+
+<SimulatorRunGuide />
+
+<Unit4Simulator lesson="sensitivity-curves" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+double cubeInput(double input) {
+    return input * input * input;
+}
+
+@Override
+public void loop() {
+    double result = cubeInput(gamepad1.right_stick_x);
+    telemetry.addData("Cubed Output", result);
+}
+```
+
+</details>
+
+<MarkComplete
+  lessonId="unit-04/sensitivity-curves"
+  nextUnit="/docs/unit-04/arcade-drive-challenge"
+  nextUnitName="Lesson 4.5: Full Arcade Drive Mapping with Custom Deadzones and Sensitivity Curves"
+/>

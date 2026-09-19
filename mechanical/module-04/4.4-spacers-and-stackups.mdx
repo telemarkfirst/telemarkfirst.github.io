@@ -1,0 +1,126 @@
+---
+id: spacers-and-stackups
+title: "Lesson 4.4: Planning Spacer Stack-Ups and Controlling Alignment"
+sidebar_label: "4.4 · Stack-Ups"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 4.4: Planning Spacer Stack-Ups and Controlling Alignment
+
+---
+
+## Technical Context
+
+A sprocket positioned 2 mm out of plane can derail its chain, and a wheel positioned 3 mm out of plane can scrub. In both cases, check the spacer and component stack that sets the final position.
+
+A stack-up is the chain of dimensions that determines where something ends up. Calculate it before assembly so you can select the correct spacers instead of adjusting the position by trial and error.
+
+---
+
+## Writing a Stack-Up
+
+Work along the shaft from one reference face and add every dimension in order.
+
+```text
+Reference: inside face of left frame rail
+
+  + 8.0 mm    bearing width
+  + 3.0 mm    spacer
+  + 12.0 mm   sprocket hub width
+  + 24.0 mm   spacer
+  + 8.0 mm    bearing width
+  ------------
+    55.0 mm   to inside face of right rail
+```
+
+Then do the same for the mating shaft and compare where the two sprockets land. If they do not land in the same plane, the difference is what you have to correct, and you correct it by changing a spacer, not by forcing the assembly.
+
+:::tip The reference face is the whole trick
+Choose one face and measure everything from it. Teams that measure some dimensions from the left rail and some from the right end up with two stack-ups that both look correct and disagree by the frame width tolerance.
+:::
+
+---
+
+## Tolerance Accumulates
+
+Every part in the stack has a tolerance, and they add. Six parts each within 0.1 mm can put the final position 0.6 mm off in the worst case.
+
+Two strategies handle this:
+
+**Reduce the number of parts in the stack.** One 24 mm spacer is more accurate than four 6 mm spacers, because it has one tolerance instead of four. It is also faster to assemble and less likely to be assembled wrong.
+
+**Put the adjustment where the accuracy is needed.** Design one element in the stack to be adjustable: a slot, a shim pack, or a clamping collar that can be positioned anywhere. Then the accumulated error is absorbed at assembly instead of having to be predicted.
+
+:::warning Do not use washers as spacers
+Washer thickness varies widely and is not a controlled dimension. A stack containing five washers has a position uncertainty that can easily exceed a millimeter. Use proper spacers with a specified length, and keep washers for what they are for, which is spreading load under a fastener head.
+:::
+
+---
+
+## Aligning Sprockets, Pulleys, and Gears
+
+Each type has a different sensitivity to misalignment.
+
+| Component | Tolerance for misalignment | What happens when it is off |
+| --- | --- | --- |
+| Roller chain | Moderate | Chain runs noisily, wears sprockets, eventually throws |
+| Timing belt | Low | Belt tracks to one side, rides the flange, shreds |
+| Spur gears | Low | Only part of the tooth face carries load, wear accelerates |
+
+Timing belts are the least forgiving, which is why belt drives need a carefully planned stack-up and a flanged pulley on at least one end.
+
+The practical check: sight along the two components with a straight edge laid across both faces. A visible step is a problem worth fixing before running it.
+
+---
+
+## Standoffs and Parallel Plates
+
+Two parallel plates held apart by standoffs is one of the most common FTC structures, used for gearboxes, slide towers, and drivetrain modules.
+
+The standoff length sets the plate spacing exactly, which is a strength: the spacing does not depend on frame tolerance. Two consequences:
+
+- **Every standoff between the same two plates must be the same length.** One that is 1 mm longer tips the plate and pre-loads every bearing between them.
+- **Measure the standoffs rather than trusting the label.** Cut-to-length standoffs vary, and a set that came from two different orders may not match.
+
+Where the plates carry bearings, this matters directly: non-parallel plates produce non-coaxial bearings, which is the misalignment failure from Lesson 4.3.
+
+---
+
+## Recording the Stack-Up
+
+Write the stack-up into the notebook next to the assembly drawing. Two reasons:
+
+Reassembly after a repair is faster and correct the first time, because someone does not have to rediscover the spacer order at a tournament.
+
+When a component is later replaced with a different width, the stack-up shows immediately what else has to change.
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Every dimension in a stack-up should be measured from a single `__________` face.
+2. Replacing four 6 mm spacers with one 24 mm spacer reduces the accumulated `__________`.
+3. Washers should not be used as spacers because their `__________` is not a controlled dimension.
+
+<details>
+<summary>Show answers</summary>
+
+1. **reference**
+2. **tolerance** (position error)
+3. **thickness**
+
+</details>
+
+---
+
+## Exercise
+
+Write the stack-up for one shaft on your robot from the reference face outward, using measured values rather than nominal ones. Then measure where the component actually sits and compare. The difference is your accumulated tolerance, and it tells you how much adjustment your design needs to include.
+
+<MarkComplete
+  lessonId="module-04/spacers-and-stackups"
+  nextUnit="/mechanical/module-04/mastery-quiz"
+  nextUnitName="Module 4 Mastery Quiz: Fasteners, Bearings, and Shafts"
+/>

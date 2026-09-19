@@ -1,0 +1,317 @@
+---
+id: limelight-fusion
+title: "Lesson 15.4: Global Field Localization with AprilTag and Limelight Fusion"
+sidebar_label: "15.4 · Limelight Fusion"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit15Simulator from '@site/src/components/Unit15Simulator';
+
+# Lesson 15.4: Global Field Localization with AprilTag and Limelight Fusion
+
+---
+
+## Two Sensors, Two Different Error Profiles
+
+Odometry is a strong short-term **relative** measurement. It updates quickly and usually changes smoothly, but wheel slip, wheel diameter error, and imperfect geometry can accumulate into drift. An AprilTag field pose is an **absolute** measurement. It can constrain that drift, but its accuracy varies with tag distance, viewing angle, tag count, calibration, blur, and latency.
+
+Copying every AprilTag pose directly into the localizer is not sensor fusion. It gives vision complete authority and can make a smooth odometry estimate jump to a noisy or delayed measurement. A useful estimator instead repeats two steps:
+
+1. **Predict:** let odometry advance the pose and increase the stored uncertainty as the robot travels and turns.
+2. **Update:** compare a fresh AprilTag measurement with that prediction, reject implausible innovations, and blend an accepted measurement according to the uncertainty of both sources.
+
+This lesson implements a diagonal Kalman-style measurement update. It tracks independent variance for X, Y, and heading. A production estimator may also track cross-covariances, velocity, camera extrinsics, and a timestamped pose history.
+
+---
+
+## From Pose Difference to Kalman Gain
+
+For one state component, let `P` be the predicted odometry variance and `R` the vision measurement variance. The gain is:
+
+```text
+K = P / (P + R)
+fused = predicted + K * (measured - predicted)
+P_new = (1 - K) * P
+```
+
+When odometry uncertainty `P` has grown and vision uncertainty `R` is small, the measurement receives more weight. When a tag is distant and `R` is large, the estimator makes a smaller correction. Heading innovation must be normalized because the shortest error between +179° and -179° is 2°, not 358°.
+
+Before the update, the code also calculates a **normalized innovation squared** (NIS). This measures how surprising the combined X/Y/heading residual is relative to its expected uncertainty. The example rejects NIS values above `11.34`, approximately the 99% chi-square threshold for three state components. That threshold and every noise constant need tuning from logs collected on the team's robot.
+
+:::caution Coordinate frames and latency
+The code assumes the Limelight field axes, field origin, camera pose, and Pedro Pathing pose convention have already been configured to agree. If they do not, apply a tested coordinate transform before fusion. The example rejects results older than 100 ms; a faster robot may need timestamped pose history so it can apply a measurement at capture time and replay odometry forward.
+:::
+
+---
+
+## Competition Code in the Wild
+
+[Murray Bridge Bunyips' BunyipsLib](https://github.com/Murray-Bridge-Bunyips/BunyipsLib) contains an `AprilTagRelocalizingAccumulator` that first integrates the odometry twist, then uses independent Kalman filters to correct X, Y, and optionally heading from an AprilTag pose. This shortened excerpt shows its actual update step:
+
+```java
+super.accumulate(twist);
+
+// ... validate detections and select a camera pose as newPose ...
+
+Vector2d newVec = newPose.position;
+Rotation2d newHeading = newPose.heading;
+if (useKf) {
+    Vector2d twistedTwist = pose.heading.times(twist.value().line);
+    newVec = new Vector2d(
+        xf.calculateFromDelta(twistedTwist.x, newPose.position.x),
+        yf.calculateFromDelta(twistedTwist.y, newPose.position.y)
+    );
+
+    double currentHeading = newHeading.log();
+    double headingTwist = twist.value().angle;
+    if (Math.abs(currentHeading - lastHeading) > Math.PI) {
+        headingTwist = pose.heading.inverse().log();
+        rf.reset();
+    }
+    newHeading = Rotation2d.exp(
+        rf.calculateFromDelta(headingTwist, currentHeading)
+    );
+    lastHeading = currentHeading;
+}
+
+pose = new Pose2d(newVec, updateHeading ? newHeading : pose.heading);
+```
+
+Unlike simply replacing the odometry pose, the filter consumes both the motion delta and the absolute measurement. The implementation also resets its heading filter at the ±π boundary. The estimator below takes the idea further by exposing per-axis uncertainty, measurement noise based on tag geometry, freshness checks, duplicate-frame rejection, and an innovation gate. Excerpted from [BunyipsLib's `AprilTagRelocalizingAccumulator.java` at a pinned commit](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/src/main/java/au/edu/sa/mbhs/studentrobotics/bunyipslib/localization/accumulators/AprilTagRelocalizingAccumulator.java) under the [MIT License](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/LICENSE).
+
+---
+
+## Annotated Code
+
+:::note
+This example emphasizes the estimator. Build paths and configure the Limelight AprilTag pipeline as described in the preceding lessons.
+:::
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.robotcore.util.Range;
+import com.pedropathing.follower.Follower;
+import com.pedropathing.math.Pose;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+import org.firstinspires.ftc.teamcode.pedro.Constants;
+
+@Autonomous(name="Limelight_Fusion_Demo")
+public class LimelightFusionDemo extends LinearOpMode {
+
+    private static final double M_TO_IN = 39.3701;
+    private static final double MAX_STALENESS_MS = 100.0;
+    private static final double NIS_GATE = 11.34;
+
+    private Follower follower;
+    private Limelight3A limelight;
+
+    // Initial 1-sigma uncertainties: 3 in for position and 8 deg for heading.
+    private double xVariance = 3.0 * 3.0;
+    private double yVariance = 3.0 * 3.0;
+    private double headingVariance = Math.pow(Math.toRadians(8.0), 2);
+
+    private Pose previousPrediction = new Pose(12, 12, 0);
+    private long lastVisionTimestamp = Long.MIN_VALUE;
+
+    @Override
+    public void runOpMode() {
+        follower = Constants.create(hardwareMap);
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+
+        Pose start = new Pose(12, 12, 0);
+        follower.setPose(start);
+        follower.update();
+        previousPrediction = start;
+
+        limelight.pipelineSwitch(0);
+        limelight.start();
+
+        waitForStart();
+
+        while (opModeIsActive()) {
+            follower.update();                 // odometry prediction
+            growPredictionUncertainty();       // P = P + Q
+            applyVisionMeasurement();          // gated measurement update
+
+            Pose estimate = follower.pose();
+            telemetry.addData("Fused X", "%.2f in", estimate.x());
+            telemetry.addData("Fused Y", "%.2f in", estimate.y());
+            telemetry.update();
+        }
+
+        limelight.stop();
+    }
+
+    private void growPredictionUncertainty() {
+        Pose predicted = follower.pose();
+        double distance = Math.hypot(
+            predicted.x() - previousPrediction.x(),
+            predicted.y() - previousPrediction.y()
+        );
+        double turn = Math.abs(AngleUnit.normalizeRadians(
+            predicted.heading() - previousPrediction.heading()
+        ));
+
+        // Simple process-noise model: uncertainty grows with motion.
+        xVariance += 0.04 + 0.06 * distance;
+        yVariance += 0.04 + 0.06 * distance;
+        headingVariance += Math.pow(Math.toRadians(0.25), 2) + 0.015 * turn;
+        previousPrediction = predicted;
+    }
+
+    private void applyVisionMeasurement() {
+        LLResult result = limelight.getLatestResult();
+        if (result == null || !result.isValid()) return;
+        if (result.getStaleness() > MAX_STALENESS_MS) return;
+        if (result.getBotposeTagCount() < 1) return;
+
+        // Do not fuse the same camera frame more than once.
+        long timestamp = result.getControlHubTimeStampNanos();
+        if (timestamp <= lastVisionTimestamp) return;
+        lastVisionTimestamp = timestamp;
+
+        Pose3D botPose = result.getBotpose();
+        if (botPose == null) return;
+
+        double measuredX = botPose.getPosition().x * M_TO_IN;
+        double measuredY = botPose.getPosition().y * M_TO_IN;
+        double measuredHeading =
+            botPose.getOrientation().getYaw(AngleUnit.RADIANS);
+
+        Pose predicted = follower.pose();
+        double innovationX = measuredX - predicted.x();
+        double innovationY = measuredY - predicted.y();
+        double innovationHeading = AngleUnit.normalizeRadians(
+            measuredHeading - predicted.heading()
+        );
+
+        // A tunable measurement-noise model: distant, single-tag poses get
+        // a larger R and therefore less influence on the fused estimate.
+        double tagCount = result.getBotposeTagCount();
+        double averageDistanceMeters = Math.max(0.0, result.getBotposeAvgDist());
+        double positionSigma = Range.clip(
+            (0.55 + 0.35 * averageDistanceMeters * averageDistanceMeters)
+                / Math.sqrt(tagCount),
+            0.4,
+            8.0
+        );
+        double headingSigma = Math.toRadians(Range.clip(
+            (2.0 + 2.0 * averageDistanceMeters * averageDistanceMeters)
+                / Math.sqrt(tagCount),
+            1.5,
+            20.0
+        ));
+
+        double visionPositionVariance = positionSigma * positionSigma;
+        double visionHeadingVariance = headingSigma * headingSigma;
+
+        double nis =
+            innovationX * innovationX / (xVariance + visionPositionVariance)
+          + innovationY * innovationY / (yVariance + visionPositionVariance)
+          + innovationHeading * innovationHeading
+                / (headingVariance + visionHeadingVariance);
+
+        if (nis > NIS_GATE) {
+            telemetry.addData("Vision", "Rejected: NIS %.2f", nis);
+            return;
+        }
+
+        double gainX = xVariance / (xVariance + visionPositionVariance);
+        double gainY = yVariance / (yVariance + visionPositionVariance);
+        double gainHeading =
+            headingVariance / (headingVariance + visionHeadingVariance);
+
+        Pose fused = new Pose(
+            predicted.x() + gainX * innovationX,
+            predicted.y() + gainY * innovationY,
+            AngleUnit.normalizeRadians(
+                predicted.heading() + gainHeading * innovationHeading
+            )
+        );
+        follower.setPose(fused);
+
+        xVariance *= 1.0 - gainX;
+        yVariance *= 1.0 - gainY;
+        headingVariance *= 1.0 - gainHeading;
+        previousPrediction = fused;
+
+        telemetry.addData("Vision", "Fused: NIS %.2f", nis);
+    }
+}
+```
+
+`LLResult` also exposes standard-deviation arrays such as `getStddevMt1()` and `getStddevMt2()`. If testing confirms their units and calibration for the selected pipeline and SDK version, those values can replace the illustrative distance-based noise model above. See the [FTC SDK `LLResult` Javadoc](https://javadoc.io/doc/org.firstinspires.ftc/Hardware/latest/com/qualcomm/hardware/limelightvision/LLResult.html).
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Odometry supplies the high-rate `__________` step, while AprilTag pose supplies an absolute measurement update.
+2. In a scalar Kalman update, the gain is `P / (P + ________)`, where the missing term is measurement variance.
+3. The difference between a measurement and its predicted value is called the `__________`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **prediction**
+2. **`R`**
+3. **innovation** (or residual)
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Implement a complementary version of the estimator in `correctPoseFromLimelight()`. Reject invalid, stale, tagless, null, or implausibly distant measurements. Compute X, Y, and normalized-heading innovations from the current follower estimate, then apply only a fraction of each innovation with a gain between 0 and 1.
+
+<SimulatorRunGuide />
+
+<Unit15Simulator lesson="limelight-fusion" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+void correctPoseFromLimelight() {
+    LLResult result = limelight.getLatestResult();
+    if (!result.isValid()) return;
+    if (result.getStaleness() > 100 || result.getBotposeTagCount() < 1) return;
+
+    Pose3D botpose = result.getBotpose();
+    if (botpose == null) return;
+
+    Pose estimate = follower.pose();
+    double innovationX = botpose.getPosition().x * 39.3701 - estimate.x();
+    double innovationY = botpose.getPosition().y * 39.3701 - estimate.y();
+    double innovationHeading = AngleUnit.normalizeRadians(
+        botpose.getOrientation().getYaw(AngleUnit.RADIANS) - estimate.heading()
+    );
+
+    if (Math.hypot(innovationX, innovationY) > 12.0) return;
+
+    double gain = 0.35;
+    follower.setPose(new Pose(
+        estimate.x() + gain * innovationX,
+        estimate.y() + gain * innovationY,
+        AngleUnit.normalizeRadians(
+            estimate.heading() + gain * innovationHeading
+        )
+    ));
+}
+```
+
+</details>
+
+<MarkComplete
+  lessonId="unit-15/limelight-fusion"
+  nextUnit="/docs/unit-15/full-autonomous"
+  nextUnitName="Lesson 15.5: Coordinating a Pedro 3 Autonomous with Ivy"
+/>

@@ -1,0 +1,32 @@
+---
+id: nested-and-nonstop-loops
+title: "Lesson 3.4: Nested Loops and Programs That Do Not Stop"
+sidebar_label: "3.4 · Nested and Nonstop Loops"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 3.4: Nested Loops and Programs That Do Not Stop
+
+A **nested loop** is a loop inside another loop. For every one repeat of the outer loop, the inner loop completes all of its repeats.
+
+If an outer loop repeats 3 times and its inner loop repeats 4 times, the inner body runs 12 times. Multiply the counts when the limits do not change.
+
+Nested loops can describe rows and columns. The outer loop can select a row while the inner loop processes each column in that row. Keep the two loop variables separate so the trace remains clear.
+
+A program that does not stop often has a condition that never becomes false, a variable changing in the wrong direction, or a repeat count much larger than intended.
+
+## Guided practice
+
+Build an outer repeat of 2 and an inner repeat of 3. Print `scan` in the inner body. Predict the number of output lines, then run and count them.
+
+Add a movement to the inner body and a turn after the inner loop. Use Step to separate what happens per column from what happens per row. If the safety limit stops your program, inspect the smallest loop first.
+
+<BlockPractice lessonId="blocks-unit-03/nested-and-nonstop-loops" />
+
+<MarkComplete
+  lessonId="blocks-unit-03/nested-and-nonstop-loops"
+  nextUnit="/blocks/blocks-unit-03/grid-scanner-challenge"
+  nextUnitName="Lesson 3.5: Grid Scanner Challenge"
+/>

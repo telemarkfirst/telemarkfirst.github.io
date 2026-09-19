@@ -1,0 +1,136 @@
+---
+id: tapping-and-threads
+title: "Lesson 2.4: Tapping Holes and Choosing the Correct Tap Drill"
+sidebar_label: "2.4 · Tapping"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import LessonTool from '@site/src/components/mechanical/LessonTool';
+import LessonPhoto from '@site/src/components/mechanical/LessonPhoto';
+import {ClearanceVsTappedDiagram} from '@site/src/components/mechanical/EngineeringDiagrams';
+import TapDrillReference from '@site/src/components/mechanical/TapDrillReference';
+
+# Lesson 2.4: Tapping Holes and Choosing the Correct Tap Drill
+
+---
+
+## Technical Context
+
+Tapping cuts threads into a hole so a screw can bite directly into the part, with no nut on the far side. It is how a motor mounts to a plate you cannot reach behind, and it is how most bracket-to-extrusion joints work.
+
+The tap drill size must be correct before you cut the thread. A hole drilled at clearance size is too large for the tap to form usable threads, and the part may need to be remade.
+
+---
+
+## Two Holes That Look Similar and Are Not
+
+Every screwed joint has two holes, and they are different sizes.
+
+**The clearance hole** is in the part the screw passes through. It is larger than the screw so the screw slides freely. If it is too tight, the parts cannot pull together and the joint depends on the screw shank instead of the clamping force.
+
+**The tapped hole** is in the part the screw threads into. It is smaller than the screw, because the tap needs material to cut threads out of.
+
+For M3, the clearance hole is 3.2 mm and the tapped hole is drilled at 2.5 mm. Those numbers are 0.7 mm apart and they are not interchangeable. Drilling 3.2 where you needed 2.5 means the tap has nothing to cut and the hole is scrap.
+
+<ClearanceVsTappedDiagram />
+
+:::warning Mark the drawing before anyone picks up a drill
+On a sketch or CAD drawing, annotate every hole as either "CL" for clearance or "TAP" with the thread size. This single habit eliminates most ruined parts.
+:::
+
+---
+
+## The Tap Drill Rule
+
+The tap drill for a standard thread is approximately:
+
+```text
+tap drill diameter = major diameter - pitch
+```
+
+For M3 x 0.5: 3 - 0.5 = 2.5 mm. For M4 x 0.7: 4 - 0.7 = 3.3 mm. For M5 x 0.8: 5 - 0.8 = 4.2 mm.
+
+That produces roughly 75% thread engagement, which is the standard target. Going to 100% engagement gains almost no strength and dramatically increases tapping torque, which is how taps break.
+
+Use the reference below to get both holes for the thread you are using.
+
+<LessonTool
+  toolId="tap-drill"
+  bring="The thread size the joint uses."
+  change="The thread, and compare the four diameters drawn to scale."
+  read="How close the tap drill and clearance sizes are. Mark every hole before drilling."
+>
+  <TapDrillReference />
+</LessonTool>
+
+---
+
+## Tapping Technique
+
+**Start square.** A tap started at an angle produces a crooked thread that the screw will bind in. Look at the tap from two directions before applying force, or start it in a drill press with the spindle unpowered and the chuck turned by hand.
+
+**Use cutting fluid.** Even a drop. Tapping dry in aluminum is the main cause of galled threads and snapped taps.
+
+**Back off to break the chip.** Turn forward about a half to three quarters of a turn, then reverse a quarter turn to break the chip, then forward again. Continuous forward turning packs chips into the flutes and binds the tap.
+
+**Feel the resistance.** Tapping should feel like steady moderate effort. A sudden increase means a packed chip or a bottomed hole. Stop and back out. Forcing it past that point is what snaps taps, and a snapped tap in a hole is usually unrecoverable because hardened tool steel cannot be drilled out.
+
+:::tip A tap handle beats a wrench
+A proper T-handle tap wrench keeps the force centered and lets you feel the resistance. Turning a tap with pliers or an adjustable wrench applies side load, which is how taps break in thin material.
+:::
+
+---
+
+## Thin Material and Thread Engagement
+
+Thread strength comes from the length of thread engaged, and a general rule is that you want at least 1.5 times the screw diameter of engaged thread in aluminum. An M3 screw wants at least 4.5 mm of tapped depth.
+
+That means 1/8 in aluminum plate, which is 3.175 mm, gives less engagement than the rule wants. Options:
+
+- Use a nut or a nutplate on the back instead of tapping
+- Tap into the thicker web of an extrusion rather than the sheet face
+- Use a threaded insert
+- Accept the reduced strength deliberately for a low-load joint, and write down that you did
+
+:::warning Never tap into polycarbonate for a structural joint
+Plastic threads strip under load and creep over time. Use a through hole with a nut and a washer.
+:::
+
+---
+
+<LessonPhoto
+  alt="A snapped tap left in a partly threaded hole in an aluminum plate."
+  caption="A snapped tap. Hardened tool steel cannot be drilled out, so the part is usually scrap. This is what forcing past a sudden increase in resistance produces."
+  shot="A tap broken off inside a tapped hole in aluminum, with the broken shank alongside."
+  framing="Close macro, part clamped in a vise, light raking across the surface so the flutes and the break face are both visible."
+/>
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. The tap drill diameter is approximately the major diameter minus the `__________`.
+2. Reversing the tap a quarter turn periodically serves to break the `__________`.
+3. A general guideline for thread engagement in aluminum is at least `__________` times the screw diameter.
+
+<details>
+<summary>Show answers</summary>
+
+1. **pitch**
+2. **chip**
+3. **1.5**
+
+</details>
+
+---
+
+## Exercise
+
+In a piece of scrap aluminum at least 6 mm thick, drill and tap two M3 holes: one at the correct 2.5 mm tap drill, and one at 2.7 mm. Thread a screw into each and compare how they feel and how much torque they take before stripping. Record the difference.
+
+<MarkComplete
+  lessonId="module-02/tapping-and-threads"
+  nextUnit="/mechanical/module-02/mastery-quiz"
+  nextUnitName="Module 2 Mastery Quiz: Shop Safety, Tools, and Measurement"
+/>

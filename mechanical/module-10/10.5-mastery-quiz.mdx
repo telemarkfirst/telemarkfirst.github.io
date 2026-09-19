@@ -1,0 +1,152 @@
+---
+id: mastery-quiz
+title: "Module 10 Mastery Quiz: Prototyping, Testing, and Iteration"
+sidebar_label: "Module 10 · Mastery Quiz"
+sidebar_position: 5
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import ScoredQuiz from '@site/src/components/mechanical/ScoredQuiz';
+import {MASTERY_QUESTIONS} from '@site/src/telemark/mechanicalQuizzes';
+
+# Module 10 Mastery Quiz: Prototyping, Testing, and Iteration
+
+---
+
+## I. Conceptual Questions
+
+**1. Prototype Quality:** Explain why building a prototype well is usually a mistake.
+
+<details>
+<summary>Show answer</summary>
+
+A prototype's value comes from producing an answer early enough to act on it. Building it well consumes the time that advantage was made of, and it introduces a second cost: the more effort invested, the more reluctant the team becomes to discard it. That is the sunk cost trap, and it converts an experiment into a commitment.
+
+The correct standard is the cheapest construction that answers the stated question. If one dimension must be accurate because it is the subject of the experiment, make that dimension accurate and let everything else be clamps, tape, and scrap.
+
+</details>
+
+---
+
+**2. Trial Counts:** A mechanism goes from 8 successes out of 10 to 9 out of 10 after a change. Can the team conclude the change helped?
+
+<details>
+<summary>Show answer</summary>
+
+No. With ten trials, a difference of one success is well within the range that random variation produces, so the result is consistent with the change having done nothing, or even with it having made things slightly worse.
+
+To detect a real difference, the team needs enough trials that the change exceeds the noise, which for FTC purposes means running 25 or more trials before and after under the same conditions. Acting on a one-trial difference is how teams adopt changes that do not help and abandon changes that do.
+
+</details>
+
+---
+
+**3. Who Runs the Test:** Why should someone other than the builder operate a mechanism during reliability testing?
+
+<details>
+<summary>Show answer</summary>
+
+The builder has an unconscious model of how the mechanism wants to be operated: the approach speed that works, the angle it prefers, the small nudge when an element sits awkwardly. They apply that automatically and do not perceive themselves as doing anything special, so the measured reliability reflects an operator the robot will not have in a match.
+
+Having the driver run the trials, ideally someone who did not watch the build, measures the mechanism as it will actually be used. The gap between the two numbers is usually large and is itself worth recording, because it tells you how much of the mechanism's reliability depends on operator skill.
+
+</details>
+
+---
+
+**4. Stopping Too Early:** A slide stops moving, and the team replaces the motor. Explain what is likely wrong with this response and how to do it correctly.
+
+<details>
+<summary>Show answer</summary>
+
+"The motor stalled" is a symptom, not a cause. A motor stalls because the load exceeded what it could deliver, and the interesting question is why the load was that high. Replacing the motor restores function and leaves the cause in place, so the new motor will stall too.
+
+Continue the why chain. The motor stalled because the slide was binding. The slide bound because the rails were not parallel under load. The rails moved out of parallel because the thin polycarbonate mounting plate flexed across an unsupported span. Supporting or stiffening that plate addresses the cause.
+
+</details>
+
+---
+
+**5. Failure Classification:** Distinguish design, build, and wear failures, and explain why misclassifying one wastes effort.
+
+<details>
+<summary>Show answer</summary>
+
+A design failure means the part was not adequate for its loads, so the team must recalculate and revise it. A build failure means an adequate design was made or assembled incorrectly, such as with a missing spacer or loose fastener. Address that with a process change, such as a checklist or recorded stack-up. A wear failure occurs when an adequate part reaches the end of its finite life. Handle normal wear with a replacement schedule and spares.
+
+Misclassifying wastes effort in both directions. Redesigning a wear item spends engineering hours on something already working as intended. Putting a wear schedule on a design failure means replacing the same part indefinitely without ever fixing it. Treating a design failure as a build failure adds a checklist item that cannot help, because careful assembly of an inadequate part still fails.
+
+</details>
+
+---
+
+## II. Review the Test
+
+A team reports a test result. **Identify the 2 errors and state how the test should be run.**
+
+```text
+QUESTION
+Is the new intake good?
+
+METHOD
+Ravi, who designed and built the intake, ran it on the shop
+floor with the robot on blocks. He tried it about eight times
+with a fresh battery and a new element.
+
+RESULT
+It worked almost every time and felt much faster than the old
+one. Ravi noted one attempt where the element got stuck, but
+the robot had not been positioned properly for that one, so it
+was not counted.
+
+CONCLUSION
+The intake is ready for competition.
+```
+
+<details>
+<summary>Show answers</summary>
+
+**Error 1 - No stated success criterion, unrealistic conditions, and the builder ran the test.**
+"Is the new intake good" cannot pass or fail, so no result can contradict the conclusion. The conditions flatter the mechanism at every point: the shop floor rather than field tile, the robot on blocks rather than at match weight driving, a fresh battery, and a new element. And the person who built it operated it, applying the approach he knows works without noticing that he is doing so.
+
+```text
+Correct: write the question as a measurable criterion, for
+example "acquires an element up to 2 in off center in 25 of 25
+attempts, within 2.0 s." Run on field tile with the robot at
+match weight, with a battery at realistic charge, and have the
+driver operate it rather than the builder.
+```
+
+**Error 2 - Inadequate trial count, and a failure was discarded.**
+Eight trials is enough to establish that the mechanism basically functions and nowhere near enough to establish competition reliability, which needs 25 or more. Separately, the failed attempt was excluded because the robot was positioned poorly, but imperfect positioning is a normal match condition, not a spoiled trial. Discarding it removes exactly the data that describes the mechanism's tolerance to misalignment, which is the property that matters most.
+
+```text
+Correct: run 25 or more trials and record every one,
+individually, with its conditions. A failure attributed to
+positioning should be recorded with the offset that caused it,
+since that measurement defines the acquisition window and
+tells the driver how accurately they must align. Discard a
+trial only for a genuine external interruption, and record
+that you did and why.
+```
+
+**On "felt much faster":** the comparison against the old intake is an impression, not a measurement. Time both across the same number of trials, or the claim cannot go in the notebook as a result.
+
+</details>
+
+---
+
+## III. Scored Check
+
+The questions above are for working something through. These are graded, so you can find out whether it stuck. Everything is scored in your browser.
+
+<ScoredQuiz
+  lessonId="module-10/mastery-quiz"
+  questions={MASTERY_QUESTIONS['module-10']}
+/>
+
+<MarkComplete
+  lessonId="module-10/mastery-quiz"
+  nextUnit="/mechanical/module-11"
+  nextUnitName="Module 11: Fabrication and Competition Readiness"
+/>

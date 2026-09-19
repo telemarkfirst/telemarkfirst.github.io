@@ -1,0 +1,29 @@
+---
+id: connect-control-hub
+title: "Section 9: Connecting Your Programming Tool to the Control Hub"
+sidebar_label: "9 · Connect to Control Hub"
+sidebar_position: 9
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Section 9: Connecting to the Control Hub
+
+:::info
+This is covered in depth in later units. For now, verify the physical connection works.
+:::
+
+---
+
+1. Power on the Control Hub. Wait for the LED to turn solid green (approximately 30 seconds).
+2. Connect your computer to the Robot Controller's Wi-Fi network. Use the network name and password configured for your team.
+3. Open `http://192.168.43.1:8080` in a browser. If the Program and Manage page loads, the network connection is working and OnBot Java is available.
+4. For Android Studio, use the deployment method documented by the current FTC SDK and your team's Robot Controller setup. USB is the simplest first check. Wireless ADB details can vary by device and season.
+
+The Telemark simulator does not connect to this network or deploy code. It is a practice environment for testing program logic before working with the robot.
+
+<MarkComplete
+  lessonId="unit-01/connect-control-hub"
+  nextUnit="/docs/unit-01/verification-checklist"
+  nextUnitName="Section 10: Environment Verification Checklist"
+/>

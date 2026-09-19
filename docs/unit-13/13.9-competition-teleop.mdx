@@ -1,0 +1,94 @@
+---
+id: competition-teleop
+title: "Lesson 13.9: Complete CompetitionTeleOp.java"
+sidebar_label: "13.9 · Complete TeleOp"
+sidebar_position: 9
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 13.9: Complete `CompetitionTeleOp.java`
+
+The OpMode should coordinate decisions. It should not repeat motor names, encoder modes, or power constants.
+
+## Use the Public Subsystem Methods
+
+<AnnotatedCode
+  title="CompetitionTeleOp.java"
+  java={String.raw`package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+
+@TeleOp(name="Competition TeleOp")
+public class CompetitionTeleOp extends OpMode {
+    private final RobotHardware robot = new RobotHardware();
+
+    @Override
+    public void init() {
+        robot.init(hardwareMap);
+    }
+
+    @Override
+    public void loop() {
+        robot.update();
+
+        if (gamepad1.right_bumper) {
+            robot.intake.collect();
+        } else if (gamepad1.left_bumper) {
+            robot.intake.eject();
+        } else {
+            robot.intake.stop();
+        }
+
+        if (gamepad1.a) {
+            robot.lift.moveToScore();
+        }
+    }
+
+    @Override
+    public void stop() {
+        robot.stopAll();
+    }
+}`}
+  python={String.raw`class CompetitionTeleOp:
+    def __init__(self):
+        self.robot = RobotHardware()
+
+    def initialize(self, hardware):
+        self.robot.initialize(hardware)
+
+    def loop(self, gamepad):
+        self.robot.update()
+        if gamepad.right_bumper:
+            self.robot.intake.collect()
+        elif gamepad.left_bumper:
+            self.robot.intake.eject()
+        else:
+            self.robot.intake.stop()
+        if gamepad.a:
+            self.robot.lift.move_to_score()
+
+    def stop(self):
+        self.robot.stop_all()`}
+/>
+
+Notice what is absent. `CompetitionTeleOp` does not import `DcMotor` or `CRServo`. It does not know hardware configuration names. Those details already have owners.
+
+## Save the Project for Autonomous
+
+Complete the project, then press **Export**. Lesson 15.5 can also read files from this completed lesson when you use the same browser.
+
+If you move to another computer, import the exported Telemark project there. The export contains every Java file and the selected OpMode entry point.
+
+## Project Practice
+
+Complete the driver controls and cleanup path. Run the checks before exporting.
+
+<Unit13BuildSimulator lesson="teleop" />
+
+<MarkComplete
+  lessonId="unit-13/competition-teleop"
+  nextUnit="/docs/unit-13/mastery-coding-challenge"
+  nextUnitName="Unit 13 Comprehensive Coding Challenge"
+/>

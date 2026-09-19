@@ -1,0 +1,145 @@
+---
+id: pitch-roll
+title: "Lesson 12.4: Monitoring Pitch and Roll for Robot Tip Detection"
+sidebar_label: "12.4 · Pitch & Roll"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit12Simulator from '@site/src/components/Unit12Simulator';
+
+# Lesson 12.4: Monitoring Pitch and Roll for Robot Tip Detection
+
+---
+
+## When Tipping Becomes a Real Risk
+
+Tall robots, high center-of-mass designs, and fast directional changes are all common in competitive FTC. A robot that tips over during a match cannot score and may receive a penalty if a referee must right it, or worse, it may damage itself or a field element. Physical countermeasures like a wide wheelbase and low ballast weight help, but software can add a second layer of protection by detecting dangerous tilt angles and responding before the tip actually occurs.
+
+The IMU's pitch and roll channels provide exactly this data. Because the IMU detects acceleration along its axes, and gravity is a constant downward acceleration, the sensor can determine how much the robot is leaning in any direction even when the robot is stationary. This is the same principle used in smartphones to detect landscape versus portrait orientation.
+
+---
+
+## Pitch, Roll, and Their Axes
+
+Pitch measures rotation around the robot's side-to-side axis. Visually, this is the robot nodding forward or backward like a car accelerating or braking hard. Roll measures rotation around the robot's front-to-back axis. This is the robot leaning left or right, like a car taking a sharp corner.
+
+Both values are retrieved from the same `YawPitchRollAngles` object used for Yaw in Lesson 12.2. The methods are `getPitch(AngleUnit)` and `getRoll(AngleUnit)`, and they accept the same `AngleUnit.DEGREES` or `AngleUnit.RADIANS` parameter.
+
+When checking for tipping, you almost always want to use `Math.abs()` on the result. A robot that is tilting 25 degrees to the left and a robot that is tilting 25 degrees to the right are both in danger, but one produces a positive roll value and the other produces a negative roll value. Taking the absolute value collapses both cases into a single threshold check.
+
+---
+
+## Designing a Tip Safety Response
+
+The appropriate response to a detected tip depends on the robot's design. Common strategies include:
+
+- Setting all drive motor power to zero to stop the motion causing the tip.
+- Retracting a tall scoring mechanism to lower the center of gravity automatically.
+- Sending a telemetry warning to the Driver Station so the drive team can intervene.
+
+A production implementation would combine two or three of these simultaneously. The code pattern is an `if` statement that checks whether either pitch or roll exceeds a threshold, using a logical OR (`||`) to trigger on tipping in any direction.
+
+```java
+boolean isTipping = Math.abs(pitch) > 20.0 || Math.abs(roll) > 20.0;
+```
+
+The threshold value of 20 degrees is a starting point. Each robot's actual tip angle depends on its geometry, and the team should measure and calibrate this number during practice sessions.
+
+---
+
+## Annotated Code
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+
+@TeleOp(name="Tip_Detection_Demo")
+public class TipDetectionDemo extends OpMode {
+
+    private DcMotor leftDrive, rightDrive;
+    private IMU     imu;
+
+    private static final double TIP_THRESHOLD_DEG = 20.0;
+
+    @Override
+    public void init() {
+        leftDrive  = hardwareMap.get(DcMotor.class, "left_drive");
+        rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
+        rightDrive.setDirection(DcMotor.Direction.REVERSE);
+
+        imu = hardwareMap.get(IMU.class, "imu");
+        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
+            RevHubOrientationOnRobot.LogoFacingDirection.UP,
+            RevHubOrientationOnRobot.UsbFacingDirection.FORWARD
+        )));
+    }
+
+    @Override
+    public void loop() {
+        YawPitchRollAngles angles = imu.getRobotYawPitchRollAngles();
+
+        double pitch = angles.getPitch(AngleUnit.DEGREES);
+        double roll  = angles.getRoll(AngleUnit.DEGREES);
+
+        // Check both axes simultaneously. Tipping in any direction is dangerous.
+        boolean isTipping = Math.abs(pitch) > TIP_THRESHOLD_DEG
+                         || Math.abs(roll)  > TIP_THRESHOLD_DEG;
+
+        if (isTipping) {
+            // Emergency stop: cut all drive power immediately
+            leftDrive.setPower(0.0);
+            rightDrive.setPower(0.0);
+            telemetry.addData("WARNING", "TIP DETECTED: MOTORS STOPPED");
+        } else {
+            leftDrive.setPower(-gamepad1.left_stick_y);
+            rightDrive.setPower(-gamepad1.right_stick_y);
+        }
+
+        telemetry.addData("Pitch (deg)", "%.1f", pitch);
+        telemetry.addData("Roll  (deg)", "%.1f", roll);
+        telemetry.addData("Tipping",     isTipping);
+        telemetry.update();
+    }
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Rotation around the robot's side-to-side axis, describing a forward or backward lean, is called `__________`.
+2. Rotation around the robot's front-to-back axis, describing a left or right lean, is called `__________`.
+3. When checking a tilt angle for a danger threshold, `Math.__________()` should be applied to the angle value so that leaning in either direction triggers the same check.
+
+<details>
+<summary>Show answers</summary>
+
+1. **Pitch**
+2. **Roll**
+3. **`abs`**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Use the simulator below to complete the tip-detection helper. The editor starts with incomplete starter code, so fill in the pitch/roll reads and either-axis safety condition before tilting the robot.
+
+<SimulatorRunGuide />
+
+<Unit12Simulator lesson="pitch-roll" />
+
+<MarkComplete
+  lessonId="unit-12/pitch-roll"
+  nextUnit="/docs/unit-12/imu-turn"
+  nextUnitName="Lesson 12.5: Implementing an IMU-Corrected 90-Degree Autonomous Turn"
+/>

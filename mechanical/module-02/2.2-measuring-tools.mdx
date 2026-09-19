@@ -1,0 +1,124 @@
+---
+id: measuring-tools
+title: "Lesson 2.2: Calipers, Rules, and Squares, and How to Read Them"
+sidebar_label: "2.2 · Measuring Tools"
+sidebar_position: 2
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+
+# Lesson 2.2: Calipers, Rules, and Squares, and How to Read Them
+
+---
+
+## Technical Context
+
+A measurement is only useful if the tool can resolve the tolerance the part needs. A tape measure resolves to about a sixteenth of an inch, or 0.0625 in. That is not precise enough for a bearing bore, where an error of 0.06 in prevents the bearing from fitting correctly.
+
+Choose the measuring tool from the required tolerance, not from convenience.
+
+---
+
+## Which Tool for Which Job
+
+| Tool | Typical resolution | Use it for |
+| --- | --- | --- |
+| Tape measure | 1/16 in | Field distances, rough stock length, robot envelope checks |
+| Steel rule | 1/32 in | Hole spacing layout, cut lines on stock |
+| Digital caliper | 0.001 in / 0.01 mm | Shaft diameters, bore sizes, material thickness, fastener sizing |
+| Micrometer | 0.0001 in | Rarely needed in FTC, useful for shim stock |
+| Combination square | angle reference | Checking 90 degrees, marking lines square to an edge |
+| Feeler gauge | 0.0015 in steps | Setting small gaps, checking chain slack |
+
+The practical rule: if the dimension controls whether two parts fit together, use a caliper. If it controls where something roughly goes, a rule is fine.
+
+---
+
+## Using a Caliper Correctly
+
+A digital caliper is the most-used precision tool on an FTC team, and it is routinely misread.
+
+**Zero it before every measurement session.** Close the jaws fully, confirm the display reads 0.000, and press zero if it does not. A caliper that drifted 0.004 in reports every measurement 0.004 in off, consistently, which is the hardest kind of error to notice.
+
+**Use the correct jaws.**
+
+- **Outside jaws** (the large lower ones) measure outside dimensions: shaft diameters, stock thickness.
+- **Inside jaws** (the small upper ones) measure inside dimensions: bore diameters, slot widths.
+- **Depth rod** (the tail that extends) measures hole depth and step heights.
+
+**Do not overtighten.** A caliper squeezed hard reads small, especially on plastics and thin-wall tube. Close it until it just contacts, then read.
+
+**Measure a round part twice, rotated 90 degrees.** Extruded and 3D printed round parts are frequently out of round. One measurement on an oval shaft is a number, not a diameter.
+
+:::tip Measure the part, not the drawing
+When a part does not fit, students often re-check the CAD. Measure the physical part first. Drill bits cut oversize, printers shrink, and stock is not always the thickness stamped on it.
+:::
+
+---
+
+## Reading Metric and Imperial Without Mixing Them
+
+FTC build systems mix units freely: goBILDA and REV use metric fasteners on hole patterns that may be spaced in millimeters, while much stock is sold in imperial sizes, and field dimensions are imperial.
+
+Two habits prevent almost all unit errors:
+
+1. **Write the unit every time.** "3.2" in a notebook is meaningless. "3.2 mm" is a measurement.
+2. **Do not convert unless you must.** Convert once, at the boundary, and write both. Repeated conversion is where rounding error accumulates.
+
+The conversions you will use constantly:
+
+```text
+1 in = 25.4 mm exactly
+1 mm = 0.03937 in
+1/8 in = 3.175 mm
+M3 clearance = 3.2 mm = 0.126 in
+```
+
+---
+
+## Squares and Why Things End Up Crooked
+
+A combination square checks that two surfaces meet at 90 degrees. Use it before drilling a mounting pattern, not after discovering the mechanism sits at an angle.
+
+The common failure is checking square in one plane only. A bracket can be square when viewed from the side and tilted when viewed from the top. Check both, and check against a reference surface you trust, which is usually the machined edge of an extrusion rather than a cut edge you made.
+
+:::warning Cut edges are not reference surfaces
+A bandsaw or hacksaw edge is not straight or square enough to measure from. Always reference from an original extruded or machined surface, and mark which edge you referenced so the next person uses the same one.
+:::
+
+---
+
+:::info Connects to the software track
+Measured wheel diameter is not a detail the programmers can look up. It goes straight into the tick conversion.
+
+See [Lesson 10.2: Converting Encoder Ticks to Distance](/docs/unit-10/ticks-to-distance).
+:::
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. Before a measuring session, a digital caliper should be closed fully and `__________` so that a drift error does not affect every reading.
+2. To measure the inside diameter of a bearing bore, use the caliper's `__________` jaws.
+3. A round part should be measured twice, rotated 90 degrees, because extruded and printed parts are often out of `__________`.
+
+<details>
+<summary>Show answers</summary>
+
+1. **zeroed**
+2. **inside** (the small upper jaws)
+3. **round**
+
+</details>
+
+---
+
+## Exercise
+
+Take one 8 mm shaft and one printed part with an 8 mm hole. Measure the shaft in two orientations and the hole in two orientations with a caliper. Record all four numbers with units. The spread you find is the tolerance your designs have to accommodate, and it is usually larger than students expect.
+
+<MarkComplete
+  lessonId="module-02/measuring-tools"
+  nextUnit="/mechanical/module-02/cutting-and-drilling"
+  nextUnitName="Lesson 2.3: Cutting and Drilling Aluminum and Polycarbonate"
+/>

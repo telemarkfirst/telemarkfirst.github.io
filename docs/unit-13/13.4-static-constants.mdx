@@ -1,0 +1,179 @@
+---
+id: static-constants
+title: "Lesson 13.4: Managing Shared Constants with the static Keyword"
+sidebar_label: "13.4 · Static Constants"
+sidebar_position: 4
+---
+
+import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
+import Unit13Simulator from '@site/src/components/Unit13Simulator';
+
+# Lesson 13.4: Managing Shared Constants with the static Keyword
+
+---
+
+## Configuration Drift: A Real Competition Problem
+
+Imagine a robot with three OpMode files: `TeleOpMain.java`, `AutonomousRed.java`, and `AutonomousBlue.java`. Each one maps the drivetrain motors using the strings `"left_front"`, `"right_front"`, `"left_back"`, and `"right_back"`. The drive team re-ports the right rear motor to a different hub slot before a match and updates the configuration name in the Robot Controller app to `"right_back_2"`. Now that string needs to change in three different Java files. One of them gets missed. The autonomous program works. The TeleOp crashes on the second match.
+
+This scenario is called configuration drift, and it is one of the most common sources of last-minute failures at competition. The fix is to store every configuration name and every tunable constant in exactly one location. Any code that needs the value reads it from that single location. When the value needs to change, it changes in one place and every file is automatically updated.
+
+---
+
+## Static and Final
+
+The `static` keyword applied to a class variable means the variable belongs to the class itself rather than to any particular instance of the class. Every object of that class shares the same static variable. This is the right model for a configuration constant: there is only one configuration, and it should be identical everywhere.
+
+The `final` keyword applied to a variable means the variable cannot be reassigned after its initial declaration. Combining `static` and `final` creates a compile-time constant: a value that is defined once, cannot be changed, belongs to the class rather than any instance, and is accessible from anywhere that can see the class.
+
+By Java naming convention, `static final` constants are written in `ALL_CAPS_WITH_UNDERSCORES` to visually distinguish them from regular variables.
+
+---
+
+## A Shared Configuration Class
+
+The most effective pattern for FTC is a dedicated class named something like `RobotConfig` that contains nothing but `public static final` declarations. No methods, no instances, no constructor. Just constants. Every OpMode and every mechanism class that needs a hardware name or a tunable value imports this class and reads the constant directly: `RobotConfig.LEFT_FRONT_MOTOR`.
+
+When the hardware changes, you open `RobotConfig.java`, change one string, rebuild, and every file is correct again.
+
+---
+
+## Annotated Code
+
+<AnnotatedCode
+  title="One shared configuration value"
+  java={String.raw`public final class RobotConfig {
+    public static final String LIFT_NAME = "lift";
+    public static final double LIFT_POWER = 0.75;
+
+    private RobotConfig() {}
+}`}
+  python={String.raw`class RobotConfig:
+    LIFT_NAME = "lift"
+    LIFT_POWER = 0.75`}
+/>
+
+Python class attributes provide a similar shared lookup. Python does not enforce `final`, so the all-caps names communicate that callers should treat these values as constants.
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+/**
+ * Single source of truth for all hardware configuration names and
+ * tunable constants used across the robot's codebase.
+ *
+ * To change a hardware port name: update the constant here only.
+ * Rebuild the project and every OpMode receives the updated value.
+ */
+public class RobotConfig {
+
+    // ── Drivetrain motor configuration names ──────────────────
+    public static final String LEFT_FRONT_MOTOR  = "left_front";
+    public static final String RIGHT_FRONT_MOTOR = "right_front";
+    public static final String LEFT_BACK_MOTOR   = "left_back";
+    public static final String RIGHT_BACK_MOTOR  = "right_back";
+
+    // ── Mechanism configuration names ─────────────────────────
+    public static final String LIFT_MOTOR        = "lift_motor";
+    public static final String INTAKE_SERVO      = "intake_servo";
+    public static final String BOTTOM_LIMIT      = "limit_bottom";
+
+    // ── Tunable drive constants ────────────────────────────────
+    public static final double DRIVE_SPEED_NORMAL    = 0.8;
+    public static final double DRIVE_SPEED_PRECISION = 0.3;
+    public static final double DEADZONE_THRESHOLD    = 0.08;
+
+    // ── Encoder constants ──────────────────────────────────────
+    public static final double TICKS_PER_REV    = 537.7; // GoBILDA 5203 19.2:1
+    public static final double WHEEL_DIAMETER_IN = 3.78;
+}
+```
+
+```java
+// Using the constants in an OpMode or mechanism class:
+import org.firstinspires.ftc.teamcode.RobotConfig;
+
+leftFront  = hardwareMap.get(DcMotor.class, RobotConfig.LEFT_FRONT_MOTOR);
+rightFront = hardwareMap.get(DcMotor.class, RobotConfig.RIGHT_FRONT_MOTOR);
+
+if (Math.abs(input) < RobotConfig.DEADZONE_THRESHOLD) {
+    input = 0;
+}
+```
+
+---
+
+## Fill-in-the-Blank Practice
+
+1. A variable that belongs to the class itself rather than to any particular instance is declared with the `__________` keyword.
+2. A variable that cannot be reassigned after its initial declaration is declared with the `__________` keyword.
+3. By Java naming convention, a `static final` constant should be written in `__________` to distinguish it from regular variables.
+
+<details>
+<summary>Show answers</summary>
+
+1. **`static`**
+2. **`final`**
+3. **ALL_CAPS_WITH_UNDERSCORES**
+
+</details>
+
+---
+
+## Simulator Challenge
+
+Your team has a claw servo, a wrist motor, and a range sensor all with specific configuration names and tunable constants. Complete the simulator's `HardwareNames` configuration class, then use those constants in the OpMode to map hardware, set the claw's open position, and display the configuration values with telemetry.
+
+Requirements:
+- Servo configuration name: `"claw_servo"` stored as `CLAW_SERVO`
+- Motor configuration name: `"wrist_motor"` stored as `WRIST_MOTOR`
+- Sensor configuration name: `"range_sensor"` stored as `RANGE_SENSOR`
+- Maximum wrist power constant: `0.5` stored as `WRIST_MAX_POWER`
+- Claw open position: `0.1` stored as `CLAW_OPEN`
+- Claw closed position: `0.9` stored as `CLAW_CLOSED`
+
+<SimulatorRunGuide />
+
+<Unit13Simulator lesson="static-constants" />
+
+<details>
+<summary>Show answer</summary>
+
+```java
+class HardwareNames {
+    public static final String CLAW_SERVO  = "claw_servo";
+    public static final String WRIST_MOTOR = "wrist_motor";
+    public static final String RANGE_SENSOR = "range_sensor";
+
+    public static final double CLAW_OPEN       = 0.1;
+    public static final double CLAW_CLOSED     = 0.9;
+    public static final double WRIST_MAX_POWER = 0.5;
+}
+
+@Override
+public void init() {
+    claw  = hardwareMap.get(Servo.class, HardwareNames.CLAW_SERVO);
+    wrist = hardwareMap.get(DcMotor.class, HardwareNames.WRIST_MOTOR);
+    range = hardwareMap.get(DistanceSensor.class, HardwareNames.RANGE_SENSOR);
+
+    claw.setPosition(HardwareNames.CLAW_OPEN);
+    telemetry.addData("Status", "Initialized");
+}
+
+@Override
+public void loop() {
+    telemetry.addData("Claw Servo", HardwareNames.CLAW_SERVO);
+    telemetry.addData("Wrist Motor", HardwareNames.WRIST_MOTOR);
+    telemetry.addData("Range Sensor", HardwareNames.RANGE_SENSOR);
+    telemetry.addData("Wrist Max Power", HardwareNames.WRIST_MAX_POWER);
+    telemetry.update();
+}
+```
+
+</details>
+
+<MarkComplete
+  lessonId="unit-13/static-constants"
+  nextUnit="/docs/unit-13/robot-class"
+  nextUnitName="Lesson 13.5: Architecting a Modular Robot Class with Nested Subsystems"
+/>

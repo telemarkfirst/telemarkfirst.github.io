@@ -1,0 +1,211 @@
+.page {
+  min-height: calc(100vh - var(--ifm-navbar-height));
+  padding: var(--tm-sp-8) var(--tm-sp-5);
+  background: var(--tm-bg);
+}
+
+.card {
+  width: min(820px, 100%);
+  margin: 0 auto;
+  padding: var(--tm-sp-8);
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-surface-1);
+}
+
+.eyebrow {
+  margin: 0 0 var(--tm-sp-2);
+  color: var(--tm-accent);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: var(--tm-fs-sm);
+}
+
+.intro {
+  max-width: 62ch;
+  color: var(--tm-text-muted);
+}
+
+.fieldset {
+  margin: var(--tm-sp-7) 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.fieldset legend {
+  margin-bottom: var(--tm-sp-3);
+  font-weight: 700;
+}
+
+.options {
+  display: grid;
+  gap: var(--tm-sp-3);
+}
+
+.option {
+  display: flex;
+  gap: var(--tm-sp-3);
+  align-items: flex-start;
+  padding: var(--tm-sp-4);
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-md);
+  background: var(--tm-surface-2);
+  cursor: pointer;
+}
+
+.option:hover,
+.selected {
+  border-color: var(--tm-accent);
+  background: var(--tm-accent-a08);
+}
+
+.locked {
+  cursor: default;
+}
+
+.locked:hover {
+  border-color: var(--tm-border);
+  background: var(--tm-surface-2);
+}
+
+.locked.selected,
+.locked.selected:hover {
+  border-color: var(--tm-accent);
+  background: var(--tm-accent-a08);
+}
+
+.option input {
+  margin-top: 0.3rem;
+  accent-color: var(--tm-accent);
+}
+
+.option span,
+.option small {
+  display: block;
+}
+
+.fieldNote {
+  max-width: 64ch;
+  margin: var(--tm-sp-2) 0 0;
+  color: var(--tm-text-muted);
+  font-size: var(--tm-fs-sm);
+  line-height: 1.5;
+}
+
+.usernameLabel {
+  display: block;
+  font-weight: 700;
+}
+
+.usernameField {
+  display: flex;
+  align-items: center;
+  width: min(440px, 100%);
+  margin-top: var(--tm-sp-3);
+  overflow: hidden;
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-md);
+  background: var(--tm-surface-2);
+}
+
+.usernameField:focus-within {
+  border-color: var(--tm-accent);
+  box-shadow: 0 0 0 3px var(--tm-accent-a12);
+}
+
+.usernameField > span {
+  padding-left: var(--tm-sp-4);
+  color: var(--tm-accent);
+  font-family: var(--tm-font-mono);
+}
+
+.usernameField input {
+  min-width: 0;
+  flex: 1;
+  padding: var(--tm-sp-3) var(--tm-sp-4) var(--tm-sp-3) var(--tm-sp-1);
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--tm-text-strong);
+  font: inherit;
+}
+
+.bridge {
+  padding: var(--tm-sp-5);
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-md);
+  background: var(--tm-surface-2);
+}
+
+.bridgeIntro {
+  margin: 0 0 var(--tm-sp-4);
+  color: var(--tm-text-muted);
+  font-size: var(--tm-fs-sm);
+}
+
+.recommended {
+  display: inline-flex !important;
+  margin-left: var(--tm-sp-2);
+  padding: 2px var(--tm-sp-2);
+  border: 1px solid var(--tm-accent-a35);
+  border-radius: var(--tm-r-sm);
+  color: var(--tm-accent);
+  font-size: var(--tm-fs-2xs);
+  white-space: nowrap;
+}
+
+.option small {
+  margin-top: var(--tm-sp-1);
+  color: var(--tm-text-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tm-sp-3);
+  margin-top: var(--tm-sp-7);
+}
+
+.primary,
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: var(--tm-sp-2) var(--tm-sp-5);
+  border: 1px solid var(--tm-accent);
+  border-radius: var(--tm-r-sm);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.primary {
+  color: var(--tm-text-on-accent) !important;
+  background: var(--tm-accent);
+}
+
+.secondary {
+  color: var(--tm-text) !important;
+  background: transparent;
+}
+
+.primary:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.error {
+  margin-top: var(--tm-sp-5);
+  padding: var(--tm-sp-3);
+  border: 1px solid var(--tm-danger);
+  border-radius: var(--tm-r-md);
+  color: var(--tm-danger);
+  background: var(--tm-danger-wash);
+}
+
+@media (max-width: 600px) {
+  .page { padding: var(--tm-sp-4); }
+  .card { padding: var(--tm-sp-5); }
+  .actions { align-items: stretch; flex-direction: column; }
+}

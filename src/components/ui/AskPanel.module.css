@@ -1,0 +1,304 @@
+.panel {
+  padding: var(--tm-sp-5);
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-md);
+  margin: var(--tm-sp-6) 0;
+  background: var(--tm-surface-1);
+}
+
+.title {
+  margin: 0 0 var(--tm-sp-2);
+  color: var(--tm-text-strong);
+  font-family: var(--telemark-font-display);
+  font-size: var(--tm-fs-md);
+}
+
+.blurb {
+  max-width: var(--tm-measure);
+  margin: 0 0 var(--tm-sp-4);
+  color: var(--tm-text-muted);
+  font-size: var(--tm-fs-sm);
+  line-height: var(--tm-lh-normal);
+}
+
+.row {
+  display: flex;
+  gap: var(--tm-sp-3);
+  flex-wrap: wrap;
+}
+
+.input {
+  flex: 1 1 18rem;
+  min-height: 44px;
+  padding: var(--tm-sp-2) var(--tm-sp-3);
+  border: 1px solid var(--tm-border-strong);
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-surface-3);
+  color: var(--tm-text-strong);
+  font-family: var(--tm-font-body);
+  font-size: var(--tm-fs-sm);
+}
+
+.input:focus-visible {
+  border-color: var(--tm-accent);
+  outline: none;
+}
+
+.askBtn,
+.signIn {
+  min-height: 44px;
+  padding: var(--tm-sp-2) var(--tm-sp-5);
+  border: 1px solid var(--tm-accent);
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-accent-a12);
+  color: var(--tm-accent);
+  cursor: pointer;
+  font-family: var(--telemark-font-label);
+  font-size: var(--tm-fs-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: background 160ms ease;
+}
+
+.askBtn:hover:not(:disabled),
+.signIn:hover {
+  background: var(--tm-accent-a20);
+}
+
+.askBtn:disabled {
+  border-color: var(--tm-border);
+  background: transparent;
+  color: var(--tm-text-faint);
+  cursor: not-allowed;
+}
+
+/* Where it is looking. Shown rather than only used, because a student will
+   not ask "why is this 3.2" until they believe it knows what "this" is. */
+.here {
+  display: flex;
+  align-items: center;
+  gap: var(--tm-sp-2);
+  margin: 0 0 var(--tm-sp-3);
+  color: var(--tm-text-muted);
+  font-size: var(--tm-fs-2xs);
+}
+
+.hereDot {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: var(--tm-r-pill);
+  background: var(--tm-success);
+}
+
+.thread {
+  display: flex;
+  max-height: 22rem;
+  flex-direction: column;
+  gap: var(--tm-sp-3);
+  overflow-y: auto;
+  margin-bottom: var(--tm-sp-3);
+}
+
+.empty {
+  margin: 0;
+  color: var(--tm-text-faint);
+  font-size: var(--tm-fs-xs);
+  line-height: var(--tm-lh-normal);
+}
+
+.fromYou,
+.fromAi {
+  max-width: 92%;
+  font-size: var(--tm-fs-sm);
+  line-height: var(--tm-lh-normal);
+}
+
+/* The student's own words sit right and tinted; the reply sits left and plain,
+   so a thread can be read at a glance without labels on every turn. */
+.fromYou {
+  align-self: flex-end;
+  padding: var(--tm-sp-2) var(--tm-sp-3);
+  border-radius: var(--tm-r-md);
+  background: var(--tm-accent-a12);
+  color: var(--tm-text-strong);
+}
+
+.fromAi {
+  align-self: flex-start;
+  color: var(--tm-text);
+}
+
+.fromYou p,
+.fromAi p {
+  margin: 0 0 var(--tm-sp-2);
+}
+
+.fromYou p:last-child,
+.fromAi p:last-child {
+  margin-bottom: 0;
+}
+
+/* Three dots travelling, so a wait that runs several seconds reads as work in
+   progress rather than a hang. Motion is the only signal available here: there
+   is no progress to report until the first token lands. */
+.typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--tm-text-faint);
+  font-size: var(--tm-fs-xs);
+}
+
+.typing::before,
+.typing::after,
+.typingDot {
+  width: 5px;
+  height: 5px;
+  border-radius: var(--tm-r-pill);
+  background: var(--tm-accent);
+  content: '';
+  animation: thinking 1.1s ease-in-out infinite;
+}
+
+.typing::before {
+  animation-delay: 0s;
+}
+
+.typingDot {
+  animation-delay: 0.15s;
+}
+
+.typing::after {
+  animation-delay: 0.3s;
+}
+
+@keyframes thinking {
+  0%, 60%, 100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typing::before,
+  .typing::after,
+  .typingDot {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+.error {
+  margin: var(--tm-sp-3) 0 0;
+  color: var(--tm-warn);
+  font-size: var(--tm-fs-sm);
+}
+
+/* Stated every time, not once in a footer. A generated answer about a hole
+   size can be wrong in a way a student cannot detect. */
+.limit {
+  margin: var(--tm-sp-4) 0 0;
+  color: var(--tm-text-faint);
+  font-size: var(--tm-fs-xs);
+}
+
+.toolbar {
+  display: flex;
+  gap: var(--tm-sp-2);
+  margin-bottom: var(--tm-sp-3);
+}
+
+.toolBtn {
+  min-height: 32px;
+  padding: 0 var(--tm-sp-3);
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-pill);
+  background: transparent;
+  color: var(--tm-text-muted);
+  cursor: pointer;
+  font-family: var(--tm-font-label);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: border-color 160ms ease, color 160ms ease;
+}
+
+.toolBtn:hover {
+  border-color: var(--tm-accent);
+  color: var(--tm-accent);
+}
+
+/* Past conversations. The opening question is the title, because that is what
+   a person remembers about a chat, not when they had it. */
+.historyRow {
+  display: flex;
+  align-items: center;
+  gap: var(--tm-sp-2);
+  border-bottom: 1px solid var(--tm-border-hair);
+}
+
+.historyOpen {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--tm-sp-3) 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.historyQuestion {
+  color: var(--tm-text-strong);
+  font-size: var(--tm-fs-sm);
+}
+
+.historyMeta {
+  color: var(--tm-text-faint);
+  font-size: var(--tm-fs-2xs);
+}
+
+.historyDelete {
+  min-width: 32px;
+  min-height: 32px;
+  border: 0;
+  background: none;
+  color: var(--tm-text-faint);
+  cursor: pointer;
+}
+
+.historyDelete:hover {
+  color: var(--tm-danger);
+}
+
+.limitLink {
+  color: var(--tm-text-muted);
+  text-decoration: underline;
+}
+
+.limitLink:hover {
+  color: var(--tm-accent);
+}
+
+/* The line between what a source supports and what the assistant reasoned.
+   Marked rather than blended: a student deciding what to trust has to see it. */
+.beyond {
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px dashed var(--ifm-color-emphasis-300);
+}
+.beyondLabel {
+  margin: 0 0 0.35rem;
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ifm-color-emphasis-600);
+}

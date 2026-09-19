@@ -1,0 +1,129 @@
+.launcher {
+  position: fixed;
+  right: var(--tm-sp-5);
+  bottom: var(--tm-sp-5);
+  z-index: 40;
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  gap: var(--tm-sp-2);
+  padding: var(--tm-sp-3) var(--tm-sp-4);
+  border: 1px solid var(--tm-border-strong);
+  border-radius: var(--tm-r-pill);
+  background: var(--tm-surface-2);
+  box-shadow: var(--tm-shadow-md);
+  color: var(--tm-text-strong);
+  cursor: pointer;
+  font-family: var(--telemark-font-label);
+  font-size: var(--tm-fs-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: border-color 180ms ease, background 180ms ease;
+}
+
+.launcher:hover {
+  border-color: var(--tm-accent);
+  background: var(--tm-surface-3);
+}
+
+.launcherOpen {
+  border-color: var(--tm-accent);
+}
+
+.mark {
+  display: block;
+  flex: none;
+}
+
+.label {
+  white-space: nowrap;
+}
+
+/* On a phone the label costs width that the thumb needs more than the eye
+   does, and the mark alone is understood once it has been opened one time. */
+@media (max-width: 600px) {
+  .label {
+    display: none;
+  }
+
+  .launcher {
+    min-width: 52px;
+    justify-content: center;
+    padding: var(--tm-sp-3);
+  }
+}
+
+.dock {
+  position: fixed;
+  right: var(--tm-sp-5);
+  bottom: calc(var(--tm-sp-5) + 64px);
+  z-index: 41;
+  display: flex;
+  width: min(30rem, calc(100vw - 2 * var(--tm-sp-5)));
+  max-height: min(32rem, calc(100vh - 10rem));
+  flex-direction: column;
+  border: 1px solid var(--tm-border-strong);
+  border-radius: var(--tm-r-md);
+  background: var(--tm-surface-1);
+  box-shadow: var(--tm-shadow-md);
+  transform-origin: bottom right;
+}
+
+.dockHead {
+  display: flex;
+  align-items: center;
+  gap: var(--tm-sp-2);
+  padding: var(--tm-sp-3) var(--tm-sp-4);
+  border-bottom: 1px solid var(--tm-border-hair);
+}
+
+.dockLogo {
+  display: block;
+}
+
+.dockTitle {
+  flex: 1;
+  text-decoration: none;
+  color: var(--tm-text-strong);
+  font-family: var(--telemark-font-label);
+  font-size: var(--tm-fs-2xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dockTitle:hover {
+  color: var(--tm-accent);
+  text-decoration: none;
+}
+
+.dockOut {
+  color: var(--tm-text-faint);
+}
+
+.dockClose {
+  min-width: 44px;
+  min-height: 44px;
+  border: 0;
+  background: none;
+  color: var(--tm-text-muted);
+  cursor: pointer;
+  font-size: var(--tm-fs-sm);
+}
+
+.dockClose:hover {
+  color: var(--tm-text-strong);
+}
+
+.dockBody {
+  overflow-y: auto;
+  padding: 0 var(--tm-sp-4) var(--tm-sp-3);
+}
+
+/* The panel is styled for sitting inline under a lesson; inside the dock it is
+   the whole surface, so it drops its own frame. */
+.dockBody > section {
+  padding: var(--tm-sp-4) 0 0;
+  border: 0;
+  margin: 0;
+  background: none;
+}
