@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Telemark Unit 9.1 Simulator</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+  <style>
+*{margin:0;padding:0;box-sizing:border-box;scrollbar-width:thin;scrollbar-color:#22d3ee #05080d}
+html,body{width:100%;height:100%;overflow:hidden;background:#05080d;font-family:"Inter","Segoe UI",system-ui,-apple-system,sans-serif;color:#eaf8ff}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#05080d}
+::-webkit-scrollbar-thumb{background:#22d3ee;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#22d3ee}
+.CodeMirror{height:100%!important;font-family:"JetBrains Mono","Fira Code","Consolas",monospace!important;font-size:13px;background:#071019!important}
+.CodeMirror-gutters{background:#071019!important;border-right:1px solid #243746!important}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+button:hover{filter:brightness(1.1)}
+button:active{filter:brightness(.9);transform:scale(.98)}
+code{font-family:"JetBrains Mono","Fira Code","Consolas",monospace}
+#app{display:flex;flex-direction:column;width:100vw;height:100vh;overflow:hidden}
+#controls{display:flex;gap:8px;align-items:center}
+.btn-run{padding:8px 20px;border-radius:6px;border:none;background:#22cc66;color:#fff;font-weight:700;font-size:.85rem;cursor:pointer;display:flex;align-items:center;gap:6px}
+.btn-stop{padding:8px 20px;border-radius:6px;border:none;background:#cc2222;color:#fff;font-weight:700;font-size:.85rem;cursor:pointer;display:flex;align-items:center;gap:6px}
+.btn-reset{padding:8px 16px;border-radius:6px;border:1px solid #243746;background:#0b1118;color:#cbd5e1;font-weight:600;font-size:.85rem;cursor:pointer;display:flex;align-items:center;gap:6px}
+.btn-init{padding:8px 16px;border-radius:6px;border:none;background:#38bdf8;color:#031019;font-weight:700;font-size:.85rem;cursor:pointer;display:flex;align-items:center;gap:6px}
+#running-indicator{padding:4px 10px;border-radius:4px;background:rgba(34,204,102,.15);border:1px solid rgba(34,204,102,.3);color:#44cc66;font-size:.75rem;font-family:monospace;font-weight:600;animation:pulse 1.5s ease-in-out infinite;display:none}
+#main{flex:1;display:flex;overflow:hidden}
+#left-panel{width:55%;min-width:320px;display:flex;flex-direction:column;border-right:1px solid #243746;background:#080d13}
+#split-resizer{width:6px;background:#243746;cursor:col-resize;z-index:30;flex-shrink:0;touch-action:none}
+#split-resizer:hover,#split-resizer.active{background:#22d3ee}
+.panel-header{padding:10px 14px;background:#05080d;border-bottom:1px solid #243746;flex-shrink:0}
+.panel-header-title{font-weight:700;color:#fff;font-size:1rem}
+.panel-header-sub{color:#9aa0a6;font-size:.82rem}
+/* bottom bar matching other simulators */
+.bottom-bar{background:#071019;border-top:1px solid #243746;padding:10px;display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+.controls-row{display:flex;gap:8px}
+.controls-row button{flex:1;padding:10px;border-radius:6px;border:none;font-size:.9rem;font-weight:700;cursor:pointer;color:#fff}
+.ds-status{display:flex;justify-content:space-between;align-items:center;font-family:monospace;font-size:.85rem}
+.ds-state{font-weight:700}.ds-timer{color:#569cd6}
+/* power bar */
+.power-bar-panel{margin:10px;background:#0b1118;border:1px solid #243746;border-radius:8px;padding:10px}
+.power-bar-label{display:flex;justify-content:space-between;align-items:center;font-family:monospace;font-size:.85rem;margin-bottom:6px}
+.power-bar-name{color:#22d3ee;font-weight:700}
+.power-bar-val{color:#fff;font-weight:700;min-width:40px;text-align:right}
+.power-bar-track{height:14px;background:#101d29;border-radius:7px;position:relative;overflow:hidden}
+.power-bar-center{position:absolute;left:50%;top:0;bottom:0;width:1px;background:#555}
+.power-bar-fill{position:absolute;top:2px;bottom:2px;border-radius:5px;transition:left .05s,width .05s;background:#44cc66}
+#editor-header{padding:8px 12px;background:#14141e;border-bottom:1px solid #2a2a3a;font-size:.8rem;font-weight:600;color:#888;display:flex;align-items:center;gap:6px;flex-shrink:0}
+#editor-header span{color:#22d3ee}
+#editor-wrap{flex:1;overflow:hidden}
+#right-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#scene-wrap{flex:1;min-height:300px;position:relative}
+#scene-container{width:100%;height:100%;overflow:hidden;background:#0a0a10}
+#bottom-panels{height:240px;display:flex;border-top:1px solid #2a2a3a;flex-shrink:0}
+#telemetry-wrap{flex:1;padding:8px;overflow:auto}
+#challenge-wrap{flex:0 0 auto;padding:8px;overflow:visible}
+.telem-panel{background:#071019;border:1px solid #243746;border-radius:8px;padding:12px;height:100%;display:flex;flex-direction:column;overflow:hidden}
+.telem-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-shrink:0}
+.telem-label{font-weight:700;font-size:.85rem;color:#aaa;text-transform:uppercase;letter-spacing:.5px}
+.telem-body{flex:1;overflow:auto;font-family:"Consolas","Courier New",monospace;font-size:.8rem;line-height:1.6}
+.telem-error{color:#ff4444;padding:8px;background:rgba(255,68,68,.1);border-radius:4px;margin-bottom:8px;border:1px solid rgba(255,68,68,.3)}
+.telem-empty{color:#555;font-style:italic}
+.telem-row{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.telem-key{color:#4488ff}.telem-val{color:#88ff88}
+.challenge-panel{background:#0b1118;border:1px solid #243746;border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:12px;overflow:auto;max-height:34vh}
+.challenge-panel.collapsed .challenge-body{display:none}
+.challenge-panel.collapsed{max-height:none}
+.challenge-header{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer}
+.challenge-title{font-size:1.1rem;font-weight:700;color:#fff;margin:0;display:flex;align-items:center;gap:8px}
+.challenge-desc{font-size:.85rem;color:#bbb;line-height:1.6}
+.challenge-desc code{background:#101d29;padding:1px 4px;border-radius:3px}
+.badge-row{display:flex;gap:8px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:12px;font-size:.75rem;font-weight:600;background:rgba(68,136,255,.15);color:#4488ff;border:1px solid rgba(68,136,255,.3)}
+.req-section-title{font-size:.8rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.req-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.82rem}
+.req-icon{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0}
+.req-pass{color:#44cc66}.req-fail{color:#888}
+.complete-banner{background:rgba(68,204,102,.1);border:1px solid rgba(68,204,102,.3);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px;font-size:.85rem;color:#44cc66;font-weight:600}
+.hint-box{padding:6px 10px;margin-bottom:4px;border-radius:4px;font-size:.8rem}
+.hint-error{background:rgba(255,68,68,.1);border:1px solid rgba(255,68,68,.3);color:#ff6666}
+.hint-warning{background:rgba(255,200,0,.1);border:1px solid rgba(255,200,0,.3);color:#ffcc44}
+#badge-strip{display:flex;gap:8px;padding:10px}
+.hw-badge{padding:6px 12px;border-radius:8px;font-size:.82rem;font-weight:700;display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.04);background:#0f0f14;color:#cfe}
+#gamepad-card{position:fixed;bottom:12px;right:12px;width:380px;min-width:240px;background:#0b1118;border:1px solid #243746;border-radius:12px;z-index:1000;display:flex;flex-direction:column;box-shadow:0 6px 24px rgba(0,0,0,.5);overflow:hidden}
+#gamepad-titlebar{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#0d1721;border-bottom:1px solid #243746;cursor:grab;user-select:none;flex-shrink:0}
+#gamepad-titlebar-label{font-weight:700;font-size:.9rem;color:#fff;display:flex;align-items:center;gap:6px}
+#gp-collapse-btn{width:24px;height:24px;padding:0;border-radius:4px;background:#101d29;border:1px solid #243746;color:#cbd5e1;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+#gamepad-body{padding:10px;overflow:hidden;flex:1}
+.controller-wrap{width:100%;position:relative;aspect-ratio:768/512;border-radius:14px;overflow:hidden;background:#0f0f0f;touch-action:none;user-select:none}
+.controller-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:1}
+.btn-overlay{position:absolute;border-radius:50%;border:2px solid rgba(255,255,255,.08);background:rgba(255,255,255,.01);cursor:pointer;opacity:.4;z-index:4;touch-action:none}
+.btn-overlay.pressed{background:rgba(255,255,255,.18);box-shadow:0 0 0 2px rgba(255,255,255,.25);opacity:1}
+.gp-stick-zone{position:absolute;border-radius:50%;background:transparent;cursor:grab;z-index:4;touch-action:none}
+.gp-stick-zone.active{background:rgba(255,255,255,.12);box-shadow:0 0 0 2px rgba(255,255,255,.2)}
+.gp-stick-knob{position:absolute;left:50%;top:50%;width:52%;height:52%;border-radius:50%;transform:translate(-50%,-50%);background:radial-gradient(circle at 35% 35%,rgba(80,80,80,.75),rgba(12,12,12,.55) 70%);border:1px solid rgba(255,255,255,.14);pointer-events:none;opacity:.55}
+.gp-trigger{position:absolute;top:0;width:10%;height:14%;transform:translate(-50%,0);background:rgba(0,0,0,.38);border:1px solid rgba(255,255,255,.15);border-radius:6px;cursor:pointer;overflow:hidden;z-index:5;touch-action:none}
+.gp-trigger-fill{position:absolute;left:0;right:0;bottom:0;height:0%;background:linear-gradient(to top,#38bdf8,#22d3ee)}
+.dpad-overlay{position:absolute;left:21.5%;top:41%;width:16%;height:24%;transform:translate(-50%,-50%);pointer-events:none;z-index:4}
+.dpad-btn{position:absolute;width:33%;height:33%;background:rgba(255,255,255,.01);border:1px solid rgba(255,255,255,.06);pointer-events:auto;cursor:pointer}
+.dpad-btn.pressed{background:rgba(255,255,255,.18);box-shadow:0 0 0 2px rgba(255,255,255,.18)}
+@media (max-width:900px){
+  #left-panel{flex:1 1 auto;width:auto;min-width:0;height:100%;border-right:1px solid #2a2a3a;border-bottom:none}
+  #right-panel{flex:0 0 clamp(260px,34vw,330px);width:clamp(260px,34vw,330px);min-width:260px;height:100%}
+  .panel-header{padding:8px 12px}
+  #challenge-wrap{padding:6px 8px}
+  .challenge-panel{padding:10px;max-height:130px}
+  #editor-wrap{min-height:210px}
+  .bottom-bar{padding:8px;gap:6px}
+  .telem-panel{padding:8px;max-height:96px}
+  #badge-strip{padding:6px 8px;gap:6px;flex-wrap:wrap}
+  #scene-wrap{flex:0 0 auto;width:calc(100% - 16px);aspect-ratio:1/1;margin:8px;min-height:0}
+  #scene-container{border-radius:8px}
+  #gamepad-card{width:min(330px,calc(100vw - 24px));right:8px;bottom:8px}
+}
+@media (max-width:640px){
+  #main{flex-direction:column}
+  #left-panel{width:100%;height:62%;border-right:none;border-bottom:1px solid #2a2a3a}
+  #split-resizer{display:none}
+  #right-panel{flex:1 1 auto;width:100%;min-width:0;height:38%;min-height:260px}
+  #scene-wrap{flex:1 1 auto;width:auto;aspect-ratio:auto;margin:0;min-height:0}
+}
+  </style>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+<script src="./telemark-project.js"></script>
+<script src="telemark-project-checks.js"></script>
+<link rel="stylesheet" href="./telemark-project.css"/>
+  <script src="./gamepad-controls.js"></script>
+  <script src='./simulator_base.js' data-telemark-mode='legacy'></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+
+<div id="app">
+  <div id="main">
+    <div id="left-panel">
+      <div class="panel-header"><div class="panel-header-title">Telemark Unit 9.1 Simulator</div><div class="panel-header-sub">Gate Servo Control · Map a servo · Use the gamepad</div></div>
+      <div id="challenge-wrap"></div>
+      <div id="editor-header"><span>&lt;/&gt;</span> Code Editor</div>
+      <div id="editor-wrap"></div>
+
+      <div class="bottom-bar">
+        <div class="controls-row">
+          <button id="btn-init" class="btn-init" onclick="handleInit()"><i class="fa-solid fa-power-off"></i> INIT</button>
+          <button id="btn-run" class="btn-run" onclick="handleRun()" style="display:none"><i class="fa-solid fa-play"></i> START</button>
+          <button id="btn-stop" class="btn-stop" onclick="handleStop()" style="display:none"><i class="fa-solid fa-stop"></i> STOP</button>
+          <button class="btn-reset" onclick="handleReset()"><i class="fa-solid fa-rotate-left"></i> RESET</button>
+        </div>
+        <div class="ds-status"><span class="ds-state" id="ds-state" style="color:#ff6666">STOPPED</span><span class="ds-timer">Time: <span id="timer-val">0.00</span>s</span></div>
+        <div id="telemetry-wrap"></div>
+      </div>
+    </div>
+    <div id="split-resizer"></div>
+    <div id="right-panel">
+      <div class="badge-strip" id="badge-strip"></div>
+      <div id="scene-wrap"><div id="scene-container"></div></div>
+      <div class="power-bar-panel">
+        <div class="power-bar-label"><span class="power-bar-name"><i class="fa-solid fa-gear"></i> GATE</span><span class="power-bar-val" id="power-val">0.00</span></div>
+        <div class="power-bar-track"><div class="power-bar-center"></div><div class="power-bar-fill" id="power-fill"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="gamepad-card">
+  <div id="gamepad-titlebar">
+  <span id="gamepad-titlebar-label"><i class="fa-solid fa-gamepad" style="color:#4488ff"></i> Gamepad 1</span>
+    <button id="gp-collapse-btn" title="Collapse / Expand">−</button>
+  </div>
+  <div id="gamepad-body">
+    <div class="controller-wrap" id="controller-wrap">
+      <img class="controller-img" alt="controller" src="https://resource.logitechg.com/w_776,h_437,ar_16:9,c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/gaming/en/products/f310/f310-feature-3.png">
+      <div id="trigger-left" class="gp-trigger" style="left:21%"><div class="gp-trigger-fill"></div></div>
+      <div id="trigger-right" class="gp-trigger" style="left:79%"><div class="gp-trigger-fill"></div></div>
+      <div id="stick-left" class="gp-stick-zone" style="left:35.5%;top:65.5%;width:17%;height:24%;transform:translate(-50%,-50%)"><div class="gp-stick-knob"></div></div>
+      <div id="stick-right" class="gp-stick-zone" style="left:64%;top:65.5%;width:17%;height:24%;transform:translate(-50%,-50%)"><div class="gp-stick-knob"></div></div>
+      <div id="btn-left-bumper" class="btn-overlay" style="left:20%;top:12%;width:14%;height:6%;transform:translate(-50%,-50%);border-radius:8px"></div>
+      <div id="btn-right-bumper" class="btn-overlay" style="left:80%;top:12%;width:14%;height:6%;transform:translate(-50%,-50%);border-radius:8px"></div>
+      <div id="btn-back" class="btn-overlay" style="left:37.5%;top:28%;width:5.2%;height:6.4%;transform:translate(-10%,-10%);border-radius:16px"></div>
+      <div id="btn-start" class="btn-overlay" style="left:58%;top:28%;width:5.2%;height:6.4%;transform:translate(-10%,-10%);border-radius:16px"></div>
+      <div id="btn-a" class="btn-overlay" style="left:75.5%;top:49%;width:7%;height:10%;transform:translate(-10%,-10%)"></div>
+      <div id="btn-b" class="btn-overlay" style="left:83%;top:38%;width:7%;height:10%;transform:translate(-10%,-10%)"></div>
+      <div id="btn-x" class="btn-overlay" style="left:68%;top:38%;width:7%;height:10%;transform:translate(-10%,-10%)"></div>
+      <div id="btn-y" class="btn-overlay" style="left:75.5%;top:27%;width:7%;height:10%;transform:translate(-10%,-10%)"></div>
+      <div class="dpad-overlay">
+        <div id="btn-dpad-up" class="dpad-btn" style="top:0;left:33%;border-radius:4px 4px 0 0"></div>
+        <div id="btn-dpad-down" class="dpad-btn" style="bottom:0;left:33%;border-radius:0 0 4px 4px"></div>
+        <div id="btn-dpad-left" class="dpad-btn" style="left:0;top:33%;border-radius:4px 0 0 4px"></div>
+        <div id="btn-dpad-right" class="dpad-btn" style="right:0;top:33%;border-radius:0 4px 4px 0"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Three.js loaded via global script tags above -->
+
+<script>
+var STARTER_CODE = '@TeleOp(name="Gate_Servo")\npublic class GateServo extends OpMode {\n\n    Servo gate;\n\n    @Override\n    public void init() {\n        // TODO: Map "gate" from the hardwareMap\n        // TODO: Set the gate to 0.0 so it starts closed\n        telemetry.addData("Status", "Initialized");\n    }\n\n    @Override\n    public void loop() {\n        if (gamepad1.y) {\n            // TODO: Open the gate to position 0.75\n        } else if (gamepad1.a) {\n            // TODO: Close the gate to position 0.0\n        }\n\n        // TODO: Show the current gate state or position with telemetry\n        telemetry.update();\n    }\n}';
+
+var state = {
+  running: false, code: STARTER_CODE, telemetry: [], telemetryError: null, initialized: false,
+  challengeRequirements: [false,false,false,false],
+  gamepad: { a:false,b:false,x:false,y:false,dpad_up:false,dpad_down:false,dpad_left:false,dpad_right:false,left_bumper:false,right_bumper:false,left_trigger:0,right_trigger:0,left_stick_x:0,left_stick_y:0,right_stick_x:0,right_stick_y:0,back:false,start:false },
+  loopInterval:null, runtimeInterval:null, runtimeSeconds:0, telemetryBuffer:[], challengeCollapsed:false
+};
+
+// Hardware
+var hardwareDevices={}, servoCallbacks=[];
+function registerServo(n){var self={type:'servo',name:n,position:0,setPosition:function(p){this.position=Math.max(0,Math.min(1,p));var pp=this.position;servoCallbacks.forEach(function(cb){cb(n,pp)})},getPosition:function(){return this.position}};hardwareDevices[n]=self}
+function onServoPosition(cb){servoCallbacks.push(cb)}
+function resetHardware(){Object.values(hardwareDevices).forEach(function(d){if(d.type==='servo')d.position=0})}
+registerServo('gate');
+var mockHardwareMap={get:function(_t,n){if(!hardwareDevices[n])registerServo(n);return hardwareDevices[n]}};
+function setServoPosition(n,p){p=Math.max(0,Math.min(1,p));var d=hardwareDevices[n];if(d&&d.setPosition)d.setPosition(p)}
+
+// Transpiler
+function getMethodBody(c,m){var r=new RegExp('(?:@\\w+[\\s\\S]*?)?(?:public\\s+)?void\\s+'+m+'\\s*\\([^)]*\\)\\s*\\{','g');var mt=r.exec(c);if(!mt)return null;var bc=1,i=mt.index+mt[0].length,s=i;while(i<c.length&&bc>0){if(c[i]==='{')bc++;if(c[i]==='}')bc--;i++}return bc!==0?null:c.substring(s,i-1)}
+function detectBlockingLoop(c){return/while\s*\(\s*(true|gamepad\d?\.|opModeIsActive)/.test(c)}
+function extractClassFields(c){var f={},r=/\b(Servo|DcMotor|CRServo|DistanceSensor|TouchSensor|ColorSensor|IMU|BNO055IMU)\s+(\w+)\s*;/g,m;while((m=r.exec(c))!==null)f[m[2]]=m[1];return f}
+function extractHardwareNames(b){var m2={},r=/(\w+)\s*=\s*hardwareMap\s*\.\s*get\s*\(\s*\w+\s*\.\s*class\s*,\s*"(\w+)"\s*\)/g,mm;while((mm=r.exec(b))!==null)m2[mm[1]]=mm[2];return m2}
+function transpileJava(j,cf,hn){var s=j;if(hn){s=s.replace(/(\w+)\.setPosition\s*\(/g,function(_,v){return'setServoPosition("'+(hn[v]||v)+'", '});s=s.replace(/(\w+)\.setPower\s*\(/g,function(_,v){return'setMotorPower("'+(hn[v]||v)+'", '})}else{s=s.replace(/(\w+)\.setPosition\s*\(/g,function(_,v){return'setServoPosition("'+v+'", '})}return window.TelemarkJava?window.TelemarkJava.transpileBody(s,{gamepad1Name:'gamepad',addTelemetryName:'addTelemetry',updateTelemetryName:'updateTelemetry',clearTelemetryName:'clearTelemetry'}):s}
+
+// Telemetry
+function addTelemetry(k,v){state.telemetryBuffer.push({key:k,value:String(v)})}
+function updateTelemetry(){state.telemetry=state.telemetryBuffer.slice();renderTelemetry()}
+function clearTelemetryBuffer(){state.telemetryBuffer=[]}
+
+// Validator
+function validateCode(c) {
+  return {requirements:state.challengeRequirements,hints:[]};
+}
+function assessChallenge() {
+  var editor=document.getElementById("code-editor");
+  var result=TelemarkProjectChecks.evaluate("9.1", editor&&editor.__telemarkProject?editor.__telemarkProject.source():state.code);
+  state.challengeRequirements=result.requirements;
+  return result;
+}
+
+// Editor
+var cmEditor=null;
+function currentIndent(s){var m=(s||'').match(/^\s*/);return m?m[0]:''}
+function shouldIndentUnbracedControl(line){var t=(line||'').trim();return /^(?:(?:if|for|while|switch|catch|synchronized)\s*\(.*\)|else(?:\s+if\s*\(.*\))?|do|try|finally)$/.test(t)||/^(?:case\b.*|default)\s*:$/.test(t)}
+function installCodeMirrorAutocomplete(cm){
+  var pairs={'(':')','[':']','{':'}','"':'"',"'":"'"};
+  function pairOrOvertype(open,close){
+    var ranges=cm.listSelections();
+    if(ranges.length===1&&ranges[0].empty()){
+      var cursor=cm.getCursor();
+      if(open===close&&cm.getRange(cursor,{line:cursor.line,ch:cursor.ch+1})===close){
+        cm.setCursor({line:cursor.line,ch:cursor.ch+1});
+        return;
+      }
+    }
+    cm.operation(function(){
+      ranges.forEach(function(range){
+        var selected=cm.getRange(range.anchor,range.head);
+        cm.replaceRange(open+selected+close,range.anchor,range.head);
+      });
+      var cursor=cm.getCursor();
+      if(ranges.length===1&&ranges[0].empty())cm.setCursor({line:cursor.line,ch:cursor.ch-1});
+    });
+  }
+  function closeOrOvertype(close){
+    var cursor=cm.getCursor(),line=cm.getLine(cursor.line),before=line.slice(0,cursor.ch);
+    if(close==='}'&&/^\s+$/.test(before)){
+      var remove=before.endsWith('\t')?1:Math.min(4,(before.match(/ +$/)||[''])[0].length);
+      if(remove){
+        var existing=line.charAt(cursor.ch)==='}';
+        cm.replaceRange(existing?'':'}',{line:cursor.line,ch:cursor.ch-remove},cursor);
+        cm.setCursor({line:cursor.line,ch:cursor.ch-remove+1});
+        return;
+      }
+    }
+    if(cm.getRange(cursor,{line:cursor.line,ch:cursor.ch+1})===close){
+      cm.setCursor({line:cursor.line,ch:cursor.ch+1});
+    }else{
+      cm.replaceSelection(close,'end');
+    }
+  }
+  cm.addKeyMap({
+    "'('":function(){pairOrOvertype('(',')')},
+    "'['":function(){pairOrOvertype('[',']')},
+    "'{'":function(){pairOrOvertype('{','}')},
+    "'\"'":function(){pairOrOvertype('"','"')},
+    "'''":function(){pairOrOvertype("'","'")},
+    "')'":function(){closeOrOvertype(')')},
+    "']'":function(){closeOrOvertype(']')},
+    "'}'":function(){closeOrOvertype('}')},
+    "Backspace":function(){
+      var range=cm.listSelections()[0],cursor=cm.getCursor();
+      if(range&&range.empty()&&cursor.ch>0){
+        var before=cm.getRange({line:cursor.line,ch:cursor.ch-1},cursor);
+        var after=cm.getRange(cursor,{line:cursor.line,ch:cursor.ch+1});
+        if(pairs[before]===after){
+          cm.replaceRange('',{line:cursor.line,ch:cursor.ch-1},{line:cursor.line,ch:cursor.ch+1});
+          return;
+        }
+      }
+      return CodeMirror.Pass;
+    },
+    "Enter":function(){
+      var cur=cm.getCursor(),line=cm.getLine(cur.line),before=line.slice(0,cur.ch),after=line.slice(cur.ch),indent=currentIndent(before);
+      if(before.trimEnd().endsWith('{')&&after.trimStart().startsWith('}')){
+        var inner=indent+'    ';
+        cm.replaceRange('\n'+inner+'\n'+indent,cur);
+        cm.setCursor({line:cur.line+1,ch:inner.length});
+      }else{
+        var extra=before.trimEnd().endsWith('{')||shouldIndentUnbracedControl(before)?'    ':'';
+        cm.replaceSelection('\n'+indent+extra);
+      }
+    }
+  });
+  cm.on('keydown',function(_cm,e){e.stopPropagation();});
+}
+function initEditor(){cmEditor=CodeMirror(document.getElementById('editor-wrap'),{value:STARTER_CODE,mode:'text/x-java',theme:'dracula',lineNumbers:true,indentUnit:4,tabSize:4,indentWithTabs:false,extraKeys:{Tab:'indentMore','Shift-Tab':'indentLess'}});installCodeMirrorAutocomplete(cmEditor);cmEditor.on('change',function(){state.code=cmEditor.getValue();state.challengeRequirements=[false,false,false,false];renderChallenge()})}
+
+// Rendering
+function renderTelemetry(){
+  var w=document.getElementById('telemetry-wrap');
+  var h='<div class="telem-panel"><div class="telem-header"><i class="fa-solid fa-tower-broadcast" style="font-size:1rem;color:#4488ff;margin-right:8px"></i><span class="telem-label">Telemetry</span></div><div class="telem-body">';
+  if(state.telemetryError) h += '<div class="telem-error">⚠️ ' + state.telemetryError + '</div>';
+  if(state.telemetry.length === 0 && !state.telemetryError) h += '<div class="telem-empty">No telemetry data. Press RUN to start.</div>';
+  state.telemetry.forEach(function(e){ h += '<div class="telem-row"><span class="telem-key">' + e.key + '</span><span class="telem-val">' + e.value + '</span></div>'; });
+  h += '</div></div>';
+  w.innerHTML = h;
+}
+
+var REQUIREMENTS=['Servo mapped as "gate" in init()','Y button sets gate to position 0.75','A button sets gate to position 0.0','Telemetry shows current gate state'];
+var BADGES=[{icon:'<i class="fa-solid fa-gear"></i>',label:'Servo (gate)'},{icon:'<i class="fa-solid fa-tower-broadcast"></i>',label:'Telemetry'},{icon:'<i class="fa-solid fa-gamepad"></i>',label:'Gamepad'}];
+
+function renderChallenge(){
+  var v = validateCode(state.code), ap = v.requirements.every(Boolean), w = document.getElementById('challenge-wrap');
+  var h = '';
+  h += '<div class="challenge-panel'+(state.challengeCollapsed?' collapsed':'')+'">';
+  h += '<div class="challenge-header" onclick="toggleChallenge(this)">';
+  h += '<div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.2rem;color:#22d3ee"><i class="fa-solid fa-bullseye"></i></span><div class="challenge-title">Unit 9.1: Gate Servo Control</div></div>';
+  h += '<i class="fa-solid fa-chevron-right chev" style="transition:transform .18s;transform:rotate('+(state.challengeCollapsed?0:90)+'deg)"></i>';
+  h += '</div>';
+  h += '<div class="challenge-body">';
+  h += '<div class="challenge-desc">Map a servo named <code style="color:#60a5fa">"gate"</code> and control it with the gamepad. Press <strong style="color:#fff">Y</strong> to open the gate to position <code style="color:#22d3ee">0.75</code>, and press <strong style="color:#fff">A</strong> to close it to position <code style="color:#22d3ee">0.0</code>. Display the current gate state using telemetry.</div>';
+  h += '<div class="badge-row">'; BADGES.forEach(function(b){ h += '<span class="badge">'+b.icon+' '+b.label+'</span>'; }); h += '</div>';
+  h += '<div><div class="req-section-title">Requirements</div>';
+  REQUIREMENTS.forEach(function(r,i){ var p = v.requirements[i]; h += '<div class="req-row '+(p?'req-pass':'req-fail')+'"><span class="req-icon" style="background:'+(p?'rgba(68,204,102,.2)':'rgba(136,136,136,.15)')+';border:1px solid '+(p?'rgba(68,204,102,.5)':'rgba(136,136,136,.3)')+'">'+(p?'<i class="fa-solid fa-check"></i>':'<i class="fa-regular fa-circle"></i>')+'</span>'+r+'</div>'; });
+  h += '</div>';
+  if(ap) h += '<div class="complete-banner"><i class="fa-solid fa-trophy"></i> All requirements met! Challenge complete!</div>';
+  if(v.hints.length>0){ h += '<div><div class="req-section-title">Hints</div>'; v.hints.forEach(function(hi){ h += '<div class="hint-box '+(hi.type==='error'?'hint-error':'hint-warning')+'">'+(hi.type==='error'?'<i class="fa-solid fa-xmark"></i>':'<i class="fa-solid fa-lightbulb"></i>')+' '+hi.text+'</div>'; }); h += '</div>'; }
+  h += '</div>'; // challenge-body
+  h += '</div>'; // challenge-panel
+  w.innerHTML = h;
+}
+
+function toggleChallenge(el){ var panel = el.closest('.challenge-panel'); if(!panel) return; panel.classList.toggle('collapsed'); state.challengeCollapsed = panel.classList.contains('collapsed'); var chev = el.querySelector('.chev'); if(chev){ if(state.challengeCollapsed) chev.style.transform='rotate(0deg)'; else chev.style.transform='rotate(90deg)'; } if(cmEditor) setTimeout(function(){ cmEditor.refresh(); cmEditor.focus(); }, 0); }
+
+function updateRunUI(){
+  var runBtn = document.getElementById('btn-run'), stopBtn = document.getElementById('btn-stop');
+  if(runBtn) runBtn.style.display = state.running ? 'none' : 'flex';
+  if(stopBtn) stopBtn.style.display = state.running ? 'flex' : 'none';
+  var ds = document.getElementById('ds-state'); if(ds) { ds.textContent = state.running ? 'RUNNING' : (state.initialized ? 'INITIALIZED' : 'STOPPED'); ds.style.color = state.running ? '#44cc66' : (state.initialized ? '#ffcc00' : '#ff6666'); }
+}
+
+function renderBadges(){
+  var el = document.getElementById('badge-strip'); if(!el) return;
+  var html = '';
+  BADGES.forEach(function(b){ html += '<div class="hw-badge">'+b.icon+' '+b.label+'</div>'; });
+  el.innerHTML = html;
+}
+
+// Run / Stop / Reset
+function validateFullJavaSource(code){
+  var result=window.TelemarkSimulatorBase
+    ? window.TelemarkSimulatorBase.compileStudentSource(code)
+    : {ok:false,diagnostics:[{message:'Telemark Java compiler is unavailable',line:1,column:1}]};
+  if(result.ok)return true;
+  var diagnostic=result.diagnostics&&result.diagnostics[0]||{};
+  state.telemetryError='Java compile error: '+(diagnostic.message||'Invalid Java source')+' (line '+(diagnostic.line||1)+', column '+(diagnostic.column||1)+')';
+  console.error('Unit 9.1 Java compile error',diagnostic);
+  renderTelemetry();
+  return false;
+}
+
+var projectProgram = null;
+var projectCompiledSource = null;
+function handleInit(){
+  state.initialized=false;
+  state.challengeRequirements=[false,false,false,false];
+  state.telemetryError=null; state.telemetry=[]; state.telemetryBuffer=[]; renderTelemetry();
+  var projectEditor = document.getElementById('code-editor');
+  var c = projectEditor && projectEditor.__telemarkProject ? projectEditor.__telemarkProject.source() : state.code, cf = extractClassFields(c), ib = getMethodBody(c,'init');
+  if(ib === null){ state.telemetryError = 'Java compile error: Required init() method is missing or has unmatched braces'; renderTelemetry(); return false; }
+  var hn = extractHardwareNames(ib), ssScope = {};
+  Object.keys(cf).forEach(function(f){ ssScope[f] = undefined; });
+  try{
+    projectProgram = TelemarkSimulatorBase.compileStudentSource(c, {gamepad1:state.gamepad,hardwareMap:mockHardwareMap,
+      addTelemetry:addTelemetry,updateTelemetry:updateTelemetry,clearTelemetry:clearTelemetryBuffer,getRuntime:function(){return state.runtimeSeconds}});
+    if(!projectProgram.ok) throw new Error(projectProgram.diagnostics[0].message);
+    if(projectProgram.kind!=='iterative') throw new Error('This lesson expects an OpMode.');
+    projectProgram.methods.init();
+    projectCompiledSource=c;
+  }catch(e){ state.telemetryError = 'init() error: '+e.message; renderTelemetry(); return false; }
+  if(state.telemetryBuffer.length && state.telemetry.length === 0) updateTelemetry();
+  // persist the init scope so loop() can reuse hardware mappings
+  state.initialized = true;
+  state.initScope = ssScope;
+  document.getElementById('btn-init').disabled = true;
+  // show the START button after successful init
+  var runBtn = document.getElementById('btn-run'); if(runBtn) runBtn.style.display = 'flex';
+  state.initialized = true; updateRunUI(); renderTelemetry(); renderChallenge(); return true;
+}
+
+function handleRun(){
+  state.telemetryError=null;
+  state.telemetryBuffer=[];
+  state.runtimeSeconds=0;
+  renderTelemetry();
+  var projectEditor=document.getElementById('code-editor');
+  var c=projectEditor&&projectEditor.__telemarkProject?projectEditor.__telemarkProject.source():state.code;
+  if((!state.initialized || c!==projectCompiledSource) && !handleInit()) return;
+  var cf=extractClassFields(c);
+  var ib=getMethodBody(c,'init');
+  var lb=getMethodBody(c,'loop');
+  var hn=ib!==null?extractHardwareNames(ib):{};
+  if(lb===null){state.telemetryError='Java compile error: Required loop() method is missing or has unmatched braces';renderTelemetry();return}
+  // reuse the scope populated during init, or create a fresh scope
+  var ss = state.initScope || {}; Object.keys(cf).forEach(function(f){ if(!(f in ss)) ss[f]=undefined });
+  if(detectBlockingLoop(lb)){state.telemetryError='Blocking loop detected in loop()!';renderTelemetry();return}
+  var runLoopOnce;
+  try{
+    if(projectProgram.methods.start)projectProgram.methods.start();
+    runLoopOnce=function(){
+      if(!state.running)return false;
+      try{
+        clearTelemetryBuffer();
+        projectProgram.methods.loop();
+        updateTelemetry();
+        return true;
+      }catch(e){
+        state.telemetryError='loop() runtime error: '+e.message;
+        renderTelemetry();
+        handleStop();
+        return false;
+      }
+    };
+  }catch(e){
+    state.telemetryError='loop() compile error: '+e.message;
+    renderTelemetry();
+    return;
+  }
+  state.running=true;
+  updateRunUI();
+  state.runtimeInterval=setInterval(function(){state.runtimeSeconds+=0.05;var tv=document.getElementById('timer-val'); if(tv) tv.textContent = state.runtimeSeconds.toFixed(2)},50);
+  if(!runLoopOnce())return;
+  assessChallenge();
+  state.loopInterval=setInterval(runLoopOnce,50);
+  renderChallenge();
+}
+
+function handleStop(){if(projectProgram&&state.running){try{if(projectProgram.methods.stop)projectProgram.methods.stop()}catch(e){state.telemetryError=e.message;renderTelemetry()}}if(state.loopInterval){clearInterval(state.loopInterval);state.loopInterval=null}if(state.runtimeInterval){clearInterval(state.runtimeInterval);state.runtimeInterval=null}state.running=false;updateRunUI()}
+
+function handleReset(){handleStop();state.telemetry=[];state.telemetryError=null;state.telemetryBuffer=[];state.runtimeSeconds=0;state.initialized=false;state.challengeRequirements=[false,false,false,false];document.getElementById('btn-init').disabled=false;var tv=document.getElementById('timer-val'); if(tv) tv.textContent='0.00';updateRunUI();resetHardware();renderTelemetry();renderChallenge();if(window.resetScene)window.resetScene()}
+
+// Gamepad
+(function(){var rs=document.getElementById('split-resizer'),lp=document.getElementById('left-panel'),rp=document.getElementById('right-panel'),drag=false,pid=null;if(!rs||!lp||!rp)return;function px(v,f){var n=parseFloat(v);return isFinite(n)?n:f}function resizeScene(){window.dispatchEvent(new Event('resize'))}function setWidth(x){var main=document.getElementById('main'),rect=(main||document.body).getBoundingClientRect(),total=rect.width,rsw=rs.offsetWidth||6,ls=getComputedStyle(lp),rsx=getComputedStyle(rp),minL=px(ls.minWidth,260),minR=px(rsx.minWidth,260),minW=Math.min(minL,Math.max(160,total-rsw-minR)),maxW=Math.max(minW,total-rsw-minR),w=Math.max(minW,Math.min(maxW,x-rect.left));lp.style.flex='0 0 '+w+'px';lp.style.width=w+'px';rp.style.flex='1 1 0';rp.style.width='auto';resizeScene()}rs.addEventListener('pointerdown',function(e){drag=true;pid=e.pointerId;rs.classList.add('active');if(rs.setPointerCapture)rs.setPointerCapture(e.pointerId);document.body.style.cursor='col-resize';document.body.style.userSelect='none';setWidth(e.clientX);e.preventDefault()});function move(e){if(!drag)return;if(pid!==null&&e.pointerId!==undefined&&e.pointerId!==pid)return;setWidth(e.clientX);e.preventDefault()}document.addEventListener('pointermove',move);window.addEventListener('pointermove',move);function end(){drag=false;pid=null;rs.classList.remove('active');document.body.style.cursor='';document.body.style.userSelect='';resizeScene()}document.addEventListener('pointerup',end);document.addEventListener('pointercancel',end);window.addEventListener('pointerup',end);window.addEventListener('pointercancel',end)})();
+// Fallback only: simulator_base owns gamepad input and card interactions.
+if (!window.TelemarkSimulatorBase) {
+(function(){var tb=document.getElementById('gamepad-titlebar'),cd=document.getElementById('gamepad-card'),dr=false,ox=0,oy=0;tb.addEventListener('mousedown',function(e){if(e.target.id==='gp-collapse-btn')return;dr=true;var r=cd.getBoundingClientRect();ox=e.clientX-r.left;oy=e.clientY-r.top});window.addEventListener('mousemove',function(e){if(!dr)return;cd.style.right=Math.max(0,window.innerWidth-(e.clientX-ox)-cd.offsetWidth)+'px';cd.style.bottom=Math.max(0,window.innerHeight-(e.clientY-oy)-cd.offsetHeight)+'px'});window.addEventListener('mouseup',function(){dr=false})})();
+var gpButtonEls={};
+function setGPButton(k,pressed){
+  state.gamepad[k]=!!pressed;
+  var el=gpButtonEls[k];
+  if(el) el.classList.toggle('pressed',!!pressed);
+}
+function setupGPBtn(id,k){
+  var el=document.getElementById(id);if(!el)return;gpButtonEls[k]=el;
+  function dn(e){e.preventDefault();setGPButton(k,true);if(el.setPointerCapture&&e.pointerId!=null){try{el.setPointerCapture(e.pointerId)}catch(_){}}}
+  function up(){setGPButton(k,false)}
+  el.addEventListener('pointerdown',dn);
+  el.addEventListener('pointerup',up);
+  el.addEventListener('pointercancel',up);
+  el.addEventListener('lostpointercapture',up);
+  el.addEventListener('mouseleave',up);
+}
+function setupTrigger(id,k){
+  var el=document.getElementById(id);if(!el)return;
+  var fill=el.querySelector('.gp-trigger-fill'),drag=false;
+  function set(v){v=Math.max(0,Math.min(1,v));state.gamepad[k]=v;if(fill)fill.style.height=(v*100)+'%'}
+  function upd(e){var r=el.getBoundingClientRect();set(1-Math.max(0,Math.min(1,(e.clientY-r.top)/r.height)))}
+  el.addEventListener('pointerdown',function(e){e.preventDefault();drag=true;el.setPointerCapture(e.pointerId);upd(e)});
+  el.addEventListener('pointermove',function(e){if(drag)upd(e)});
+  function up(){drag=false;set(0)}
+  el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);el.addEventListener('lostpointercapture',up);
+}
+function setupStick(id,xKey,yKey){
+  var el=document.getElementById(id);if(!el)return;
+  var knob=el.querySelector('.gp-stick-knob'),drag=false,pid=null;
+  function set(x,y){state.gamepad[xKey]=x;state.gamepad[yKey]=y;if(knob){knob.style.left=(50+x*38)+'%';knob.style.top=(50+y*38)+'%'}}
+  function upd(e){var r=el.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,max=Math.min(r.width,r.height)*.34,dx=e.clientX-cx,dy=e.clientY-cy,len=Math.sqrt(dx*dx+dy*dy);if(len>max){dx=dx/len*max;dy=dy/len*max}set(Math.max(-1,Math.min(1,dx/max)),Math.max(-1,Math.min(1,dy/max)))}
+  el.addEventListener('pointerdown',function(e){e.preventDefault();drag=true;pid=e.pointerId;el.setPointerCapture(pid);el.classList.add('active');upd(e)});
+  el.addEventListener('pointermove',function(e){if(drag&&e.pointerId===pid)upd(e)});
+  function up(){drag=false;pid=null;el.classList.remove('active');set(0,0)}
+  el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);el.addEventListener('lostpointercapture',up);
+}
+[
+  ['btn-a','a'],['btn-b','b'],['btn-x','x'],['btn-y','y'],
+  ['btn-left-bumper','left_bumper'],['btn-right-bumper','right_bumper'],
+  ['btn-back','back'],['btn-start','start'],
+  ['btn-dpad-up','dpad_up'],['btn-dpad-down','dpad_down'],['btn-dpad-left','dpad_left'],['btn-dpad-right','dpad_right']
+].forEach(function(p){setupGPBtn(p[0],p[1])});
+setupTrigger('trigger-left','left_trigger');setupTrigger('trigger-right','right_trigger');
+setupStick('stick-left','left_stick_x','left_stick_y');setupStick('stick-right','right_stick_x','right_stick_y');
+}
+// Three.js Scene
+var WW=4,WH=3,WD=.15,OW=1.8,OH=1,GT=.08,SR=.15,HY=-WH/2+(WH-OH)/2;
+var ss={scene:null,gateGroup:null,spheres:[],sphereInitPos:[],needlePivot:null,angleLabel:null,camera:null,controls:null,renderer:null,currentGateAngle:0,targetGateAngle:0,currentServoPos:0,spheresReleased:false,animFrame:0};
+function resetSpheres2(){
+  ss.spheres.forEach(function(s,i){
+    var p=ss.sphereInitPos[i];
+    s.mesh.position.set(p.x,p.y,p.z);
+    s.vx=0; s.vy=0; s.vz=0; s.state='waiting';
+  });
+  ss.spheresReleased=false;
+}
+function updateProt(deg){
+  // 0 degrees points down with the closed gate; positive degrees sweep forward as it opens.
+  if(ss.needlePivot) ss.needlePivot.rotation.x = -(deg * Math.PI) / 180;
+  if(ss.angleLabel){
+    var c = ss.angleLabel.canvas, t = ss.angleLabel.texture, cx = c.getContext('2d');
+    cx.clearRect(0,0,c.width,c.height);
+    cx.fillStyle = '#22d3ee';
+    cx.font = 'bold 26px monospace';
+    cx.textAlign = 'center';
+    cx.fillText(Math.round(deg) + '°', 64, 34);
+    t.needsUpdate = true;
+  }
+}
+window.resetScene=function(){ss.currentServoPos=0;ss.targetGateAngle=0;ss.currentGateAngle=0;if(ss.gateGroup)ss.gateGroup.rotation.x=0;resetSpheres2();updateProt(0);updatePowerBar();if(ss.camera){ss.camera.position.set(0,.5,5.5);ss.camera.lookAt(0,0,0)}if(ss.controls){ss.controls.target.set(0,0,0);ss.controls.update()}};
+
+function buildScene(){var T=window.THREE;if(!T)return;var ct=document.getElementById('scene-container'),sc=new T.Scene();ss.scene=sc;sc.background=new T.Color(0x0a0a10);var w=ct.clientWidth,h=ct.clientHeight;var cam=new T.PerspectiveCamera(50,w/h,.1,100);cam.position.set(0,.5,5.5);cam.lookAt(0,0,0);ss.camera=cam;var rn=new T.WebGLRenderer({antialias:true});rn.setSize(w,h);rn.setPixelRatio(Math.min(window.devicePixelRatio,2));rn.shadowMap.enabled=true;rn.shadowMap.type=T.PCFSoftShadowMap;ct.appendChild(rn.domElement);ss.renderer=rn;var co=new THREE.OrbitControls(cam,rn.domElement);co.enableDamping=true;co.dampingFactor=.05;co.target.set(0,0,0);ss.controls=co;
+sc.add(new T.AmbientLight(0x404060,.6));var dl=new T.DirectionalLight(0xffffff,.8);dl.position.set(3,5,5);dl.castShadow=true;dl.shadow.mapSize.width=1024;dl.shadow.mapSize.height=1024;sc.add(dl);var pl=new T.PointLight(0x4488ff,.4,12);pl.position.set(-2,3,3);sc.add(pl);var fl=new T.PointLight(0xffffff,.3,10);fl.position.set(2,1,4);sc.add(fl);
+var wg=new T.Group(),wm=new T.MeshPhongMaterial({color:0x3a3a4a,specular:0x222222,shininess:20}),ob=HY,ot=ob+OH,ol=-OW/2,or2=OW/2;
+var tH=WH/2-ot;if(tH>.01){var m1=new T.Mesh(new T.BoxGeometry(WW,tH,WD),wm);m1.position.set(0,ot+tH/2,0);m1.castShadow=true;m1.receiveShadow=true;wg.add(m1)}
+var bH=ob-(-WH/2);if(bH>.01){var m2=new T.Mesh(new T.BoxGeometry(WW,bH,WD),wm);m2.position.set(0,-WH/2+bH/2,0);m2.castShadow=true;m2.receiveShadow=true;wg.add(m2)}
+var pW2=(WW-OW)/2;if(pW2>.01){var lm=new T.Mesh(new T.BoxGeometry(pW2,OH,WD),wm);lm.position.set(-WW/2+pW2/2,ob+OH/2,0);lm.castShadow=true;wg.add(lm);var rm=new T.Mesh(new T.BoxGeometry(pW2,OH,WD),wm);rm.position.set(WW/2-pW2/2,ob+OH/2,0);rm.castShadow=true;wg.add(rm)}
+var fmat=new T.MeshPhongMaterial({color:0x555566}),ftt=.06;
+var f1=new T.Mesh(new T.BoxGeometry(OW+ftt*2,ftt,WD+.02),fmat);f1.position.set(0,ot+ftt/2,0);wg.add(f1);
+var f2=new T.Mesh(new T.BoxGeometry(OW+ftt*2,ftt,WD+.02),fmat);f2.position.set(0,ob-ftt/2,0);wg.add(f2);
+var f3=new T.Mesh(new T.BoxGeometry(ftt,OH,WD+.02),fmat);f3.position.set(ol-ftt/2,ob+OH/2,0);wg.add(f3);
+var f4=new T.Mesh(new T.BoxGeometry(ftt,OH,WD+.02),fmat);f4.position.set(or2+ftt/2,ob+OH/2,0);wg.add(f4);sc.add(wg);
+var gg=new T.Group();
+// Place the pivot on the gate's top edge; opening swings the panel forward from vertical.
+gg.position.set(0,ot,WD/2+.01);ss.gateGroup=gg;
+var gateW=OW-.08,gateH=OH-.08,rail=.055;
+var gateMat=new T.MeshPhongMaterial({color:0xff6600,emissive:0x331500,specular:0x884400,shininess:40});
+var fillMat=new T.MeshPhongMaterial({color:0xff8844,emissive:0x221000,transparent:true,opacity:.28,shininess:20});
+var gateFill=new T.Mesh(new T.BoxGeometry(gateW,gateH,WD*.35),fillMat);
+gateFill.position.set(0,-gateH/2,0);gateFill.castShadow=true;gg.add(gateFill);
+function addGatePart(w,h,x,y){var m=new T.Mesh(new T.BoxGeometry(w,h,WD+.04),gateMat);m.position.set(x,y,0);m.castShadow=true;gg.add(m)}
+addGatePart(gateW,rail,0,-rail/2);
+addGatePart(gateW,rail,0,-gateH+rail/2);
+addGatePart(rail,gateH,-gateW/2+rail/2,-gateH/2);
+addGatePart(rail,gateH,gateW/2-rail/2,-gateH/2);
+[-gateW*.25,0,gateW*.25].forEach(function(x){addGatePart(rail*.75,gateH-rail*2,x,-gateH/2)});
+var hMat=new T.MeshPhongMaterial({color:0x666666}),hGeo=new T.CylinderGeometry(.04,.04,.12,12);[-OW/2+.1,OW/2-.1].forEach(function(x){var hh=new T.Mesh(hGeo,hMat);hh.rotation.z=Math.PI/2;hh.position.set(x,0,0);gg.add(hh)});gg.rotation.x=0;sc.add(gg);
+var pg=new T.Group();pg.position.set(OW/2+.18,ot,WD/2+.02);var aR=.58,tmm=new T.MeshBasicMaterial({color:0x666688});
+for(var d=0;d<=90;d+=15){var rd=(d*Math.PI)/180,ln=d%45===0?.12:.06;var tG=new T.BoxGeometry(d%45===0?.015:.008,ln,.005),tk=new T.Mesh(tG,tmm);tk.position.set(0,-Math.cos(rd)*aR,Math.sin(rd)*aR);tk.rotation.x=-rd;pg.add(tk);if(d%45===0||d===90){var cv=document.createElement('canvas');cv.width=64;cv.height=32;var cx2=cv.getContext('2d');cx2.fillStyle='#888';cx2.font='bold 20px monospace';cx2.textAlign='center';cx2.fillText(d+'°',32,22);var tx2=new T.CanvasTexture(cv),sp2=new T.Sprite(new T.SpriteMaterial({map:tx2,transparent:true}));sp2.scale.set(.35,.18,1);sp2.position.set(.22,-Math.cos(rd)*(aR+.12),Math.sin(rd)*(aR+.12));pg.add(sp2)}}
+var aPts=[];for(var i=0;i<=36;i++){var r2=(i/36)*(Math.PI/2);aPts.push(new T.Vector3(0,-Math.cos(r2)*aR,Math.sin(r2)*aR))}pg.add(new T.Line(new T.BufferGeometry().setFromPoints(aPts),new T.LineBasicMaterial({color:0x444466})));
+var nd=new T.Mesh(new T.BoxGeometry(.01,aR+.08,.008),new T.MeshBasicMaterial({color:0xff6600}));nd.position.set(0,-(aR+.08)/2,0);var np=new T.Group();np.add(nd);pg.add(np);ss.needlePivot=np;
+var hub=new T.Mesh(new T.SphereGeometry(.035,12,8),new T.MeshBasicMaterial({color:0xff6600}));pg.add(hub);
+var lC=document.createElement('canvas');lC.width=128;lC.height=48;var lx=lC.getContext('2d');lx.fillStyle='#22d3ee';lx.font='bold 26px monospace';lx.textAlign='center';lx.fillText('0°',64,34);var lT=new T.CanvasTexture(lC),aL=new T.Sprite(new T.SpriteMaterial({map:lT,transparent:true}));aL.scale.set(.55,.22,1);aL.position.set(.42,-aR-.22,.12);pg.add(aL);ss.angleLabel={sprite:aL,canvas:lC,texture:lT};sc.add(pg);
+// The samples wait behind the wall, then pass forward through the opening once the gate swings away.
+var sY = ob + OH*.65;
+var sP = [{x:-0.38,y:sY,z:-0.72},{x:0.0,y:sY+.04,z:-0.82},{x:0.38,y:sY-.02,z:-0.68}];
+var sMat=new T.MeshPhongMaterial({color:0x22cc66,emissive:0x0a4422,specular:0x66ff99,shininess:60});ss.spheres=[];ss.sphereInitPos=[];
+sP.forEach(function(p){var me=new T.Mesh(new T.SphereGeometry(SR,16,12),sMat);me.position.set(p.x,p.y,p.z);me.castShadow=true;var ri=new T.Mesh(new T.TorusGeometry(SR*.9,.015,8,20),new T.MeshBasicMaterial({color:0x44ff88}));ri.rotation.x=Math.PI/2;me.add(ri);sc.add(me);ss.spheres.push({mesh:me,vx:0,vy:0,vz:0,state:'waiting'});ss.sphereInitPos.push({x:p.x,y:p.y,z:p.z})});
+var flr=new T.Mesh(new T.PlaneGeometry(6,6),new T.MeshPhongMaterial({color:0x111118}));flr.rotation.x=-Math.PI/2;flr.position.y=-WH/2;flr.receiveShadow=true;flr.userData.telemarkThemeRole='floor';sc.add(flr);if(window.TelemarkSimulatorBase)window.TelemarkSimulatorBase.themeThreeScene(sc);
+  // Low tray in front of the opening so released samples have a clear forward/downward path.
+  var platformCenterX = 0;
+  var platformCenterZ = 1.25;
+  var platformWidth = OW + 0.5;
+  var platformDepth = 1.25;
+  var platformThickness = 0.06;
+  var platformTopY = -WH/2 + 0.08;
+  var platform = new T.Mesh(new T.BoxGeometry(platformWidth, platformThickness, platformDepth), new T.MeshPhongMaterial({color:0x884400}));
+  platform.position.set(platformCenterX, platformTopY - platformThickness/2, platformCenterZ);
+  platform.receiveShadow = true; platform.castShadow = true; sc.add(platform);
+  ss.platform = {x: platform.position.x, z: platform.position.z, w: platformWidth, d: platformDepth, topY: platformTopY};
+onServoPosition(function(n,v){
+  if(n!=='gate')return;
+  ss.currentServoPos = Math.max(0,Math.min(1,v));
+  // Map servo position: 0 = closed, 1 = open with the gate swung forward.
+  ss.targetGateAngle = -ss.currentServoPos*(Math.PI/2);
+  updatePowerBar();
+});
+
+function updatePowerBar(){
+  var p = ss.currentServoPos || 0;
+  var el = document.getElementById('power-val'); if(el) el.textContent = p.toFixed(2);
+  var fill = document.getElementById('power-fill'); if(fill){
+    var pct = Math.max(0,Math.min(1,p))*100;
+    fill.style.left = '0%';
+    fill.style.width = pct + '%';
+    fill.style.background = p>0.5? '#44cc66' : '#666';
+  }
+}
+window.updatePowerBar = updatePowerBar;
+function animate(){
+  ss.animFrame = requestAnimationFrame(animate);
+  var df = ss.targetGateAngle - ss.currentGateAngle;
+  if (Math.abs(df) > .001) ss.currentGateAngle += df * .12; else ss.currentGateAngle = ss.targetGateAngle;
+  if (ss.gateGroup) ss.gateGroup.rotation.x = ss.currentGateAngle;
+  // show positive degrees on the gauge
+  updateProt(-ss.currentGateAngle * 180 / Math.PI);
+
+  var gf = ss.currentServoPos;
+  var floorY = -WH/2 + SR;
+
+  // When the gate has visibly opened, release samples forward from behind the wall.
+  if (gf > 0.5 && Math.abs(ss.currentGateAngle) > .35 && !ss.spheresReleased) {
+    ss.spheresReleased = true;
+    ss.spheres.forEach(function(s,i){
+      if (s.state === 'waiting'){
+        s.state = 'falling';
+        s.vx = (Math.random() - 0.5) * 0.012;
+        s.vy = 0.004 + Math.random() * 0.004;
+        s.vz = 0.04 + i * 0.004 + Math.random() * 0.006;
+      }
+    });
+  }
+
+  if (gf < 0.3 && ss.spheresReleased) resetSpheres2();
+
+  ss.spheres.forEach(function(s){
+    var p = s.mesh.position;
+    if (s.state === 'waiting') return;
+      if (s.state === 'falling'){
+        // gravity
+        s.vy -= 0.0012;
+        p.y += s.vy;
+        p.x += s.vx;
+        p.z += s.vz;
+        var spd = Math.sqrt(s.vx*s.vx + s.vz*s.vz + s.vy*s.vy);
+        if (spd > 0.001) s.mesh.rotation.x += spd * 3;
+        // platform collision: check X/Z bounds and whether we've reached the platform top
+        if (ss.platform && p.x >= ss.platform.x - ss.platform.w/2 && p.x <= ss.platform.x + ss.platform.w/2 && p.z >= ss.platform.z - ss.platform.d/2 && p.z <= ss.platform.z + ss.platform.d/2 && p.y <= ss.platform.topY + SR){
+          p.y = ss.platform.topY + SR;
+          s.vy = 0; s.state = 'stopped';
+          s.vx *= 0.35; s.vz *= 0.45;
+        } else if (p.y <= floorY){
+          p.y = floorY; s.vy = 0; s.state = 'stopped';
+        }
+      } else if (s.state === 'stopped'){
+        // settle
+        s.vx *= 0.98; s.vz *= 0.98;
+        p.x += s.vx; p.z += s.vz;
+        if (p.x < -2){ p.x = -2; s.vx *= -0.5 }
+        if (p.x > 2){ p.x = 2; s.vx *= -0.5 }
+        if (p.z < -3.8){ p.z = -3.8; s.vz *= -0.5 }
+        if (p.z > 3.8){ p.z = 3.8; s.vz *= -0.5 }
+      }
+  });
+
+  co.update(); rn.render(sc,cam);
+}
+animate();
+window.addEventListener('resize',function(){var cw=ct.clientWidth,ch=ct.clientHeight;cam.aspect=cw/ch;cam.updateProjectionMatrix();rn.setSize(cw,ch)})}
+
+function init(){initEditor();renderTelemetry();renderChallenge();renderBadges();buildScene()}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+if (window.TelemarkSimulatorBase) window.TelemarkSimulatorBase.installLegacy({
+  state: state.gamepad,
+  onThemeChange: function(theme) {
+    if (ss.scene) window.TelemarkSimulatorBase.themeThreeScene(ss.scene, theme);
+  }
+});
+</script>
+</body>
+</html>

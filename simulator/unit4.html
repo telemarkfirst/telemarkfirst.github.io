@@ -1,0 +1,2180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Telemark Unit 4 Simulator</title>
+  
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg: #05080d;
+      --panel: #0b1118;
+      --panel-2: #071019;
+      --text: #eaf8ff;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-2: #22d3ee;
+      --danger: #cc0000;
+      --good: #00cc00;
+      --warn: #ffcc00;
+      --border: #243746;
+      
+      --type-string: #38bdf8;
+      --type-double: #00cc00;
+      --type-int: #ff8c00;
+      --type-boolean: #d7ba7d;
+    }
+
+    /* Custom Scrollbars */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: #22d3ee #05080d;
+    }
+    *::-webkit-scrollbar { width: 6px; height: 6px; }
+    *::-webkit-scrollbar-track { background: #05080d; }
+    *::-webkit-scrollbar-thumb { background: #22d3ee; border-radius: 3px; }
+    *::-webkit-scrollbar-thumb:hover { background: #22d3ee; }
+    *::-webkit-scrollbar-corner { background: #05080d; }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; display: flex; height: 100vh; overflow: hidden;
+      background: var(--bg); color: var(--text);
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Editor Side */
+    #editor-container {
+      width: 55%; min-width: 320px; height: 100%;
+      display: flex; flex-direction: column; background: #080d13;
+    }
+    .editor-header {
+      padding: 12px 14px; background: #05080d; border-bottom: 1px solid #243746;
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    }
+    .editor-title { font-weight: 700; color: white; }
+    .editor-subtitle { color: #9aa0a6; font-size: 0.9rem; }
+
+    .code-wrapper { position: relative; flex: 1; overflow: hidden; background: var(--bg); }
+    #code-editor, #highlighting {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0; margin: 0; padding: 16px;
+      font-family: "Consolas", "Courier New", monospace; font-size: 14px; line-height: 1.5;
+      tab-size: 4; white-space: pre; border: 0; outline: none;
+    }
+    #code-editor { color: transparent; background: transparent; caret-color: white; z-index: 2; resize: none; overflow: auto; }
+    #highlighting { z-index: 1; overflow: hidden; }
+    #highlighting code { font-family: inherit; font-size: inherit; line-height: inherit; text-shadow: none; }
+    
+    #resizer { width: 6px; background: #243746; cursor: col-resize; z-index: 10; transition: background 0.2s; }
+    #resizer:hover, #resizer.active { background: var(--accent); }
+
+    /* Driver Station Side */
+    #ds-container {
+      flex: 1; display: flex; flex-direction: column; background: var(--panel-2);
+      padding: 15px; overflow-y: auto; min-width: 360px; gap: 12px;
+    }
+
+    /* Live Input Monitor Panel */
+    .input-monitor-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .input-monitor-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #fff;
+      font-size: 1.05rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .input-monitor-title .fa-tower-broadcast {
+      color: var(--accent);
+    }
+    .input-section {
+      margin-bottom: 12px;
+    }
+    .input-section-label {
+      font-size: 0.8rem;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+    }
+    .button-indicator {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 4px;
+      border-radius: 4px;
+      background: #0d1721;
+    }
+    .button-indicator .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #101d29;
+      margin-bottom: 2px;
+      transition: background 0.1s;
+    }
+    .button-indicator .dot.active {
+      background: var(--good);
+      box-shadow: 0 0 6px var(--good);
+    }
+    .button-indicator .label {
+      font-size: 0.7rem;
+      color: #888;
+      font-family: monospace;
+    }
+    .axis-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      background: #0d1721;
+      padding: 6px 8px;
+      border-radius: 4px;
+    }
+    .axis-label {
+      font-size: 0.8rem;
+      color: #9cdcfe;
+      font-family: monospace;
+      width: 90px;
+    }
+    .axis-bar-container {
+      flex: 1;
+      height: 14px;
+      background: #101d29;
+      border-radius: 7px;
+      position: relative;
+      overflow: hidden;
+    }
+    .axis-bar-center {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: #666;
+    }
+    .axis-bar-fill {
+      position: absolute;
+      top: 2px;
+      bottom: 2px;
+      background: var(--accent-2);
+      border-radius: 5px;
+      transition: left 0.05s, width 0.05s;
+    }
+    .axis-value {
+      font-size: 0.8rem;
+      font-family: monospace;
+      color: #d4d4d4;
+      width: 45px;
+      text-align: right;
+    }
+    .trigger-row {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+    }
+    .trigger-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .trigger-bar-container {
+      width: 30px;
+      height: 60px;
+      background: #101d29;
+      border-radius: 6px;
+      position: relative;
+      overflow: hidden;
+    }
+    .trigger-bar-fill {
+      position: absolute;
+      bottom: 0;
+      left: 3px;
+      right: 3px;
+      background: var(--accent-2);
+      border-radius: 4px;
+      transition: height 0.05s;
+    }
+    .trigger-label {
+      font-size: 0.75rem;
+      color: #888;
+      font-family: monospace;
+      margin-top: 4px;
+    }
+    .trigger-value {
+      font-size: 0.75rem;
+      font-family: monospace;
+      color: #d4d4d4;
+    }
+
+    /* Sensitivity Curve Graph */
+    .curve-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      display: none;
+    }
+    .curve-panel.visible { display: block; }
+    .curve-title {
+      font-weight: bold;
+      color: #fff;
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+    }
+    .curve-canvas-container {
+      background: #0d1721;
+      border-radius: 6px;
+      padding: 10px;
+    }
+    #curve-canvas {
+      display: block;
+      width: 100%;
+      height: 150px;
+    }
+    .curve-legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 8px;
+      font-size: 0.8rem;
+    }
+    .curve-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .curve-legend-color {
+      width: 16px;
+      height: 3px;
+      border-radius: 2px;
+    }
+
+    .ds-header { background: var(--panel); padding: 15px; border-radius: 10px; border: 1px solid var(--border); }
+    .ds-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .ds-row:last-child { margin-bottom: 0; }
+    .ds-title { font-size: 1.15rem; font-weight: 700; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ds-state { font-family: monospace; font-weight: 700; font-size: 1.05rem; color: var(--danger); }
+    .ds-timer { font-family: monospace; font-size: 1.05rem; color: #569cd6; }
+
+    .controls { display: flex; gap: 10px; }
+    button { flex: 1; padding: 12px; border-radius: 8px; border: none; font-size: 1rem; font-weight: 700; cursor: pointer; transition: 0.1s ease; user-select: none; }
+    button:active { transform: translateY(1px); }
+    #btn-main { background: var(--accent); color: white; }
+    #btn-main:hover { background: var(--accent-2); }
+    #btn-main:disabled { background: #444; color: #888; cursor: not-allowed; transform: none; }
+    #btn-stop { background: var(--danger); color: white; }
+    #btn-stop:hover { filter: brightness(1.1); }
+
+    /* Spinning Motor Indicator */
+    .motor-visual {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-top: 15px;
+      font-family: monospace;
+      font-size: 0.9rem;
+      background: #000;
+      padding: 14px 10px 10px;
+      border-radius: 6px;
+    }
+    .motor-spinning-container {
+      position: relative;
+      width: 80px;
+      height: 80px;
+    }
+    .motor-housing {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%, #555, #2a2a2a 50%, #1a1a1a 100%);
+      border: 3px solid #3a3a3a;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.6), 0 2px 10px rgba(0,0,0,0.5);
+    }
+    .motor-stator {
+      position: absolute;
+      top: 12%;
+      left: 12%;
+      width: 76%;
+      height: 76%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%, #444, #222 70%);
+      border: 2px solid #3d3d3d;
+    }
+    .motor-rotor {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 60%;
+      height: 60%;
+      transform: translate(-50%, -50%);
+      animation: none;
+    }
+    .motor-rotor.spinning-cw {
+      animation: spin-cw var(--spin-duration, 2s) linear infinite;
+    }
+    .motor-rotor.spinning-ccw {
+      animation: spin-ccw var(--spin-duration, 2s) linear infinite;
+    }
+    @keyframes spin-cw {
+      from { transform: translate(-50%, -50%) rotate(0deg); }
+      to   { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    @keyframes spin-ccw {
+      from { transform: translate(-50%, -50%) rotate(0deg); }
+      to   { transform: translate(-50%, -50%) rotate(-360deg); }
+    }
+    .rotor-arm {
+      position: absolute;
+      background: #777;
+      border-radius: 2px;
+    }
+    .rotor-arm-h {
+      width: 100%;
+      height: 16%;
+      top: 42%;
+      left: 0;
+      background: linear-gradient(to bottom, #888, #555);
+    }
+    .rotor-arm-v {
+      width: 16%;
+      height: 100%;
+      left: 42%;
+      top: 0;
+      background: linear-gradient(to right, #888, #555);
+    }
+    .motor-hub {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 16px;
+      height: 16px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%, #aaa, #555 70%);
+      border: 2px solid #666;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+      z-index: 2;
+    }
+    .rotor-notch {
+      position: absolute;
+      top: -2px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 6px;
+      height: 6px;
+      background: #00cc00;
+      border-radius: 50%;
+      box-shadow: 0 0 6px #00cc0088;
+    }
+    .motor-power-label {
+      margin-top: 6px;
+      font-family: monospace;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .motor-power-label .label-text { color: #aaa; }
+    .motor-power-label .power-value {
+      color: #00ff00;
+      font-weight: bold;
+      min-width: 45px;
+      text-align: center;
+    }
+
+    /* Floating Gamepad Card */
+    .gamepad-float-card {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 480px;
+      min-width: 300px;
+      min-height: 48px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      overflow: hidden;
+    }
+    .gamepad-titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 14px;
+      background: #1a1a1a;
+      border-bottom: 1px solid var(--border);
+      cursor: grab;
+      user-select: none;
+      flex-shrink: 0;
+    }
+    .gamepad-titlebar:active { cursor: grabbing; }
+    .gamepad-titlebar-label {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .gamepad-titlebar-label .fa-gamepad {
+      color: var(--accent);
+    }
+    .gamepad-collapse-btn {
+      flex: none;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border-radius: 6px;
+      background: #333;
+      border: 1px solid #555;
+      color: #ccc;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      transition: background 0.15s;
+    }
+    .gamepad-collapse-btn:hover { background: #444; }
+    .gamepad-card-body {
+      padding: 14px;
+      overflow: hidden;
+      flex: 1;
+    }
+    .gamepad-resize-handle {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 18px;
+      height: 18px;
+      cursor: nwse-resize;
+      z-index: 10;
+      background: transparent;
+    }
+    .gamepad-resize-handle::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      width: 8px;
+      height: 8px;
+      border-right: 2px solid #666;
+      border-bottom: 2px solid #666;
+    }
+
+    .controller-wrap {
+      width: 100%;
+      position: relative;
+      aspect-ratio: 768 / 512;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #0f0f0f;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+      touch-action: none;
+      user-select: none;
+    }
+    .controller-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+    }
+    .overlay {
+      position: absolute;
+      border-radius: 50%;
+      touch-action: none;
+      user-select: none;
+    }
+
+    /* Joysticks */
+    .stick-zone-left {
+      left: 35.5%; top: 65.5%;
+      width: 17%; height: 24%;
+      transform: translate(-50%, -50%);
+      background: transparent;
+    }
+    .stick-base-left {
+      position: absolute;
+      left: 35.5%; top: 65.5%;
+      width: 14%; height: 21%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      pointer-events: none;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.12);
+    }
+    .stick-knob-left {
+      position: absolute;
+      left: 35.5%; top: 65.5%;
+      width: 9%; height: 13%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #444, #121212 70%);
+      border: 1px solid rgba(255,255,255,0.18);
+      pointer-events: none;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.45);
+    }
+    .stick-zone-right {
+      left: 64%; top: 65.5%;
+      width: 17%; height: 24%;
+      transform: translate(-50%, -50%);
+      background: transparent;
+    }
+    .stick-base-right {
+      position: absolute;
+      left: 64%; top: 65.5%;
+      width: 14%; height: 21%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      pointer-events: none;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.12);
+    }
+    .stick-knob-right {
+      position: absolute;
+      left: 64%; top: 65.5%;
+      width: 9%; height: 13%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #444, #121212 70%);
+      border: 1px solid rgba(255,255,255,0.18);
+      pointer-events: none;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.45);
+    }
+
+    /* Deadzone overlay */
+    .deadzone-overlay {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 204, 0, 0.15);
+      border: 2px dashed rgba(255, 204, 0, 0.5);
+      pointer-events: none;
+      display: none;
+      z-index: 1;
+    }
+    .deadzone-overlay.visible { display: block; }
+    .deadzone-label {
+      position: absolute;
+      bottom: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.65rem;
+      color: var(--warn);
+      white-space: nowrap;
+      font-family: monospace;
+    }
+
+    /* Buttons */
+    .button-overlay {
+      border: 2px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.02);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15);
+      transition: transform 0.05s ease, background 0.05s ease, box-shadow 0.05s ease;
+      cursor: pointer;
+    }
+    .button-overlay.pressed {
+      transform: scale(0.95);
+      background: rgba(255,255,255,0.18);
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.25), inset 0 0 20px rgba(255,255,255,0.22);
+    }
+
+    .a-btn { left: 75.5%; top: 49%; width: 7%; height: 10%; transform: translate(-10%, -10%); }
+    .b-btn { left: 83%; top: 38%; width: 7%; height: 10%; transform: translate(-10%, -10%); }
+    .x-btn { left: 68%; top: 38%; width: 7%; height: 10%; transform: translate(-10%, -10%); }
+    .y-btn { left: 75.5%; top: 27%; width: 7%; height: 10%; transform: translate(-10%, -10%); }
+
+    .small-button {
+      width: 5.2%; height: 6.4%;
+      border-radius: 16px;
+      border: 2px solid rgba(255,255,255,0.14);
+      pointer-events: auto;
+    }
+    .back-btn { left: 37.5%; top: 28%; transform: translate(-10%, -10%); }
+    .mode-btn { left: 39%; top: 41%; transform: translate(-10%, -10%); }
+    .start-btn { left: 58%; top: 28%; transform: translate(-10%, -10%); }
+
+    /* Bumpers */
+    .bumper-btn {
+      width: 14%;
+      height: 6%;
+      border-radius: 8px;
+      border: 2px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.02);
+      cursor: pointer;
+    }
+    .bumper-btn.pressed {
+      background: rgba(255,255,255,0.18);
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.25);
+    }
+    .left-bumper-btn { left: 20%; top: 12%; transform: translate(-50%, -50%); }
+    .right-bumper-btn { left: 80%; top: 12%; transform: translate(-50%, -50%); }
+
+    /* Triggers */
+    .trigger-slider {
+      position: absolute;
+      width: 10%;
+      height: 14%;
+      background: rgba(0,0,0,0.4);
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.15);
+      cursor: pointer;
+      overflow: hidden;
+    }
+    .trigger-slider-fill {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, var(--accent-2), var(--accent));
+      transition: height 0.05s;
+    }
+    .left-trigger-slider { left: 21%; top: 0%; transform: translate(-50%, 0); }
+    .right-trigger-slider { left: 79%; top: 0%; transform: translate(-50%, 0); }
+
+    /* D-Pad */
+    .dpad-container {
+      position: absolute;
+      left: 21.5%;
+      top: 41%;
+      width: 16%;
+      height: 24%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    .dpad-btn {
+      position: absolute;
+      width: 33%;
+      height: 33%;
+      background: rgba(40,40,40,0.8);
+      border: 1px solid rgba(255,255,255,0.1);
+      cursor: pointer;
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.05s;
+    }
+    .dpad-btn:hover { background: rgba(60,60,60,0.9); }
+    .dpad-btn.pressed {
+      background: rgba(255,255,255,0.2);
+      box-shadow: inset 0 0 10px rgba(255,255,255,0.3);
+    }
+    .dpad-btn svg {
+      width: 50%;
+      height: 50%;
+      fill: rgba(255,255,255,0.5);
+    }
+    .dpad-btn.pressed svg { fill: rgba(255,255,255,0.9); }
+    .dpad-up { top: 0; left: 33%; border-radius: 4px 4px 0 0; }
+    .dpad-down { bottom: 0; left: 33%; border-radius: 0 0 4px 4px; }
+    .dpad-left { left: 0; top: 33%; border-radius: 4px 0 0 4px; }
+    .dpad-right { right: 0; top: 33%; border-radius: 0 4px 4px 0; }
+    .dpad-center {
+      position: absolute;
+      left: 33%;
+      top: 33%;
+      width: 34%;
+      height: 34%;
+      background: rgba(30,30,30,0.9);
+      border-radius: 2px;
+      pointer-events: none;
+    }
+
+    .telemetry-panel {
+      background: #000;
+      border: 2px solid #444;
+      border-radius: 10px;
+      min-height: 100px;
+      padding: 15px;
+      font-family: monospace;
+      font-size: 0.95rem;
+      overflow-y: auto;
+      color: #00ff00;
+    }
+    .telemetry-line { margin: 2px 0; }
+    .telemetry-key { color: #4ec9b0; }
+
+    #hint-container { display: flex; flex-direction: column; gap: 8px; }
+    .hint {
+      display: block;
+      background: rgba(255, 204, 0, 0.12);
+      border-left: 4px solid var(--warn);
+      padding: 10px 12px;
+      color: var(--warn);
+      border-radius: 6px;
+      font-size: 0.92rem;
+    }
+    .hint.error {
+      background: rgba(204, 0, 0, 0.12);
+      border-left-color: var(--danger);
+      color: #ff6666;
+    }
+    .hint.info {
+      background: rgba(0, 122, 204, 0.12);
+      border-left-color: var(--accent);
+      color: #6db3f2;
+    }
+  </style>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+<script src="./telemark-project.js"></script>
+<link rel="stylesheet" href="./telemark-project.css"/>
+  <script src="./gamepad-controls.js"></script>
+  <script src='./simulator_base.js' data-telemark-mode='legacy'></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+
+<div id="editor-container">
+  <div class="editor-header">
+    <div>
+      <div class="editor-title">Telemark Unit 4 Simulator</div>
+      <div class="editor-subtitle">Gamepad Input · Sensitivity Curves · Deadzones · Math Operations</div>
+    </div>
+  </div>
+
+  <div class="code-wrapper">
+    <textarea id="code-editor" spellcheck="false"
+      onscroll="syncScroll(this);">@TeleOp(name="TeleOpTest", group="Practice")
+public class TeleOpTest extends OpMode {
+    @Override
+    public void init() {
+        telemetry.addData("Status", "Initialized");
+    }
+
+    @Override
+    public void loop() {
+        telemetry.addData("Status", "Running");
+    }
+
+    @Override
+    public void stop() {
+        telemetry.addData("Status", "Stopped");
+    }
+}</textarea>
+    <pre id="highlighting" aria-hidden="true"><code class="language-java" id="highlighting-content"></code></pre>
+  </div>
+</div>
+
+<div id="resizer"></div>
+
+<div id="ds-container">
+
+  <div class="ds-header">
+    <div class="ds-row">
+      <div class="ds-title" id="opmode-name">Select OpMode...</div>
+      <div class="ds-state" id="state-indicator">STOPPED</div>
+    </div>
+    <div class="ds-row" style="margin-bottom:0;">
+      <div style="font-size:0.9rem; color:#aaa;" id="warning-label"></div>
+      <div class="ds-timer">Time: <span id="timer-val">0.00</span>s</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="btn-main" onclick="handleMainButton()">INIT</button>
+    <button id="btn-stop" onclick="handleStopButton()">STOP</button>
+  </div>
+  
+  <!-- Live Input Monitor Panel -->
+  <div class="input-monitor-panel">
+    <div class="input-monitor-title">Live Input Monitor <span><i class="fa-solid fa-tower-broadcast"></i></span></div>
+    
+    <div class="input-section">
+      <div class="input-section-label">Buttons</div>
+      <div class="button-grid" id="button-indicators">
+        <div class="button-indicator"><div class="dot" id="ind-a"></div><span class="label">A</span></div>
+        <div class="button-indicator"><div class="dot" id="ind-b"></div><span class="label">B</span></div>
+        <div class="button-indicator"><div class="dot" id="ind-x"></div><span class="label">X</span></div>
+        <div class="button-indicator"><div class="dot" id="ind-y"></div><span class="label">Y</span></div>
+        <div class="button-indicator"><div class="dot" id="ind-lb"></div><span class="label">LB</span></div>
+        <div class="button-indicator"><div class="dot" id="ind-rb"></div><span class="label">RB</span></div>
+        <div class="button-indicator"><div class="dot" id="ind-start"></div><span class="label">start</span></div>
+        <div class="button-indicator"><div class="dot" id="ind-back"></div><span class="label">back</span></div>
+        <div class="button-indicator"><div class="dot" id="ind-dup"></div><span class="label">d↑</span></div>
+        <div class="button-indicator"><div class="dot" id="ind-ddown"></div><span class="label">d↓</span></div>
+        <div class="button-indicator"><div class="dot" id="ind-dleft"></div><span class="label">d←</span></div>
+        <div class="button-indicator"><div class="dot" id="ind-dright"></div><span class="label">d→</span></div>
+      </div>
+    </div>
+
+    <div class="input-section">
+      <div class="input-section-label">Joystick Axes</div>
+      <div id="axis-indicators">
+        <div class="axis-row">
+          <span class="axis-label">left_stick_x</span>
+          <div class="axis-bar-container">
+            <div class="axis-bar-center"></div>
+            <div class="axis-bar-fill" id="axis-lx"></div>
+          </div>
+          <span class="axis-value" id="val-lx">0.00</span>
+        </div>
+        <div class="axis-row">
+          <span class="axis-label">left_stick_y</span>
+          <div class="axis-bar-container">
+            <div class="axis-bar-center"></div>
+            <div class="axis-bar-fill" id="axis-ly"></div>
+          </div>
+          <span class="axis-value" id="val-ly">0.00</span>
+        </div>
+        <div class="axis-row">
+          <span class="axis-label">right_stick_x</span>
+          <div class="axis-bar-container">
+            <div class="axis-bar-center"></div>
+            <div class="axis-bar-fill" id="axis-rx"></div>
+          </div>
+          <span class="axis-value" id="val-rx">0.00</span>
+        </div>
+        <div class="axis-row">
+          <span class="axis-label">right_stick_y</span>
+          <div class="axis-bar-container">
+            <div class="axis-bar-center"></div>
+            <div class="axis-bar-fill" id="axis-ry"></div>
+          </div>
+          <span class="axis-value" id="val-ry">0.00</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-section">
+      <div class="input-section-label">Triggers</div>
+      <div class="trigger-row">
+        <div class="trigger-container">
+          <div class="trigger-bar-container">
+            <div class="trigger-bar-fill" id="trigger-left-fill"></div>
+          </div>
+          <span class="trigger-label">left_trigger</span>
+          <span class="trigger-value" id="val-lt">0.00</span>
+        </div>
+        <div class="trigger-container">
+          <div class="trigger-bar-container">
+            <div class="trigger-bar-fill" id="trigger-right-fill"></div>
+          </div>
+          <span class="trigger-label">right_trigger</span>
+          <span class="trigger-value" id="val-rt">0.00</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sensitivity Curve Graph -->
+  <div class="curve-panel" id="curve-panel">
+    <div class="curve-title">Sensitivity Curve</div>
+    <div class="curve-canvas-container">
+      <canvas id="curve-canvas"></canvas>
+    </div>
+    <div class="curve-legend" id="curve-legend">
+      <div class="curve-legend-item">
+        <div class="curve-legend-color" style="background:#666;"></div>
+        <span>Linear</span>
+      </div>
+      <div class="curve-legend-item">
+        <div class="curve-legend-color" style="background:#38bdf8;"></div>
+        <span id="curve-type-label">Squared</span>
+      </div>
+    </div>
+  </div>
+
+  
+
+  <div class="motor-visual" id="motor-visual">
+    <div class="motor-spinning-container">
+      <div class="motor-housing"></div>
+      <div class="motor-stator"></div>
+      <div class="motor-rotor" id="motor-rotor">
+        <div class="rotor-arm rotor-arm-h"></div>
+        <div class="rotor-arm rotor-arm-v"></div>
+        <div class="rotor-notch"></div>
+      </div>
+      <div class="motor-hub"></div>
+    </div>
+    <div class="motor-power-label">
+      <span class="label-text">setPower(</span>
+      <span class="power-value" id="motor-power-text">0.00</span>
+      <span class="label-text">)</span>
+    </div>
+  </div>
+
+  <div class="telemetry-panel" id="telemetry-log">
+    <div style="color:#666; font-style:italic;">Telemetry will appear here...</div>
+  </div>
+
+  <div id="hint-container"></div>
+</div>
+
+<!-- Floating Gamepad Card -->
+<div class="gamepad-float-card" id="gamepad-float-card">
+  <div class="gamepad-titlebar" id="gamepad-titlebar">
+    <span class="gamepad-titlebar-label"><i class="fa-solid fa-gamepad"></i> Gamepad 1</span>
+    <button class="gamepad-collapse-btn" id="gamepad-collapse-btn" title="Collapse/Expand">−</button>
+  </div>
+  <div class="gamepad-card-body" id="gamepad-card-body">
+    <div class="controller-wrap" id="controller-wrap">
+      <img class="controller-img" alt="FTC controller"
+        src="https://resource.logitechg.com/w_776,h_437,ar_16:9,c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/gaming/en/products/f310/f310-feature-3.png">
+
+      <!-- Triggers -->
+      <div class="trigger-slider left-trigger-slider" id="left-trigger-slider">
+        <div class="trigger-slider-fill" id="left-trigger-fill"></div>
+      </div>
+      <div class="trigger-slider right-trigger-slider" id="right-trigger-slider">
+        <div class="trigger-slider-fill" id="right-trigger-fill"></div>
+      </div>
+
+      <!-- Bumpers -->
+      <div class="overlay bumper-btn left-bumper-btn" id="btn-lb" title="Left Bumper"></div>
+      <div class="overlay bumper-btn right-bumper-btn" id="btn-rb" title="Right Bumper"></div>
+
+      <!-- Joysticks -->
+      <div class="overlay stick-zone-left" id="stick-zone-left"></div>
+      <div class="stick-base-left" id="stick-base-left"></div>
+      <div class="stick-knob-left" id="stick-knob-left"></div>
+      <div class="deadzone-overlay" id="deadzone-left"><span class="deadzone-label" id="deadzone-left-label"></span></div>
+
+      <div class="overlay stick-zone-right" id="stick-zone-right"></div>
+      <div class="stick-base-right" id="stick-base-right"></div>
+      <div class="stick-knob-right" id="stick-knob-right"></div>
+      <div class="deadzone-overlay" id="deadzone-right"><span class="deadzone-label" id="deadzone-right-label"></span></div>
+
+      <!-- Face buttons -->
+      <div class="overlay button-overlay y-btn" id="btn-y" title="Y"></div>
+      <div class="overlay button-overlay x-btn" id="btn-x" title="X"></div>
+      <div class="overlay button-overlay a-btn" id="btn-a-visual" title="A"></div>
+      <div class="overlay button-overlay b-btn" id="btn-b" title="B"></div>
+
+      <!-- Small buttons -->
+      <div class="overlay button-overlay small-button back-btn" id="btn-back" title="Back"></div>
+      <div class="overlay button-overlay small-button mode-btn" id="btn-mode" title="Mode"></div>
+      <div class="overlay button-overlay small-button start-btn" id="btn-start" title="Start"></div>
+
+      <!-- D-Pad -->
+      <div class="dpad-container">
+        <div class="dpad-center"></div>
+        <div class="dpad-btn dpad-up" id="dpad-up" title="D-Pad Up">
+          <svg viewBox="0 0 24 24"><path d="M12 4l-8 8h16z"/></svg>
+        </div>
+        <div class="dpad-btn dpad-down" id="dpad-down" title="D-Pad Down">
+          <svg viewBox="0 0 24 24"><path d="M12 20l8-8H4z"/></svg>
+        </div>
+        <div class="dpad-btn dpad-left" id="dpad-left" title="D-Pad Left">
+          <svg viewBox="0 0 24 24"><path d="M4 12l8-8v16z"/></svg>
+        </div>
+        <div class="dpad-btn dpad-right" id="dpad-right" title="D-Pad Right">
+          <svg viewBox="0 0 24 24"><path d="M20 12l-8 8V4z"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="gamepad-resize-handle" id="gamepad-resize-handle"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+
+<script>
+// ─── Resizer ────────────────────────────────────────────────────────────────
+const resizer = document.getElementById('resizer');
+const leftPanel = document.getElementById('editor-container');
+let isResizing = false;
+
+resizer.addEventListener('mousedown', () => { isResizing = true; resizer.classList.add('active'); });
+document.addEventListener('mousemove', (e) => {
+  if (!isResizing) return;
+  const pct = (e.clientX / window.innerWidth) * 100;
+  if (pct > 20 && pct < 80) leftPanel.style.width = pct + '%';
+});
+document.addEventListener('mouseup', () => { isResizing = false; resizer.classList.remove('active'); });
+
+// ─── Syntax Highlighting ─────────────────────────────────────────────────────
+function updateCode(text) {
+  const el = document.getElementById('highlighting-content');
+  if (text[text.length - 1] === '\n') text += ' ';
+  el.innerHTML = text.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  Prism.highlightElement(el);
+}
+
+function syncScroll(el) {
+  const h = document.getElementById('highlighting');
+  h.scrollTop = el.scrollTop;
+  h.scrollLeft = el.scrollLeft;
+}
+
+// ─── Smart Editor ────────────────────────────────────────────────────────────
+const codeEditor = document.getElementById('code-editor');
+function getProjectSource(){return codeEditor.__telemarkProject ? codeEditor.__telemarkProject.source() : codeEditor.value;}
+
+function loadInitialConfig() {
+  var params = new URLSearchParams(window.location.search);
+  var starterCode = params.get('code');
+  if (starterCode) {
+    codeEditor.value = starterCode;
+  }
+
+  var showMotorVisual = params.get('showMotorVisual');
+  if (showMotorVisual !== null) {
+    var motorVisual = document.getElementById('motor-visual');
+    var normalized = showMotorVisual.trim().toLowerCase();
+    var shouldShow = ['0', 'false', 'no', 'off'].indexOf(normalized) === -1;
+    if (motorVisual) {
+      motorVisual.style.display = shouldShow ? '' : 'none';
+    }
+  }
+}
+
+TelemarkEditor.attach(codeEditor, {
+  onChange(editor) {
+    updateCode(editor.value);
+    syncScroll(editor);
+  },
+});
+codeEditor.addEventListener('input', () => {
+  updateCode(codeEditor.value);
+  syncScroll(codeEditor);
+});
+
+// ─── Simulator State ─────────────────────────────────────────────────────────
+let currentState = 'STOPPED';
+let intervalId = null;
+let timerId = null;
+let runtimeOffset = 0;
+
+let declaredVars = {};
+let activeHints = [];
+let detectedCurve = null;
+let deadzoneThreshold = 0;
+
+// Full gamepad state
+const gamepad = {
+  left_stick_x: 0, left_stick_y: 0,
+  right_stick_x: 0, right_stick_y: 0,
+  left_trigger: 0, right_trigger: 0,
+  a: false, b: false, x: false, y: false,
+  left_bumper: false, right_bumper: false,
+  start: false, back: false,
+  dpad_up: false, dpad_down: false, dpad_left: false, dpad_right: false
+};
+
+function getRuntime() { return runtimeOffset === 0 ? 0 : (Date.now() - runtimeOffset) / 1000; }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+// ─── Live Input Monitor ──────────────────────────────────────────────────────
+function updateInputMonitor() {
+  document.getElementById('ind-a').classList.toggle('active', gamepad.a);
+  document.getElementById('ind-b').classList.toggle('active', gamepad.b);
+  document.getElementById('ind-x').classList.toggle('active', gamepad.x);
+  document.getElementById('ind-y').classList.toggle('active', gamepad.y);
+  document.getElementById('ind-lb').classList.toggle('active', gamepad.left_bumper);
+  document.getElementById('ind-rb').classList.toggle('active', gamepad.right_bumper);
+  document.getElementById('ind-start').classList.toggle('active', gamepad.start);
+  document.getElementById('ind-back').classList.toggle('active', gamepad.back);
+  document.getElementById('ind-dup').classList.toggle('active', gamepad.dpad_up);
+  document.getElementById('ind-ddown').classList.toggle('active', gamepad.dpad_down);
+  document.getElementById('ind-dleft').classList.toggle('active', gamepad.dpad_left);
+  document.getElementById('ind-dright').classList.toggle('active', gamepad.dpad_right);
+
+  updateAxisBar('axis-lx', 'val-lx', gamepad.left_stick_x);
+  updateAxisBar('axis-ly', 'val-ly', gamepad.left_stick_y);
+  updateAxisBar('axis-rx', 'val-rx', gamepad.right_stick_x);
+  updateAxisBar('axis-ry', 'val-ry', gamepad.right_stick_y);
+
+  document.getElementById('trigger-left-fill').style.height = (gamepad.left_trigger * 100) + '%';
+  document.getElementById('trigger-right-fill').style.height = (gamepad.right_trigger * 100) + '%';
+  document.getElementById('val-lt').textContent = gamepad.left_trigger.toFixed(2);
+  document.getElementById('val-rt').textContent = gamepad.right_trigger.toFixed(2);
+}
+
+function updateAxisBar(barId, valId, value) {
+  const bar = document.getElementById(barId);
+  const valEl = document.getElementById(valId);
+  valEl.textContent = value.toFixed(2);
+  
+  const pct = Math.abs(value) * 50;
+  if (value >= 0) {
+    bar.style.left = '50%';
+    bar.style.width = pct + '%';
+  } else {
+    bar.style.left = (50 - pct) + '%';
+    bar.style.width = pct + '%';
+  }
+}
+
+// ─── Sensitivity Curve Graph ─────────────────────────────────────────────────
+function drawCurveGraph() {
+  const panel = document.getElementById('curve-panel');
+  const canvas = document.getElementById('curve-canvas');
+  const ctx = canvas.getContext('2d');
+  const labelEl = document.getElementById('curve-type-label');
+  
+  if (!detectedCurve) {
+    panel.classList.remove('visible');
+    return;
+  }
+  
+  panel.classList.add('visible');
+  
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * 2;
+  canvas.height = rect.height * 2;
+  ctx.scale(2, 2);
+  
+  const w = rect.width;
+  const h = rect.height;
+  const pad = 25;
+  const graphW = w - pad * 2;
+  const graphH = h - pad * 2;
+  
+  ctx.clearRect(0, 0, w, h);
+  
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad + graphW / 2, pad);
+  ctx.lineTo(pad + graphW / 2, pad + graphH);
+  ctx.moveTo(pad, pad + graphH / 2);
+  ctx.lineTo(pad + graphW, pad + graphH / 2);
+  ctx.stroke();
+  
+  ctx.strokeStyle = '#555';
+  ctx.beginPath();
+  ctx.rect(pad, pad, graphW, graphH);
+  ctx.stroke();
+  
+  ctx.fillStyle = '#888';
+  ctx.font = '10px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('-1', pad, pad + graphH + 12);
+  ctx.fillText('0', pad + graphW / 2, pad + graphH + 12);
+  ctx.fillText('1', pad + graphW, pad + graphH + 12);
+  ctx.fillText('Input', pad + graphW / 2, h - 2);
+  
+  ctx.textAlign = 'right';
+  ctx.fillText('1', pad - 4, pad + 4);
+  ctx.fillText('0', pad - 4, pad + graphH / 2 + 3);
+  ctx.fillText('-1', pad - 4, pad + graphH + 4);
+  
+  ctx.strokeStyle = '#666';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(pad, pad + graphH);
+  ctx.lineTo(pad + graphW, pad);
+  ctx.stroke();
+  
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  
+  for (let i = 0; i <= 100; i++) {
+    const input = (i / 100) * 2 - 1;
+    let output;
+    
+    if (detectedCurve === 'squared') {
+      output = input * input * Math.sign(input);
+      labelEl.textContent = 'Squared';
+    } else if (detectedCurve === 'cubed') {
+      output = input * input * input;
+      labelEl.textContent = 'Cubed';
+    } else if (detectedCurve === 'squareWithSign') {
+      output = input * input * Math.sign(input);
+      labelEl.textContent = 'Squared w/ Sign';
+    } else {
+      output = input;
+      labelEl.textContent = 'Custom';
+    }
+    
+    const px = pad + ((input + 1) / 2) * graphW;
+    const py = pad + ((1 - output) / 2) * graphH;
+    
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+  
+  if (deadzoneThreshold > 0) {
+    const dzLeft = pad + (((-deadzoneThreshold) + 1) / 2) * graphW;
+    const dzRight = pad + ((deadzoneThreshold + 1) / 2) * graphW;
+    ctx.fillStyle = 'rgba(255, 204, 0, 0.15)';
+    ctx.fillRect(dzLeft, pad, dzRight - dzLeft, graphH);
+  }
+}
+
+// ─── Deadzone Visualizer ─────────────────────────────────────────────────────
+function updateDeadzoneOverlays() {
+  const leftDz = document.getElementById('deadzone-left');
+  const rightDz = document.getElementById('deadzone-right');
+  const leftLabel = document.getElementById('deadzone-left-label');
+  const rightLabel = document.getElementById('deadzone-right-label');
+  
+  if (deadzoneThreshold > 0) {
+    const pct = deadzoneThreshold * 100;
+    // The stick base is 14% wide and 21% tall.
+    // At threshold=1.0 the deadzone circle should equal the full stick base.
+    // Scale proportionally by the threshold value.
+    const dzW = deadzoneThreshold * 14;
+    const dzH = deadzoneThreshold * 21;
+    
+    leftDz.classList.add('visible');
+    leftDz.style.left = '35.5%';
+    leftDz.style.top = '65.5%';
+    leftDz.style.width = dzW + '%';
+    leftDz.style.height = dzH + '%';
+    leftDz.style.transform = 'translate(-50%, -50%)';
+    leftLabel.textContent = 'Deadzone: \u00B1' + pct.toFixed(0) + '%';
+    
+    rightDz.classList.add('visible');
+    rightDz.style.left = '64%';
+    rightDz.style.top = '65.5%';
+    rightDz.style.width = dzW + '%';
+    rightDz.style.height = dzH + '%';
+    rightDz.style.transform = 'translate(-50%, -50%)';
+    rightLabel.textContent = 'Deadzone: \u00B1' + pct.toFixed(0) + '%';
+  } else {
+    leftDz.classList.remove('visible');
+    rightDz.classList.remove('visible');
+  }
+}
+
+// ─── Hints ───────────────────────────────────────────────────────────────────
+function renderHints() {
+  const c = document.getElementById('hint-container');
+  c.innerHTML = '';
+  activeHints.forEach(h => {
+    let cls = 'hint';
+    if (h.type === 'error') cls += ' error';
+    else if (h.type === 'info') cls += ' info';
+    c.innerHTML += '<div class="' + cls + '">' + h.msg + '</div>';
+  });
+}
+
+function addHint(msg, type) {
+  type = type || 'warn';
+  // Deduplicate by message
+  for (let i = 0; i < activeHints.length; i++) {
+    if (activeHints[i].msg === msg) return;
+  }
+  activeHints.push({ msg: msg, type: type });
+}
+
+// ─── Math Expression Evaluator ───────────────────────────────────────────────
+// All gamepad property names sorted longest-first so that e.g.
+// "left_stick_x" is replaced before the shorter "x".
+const GAMEPAD_PROPS = [
+  'left_stick_x', 'left_stick_y',
+  'right_stick_x', 'right_stick_y',
+  'left_trigger', 'right_trigger',
+  'left_bumper', 'right_bumper',
+  'dpad_up', 'dpad_down', 'dpad_left', 'dpad_right',
+  'start', 'back',
+  'a', 'b', 'x', 'y'
+];
+
+function evaluateExpression(expr) {
+  let safeExpr = expr.trim();
+  
+  // Replace gamepad inputs — longest property names first to avoid
+  // "gamepad1.y" matching inside "gamepad1.left_stick_y"
+  for (let i = 0; i < GAMEPAD_PROPS.length; i++) {
+    var prop = GAMEPAD_PROPS[i];
+    var re = new RegExp('gamepad1\\.' + prop.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+    safeExpr = safeExpr.replace(re, String(gamepad[prop]));
+  }
+  
+  safeExpr = safeExpr.replace(/getRuntime\(\)/g, String(getRuntime().toFixed(2)));
+  
+  // Replace Java Math functions with JS equivalents
+  safeExpr = safeExpr.replace(/Math\.signum/g, 'Math.sign');
+  // Math.abs, Math.hypot, Math.atan2, Math.max, Math.min, Math.sqrt, Math.pow
+  // are identical in Java and JS — no replacement needed.
+  
+  // Replace variables (sorted by length, longest first)
+  var varNames = Object.keys(declaredVars).sort(function(a, b) { return b.length - a.length; });
+  for (var vi = 0; vi < varNames.length; vi++) {
+    var vName = varNames[vi];
+    var val = declaredVars[vName].value;
+    var rep = (typeof val === 'string') ? '"' + val + '"' : val;
+    var regex = new RegExp('\\b' + vName + '\\b', 'g');
+    safeExpr = safeExpr.replace(regex, rep);
+  }
+  
+  // Handle squareInputWithSign custom method
+  var sqMatch = safeExpr.match(/squareInputWithSign\(([^)]+)\)/);
+  if (sqMatch) {
+    try {
+      var innerVal = Function('"use strict"; return (' + sqMatch[1] + ');')();
+      var sqResult = innerVal * innerVal * Math.sign(innerVal);
+      safeExpr = safeExpr.replace(/squareInputWithSign\([^)]+\)/, sqResult);
+    } catch(e) {}
+  }
+  
+  if (/^".*"$/.test(safeExpr)) return safeExpr.slice(1, -1);
+  
+  safeExpr = safeExpr.replace(/\b([a-zA-Z_]\w*)\(([^()]*)\)/g, function(match, methodName, rawArgs, offset, fullExpr) {
+    if (offset > 0 && fullExpr[offset - 1] === '.') return match;
+    if (methodName === 'getRuntime') return match;
+    var customResult = evaluateCustomMethodCall(methodName, rawArgs);
+    return customResult === null ? match : String(customResult);
+  });
+
+  try {
+    return Function('"use strict"; return (' + safeExpr + ');')();
+  } catch(e) {
+    return safeExpr;
+  }
+}
+
+function parseValue(valStr, type) {
+  if (type === 'int') {
+    var val = parseFloat(valStr);
+    return isNaN(val) ? 0 : Math.trunc(val);
+  }
+  if (type === 'double') {
+    var val2 = parseFloat(valStr);
+    return isNaN(val2) ? 0.0 : val2;
+  }
+  if (type === 'boolean') return (valStr === 'true' || valStr === '1' || valStr === true);
+  if (type === 'String') return String(valStr).replace(/^"(.*)"$/, '$1');
+  return valStr;
+}
+
+function formatValue(val, type) {
+  if (type === 'String') return '"' + val + '"';
+  if (type === 'double') return Number(val).toFixed(2);
+  if (type === 'boolean') return val ? 'true' : 'false';
+  return val;
+}
+
+// ─── Static Analysis ─────────────────────────────────────────────────────────
+function runStaticAnalysis() {
+  var code = getProjectSource();
+  activeHints = [];
+  declaredVars = {};
+  detectedCurve = null;
+  deadzoneThreshold = 0;
+
+  // Base hints
+  if (!/@TeleOp|@Autonomous/.test(code)) {
+    addHint("Your class won't appear on the Driver Station without an annotation.");
+  }
+  
+  var nameMatch = /@(?:TeleOp|Autonomous)\s*\(\s*name\s*=\s*"([^"]+)"/.exec(code);
+  document.getElementById('opmode-name').textContent = nameMatch ? nameMatch[1] : 'Unnamed OpMode';
+  document.getElementById('warning-label').textContent = /@Disabled/.test(code) ? '<i class="fa-solid fa-triangle-exclamation"></i> @Disabled' : '';
+
+  // Detect sensitivity curves
+  if (/squareInputWithSign/.test(code)) {
+    detectedCurve = 'squareWithSign';
+  } else if (/\*\s*\w+\s*\*\s*\w+\s*\*/.test(code) || /input\s*\*\s*input\s*\*\s*input/.test(code)) {
+    detectedCurve = 'cubed';
+  } else if (/\*\s*\w+(?!\s*\*)/.test(code) && /(\w+)\s*\*\s*\1/.test(code)) {
+    detectedCurve = 'squared';
+  }
+  
+  // Detect deadzone — match Math.abs(varname) < number
+  var dzMatch = code.match(/Math\.abs\s*\(\s*\w+\s*\)\s*<\s*([\d.]+)/);
+  if (dzMatch) {
+    deadzoneThreshold = parseFloat(dzMatch[1]);
+  }
+  
+  // Check for Y-axis negation: both -gamepad1.left_stick_y and -1 * gamepad1.left_stick_y
+  var hasNegatedY = /-\s*gamepad1\.left_stick_y/.test(code) ||
+                    /-1\s*\*\s*gamepad1\.left_stick_y/.test(code);
+  if (hasNegatedY) {
+    addHint("Y-axis negated: pushing stick up gives positive power", 'info');
+  } else if (/gamepad1\.left_stick_y/.test(code) && /setPower/.test(code)) {
+    addHint("Did you forget to negate? Pushing up returns negative Y by default");
+  }
+  
+  // Check for trigger == comparison
+  if (/(?:left_trigger|right_trigger)\s*==/.test(code)) {
+    addHint("Triggers return analog values — use > threshold instead of ==");
+  }
+  
+  // Check for blocking while loop
+  if (/while\s*\(\s*gamepad1\./.test(code)) {
+    addHint("Blocking loop inside loop() will cause a Driver Station timeout", 'error');
+  }
+
+  // Find Variable Declarations
+  var declRegex = /(String|double|boolean|int)\s+([a-zA-Z_]\w*)\s*(?:=\s*([^;]+))?;/g;
+  var match;
+  while ((match = declRegex.exec(code)) !== null) {
+    var type = match[1];
+    var name = match[2];
+    var rawVal = match[3] || (type === 'String' ? '""' : '0');
+    var val = evaluateExpression(rawVal);
+    declaredVars[name] = { type: type, value: parseValue(val, type) };
+  }
+  
+  renderHints();
+  drawCurveGraph();
+  updateDeadzoneOverlays();
+}
+
+// ─── Method Execution ────────────────────────────────────────────────────────
+function getMethodBody(code, methodName) {
+  var headerRe = new RegExp('\\bvoid\\s+' + methodName + '\\s*\\([^)]*\\)\\s*\\{', 'm');
+  var headerMatch = headerRe.exec(code);
+  if (!headerMatch) return null;
+  var idx = headerMatch.index + headerMatch[0].length;
+  var depth = 1, inStr = false, strCh = null, escaped = false;
+  for (; idx < code.length; idx++) {
+    var ch = code[idx];
+    if (inStr) {
+      if (escaped) { escaped = false; continue; }
+      if (ch === '\\') { escaped = true; continue; }
+      if (ch === strCh) { inStr = false; continue; }
+      continue;
+    }
+    if (ch === '"' || ch === "'") { inStr = true; strCh = ch; continue; }
+    if (ch === '{') depth++;
+    else if (ch === '}') { if (--depth === 0) return code.slice(headerMatch.index + headerMatch[0].length, idx); }
+  }
+  return null;
+}
+
+// Also look for custom method bodies (like squareInputWithSign)
+function getCustomMethodBody(code, methodName) {
+  // Match: returnType methodName(params) {
+  var headerRe = new RegExp('\\b(?:double|int|float|boolean|String|void)\\s+' + methodName + '\\s*\\([^)]*\\)\\s*\\{', 'm');
+  var headerMatch = headerRe.exec(code);
+  if (!headerMatch) return null;
+  var idx = headerMatch.index + headerMatch[0].length;
+  var depth = 1;
+  for (; idx < code.length; idx++) {
+    if (code[idx] === '{') depth++;
+    else if (code[idx] === '}') { if (--depth === 0) return code.slice(headerMatch.index + headerMatch[0].length, idx); }
+  }
+  return null;
+}
+
+function getCustomMethodParamName(code, methodName) {
+  var signatureRe = new RegExp('\\b(?:double|int|float|boolean|String|void)\\s+' + methodName + '\\s*\\(\\s*(?:double|int|float|boolean|String)\\s+([a-zA-Z_]\\w*)', 'm');
+  var signatureMatch = signatureRe.exec(code);
+  return signatureMatch ? signatureMatch[1] : null;
+}
+
+function evaluateCustomMethodCall(methodName, rawArgs) {
+  var code = getProjectSource();
+  var methodBody = getCustomMethodBody(code, methodName);
+  if (!methodBody) return null;
+
+  var paramName = getCustomMethodParamName(code, methodName);
+  var args = splitArguments(rawArgs);
+  if (!paramName || args.length !== 1) return null;
+
+  var argValue = evaluateExpression(args[0]);
+  var returnMatch = methodBody.match(/return\s+([^;]+);/);
+  if (!returnMatch) return null;
+
+  var returnExpr = returnMatch[1];
+  var paramRegex = new RegExp('\\b' + paramName + '\\b', 'g');
+  returnExpr = returnExpr.replace(paramRegex, String(argValue));
+
+  try {
+    return Function('"use strict"; return (' + returnExpr + ');')();
+  } catch (e) {
+    return null;
+  }
+}
+
+function splitArguments(argsString) {
+  var args = [];
+  var current = '';
+  var depth = 0;
+  var inStr = false;
+  var strCh = null;
+  var escaped = false;
+
+  for (var i = 0; i < argsString.length; i++) {
+    var ch = argsString[i];
+
+    if (inStr) {
+      current += ch;
+      if (escaped) {
+        escaped = false;
+      } else if (ch === '\\') {
+        escaped = true;
+      } else if (ch === strCh) {
+        inStr = false;
+      }
+      continue;
+    }
+
+    if (ch === '"' || ch === "'") {
+      inStr = true;
+      strCh = ch;
+      current += ch;
+      continue;
+    }
+
+    if (ch === '(') depth++;
+    if (ch === ')') depth--;
+
+    if (ch === ',' && depth === 0) {
+      args.push(current.trim());
+      current = '';
+      continue;
+    }
+
+    current += ch;
+  }
+
+  if (current.trim()) {
+    args.push(current.trim());
+  }
+
+  return args;
+}
+
+function executeMethod(methodName) {
+  if (window.TelemarkSimulatorBase) {
+    var sharedSource = getProjectSource();
+    if (methodName === 'init' || window.__telemarkUnit4Source !== sharedSource) {
+      var sharedTelemetry = [];
+      window.__telemarkUnit4Runtime = TelemarkSimulatorBase.createRuntime({
+        gamepad: gamepad,
+        getRuntime: getRuntime,
+        resetRuntime: function() { runtimeOffset = Date.now(); },
+        onPower: function(power) { updateMotorVisual(power); },
+        onTelemetry: function(key, value) {
+          sharedTelemetry.push('<div class="telemetry-line"><span class="telemetry-key">' + key + '</span>: ' + String(value) + '</div>');
+        },
+        onTelemetryClear: function(event) {
+          sharedTelemetry.length = 0;
+          if (!event || !event.automatic) document.getElementById('telemetry-log').innerHTML = '';
+        },
+        onTelemetryUpdate: function() {
+          if (sharedTelemetry.length) document.getElementById('telemetry-log').innerHTML = sharedTelemetry.join('');
+        }
+      });
+      window.__telemarkUnit4Program = TelemarkSimulatorBase.compileStudentSource(sharedSource, window.__telemarkUnit4Runtime);
+      window.__telemarkUnit4Source = sharedSource;
+      if (!window.__telemarkUnit4Program.ok) {
+        var sharedDiagnostic = window.__telemarkUnit4Program.diagnostics[0];
+        return failJavaExecution(
+          'Java compile error',
+          new Error(sharedDiagnostic.message + ' (line ' + sharedDiagnostic.line + ', column ' + sharedDiagnostic.column + ')')
+        );
+      }
+    }
+    if (!window.__telemarkUnit4Program || !window.__telemarkUnit4Program.ok) return false;
+    var sharedMethod = window.__telemarkUnit4Program.methods[methodName];
+    try {
+      if (sharedMethod) {
+        if (methodName === 'loop' || methodName === 'init_loop') window.__telemarkUnit4Runtime.clearTelemetry();
+        sharedMethod();
+        window.__telemarkUnit4Runtime.updateTelemetry();
+      }
+    } catch (error) {
+      return failJavaExecution(methodName + '() runtime error', error);
+    }
+    Object.keys(window.__telemarkUnit4Program.scope || {}).forEach(function(name) {
+      if (declaredVars[name]) declaredVars[name].value = window.__telemarkUnit4Program.scope[name];
+    });
+    renderHints();
+    drawCurveGraph();
+    updateDeadzoneOverlays();
+    return true;
+  }
+
+  var code = getProjectSource();
+  var body = getMethodBody(code, methodName);
+  if (!body) return true;
+
+  if (methodName === 'start' && /resetRuntime\(\)/.test(body)) runtimeOffset = Date.now();
+
+  // Process if / else-if / else chains for gamepad buttons.
+  // We handle full chains: if (gamepad1.a) { ... } else if (gamepad1.b) { ... } else { ... }
+  // Strategy: find outermost if-chain, evaluate first true branch, or fall to else.
+  body = processIfElseChains(body);
+
+  var lines = body.replace(/[{}]/g, '').split(';');
+  var telemetryLines = [];
+
+  for (var li = 0; li < lines.length; li++) {
+    var line = lines[li].trim();
+    if (!line) continue;
+
+    var inlineIfMatch = line.match(/^if\s*\(\s*([^)]+)\s*\)\s*([\s\S]+)$/);
+    if (inlineIfMatch) {
+      var inlineCondition = evaluateExpression(inlineIfMatch[1]);
+      var inlineIsTrue = inlineCondition === true || inlineCondition === 'true' || (!!inlineCondition && inlineCondition !== 'false' && inlineCondition !== 0);
+      if (!inlineIsTrue) {
+        continue;
+      }
+      line = inlineIfMatch[2].trim();
+    }
+
+    // Deadzone-style: if (Math.abs(x) < 0.1) x = 0
+    var dzInline = line.match(/^if\s*\(\s*Math\.abs\s*\(\s*(\w+)\s*\)\s*<\s*([\d.]+)\s*\)\s*(\w+)\s*=\s*(.+)$/);
+    if (dzInline) {
+      var dzTestVar = dzInline[1];
+      var dzThresh = parseFloat(dzInline[2]);
+      var dzAssignVar = dzInline[3];
+      var dzAssignVal = dzInline[4];
+      var dzCurrent = declaredVars[dzTestVar] ? declaredVars[dzTestVar].value : evaluateExpression(dzTestVar);
+      if (typeof dzCurrent === 'number' && Math.abs(dzCurrent) < dzThresh) {
+        var dzVal = evaluateExpression(dzAssignVal);
+        if (declaredVars[dzAssignVar]) {
+          declaredVars[dzAssignVar].value = parseValue(dzVal, declaredVars[dzAssignVar].type);
+        }
+      }
+      continue;
+    }
+
+    // Variable Assignment
+    var assignMatch = line.match(/^(?:String|double|boolean|int)?\s*([a-zA-Z_]\w*)\s*=\s*(.+)$/);
+    if (assignMatch) {
+      var varName = assignMatch[1];
+      var expr = assignMatch[2];
+      var val = evaluateExpression(expr);
+      if (declaredVars[varName]) {
+        var type = declaredVars[varName].type;
+        declaredVars[varName].value = parseValue(val, type);
+      } else {
+        declaredVars[varName] = { type: 'double', value: val };
+      }
+    }
+
+    // Motor Power
+    var powerMatch = line.match(/\.setPower\(([^)]+)\)/);
+    if (powerMatch) {
+      var param = powerMatch[1].trim();
+      updateMotorVisual(evaluateExpression(param));
+    }
+
+    // Telemetry with format string
+    var formattedTelMatch = line.match(/telemetry\.addData\(\s*"([^"]+)"\s*,\s*"([^"]*)"\s*,\s*(.+)\)$/);
+    if (formattedTelMatch) {
+      var formattedKey = formattedTelMatch[1];
+      var formatString = formattedTelMatch[2];
+      var formatArgs = splitArguments(formattedTelMatch[3]);
+      var formatValues = formatArgs.map(function(arg) { return evaluateExpression(arg); });
+      var formatIndex = 0;
+      var formattedValue = formatString.replace(/%(\.\d+)?f|%d|%s/g, function(specifier) {
+        if (formatIndex >= formatValues.length) return specifier;
+        var nextValue = formatValues[formatIndex++];
+        if (/%(\.\d+)?f/.test(specifier)) {
+          var precisionMatch = specifier.match(/%\.(\d+)f/);
+          var precision = precisionMatch ? parseInt(precisionMatch[1], 10) : 6;
+          var numericValue = parseFloat(nextValue);
+          return isNaN(numericValue) ? String(nextValue) : numericValue.toFixed(precision);
+        }
+        if (specifier === '%d') {
+          return String(parseInt(nextValue, 10));
+        }
+        return String(nextValue);
+      });
+      telemetryLines.push('<div class="telemetry-line"><span class="telemetry-key">' + formattedKey + '</span>: ' + formattedValue + '</div>');
+      continue;
+    }
+
+    // Telemetry
+    var telMatch = line.match(/telemetry\.addData\(\s*"([^"]+)"\s*,\s*([^)]+)\s*\)/);
+    if (telMatch) {
+      var key = telMatch[1];
+      var tparam = telMatch[2].trim();
+      var tval = evaluateExpression(tparam);
+      if (declaredVars[tparam]) tval = formatValue(tval, declaredVars[tparam].type);
+      if (typeof tval === 'number' && !Number.isInteger(tval)) tval = tval.toFixed(2);
+      if (typeof tval === 'boolean') tval = tval ? 'true' : 'false';
+      telemetryLines.push('<div class="telemetry-line"><span class="telemetry-key">' + key + '</span>: ' + tval + '</div>');
+    }
+  }
+
+  if (telemetryLines.length > 0) document.getElementById('telemetry-log').innerHTML = telemetryLines.join('');
+  return true;
+}
+
+// Process full if / else-if / else chains involving gamepad buttons
+function processIfElseChains(body) {
+  // This regex finds: if (gamepad1.XXX) { BLOCK } [else if (...) { BLOCK }]* [else { BLOCK }]?
+  // We process them iteratively to handle multiple independent chains.
+  
+  var MAX_PASSES = 20;
+  for (var pass = 0; pass < MAX_PASSES; pass++) {
+    // Find the first if (gamepad1.PROP) pattern
+    var ifRe = /if\s*\(\s*gamepad1\.(\w+)\s*\)\s*\{/;
+    var ifMatch = ifRe.exec(body);
+    if (!ifMatch) break;
+    
+    var chainStart = ifMatch.index;
+    var pos = ifMatch.index + ifMatch[0].length;
+    
+    // Extract the if-block body
+    var blocks = [];
+    var conditions = [ifMatch[1]];
+    
+    // Parse first if-block
+    var blockResult = extractBlock(body, pos);
+    if (!blockResult) break;
+    blocks.push(blockResult.content);
+    pos = blockResult.end;
+    
+    // Look for else-if and else
+    var elseBody = '';
+    while (true) {
+      var afterBlock = body.substring(pos).match(/^\s*else\s+if\s*\(\s*gamepad1\.(\w+)\s*\)\s*\{/);
+      if (afterBlock) {
+        conditions.push(afterBlock[1]);
+        pos = pos + afterBlock[0].length;
+        blockResult = extractBlock(body, pos);
+        if (!blockResult) break;
+        blocks.push(blockResult.content);
+        pos = blockResult.end;
+        continue;
+      }
+      
+      var elseMatch = body.substring(pos).match(/^\s*else\s*\{/);
+      if (elseMatch) {
+        pos = pos + elseMatch[0].length;
+        blockResult = extractBlock(body, pos);
+        if (blockResult) {
+          elseBody = blockResult.content;
+          pos = blockResult.end;
+        }
+      }
+      break;
+    }
+    
+    // Determine which branch to take
+    var replacement = '';
+    var taken = false;
+    for (var bi = 0; bi < conditions.length; bi++) {
+      if (gamepad[conditions[bi]]) {
+        replacement = blocks[bi];
+        taken = true;
+        break;
+      }
+    }
+    if (!taken) {
+      replacement = elseBody;
+    }
+    
+    // Replace the entire chain in body
+    body = body.substring(0, chainStart) + replacement + body.substring(pos);
+  }
+  
+  return body;
+}
+
+function processSimpleIfBlocks(body) {
+  var MAX_PASSES = 20;
+
+  for (var pass = 0; pass < MAX_PASSES; pass++) {
+    var ifRe = /if\s*\(\s*(!?\s*[a-zA-Z_]\w*)\s*\)\s*\{/;
+    var ifMatch = ifRe.exec(body);
+    if (!ifMatch) break;
+
+    var chainStart = ifMatch.index;
+    var pos = ifMatch.index + ifMatch[0].length;
+    var blockResult = extractBlock(body, pos);
+    if (!blockResult) break;
+
+    var ifBody = blockResult.content;
+    pos = blockResult.end;
+    var elseBody = '';
+
+    var elseMatch = body.substring(pos).match(/^\s*else\s*\{/);
+    if (elseMatch) {
+      pos = pos + elseMatch[0].length;
+      blockResult = extractBlock(body, pos);
+      if (blockResult) {
+        elseBody = blockResult.content;
+        pos = blockResult.end;
+      }
+    }
+
+    var conditionValue = evaluateExpression(ifMatch[1]);
+    var isTrue = conditionValue === true || conditionValue === 'true' || (!!conditionValue && conditionValue !== 'false' && conditionValue !== 0);
+    var replacement = isTrue ? ifBody : elseBody;
+
+    body = body.substring(0, chainStart) + replacement + body.substring(pos);
+  }
+
+  return body;
+}
+
+function extractBlock(str, startAfterBrace) {
+  var depth = 1;
+  var i = startAfterBrace;
+  for (; i < str.length; i++) {
+    if (str[i] === '{') depth++;
+    else if (str[i] === '}') {
+      depth--;
+      if (depth === 0) {
+        return { content: str.substring(startAfterBrace, i), end: i + 1 };
+      }
+    }
+  }
+  return null;
+}
+
+// ─── Motor Visual ────────────────────────────────────────────────────────────
+function updateMotorVisual(power) {
+  var p = parseFloat(power);
+  if (isNaN(p)) p = 0;
+  p = Math.max(-1.0, Math.min(1.0, p));
+
+  var rotor = document.getElementById('motor-rotor');
+  var powerText = document.getElementById('motor-power-text');
+  powerText.innerText = p.toFixed(2);
+
+  if (p === 0) {
+    powerText.style.color = '#888';
+  } else if (p > 0) {
+    powerText.style.color = '#00ff00';
+  } else {
+    powerText.style.color = '#ffcc00';
+  }
+
+  if (Math.abs(p) < 0.001) {
+    rotor.className = 'motor-rotor';
+    rotor.style.removeProperty('--spin-duration');
+  } else {
+    var duration = Math.max(0.15, 0.3 / Math.abs(p));
+    rotor.style.setProperty('--spin-duration', duration + 's');
+    rotor.className = 'motor-rotor ' + (p > 0 ? 'spinning-cw' : 'spinning-ccw');
+  }
+}
+
+// ─── Lifecycle ───────────────────────────────────────────────────────────────
+function setLifecycle(s, color, btnLabel) {
+  currentState = s;
+  document.getElementById('state-indicator').textContent = s;
+  document.getElementById('state-indicator').style.color = color;
+  var btn = document.getElementById('btn-main');
+  btn.textContent = btnLabel;
+  btn.disabled = (s === 'RUNNING');
+  if (s === 'RUNNING') {
+    timerId = setInterval(function() { document.getElementById('timer-val').textContent = getRuntime().toFixed(2); }, 50);
+  }
+}
+
+function stopAllIntervals() { clearInterval(intervalId); clearInterval(timerId); intervalId = timerId = null; }
+
+function failJavaExecution(context, error) {
+  stopAllIntervals();
+  runtimeOffset = 0;
+  document.getElementById('timer-val').textContent = '0.00';
+  updateMotorVisual(0);
+  document.getElementById('telemetry-log').textContent =
+    context + ': ' + (error && error.message ? error.message : String(error));
+  setLifecycle('STOPPED', '#cc0000', 'INIT');
+  return false;
+}
+
+function handleMainButton() {
+  if (currentState === 'STOPPED') {
+    runStaticAnalysis();
+    document.getElementById('telemetry-log').innerHTML = '';
+    document.getElementById('timer-val').textContent = '0.00';
+    runtimeOffset = 0;
+    updateMotorVisual(0);
+    if (!executeMethod('init')) return;
+    setLifecycle('INIT_LOOP', '#ffcc00', 'START');
+    intervalId = setInterval(function() { executeMethod('init_loop'); }, 100);
+  } else if (currentState === 'INIT_LOOP') {
+    stopAllIntervals();
+    if (!executeMethod('start')) return;
+    if (runtimeOffset === 0) runtimeOffset = Date.now();
+    setLifecycle('RUNNING', '#00ff00', 'RUNNING');
+    intervalId = setInterval(function() { executeMethod('loop'); }, 100);
+  }
+}
+
+function handleStopButton() {
+  if (currentState === 'STOPPED') return;
+  stopAllIntervals();
+  executeMethod('stop');
+  runtimeOffset = 0;
+  document.getElementById('timer-val').textContent = '0.00';
+  updateMotorVisual(0);
+  setLifecycle('STOPPED', '#cc0000', 'INIT');
+}
+
+// Fallback only: simulator_base owns gamepad input and card interactions.
+if (!window.TelemarkSimulatorBase) {
+// ─── Gamepad Button Handling ─────────────────────────────────────────────────
+function setButtonState(prop, pressed, elementId) {
+  gamepad[prop] = pressed;
+  var el = document.getElementById(elementId);
+  if (el) el.classList.toggle('pressed', pressed);
+  updateInputMonitor();
+}
+
+var buttonMap = [
+  ['btn-a-visual', 'a'], ['btn-b', 'b'], ['btn-x', 'x'], ['btn-y', 'y'],
+  ['btn-lb', 'left_bumper'], ['btn-rb', 'right_bumper'],
+  ['btn-back', 'back'], ['btn-start', 'start'], ['btn-mode', 'mode'],
+  ['dpad-up', 'dpad_up'], ['dpad-down', 'dpad_down'],
+  ['dpad-left', 'dpad_left'], ['dpad-right', 'dpad_right']
+];
+
+buttonMap.forEach(function(pair) {
+  var id = pair[0], prop = pair[1];
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('pointerdown', function(e) { e.preventDefault(); setButtonState(prop, true, id); });
+  el.addEventListener('pointerup', function() { setButtonState(prop, false, id); });
+  el.addEventListener('pointerleave', function() { setButtonState(prop, false, id); });
+  el.addEventListener('pointercancel', function() { setButtonState(prop, false, id); });
+});
+
+// ─── Trigger Sliders ─────────────────────────────────────────────────────────
+function setupTriggerSlider(sliderId, fillId, prop) {
+  var slider = document.getElementById(sliderId);
+  var fill = document.getElementById(fillId);
+  var isDragging = false;
+  
+  function updateTrigger(e) {
+    var rect = slider.getBoundingClientRect();
+    var y = e.clientY - rect.top;
+    var pct = 1 - Math.max(0, Math.min(1, y / rect.height));
+    gamepad[prop] = pct;
+    fill.style.height = (pct * 100) + '%';
+    updateInputMonitor();
+  }
+  
+  slider.addEventListener('pointerdown', function(e) {
+    isDragging = true;
+    slider.setPointerCapture(e.pointerId);
+    updateTrigger(e);
+  });
+  
+  slider.addEventListener('pointermove', function(e) {
+    if (isDragging) updateTrigger(e);
+  });
+  
+  slider.addEventListener('pointerup', function() {
+    isDragging = false;
+    gamepad[prop] = 0;
+    fill.style.height = '0%';
+    updateInputMonitor();
+  });
+  
+  slider.addEventListener('pointercancel', function() {
+    isDragging = false;
+    gamepad[prop] = 0;
+    fill.style.height = '0%';
+    updateInputMonitor();
+  });
+}
+
+setupTriggerSlider('left-trigger-slider', 'left-trigger-fill', 'left_trigger');
+setupTriggerSlider('right-trigger-slider', 'right-trigger-fill', 'right_trigger');
+
+// ─── Joysticks ───────────────────────────────────────────────────────────────
+var controllerWrap = document.getElementById('controller-wrap');
+var sticks = {
+  left: {
+    zone: document.getElementById('stick-zone-left'),
+    knob: document.getElementById('stick-knob-left'),
+    defaultL: '35.5%', defaultT: '65.5%',
+    dragging: false, pointerId: null,
+    setValues: function(sx, sy) {
+      gamepad.left_stick_x = sx;
+      gamepad.left_stick_y = sy;
+      updateInputMonitor();
+    }
+  },
+  right: {
+    zone: document.getElementById('stick-zone-right'),
+    knob: document.getElementById('stick-knob-right'),
+    defaultL: '64%', defaultT: '65.5%',
+    dragging: false, pointerId: null,
+    setValues: function(sx, sy) {
+      gamepad.right_stick_x = sx;
+      gamepad.right_stick_y = sy;
+      updateInputMonitor();
+    }
+  }
+};
+
+function resetStick(stick) {
+  stick.dragging = false;
+  stick.pointerId = null;
+  stick.setValues(0, 0);
+  stick.knob.style.left = stick.defaultL;
+  stick.knob.style.top = stick.defaultT;
+  stick.knob.style.transform = 'translate(-50%, -50%)';
+}
+
+function updateStickFromPointer(stick, clientX, clientY) {
+  var wrapRect = controllerWrap.getBoundingClientRect();
+  var zoneRect = stick.zone.getBoundingClientRect();
+  var centerX = zoneRect.left + zoneRect.width / 2;
+  var centerY = zoneRect.top + zoneRect.height / 2;
+  var dx = clientX - centerX;
+  var dy = clientY - centerY;
+  var maxR = Math.min(zoneRect.width, zoneRect.height) * 0.36;
+  var dist = Math.hypot(dx, dy);
+  var scale = dist > maxR ? maxR / dist : 1;
+  var clampedDx = dx * scale;
+  var clampedDy = dy * scale;
+  
+  // Screen Y and FTC stick Y use the same sign: up is negative.
+  stick.setValues(clamp(clampedDx / maxR, -1, 1), clamp(clampedDy / maxR, -1, 1));
+  
+  var knobCx = (zoneRect.left - wrapRect.left + zoneRect.width / 2 + clampedDx) / wrapRect.width * 100;
+  var knobCy = (zoneRect.top - wrapRect.top + zoneRect.height / 2 + clampedDy) / wrapRect.height * 100;
+  stick.knob.style.left = knobCx + '%';
+  stick.knob.style.top = knobCy + '%';
+  stick.knob.style.transform = 'translate(-50%, -50%)';
+}
+
+Object.values(sticks).forEach(function(stick) {
+  stick.zone.addEventListener('pointerdown', function(e) {
+    e.preventDefault();
+    stick.dragging = true;
+    stick.pointerId = e.pointerId;
+    stick.zone.setPointerCapture(e.pointerId);
+    updateStickFromPointer(stick, e.clientX, e.clientY);
+  });
+});
+
+window.addEventListener('pointermove', function(e) {
+  Object.values(sticks).forEach(function(stick) {
+    if (stick.dragging && stick.pointerId === e.pointerId) {
+      updateStickFromPointer(stick, e.clientX, e.clientY);
+    }
+  });
+});
+
+function handlePointerEnd(e) {
+  Object.values(sticks).forEach(function(stick) {
+    if (stick.dragging && stick.pointerId === e.pointerId) {
+      resetStick(stick);
+    }
+  });
+}
+
+window.addEventListener('pointerup', handlePointerEnd);
+window.addEventListener('pointercancel', handlePointerEnd);
+window.addEventListener('blur', function() { Object.values(sticks).forEach(resetStick); });
+
+// ─── Floating Gamepad Card Controls ──────────────────────────────────────────
+(function() {
+  var card = document.getElementById('gamepad-float-card');
+  var titlebar = document.getElementById('gamepad-titlebar');
+  var collapseBtn = document.getElementById('gamepad-collapse-btn');
+  var cardBody = document.getElementById('gamepad-card-body');
+  var resizeHandle = document.getElementById('gamepad-resize-handle');
+
+  var isCollapsed = false;
+  var savedCardWidth = null;
+  var savedCardHeight = null;
+
+  collapseBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    isCollapsed = !isCollapsed;
+    if (isCollapsed) {
+      savedCardWidth = card.style.width || null;
+      savedCardHeight = card.style.height || null;
+      cardBody.style.display = 'none';
+      resizeHandle.style.display = 'none';
+      card.style.height = 'auto';
+      collapseBtn.textContent = '+';
+    } else {
+      cardBody.style.display = '';
+      resizeHandle.style.display = '';
+      if (savedCardWidth) card.style.width = savedCardWidth;
+      if (savedCardHeight) card.style.height = savedCardHeight;
+      collapseBtn.textContent = '\u2212';
+    }
+  });
+
+  var isDragging = false;
+  var dragOffsetX = 0;
+  var dragOffsetY = 0;
+
+  titlebar.addEventListener('pointerdown', function(e) {
+    if (e.target === collapseBtn) return;
+    isDragging = true;
+    var rect = card.getBoundingClientRect();
+    dragOffsetX = e.clientX - rect.left;
+    dragOffsetY = e.clientY - rect.top;
+    titlebar.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+
+  titlebar.addEventListener('pointermove', function(e) {
+    if (!isDragging) return;
+    var newX = e.clientX - dragOffsetX;
+    var newY = e.clientY - dragOffsetY;
+    newX = Math.max(0, Math.min(window.innerWidth - card.offsetWidth, newX));
+    newY = Math.max(0, Math.min(window.innerHeight - 48, newY));
+    card.style.left = newX + 'px';
+    card.style.top = newY + 'px';
+    card.style.right = 'auto';
+    card.style.bottom = 'auto';
+  });
+
+  titlebar.addEventListener('pointerup', function() { isDragging = false; });
+  titlebar.addEventListener('pointercancel', function() { isDragging = false; });
+
+  var isCardResizing = false;
+  var resizeStartX = 0;
+  var resizeStartY = 0;
+  var resizeStartW = 0;
+  var resizeStartH = 0;
+
+  resizeHandle.addEventListener('pointerdown', function(e) {
+    isCardResizing = true;
+    resizeStartX = e.clientX;
+    resizeStartY = e.clientY;
+    resizeStartW = card.offsetWidth;
+    resizeStartH = card.offsetHeight;
+    resizeHandle.setPointerCapture(e.pointerId);
+    e.preventDefault();
+    e.stopPropagation();
+  });
+
+  resizeHandle.addEventListener('pointermove', function(e) {
+    if (!isCardResizing) return;
+    var dx = e.clientX - resizeStartX;
+    var dy = e.clientY - resizeStartY;
+    var newW = Math.max(300, resizeStartW + dx);
+    var newH = Math.max(120, resizeStartH + dy);
+    card.style.width = newW + 'px';
+    card.style.height = newH + 'px';
+  });
+
+  resizeHandle.addEventListener('pointerup', function() { isCardResizing = false; });
+  resizeHandle.addEventListener('pointercancel', function() { isCardResizing = false; });
+})();
+}
+
+// ─── Boot ────────────────────────────────────────────────────────────────────
+window.addEventListener('load', function() {
+  loadInitialConfig();
+  updateCode(codeEditor.value);
+  updateInputMonitor();
+  drawCurveGraph();
+});
+
+// Periodic input monitor update
+setInterval(updateInputMonitor, 50);
+if (window.TelemarkSimulatorBase) window.TelemarkSimulatorBase.installLegacy({state: gamepad});
+</script>
+</body>
+</html>

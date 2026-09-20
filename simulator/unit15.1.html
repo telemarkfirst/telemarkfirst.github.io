@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Telemark Unit 15.1 Simulator</title>
+<style>
+  #sim-right-panel #sim-scene-container {
+    flex: 1 0 clamp(380px, 56vh, 620px);
+    min-height: 380px;
+    background: #020204;
+  }
+
+  #sim-right-panel .u151-panel {
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: clamp(285px, 40vh, 470px);
+    overflow-y: auto;
+    margin: 10px;
+    padding: 12px;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #0b0b0f;
+    color: #e5e7eb;
+    font-family: var(--font-ui, Arial, sans-serif);
+  }
+
+  #sim-scene-container .u151-scene-badge,
+  #sim-scene-container .u151-tx-badge,
+  #sim-scene-container .u151-lock-badge {
+    position: absolute;
+    z-index: 5;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: rgba(4, 4, 7, 0.9);
+    color: #f4f4f5;
+    pointer-events: none;
+    font-weight: 800;
+  }
+
+  #sim-scene-container .u151-scene-badge {
+    top: 12px;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 11px;
+  }
+
+  #sim-scene-container .u151-tx-badge {
+    right: 12px;
+    bottom: 12px;
+    padding: 10px 13px;
+    font-size: 1.1rem;
+  }
+
+  #sim-scene-container .u151-lock-badge {
+    left: 12px;
+    bottom: 12px;
+    padding: 9px 12px;
+  }
+
+  #sim-right-panel .u151-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0 8px;
+    font-weight: 800;
+  }
+
+  #sim-right-panel .u151-title:first-child {
+    margin-top: 0;
+  }
+
+  #sim-right-panel .u151-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  #sim-right-panel .u151-card,
+  #sim-right-panel .u151-branch {
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #08080c;
+    color: #9ca3af;
+    padding: 9px;
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  #sim-right-panel .u151-card.large strong {
+    font-size: 1.35rem;
+  }
+
+  #sim-right-panel .u151-card.good,
+  #sim-right-panel .u151-branch.active {
+    border-color: #22cc66;
+    color: #bbf7d0;
+  }
+
+  #sim-right-panel .u151-card.bad {
+    border-color: #b91c1c;
+    color: #fecaca;
+  }
+
+  #sim-right-panel .u151-card.warn {
+    border-color: #8a6a20;
+    color: #fde68a;
+  }
+
+  #sim-right-panel .u151-bar {
+    height: 10px;
+    margin-top: 6px;
+    border-radius: 999px;
+    background: #1f2937;
+    overflow: hidden;
+  }
+
+  #sim-right-panel .u151-fill {
+    height: 100%;
+    width: 0%;
+    background: #22d3ee;
+  }
+
+  #sim-right-panel .u151-deadband {
+    position: relative;
+    height: 16px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #7f1d1d 0%, #7f1d1d 42%, #166534 42%, #166534 58%, #7f1d1d 58%, #7f1d1d 100%);
+    margin-top: 8px;
+  }
+
+  #sim-right-panel .u151-marker {
+    position: absolute;
+    top: -4px;
+    width: 4px;
+    height: 24px;
+    border-radius: 4px;
+    background: #f8fafc;
+  }
+
+  #sim-right-panel .u151-callout,
+  #sim-right-panel .u151-warning,
+  #sim-right-panel .u151-success {
+    margin-top: 10px;
+    border-radius: 8px;
+    padding: 9px;
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  #sim-right-panel .u151-callout {
+    border: 1px solid #374151;
+    background: rgba(244, 244, 245, 0.05);
+    color: #e5e7eb;
+  }
+
+  #sim-right-panel .u151-warning {
+    display: none;
+    border: 1px solid #8a6a20;
+    background: rgba(255, 204, 102, 0.08);
+    color: #fde68a;
+  }
+
+  #sim-right-panel .u151-warning.error {
+    border-color: #7f1d1d;
+    background: rgba(239, 68, 68, 0.1);
+    color: #fecaca;
+  }
+
+  #sim-right-panel .u151-success {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #22cc66;
+    background: rgba(34, 204, 102, 0.1);
+    color: #22cc66;
+    font-weight: 800;
+  }
+</style>
+<script src="./simulator_base.js"></script>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+<script>
+window.onSimulatorReady = function () {
+  "use strict";
+
+  const starterCode = `@TeleOp(name="Limelight_Auto_Lock")
+public class LimelightAutoLock extends OpMode {
+
+    DcMotor      leftDrive, rightDrive;
+    Limelight3A  limelight;
+
+    @Override
+    public void init() {
+        leftDrive  = hardwareMap.get(DcMotor.class,     "leftDrive");
+        rightDrive = hardwareMap.get(DcMotor.class,     "rightDrive");
+        limelight  = hardwareMap.get(Limelight3A.class, "limelight");
+
+        // TODO: Switch to Limelight pipeline 1
+
+        telemetry.addData("Status", "Initialized");
+    }
+
+    @Override
+    public void loop() {
+        // Manual search mode: use the joystick until your auto-lock code takes over
+        double turn = gamepad1.left_stick_x * 0.45;
+        leftDrive.setPower(turn);
+        rightDrive.setPower(-turn);
+
+        // TODO: Get the latest Limelight result
+        // TODO: If the result is valid, read Tx
+        // TODO: Rotate right when Tx > 3.0, left when Tx < -3.0
+        // TODO: Stop both motors when locked or when no target is visible
+
+        telemetry.addData("AutoLock", "Searching with joystick");
+        telemetry.addData("Tx",       "Add Limelight code");
+
+        telemetry.update();
+    }
+}`;
+
+  const requirements = [
+    "Call limelight.pipelineSwitch(1) in init()",
+    "Call limelight.getLatestResult() in loop()",
+    "Check result.isValid() before using Tx",
+    "Use result.getTx() > 3.0 for right rotation",
+    "Use result.getTx() < -3.0 for left rotation",
+    "Rotate right with leftDrive positive and rightDrive negative",
+    "Rotate left with leftDrive negative and rightDrive positive",
+    "Stop both motors in the dead band",
+    "Use exactly 0.2 power for both auto-lock rotation cases",
+    "Use joystick steering while no tag is visible"
+  ];
+
+  const state = {
+    running: false,
+    tag: { x: 0, y: 1.05, z: 2.6 },
+    robotHeading: -0.78,
+    leftPower: 0,
+    rightPower: 0,
+    tx: 0,
+    valid: false,
+    pipeline: 0,
+    branch: "SEARCH",
+    lastValid: false
+  };
+
+  let leftMotor;
+  let rightMotor;
+  let limelightDevice;
+  let sceneRoot;
+  let robotGroup;
+  let coneMesh;
+  let deadbandMesh;
+  let beamLine;
+  let tagMesh;
+  let txLabel;
+  let statusLabel;
+  let leftPowerFill;
+  let rightPowerFill;
+  let loopFn = null;
+  let animationRegistered = false;
+  const limelightCallbacks = [];
+
+  function el(id) {
+    return document.getElementById(id);
+  }
+
+  function safeCall(fn) {
+    if (typeof fn !== "function") return undefined;
+    const args = Array.prototype.slice.call(arguments, 1);
+    return fn.apply(null, args);
+  }
+
+  ensureLimelightHardware();
+
+  setCode(starterCode);
+  setChallenge(
+    "Telemark Unit 15.1 Simulator",
+    "Limelight Auto-Lock Steering",
+    requirements
+  );
+  setBadges([
+    { icon: "fa-crosshairs", iconClass: "fa-solid fa-crosshairs", label: "Limelight", active: true },
+    { icon: "fa-microchip", iconClass: "fa-solid fa-microchip", label: "DcMotor", active: true },
+    { icon: "fa-gamepad", iconClass: "fa-solid fa-gamepad", label: "Joystick", active: true },
+    { icon: "fa-display", iconClass: "fa-solid fa-display", label: "Telemetry", active: true }
+  ]);
+  setActiveInputs(["left_stick_x"]);
+
+  const banner = el("sim-success-banner");
+  if (banner) {
+    banner.innerHTML = '<i class="fa-solid fa-circle-check"></i> Challenge Complete! Limelight auto-lock steering is working correctly.';
+  }
+
+  leftMotor = hardwareMap.registerMotor("leftDrive");
+  rightMotor = hardwareMap.registerMotor("rightDrive");
+  limelightDevice = hardwareMap.registerLimelight("limelight");
+  hardwareMap.onMotorPower(function (name, value) {
+    updateDriveVisual(name, value);
+  });
+  hardwareMap.onLimelight(function (tx, ty, valid) {
+    updateLimelightVisual(tx, ty, valid);
+  });
+
+  createPanel();
+  setupScene();
+  updateLimelightModel();
+  validateCode();
+  updatePanel();
+
+  window.onRun = function () {
+    state.running = true;
+    compileAndStart();
+  };
+
+  window.onStop = function () {
+    state.running = false;
+    setMotorPower("leftDrive", 0);
+    setMotorPower("rightDrive", 0);
+    updatePanel();
+  };
+
+  window.onReset = function () {
+    state.running = false;
+    state.robotHeading = -0.78;
+    state.leftPower = 0;
+    state.rightPower = 0;
+    state.tx = 0;
+    state.valid = false;
+    state.pipeline = 0;
+    state.branch = "SEARCH";
+    loopFn = null;
+    safeCall(clearTelemetry);
+    setMotorPower("leftDrive", 0);
+    setMotorPower("rightDrive", 0);
+    updateLimelightModel();
+    validateCode();
+    updatePanel();
+  };
+
+  if (!animationRegistered && typeof addAnimationCallback === "function") {
+    addAnimationCallback(tick);
+    animationRegistered = true;
+  }
+
+  function ensureLimelightHardware() {
+    if (typeof hardwareMap.registerLimelight !== "function") {
+      hardwareMap.registerLimelight = function (name) {
+        const device = {
+          _name: name,
+          pipelineSwitch: function (slot) { switchPipeline(slot); },
+          getLatestResult: function () { return getLimelightResult(); }
+        };
+        hardwareMap._devices[name] = device;
+        return device;
+      };
+    }
+
+    const originalGet = hardwareMap.get.bind(hardwareMap);
+    hardwareMap.get = function (type, name) {
+      const typeStr = String(type).toLowerCase();
+      if (typeStr.includes("limelight")) {
+        if (hardwareMap._devices[name]) return hardwareMap._devices[name];
+        return hardwareMap.registerLimelight(name);
+      }
+      return originalGet(type, name);
+    };
+
+    if (typeof hardwareMap.onLimelight !== "function") {
+      hardwareMap.onLimelight = function (cb) { limelightCallbacks.push(cb); };
+    } else {
+      const original = hardwareMap.onLimelight.bind(hardwareMap);
+      hardwareMap.onLimelight = function (cb) {
+        limelightCallbacks.push(cb);
+        original(cb);
+      };
+    }
+  }
+
+  function createPanel() {
+    const rightPanel = el("sim-right-panel");
+    const sceneContainer = el("sim-scene-container");
+    if (!rightPanel || !sceneContainer) return;
+
+    ["u151-panel", "u151-scene-badge", "u151-tx-badge", "u151-lock-badge"].forEach(function (id) {
+      const old = el(id);
+      if (old) old.remove();
+    });
+
+    const sceneBadge = document.createElement("div");
+    sceneBadge.id = "u151-scene-badge";
+    sceneBadge.className = "u151-scene-badge";
+    sceneContainer.appendChild(sceneBadge);
+
+    const txBadge = document.createElement("div");
+    txBadge.id = "u151-tx-badge";
+    txBadge.className = "u151-tx-badge";
+    sceneContainer.appendChild(txBadge);
+
+    const lockBadge = document.createElement("div");
+    lockBadge.id = "u151-lock-badge";
+    lockBadge.className = "u151-lock-badge";
+    sceneContainer.appendChild(lockBadge);
+
+    const panel = document.createElement("div");
+    panel.id = "u151-panel";
+    panel.className = "u151-panel";
+    panel.innerHTML = `
+      <div class="u151-title"><i class="fa-solid fa-gamepad"></i> Driver Search</div>
+      <div class="u151-callout">
+        <i class="fa-solid fa-circle-info"></i>
+        Use the highlighted left joystick to rotate the robot until the AprilTag enters the blue Limelight cone. Once visible, the code should auto-lock.
+      </div>
+
+      <div class="u151-title"><i class="fa-solid fa-gauge-high"></i> Limelight Data</div>
+      <div class="u151-summary">
+        <div class="u151-card large" id="u151-tx-card"></div>
+        <div class="u151-card" id="u151-valid-card"></div>
+        <div class="u151-card" id="u151-pipeline-card"></div>
+        <div class="u151-card" id="u151-behavior-card"></div>
+        <div class="u151-card" id="u151-left-motor-card"></div>
+        <div class="u151-card" id="u151-right-motor-card"></div>
+      </div>
+
+      <div class="u151-title"><i class="fa-solid fa-arrows-left-right"></i> Dead Band</div>
+      <div class="u151-card" id="u151-deadband-card"></div>
+
+      <div class="u151-title"><i class="fa-solid fa-code-branch"></i> Live Branches</div>
+      <div class="u151-summary">
+        <div class="u151-branch" id="u151-branch-valid">result.isValid()</div>
+        <div class="u151-branch" id="u151-branch-right">result.getTx() > 3.0</div>
+        <div class="u151-branch" id="u151-branch-left">result.getTx() < -3.0</div>
+        <div class="u151-branch" id="u151-branch-active">Active branch</div>
+      </div>
+
+      <div class="u151-success" id="u151-success"><i class="fa-solid fa-circle-check"></i> Challenge Complete! Limelight auto-lock steering is working correctly.</div>
+      <div class="u151-warning" id="u151-warning"></div>
+    `;
+    rightPanel.appendChild(panel);
+  }
+
+  function setupScene() {
+    if (!window.THREE || !window.scene) return;
+    if (sceneRoot) window.scene.remove(sceneRoot);
+
+    sceneRoot = new THREE.Group();
+    sceneRoot.name = "unit15_1_scene";
+    window.scene.add(sceneRoot);
+    window.scene.background = new THREE.Color(0x000000);
+    safeCall(setFieldVisible, false);
+    safeCall(setCameraOrbit, {
+      theta: -0.35,
+      phi: 0.72,
+      radius: 7.2,
+      target: { x: 0, y: 0.45, z: 0.25 }
+    });
+
+    const ambient = new THREE.AmbientLight(0xffffff, 0.84);
+    sceneRoot.add(ambient);
+    const key = new THREE.DirectionalLight(0xffffff, 1.1);
+    key.position.set(3, 6, 4);
+    sceneRoot.add(key);
+
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(7, 6),
+      new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.92, metalness: 0.02 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.02;
+    sceneRoot.add(floor);
+
+    const grid = new THREE.GridHelper(7, 14, 0xf3ead7, 0x1f1f1f);
+    grid.position.y = 0.001;
+    sceneRoot.add(grid);
+
+    const wall = new THREE.Mesh(
+      new THREE.BoxGeometry(4.8, 1.35, 0.12),
+      new THREE.MeshStandardMaterial({ color: 0xf3ead7, roughness: 0.74, metalness: 0.02 })
+    );
+    wall.position.set(0, 0.68, 2.75);
+    sceneRoot.add(wall);
+
+    tagMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.62, 0.62),
+      new THREE.MeshBasicMaterial({ map: makeTagTexture(7), side: THREE.DoubleSide })
+    );
+    tagMesh.position.set(state.tag.x, state.tag.y, state.tag.z);
+    tagMesh.rotation.y = Math.PI;
+    sceneRoot.add(tagMesh);
+
+    robotGroup = new THREE.Group();
+    robotGroup.position.set(0, 0, -2.0);
+    sceneRoot.add(robotGroup);
+
+    const body = new THREE.Mesh(
+      new THREE.BoxGeometry(1.0, 0.42, 1.2),
+      new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.68, metalness: 0.08 })
+    );
+    body.position.y = 0.22;
+    robotGroup.add(body);
+
+    const front = new THREE.Mesh(
+      new THREE.BoxGeometry(0.5, 0.08, 0.12),
+      new THREE.MeshStandardMaterial({ color: 0xf3ead7, roughness: 0.5, metalness: 0.04 })
+    );
+    front.position.set(0, 0.46, 0.65);
+    robotGroup.add(front);
+
+    const camera = new THREE.Mesh(
+      new THREE.BoxGeometry(0.26, 0.18, 0.18),
+      new THREE.MeshStandardMaterial({ color: 0x0d0d10, roughness: 0.48, metalness: 0.18 })
+    );
+    camera.position.set(0, 0.58, 0.74);
+    robotGroup.add(camera);
+
+    addRobotWheels();
+
+    coneMesh = makeConeMesh(27, 3.7, 0x3b82f6, 0.22);
+    coneMesh.position.y = 0.025;
+    robotGroup.add(coneMesh);
+
+    deadbandMesh = makeConeMesh(3, 3.4, 0x22cc66, 0.22);
+    deadbandMesh.position.y = 0.04;
+    robotGroup.add(deadbandMesh);
+
+    beamLine = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
+      new THREE.LineDashedMaterial({ color: 0xa5f3fc, dashSize: 0.12, gapSize: 0.08 })
+    );
+    sceneRoot.add(beamLine);
+
+    txLabel = makeTextSprite("Tx: --", "#a5f3fc");
+    sceneRoot.add(txLabel);
+    statusLabel = makeTextSprite("SEARCH", "#fde68a");
+    statusLabel.position.set(0, 1.5, -1.55);
+    sceneRoot.add(statusLabel);
+
+    leftPowerFill = makePowerBar(-0.75);
+    rightPowerFill = makePowerBar(0.75);
+    robotGroup.add(leftPowerFill.group);
+    robotGroup.add(rightPowerFill.group);
+  }
+
+  function makeConeMesh(degrees, length, color, opacity) {
+    const half = degrees * Math.PI / 180;
+    const verts = new Float32Array([
+      0, 0, 0.68,
+      Math.sin(-half) * length, 0, 0.68 + Math.cos(-half) * length,
+      Math.sin(half) * length, 0, 0.68 + Math.cos(half) * length
+    ]);
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.BufferAttribute(verts, 3));
+    geometry.setIndex([0, 1, 2]);
+    geometry.computeVertexNormals();
+    return new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: opacity, side: THREE.DoubleSide }));
+  }
+
+  function addRobotWheels() {
+    if (!robotGroup || !window.THREE) return;
+    const tireMaterial = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.84, metalness: 0.03 });
+    const hubMaterial = new THREE.MeshStandardMaterial({ color: 0xf3ead7, roughness: 0.58, metalness: 0.12 });
+    const positions = [
+      [-0.58, 0.18, 0.38],
+      [0.58, 0.18, 0.38],
+      [-0.58, 0.18, -0.38],
+      [0.58, 0.18, -0.38]
+    ];
+
+    positions.forEach(function (pos) {
+      const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.18, 28), tireMaterial);
+      tire.rotation.z = Math.PI / 2;
+      tire.position.set(pos[0], pos[1], pos[2]);
+      robotGroup.add(tire);
+
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.085, 0.19, 20), hubMaterial);
+      hub.rotation.z = Math.PI / 2;
+      hub.position.set(pos[0], pos[1], pos[2]);
+      robotGroup.add(hub);
+    });
+  }
+
+  function makePowerBar(x) {
+    const group = new THREE.Group();
+    group.position.set(x, 0.58, -0.18);
+    const back = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.1, 0.9), new THREE.MeshBasicMaterial({ color: 0x111827 }));
+    group.add(back);
+    const fill = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.01), new THREE.MeshBasicMaterial({ color: 0x22cc66 }));
+    fill.position.z = 0.44;
+    group.add(fill);
+    return { group: group, fill: fill };
+  }
+
+  function makeTagTexture(id) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, 128, 128);
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(8, 8, 112, 112);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(22, 22, 84, 84);
+    ctx.fillStyle = "#000000";
+    for (let r = 0; r < 4; r++) {
+      for (let c = 0; c < 4; c++) {
+        if (((id * 7 + r * 5 + c * 3) % 2) === 0) ctx.fillRect(34 + c * 15, 34 + r * 15, 12, 12);
+      }
+    }
+    ctx.fillStyle = "#111111";
+    ctx.font = "bold 20px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(String(id), 64, 116);
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  function makeTextSprite(text, color) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 512;
+    canvas.height = 128;
+    const ctx = canvas.getContext("2d");
+    drawSpriteText(ctx, text, color);
+    const texture = new THREE.CanvasTexture(canvas);
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false }));
+    sprite.scale.set(1.25, 0.32, 1);
+    return sprite;
+  }
+
+  function updateTextSprite(sprite, text, color) {
+    if (!sprite || !sprite.material || !sprite.material.map) return;
+    const ctx = sprite.material.map.image.getContext("2d");
+    drawSpriteText(ctx, text, color);
+    sprite.material.map.needsUpdate = true;
+  }
+
+  function drawSpriteText(ctx, text, color) {
+    ctx.clearRect(0, 0, 512, 128);
+    ctx.fillStyle = "rgba(0,0,0,0.72)";
+    roundRect(ctx, 10, 18, 492, 92, 18);
+    ctx.fill();
+    ctx.fillStyle = color || "#ffffff";
+    ctx.font = "bold 42px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, 256, 64);
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function tick() {
+    const now = performance.now();
+    const dt = state._lastTick ? Math.min(0.05, (now - state._lastTick) / 1000) : 0.016;
+    state._lastTick = now;
+    state.robotHeading += (state.leftPower - state.rightPower) * dt * 2.05;
+    state.robotHeading = normalizeRadians(state.robotHeading);
+    updateLimelightModel();
+    updateSceneVisuals();
+    updatePanel();
+  }
+
+  function updateSceneVisuals() {
+    if (robotGroup) robotGroup.rotation.y = state.robotHeading;
+    if (tagMesh && tagMesh.material) {
+      tagMesh.material.opacity = state.valid ? 1 : 0.72;
+      tagMesh.scale.setScalar(state.valid ? 1.08 + Math.sin(performance.now() * 0.012) * 0.03 : 1);
+    }
+    if (deadbandMesh && deadbandMesh.material) deadbandMesh.material.opacity = state.valid && Math.abs(state.tx) <= 3 ? 0.45 : 0.16;
+    if (beamLine) {
+      beamLine.visible = state.valid;
+      if (state.valid) {
+        const start = localToWorld(0, 0.58, 0.74);
+        const end = new THREE.Vector3(state.tag.x, state.tag.y, state.tag.z);
+        beamLine.geometry.dispose();
+        beamLine.geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
+        beamLine.computeLineDistances();
+      }
+    }
+    if (txLabel) {
+      txLabel.visible = state.valid;
+      txLabel.position.copy(new THREE.Vector3(state.tag.x * 0.5, 1.35, (state.tag.z - 2.0) * 0.5 - 0.2));
+      updateTextSprite(txLabel, "Tx: " + formatTx(state.tx), Math.abs(state.tx) <= 3 ? "#bbf7d0" : "#fde68a");
+    }
+    if (statusLabel) {
+      const text = !state.valid ? "SEARCH WITH JOYSTICK" : Math.abs(state.tx) <= 3 ? "AUTO LOCKED" : "AUTO TRACKING";
+      const color = !state.valid ? "#fde68a" : Math.abs(state.tx) <= 3 ? "#bbf7d0" : "#a5f3fc";
+      updateTextSprite(statusLabel, text, color);
+    }
+    updatePowerBar(leftPowerFill, state.leftPower);
+    updatePowerBar(rightPowerFill, state.rightPower);
+  }
+
+  function localToWorld(x, y, z) {
+    const vector = new THREE.Vector3(x, y, z);
+    if (robotGroup) robotGroup.localToWorld(vector);
+    return vector;
+  }
+
+  function updatePowerBar(bar, power) {
+    if (!bar || !bar.fill) return;
+    const height = Math.max(0.02, Math.abs(power) * 0.9);
+    bar.fill.scale.z = height;
+    bar.fill.material.color.setHex(power >= 0 ? 0x22cc66 : 0xef4444);
+  }
+
+  function updateLimelightModel() {
+    const result = computeLimelight();
+    state.tx = result.tx;
+    state.valid = result.valid;
+    limelightCallbacks.forEach(function (cb) {
+      try {
+        cb(state.tx, 0, state.valid);
+      } catch (err) {
+        console.error("[Limelight callback error]", err);
+      }
+    });
+  }
+
+  function computeLimelight() {
+    const robot = { x: 0, z: -2.0 };
+    const dx = state.tag.x - robot.x;
+    const dz = state.tag.z - robot.z;
+    const angle = Math.atan2(dx, dz);
+    const rel = normalizeRadians(angle - state.robotHeading);
+    const txRaw = rel * 180 / Math.PI;
+    const valid = Math.abs(txRaw) <= 27;
+    const noisy = txRaw + (Math.random() * 0.4 - 0.2);
+    return { tx: Math.max(-27, Math.min(27, noisy)), valid: valid };
+  }
+
+  function compileAndStart() {
+    const code = getCodeSafe();
+    const opBody = extractOpModeBody(code);
+    const initBody = extractMethodBody(opBody, "init");
+    const loopBody = extractMethodBody(opBody, "loop");
+    if (!loopBody) {
+      failStudentExecution("loop() was not found.");
+      return;
+    }
+
+    try {
+      const initFn = new Function("hardwareMap", "leftDrive", "rightDrive", "limelight", "switchPipeline", "addTelemetry", "updateTelemetry", '"use strict";\n' + transpileBody(initBody || ""));
+      loopFn = new Function("hardwareMap", "leftDrive", "rightDrive", "limelight", "gamepad", "getLimelightResult", "switchPipeline", "setMotorPower", "addTelemetry", "updateTelemetry", '"use strict";\n' + transpileBody(loopBody));
+      clearTelemetry();
+      initFn(hardwareMap, leftMotor, rightMotor, limelightDevice, switchPipeline, addTelemetry, updateTelemetry);
+      updateTelemetry();
+    } catch (err) {
+      loopFn = null;
+      failStudentExecution("compile/runtime error: " + err.message);
+      return;
+    }
+
+    const runFrame = function () {
+      if (!loopFn) return;
+      try {
+        clearTelemetry();
+        loopFn(hardwareMap, leftMotor, rightMotor, limelightDevice, window.gamepad || {}, getLimelightResult, switchPipeline, setMotorPower, addTelemetry, updateTelemetry);
+        validateCode();
+      } catch (err) {
+        failStudentExecution("loop() runtime error: " + err.message);
+      }
+    };
+
+    if (typeof _simStartLoop === "function") _simStartLoop(runFrame);
+    else window.setInterval(runFrame, 50);
+  }
+
+  function transpileBody(body) {
+    let js = body || "";
+    js = js
+      .replace(/\blimelight\s*\.\s*getLatestResult\s*\(\s*\)/g, "getLimelightResult()")
+      .replace(/\bresult\s*\.\s*getTx\s*\(\s*\)/g, "result.tx")
+      .replace(/\bresult\s*\.\s*isValid\s*\(\s*\)/g, "result.valid")
+      .replace(/\blimelight\s*\.\s*pipelineSwitch\s*\(/g, "switchPipeline(")
+      .replace(/\bleftDrive\s*\.\s*setPower\s*\(/g, 'setMotorPower("leftDrive",')
+      .replace(/\brightDrive\s*\.\s*setPower\s*\(/g, 'setMotorPower("rightDrive",')
+      .replace(/\bgamepad1\s*\.\s*left_stick_x\b/g, "gamepad.left_stick_x")
+      .replace(/\btelemetry\s*\.\s*addData\s*\(/g, "addTelemetry(")
+      .replace(/\btelemetry\s*\.\s*update\s*\(\s*\)/g, "updateTelemetry()")
+      .replace(/\bhardwareMap\s*\.\s*get\s*\(\s*(\w+)\.class\s*,/g, 'hardwareMap.get("$1",')
+      .replace(/\b(?:final\s+)?(?:double|int|boolean|String|float|long|byte|short|char|DcMotor|Limelight3A|LLResult)\s+(?=[A-Za-z_$])/g, "let ");
+    if (typeof _simTranspile === "function") js = _simTranspile(js);
+    return js;
+  }
+
+  function getLimelightResult() {
+    return { tx: state.tx, ty: 0, valid: state.valid };
+  }
+
+  function switchPipeline(slot) {
+    state.pipeline = Number(slot);
+  }
+
+  function setMotorPower(name, value) {
+    const power = Math.max(-1, Math.min(1, Number(value) || 0));
+    const device = name === "leftDrive" ? leftMotor : rightMotor;
+    if (device && typeof device.setPower === "function") device.setPower(power);
+    else updateDriveVisual(name, power);
+  }
+
+  function updateDriveVisual(name, value) {
+    if (name === "leftDrive") state.leftPower = Number(value) || 0;
+    if (name === "rightDrive") state.rightPower = Number(value) || 0;
+    if (!state.valid) state.branch = "SEARCH";
+    else if (Math.abs(state.tx) <= 3) state.branch = "LOCKED";
+    else if (state.leftPower > state.rightPower) state.branch = "ROTATE_RIGHT";
+    else if (state.rightPower > state.leftPower) state.branch = "ROTATE_LEFT";
+    else state.branch = "STOP";
+  }
+
+  function updateLimelightVisual(tx, ty, valid) {
+    state.tx = Number(tx) || 0;
+    state.valid = !!valid;
+  }
+
+  function updatePanel() {
+    const inDeadBand = state.valid && Math.abs(state.tx) <= 3;
+    const txStatus = !state.valid ? "bad" : inDeadBand ? "good" : Math.abs(state.tx) < 8 ? "warn" : "bad";
+    renderCard("u151-tx-card", '<i class="fa-solid fa-crosshairs"></i> Tx<br><strong>' + (state.valid ? formatTx(state.tx) : "N/A") + "</strong>", txStatus);
+    renderCard("u151-valid-card", '<i class="fa-solid fa-eye"></i> AprilTag visible<br><strong>' + (state.valid ? "VALID" : "OUTSIDE CONE") + "</strong>", state.valid ? "good" : "bad");
+    renderCard("u151-pipeline-card", '<i class="fa-solid fa-diagram-project"></i> Pipeline<br><strong>Pipeline: ' + state.pipeline + "</strong>", state.pipeline === 1 ? "good" : "bad");
+    renderCard("u151-behavior-card", '<i class="fa-solid fa-rotate"></i> Current behavior<br><strong>' + behaviorText() + "</strong>", inDeadBand ? "good" : state.valid ? "warn" : "bad");
+    renderMotorCard("u151-left-motor-card", "LEFT", state.leftPower);
+    renderMotorCard("u151-right-motor-card", "RIGHT", state.rightPower);
+
+    const marker = Math.max(0, Math.min(100, ((state.tx + 27) / 54) * 100));
+    renderCard("u151-deadband-card", '<i class="fa-solid fa-arrows-left-right"></i> -3.0 deg <-[ DEAD BAND ]-> +3.0 deg<div class="u151-deadband"><div class="u151-marker" style="left:' + marker + '%"></div></div>', inDeadBand ? "good" : "");
+
+    setBranch("u151-branch-valid", state.valid, "result.isValid(): " + state.valid);
+    setBranch("u151-branch-right", state.valid && state.tx > 3, "result.getTx() > 3.0: " + (state.valid && state.tx > 3));
+    setBranch("u151-branch-left", state.valid && state.tx < -3, "result.getTx() < -3.0: " + (state.valid && state.tx < -3));
+    setBranch("u151-branch-active", true, "Active branch: " + state.branch);
+
+    const sceneBadge = el("u151-scene-badge");
+    if (sceneBadge) {
+      sceneBadge.style.color = state.valid ? "#bbf7d0" : "#fde68a";
+      sceneBadge.innerHTML = state.valid
+        ? '<i class="fa-solid fa-crosshairs"></i> APRILTAG IN CONE'
+        : '<i class="fa-solid fa-gamepad"></i> STEER WITH JOYSTICK';
+    }
+    const txBadge = el("u151-tx-badge");
+    if (txBadge) {
+      txBadge.style.color = !state.valid ? "#fecaca" : inDeadBand ? "#bbf7d0" : "#fde68a";
+      txBadge.innerHTML = '<i class="fa-solid fa-crosshairs"></i> ' + (state.valid ? formatTx(state.tx) : "OUTSIDE CONE");
+    }
+    const lockBadge = el("u151-lock-badge");
+    if (lockBadge) {
+      lockBadge.style.color = inDeadBand ? "#bbf7d0" : state.valid ? "#a5f3fc" : "#fde68a";
+      lockBadge.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> ' + behaviorText();
+    }
+  }
+
+  function renderCard(id, html, status) {
+    const card = el(id);
+    if (!card) return;
+    card.classList.toggle("good", status === "good");
+    card.classList.toggle("bad", status === "bad");
+    card.classList.toggle("warn", status === "warn");
+    card.innerHTML = html;
+  }
+
+  function renderMotorCard(id, label, power) {
+    const pct = Math.min(100, Math.abs(power) * 100);
+    renderCard(id, '<i class="fa-solid fa-microchip"></i> ' + label + ' motor<br><strong>' + power.toFixed(2) + '</strong><div class="u151-bar"><div class="u151-fill" style="width:' + pct + '%"></div></div>', Math.abs(power) > 0 ? "warn" : "");
+  }
+
+  function setBranch(id, active, text) {
+    const item = el(id);
+    if (!item) return;
+    item.classList.toggle("active", !!active);
+    item.textContent = text;
+  }
+
+  function behaviorText() {
+    if (!state.valid) return "SEARCHING WITH JOYSTICK";
+    if (Math.abs(state.tx) <= 3) return "AUTO LOCKED";
+    if (state.tx > 3) return "AUTO ROTATING RIGHT";
+    return "AUTO ROTATING LEFT";
+  }
+
+  function formatTx(tx) {
+    return (tx >= 0 ? "+" : "") + tx.toFixed(1) + " deg";
+  }
+
+  function validateCode() {
+    const code = stripComments(getCodeSafe());
+    const opBody = extractOpModeBody(code);
+    const initBody = extractMethodBody(opBody, "init");
+    const loopBody = extractMethodBody(opBody, "loop");
+    const checks = [
+      /limelight\s*\.\s*pipelineSwitch\s*\(\s*1\s*\)/.test(initBody),
+      /limelight\s*\.\s*getLatestResult\s*\(\s*\)/.test(loopBody),
+      validBeforeTx(loopBody),
+      /(?:tx|result\s*\.\s*getTx\s*\(\s*\))\s*>\s*3(?:\.0)?/.test(loopBody),
+      /(?:tx|result\s*\.\s*getTx\s*\(\s*\))\s*<\s*-3(?:\.0)?/.test(loopBody),
+      /tx\s*>\s*3(?:\.0)?[\s\S]*leftDrive\s*\.\s*setPower\s*\(\s*0\.2\s*\)[\s\S]*rightDrive\s*\.\s*setPower\s*\(\s*-0\.2\s*\)/.test(loopBody),
+      /tx\s*<\s*-3(?:\.0)?[\s\S]*leftDrive\s*\.\s*setPower\s*\(\s*-0\.2\s*\)[\s\S]*rightDrive\s*\.\s*setPower\s*\(\s*0\.2\s*\)/.test(loopBody),
+      /else\s*\{[\s\S]*leftDrive\s*\.\s*setPower\s*\(\s*0\s*\)[\s\S]*rightDrive\s*\.\s*setPower\s*\(\s*0\s*\)/.test(loopBody),
+      (loopBody.match(/setPower\s*\(\s*-?0\.2\s*\)/g) || []).length >= 4,
+      /gamepad1\s*\.\s*left_stick_x/.test(loopBody)
+    ];
+    checks.forEach(function (passed, index) {
+      safeCall(setRequirement, index, !!passed);
+    });
+    const success = el("u151-success");
+    if (success) success.style.display = checks.every(Boolean) ? "flex" : "none";
+    updateWarning(initBody, loopBody, checks);
+    return checks;
+  }
+
+  function validBeforeTx(loopBody) {
+    const validIndex = loopBody.search(/result\s*!=\s*null\s*&&\s*result\s*\.\s*isValid\s*\(\s*\)|result\s*\.\s*isValid\s*\(\s*\)/);
+    const txIndex = loopBody.search(/getTx\s*\(\s*\)/);
+    return validIndex >= 0 && txIndex > validIndex;
+  }
+
+  function updateWarning(initBody, loopBody, checks) {
+    const warning = el("u151-warning");
+    if (!warning) return;
+    let message = "";
+    let type = "warn";
+
+    if (!checks[2]) {
+      message = "Check result.isValid() before calling getTx() - an invalid result may return garbage Tx values";
+      type = "error";
+    } else if (!checks[0]) {
+      message = "Switch to pipeline 1 in init() with limelight.pipelineSwitch(1) - pipeline 1 is configured for AprilTag detection";
+      type = "error";
+    } else if (!checks[3] || !checks[4]) {
+      message = "Without a dead band the robot oscillates around the tag - add the +/-3.0 degree dead band to stop when centered";
+    } else if (!checks[5] || !checks[6]) {
+      message = "Check your motor signs - to rotate right: leftDrive positive and rightDrive negative. To rotate left: leftDrive negative and rightDrive positive";
+      type = "error";
+    } else if (!checks[8]) {
+      message = "Use exactly 0.2 power for both auto-lock rotation directions as specified in the challenge";
+    } else if (!checks[9]) {
+      message = "Use gamepad1.left_stick_x while the tag is outside the Limelight cone so the driver can search for the tag";
+    } else if (!/telemetry\s*\.\s*update\s*\(\s*\)/.test(loopBody)) {
+      message = "Call telemetry.update() to send data to the Driver Station";
+    }
+
+    warning.classList.toggle("error", type === "error");
+    warning.style.display = message ? "block" : "none";
+    warning.innerHTML = message ? '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(message) : "";
+    safeCall(clearHints);
+    if (message) safeCall(addHint, warning.innerHTML, type === "error" ? "error" : "warn");
+  }
+
+  function normalizeRadians(angle) {
+    while (angle > Math.PI) angle -= Math.PI * 2;
+    while (angle < -Math.PI) angle += Math.PI * 2;
+    return angle;
+  }
+
+  function showStudentError(message) {
+    const warning = el("u151-warning");
+    if (warning) {
+      warning.classList.add("error");
+      warning.style.display = "block";
+      warning.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(message);
+    }
+    safeCall(addHint, '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(message), "error");
+    if (typeof _simShowTelemetryError === "function") _simShowTelemetryError(message);
+    else {
+      safeCall(addTelemetry, "ERROR", message);
+      safeCall(updateTelemetry);
+    }
+  }
+
+  function failStudentExecution(message) {
+    if (typeof stopExecution === "function") stopExecution();
+    showStudentError(message);
+  }
+
+  function getCodeSafe() {
+    if (typeof getCode !== "function") return starterCode;
+    try {
+      return getCode();
+    } catch (err) {
+      return starterCode;
+    }
+  }
+
+  function extractOpModeBody(code) {
+    const match = /\bclass\s+([A-Za-z_$][\w$]*)\s+extends\s+OpMode\b/.exec(code);
+    return match ? extractClassBody(code, match[1]) : extractClassBody(code, "LimelightAutoLock");
+  }
+
+  function extractClassBody(code, name) {
+    const match = new RegExp("\\bclass\\s+" + name + "\\b[^\\{]*\\{").exec(code);
+    if (!match) return "";
+    let index = match.index + match[0].length;
+    let depth = 1;
+    for (; index < code.length; index++) {
+      if (code[index] === "{") depth++;
+      else if (code[index] === "}") {
+        depth--;
+        if (depth === 0) return code.slice(match.index + match[0].length, index);
+      }
+    }
+    return "";
+  }
+
+  function extractMethodBody(scope, name) {
+    if (!scope) return "";
+    const re = new RegExp("\\b(?:public\\s+|private\\s+|protected\\s+)?(?:void|boolean|double|int|String)\\s+" + name + "\\s*\\([^)]*\\)\\s*\\{");
+    const match = re.exec(scope);
+    if (!match) return "";
+    let index = match.index + match[0].length;
+    let depth = 1;
+    for (; index < scope.length; index++) {
+      if (scope[index] === "{") depth++;
+      else if (scope[index] === "}") {
+        depth--;
+        if (depth === 0) return scope.slice(match.index + match[0].length, index);
+      }
+    }
+    return "";
+  }
+
+  function stripComments(code) {
+    return String(code || "")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\/\/.*$/gm, "");
+  }
+
+  function escapeHTML(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+};
+</script>
+</body>
+</html>

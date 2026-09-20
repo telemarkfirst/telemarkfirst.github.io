@@ -1,0 +1,1643 @@
+/* ════════════════════════════════════════════════════════════════════════
+   Shared simulator theme.
+
+   The simulators are iframes, so they cannot inherit the site's design tokens
+   through the cascade. This file restates them and maps them onto the variable
+   names the 61 simulator pages already use, so the panels inside an iframe
+   match the page around it without rewriting each simulator.
+
+   Linked after each page's inline <style>, so it wins on equal specificity.
+   ════════════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700&family=JetBrains+Mono:wght@400;600&family=Rajdhani:wght@600;700&family=Share+Tech+Mono&display=swap');
+
+:root {
+  /* Site tokens, restated for the iframe. */
+  --tm-bg: #05080d;
+  --tm-surface-1: #080d13;
+  --tm-surface-2: #0b1118;
+  --tm-surface-3: #0d151e;
+  --tm-text-strong: #effbff;
+  --tm-text: rgba(221, 241, 249, 0.82);
+  --tm-text-muted: rgba(203, 230, 241, 0.5);
+  --tm-accent: #22d3ee;
+  --tm-blue: #38bdf8;
+  --tm-success: #4ade80;
+  --tm-warn: #fbbf24;
+  --tm-danger: #f87171;
+  --tm-border: rgba(34, 211, 238, 0.16);
+  --tm-border-quiet: rgba(156, 175, 194, 0.18);
+  --tm-r-sm: 8px;
+  --tm-r-md: 12px;
+
+  /* Remap the simulators' own names onto the tokens. */
+  --bg: var(--tm-bg);
+  --panel: var(--tm-surface-2);
+  --panel-2: var(--tm-surface-1);
+  --text: var(--tm-text-strong);
+  --accent: var(--tm-blue);
+  --accent-2: var(--tm-accent);
+  --border: var(--tm-border);
+  --orange: var(--tm-accent);
+  --good: var(--tm-success);
+  --warn: var(--tm-warn);
+  --danger: var(--tm-danger);
+}
+
+:root[data-theme='light'],
+:root[data-telemark-theme='light'] {
+  --tm-bg: #f4f8fb;
+  --tm-surface-1: #ffffff;
+  --tm-surface-2: #f7fafc;
+  --tm-surface-3: #e8f1f5;
+  --tm-text-strong: #102a36;
+  --tm-text: rgba(16, 42, 54, 0.84);
+  --tm-text-muted: #526c78;
+  --tm-text-muted-strong: #526c78;
+  --tm-success-ink: #116329;
+  --tm-warn-ink: #7a5200;
+  --tm-accent: #087f9c;
+  --tm-blue: #176f9c;
+  --tm-success: #116329;
+  --tm-warn: #7a5200;
+  --tm-danger: #b4232c;
+  --tm-border: rgba(8, 127, 156, 0.24);
+  --tm-border-quiet: rgba(61, 91, 105, 0.24);
+}
+
+body {
+  font-family: 'Exo 2', 'Segoe UI', sans-serif;
+  color: var(--tm-text);
+  background: var(--tm-bg);
+}
+
+/* Context-aware Java completions shared by every simulator editor. */
+.telemark-completion-host { position: relative; }
+
+.telemark-completion-menu {
+  position: fixed;
+  z-index: 10000;
+  box-sizing: border-box;
+  width: min(380px, calc(100vw - 16px));
+  max-height: 290px;
+  overflow: auto;
+  padding: 5px;
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  border-radius: 9px;
+  background: #081019;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.48);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.telemark-completion-option {
+  display: grid;
+  grid-template-columns: minmax(100px, auto) 1fr;
+  gap: 12px;
+  width: 100%;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--tm-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.telemark-completion-option:is(:hover, .active) {
+  background: rgba(56, 189, 248, 0.16);
+  color: var(--tm-text-strong);
+}
+
+.telemark-completion-label { color: var(--tm-accent); font-weight: 700; overflow-wrap: anywhere; }
+.telemark-completion-detail { color: var(--tm-text-muted); font-size: 0.72rem; }
+.telemark-completion-footer {
+  padding: 6px 9px 3px;
+  color: var(--tm-text-muted);
+  font-size: 0.65rem;
+  border-top: 1px solid var(--tm-border-quiet);
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light']) .telemark-completion-menu {
+  background: #ffffff;
+  border-color: rgba(8, 127, 156, 0.38);
+  box-shadow: 0 12px 28px rgba(24, 56, 70, 0.18);
+}
+
+/* Panel chrome, brought in line with the site's cards. */
+#left-panel { background: var(--tm-surface-1); }
+#right-panel { background: var(--tm-bg); }
+
+.panel-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--tm-border);
+  background: var(--tm-bg);
+}
+
+.panel-header-title {
+  color: var(--tm-text-strong);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.panel-header-sub {
+  color: var(--tm-text-muted);
+  font-size: 0.8rem;
+}
+
+.challenge-card {
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-md);
+  background: var(--tm-surface-2);
+}
+
+.challenge-header {
+  background: var(--tm-surface-3);
+  color: var(--tm-accent);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.challenge-body { color: var(--tm-text); }
+
+.challenge-body .task {
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-sm);
+  background: var(--tm-bg);
+  color: var(--tm-text);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Requirement checks read as state, in the site's semantic colours. */
+.req .check.pass {
+  background: rgba(74, 222, 128, 0.14);
+  color: var(--tm-success);
+}
+
+.req .check.fail {
+  background: rgba(156, 175, 194, 0.12);
+  color: var(--tm-text-muted);
+}
+
+.success-banner {
+  border: 1px solid rgba(74, 222, 128, 0.45);
+  border-radius: var(--tm-r-md);
+  background: rgba(74, 222, 128, 0.1);
+  color: var(--tm-success);
+}
+
+/* Shared floating gamepad chrome and interactions. */
+.gamepad-float-card,
+.gamepad-card {
+  border-color: var(--tm-border) !important;
+  background: var(--tm-surface-1) !important;
+  color: var(--tm-text-strong);
+}
+
+.gamepad-titlebar {
+  border-bottom-color: var(--tm-border) !important;
+  background: var(--tm-surface-3) !important;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.gamepad-titlebar-label { color: var(--tm-text-strong) !important; }
+
+.gp-collapse-btn,
+.gamepad-collapse-btn,
+#gp-collapse-btn {
+  border-color: var(--tm-border-quiet) !important;
+  background: var(--tm-surface-1) !important;
+  color: var(--tm-text-strong) !important;
+}
+
+.controller-wrap,
+.sim-controller-wrap {
+  background: var(--tm-surface-3) !important;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+.controller-img,
+.sim-controller-img,
+.controller-wrap img,
+.sim-controller-wrap img {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+.stick-knob-left,
+.stick-knob-right,
+.sim-stick-knob,
+.sim-joystick-knob { opacity: 1 !important; }
+
+.bumper-btn {
+  position: absolute !important;
+  top: 12% !important;
+  width: 14% !important;
+  height: 6% !important;
+  border-radius: 8px !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+.left-bumper-btn { left: 20% !important; right: auto !important; }
+.right-bumper-btn { left: 80% !important; right: auto !important; }
+
+.dpad-container {
+  left: 21.5% !important;
+  top: 41% !important;
+  width: 16% !important;
+  height: 24% !important;
+  transform: translate(-50%, -50%) !important;
+  pointer-events: auto !important;
+  opacity: 1 !important;
+}
+
+.dpad-btn.pressed,
+.bumper-btn.pressed {
+  opacity: 1 !important;
+  border-color: rgba(34, 211, 238, 0.9) !important;
+  background: rgba(34, 211, 238, 0.38) !important;
+  box-shadow: none !important;
+}
+
+/* Legacy editor/readout surfaces that used literal dark fills. */
+:root[data-theme='light'] .code-wrapper,
+:root[data-telemark-theme='light'] .code-wrapper,
+:root[data-theme='light'] #highlighting,
+:root[data-telemark-theme='light'] #highlighting {
+  background: #f8fbfd !important;
+}
+
+:root[data-theme='light'] #code-editor,
+:root[data-telemark-theme='light'] #code-editor {
+  background: transparent !important;
+  caret-color: #102a36 !important;
+}
+
+:root[data-theme='light'] .bottom-panel,
+:root[data-telemark-theme='light'] .bottom-panel,
+:root[data-theme='light'] .readout-panel,
+:root[data-telemark-theme='light'] .readout-panel,
+:root[data-theme='light'] .status-panel,
+:root[data-telemark-theme='light'] .status-panel {
+  border-color: var(--tm-border) !important;
+  background: var(--tm-surface-2) !important;
+  color: var(--tm-text-strong) !important;
+}
+
+/* Buttons match the site's control vocabulary. */
+button,
+.btn {
+  border-radius: var(--tm-r-sm);
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 0.05em;
+  transition: background 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Scrollbars, thinned and neutralised as on the site. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--tm-border-quiet) transparent;
+}
+
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+
+*::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 6px;
+  background: var(--tm-border-quiet);
+  background-clip: content-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--tm-text-muted);
+  background-clip: content-box;
+}
+
+/* Focus, consistent with the site. */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--tm-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button, .btn { transition: none; }
+}
+
+/* ── Run controls ────────────────────────────────────────────────────────
+   The transport buttons were saturated fills. Kept semantic, since run and
+   stop genuinely are, but moved onto the site's softer pair and given the
+   outline treatment used elsewhere, so they read as controls not alarms. */
+.btn-run, .btn-stop, .btn-reset {
+  border: 1px solid transparent;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.btn-run {
+  border-color: rgba(74, 222, 128, 0.5);
+  background: rgba(74, 222, 128, 0.16);
+  color: var(--tm-success);
+}
+
+.btn-run:hover { background: rgba(74, 222, 128, 0.26); }
+
+.btn-stop {
+  border-color: rgba(248, 113, 113, 0.45);
+  background: rgba(248, 113, 113, 0.14);
+  color: var(--tm-danger);
+}
+
+.btn-stop:hover { background: rgba(248, 113, 113, 0.24); }
+
+.btn-reset {
+  border-color: var(--tm-border-quiet);
+  background: transparent;
+  color: var(--tm-text-muted);
+}
+
+.btn-reset:hover { border-color: var(--tm-border); color: var(--tm-text-strong); }
+
+/* ── Legacy light-theme bridge ─────────────────────────────────────────────────────
+   Units 2–9 predate the shared simulator shell and contain literal dark
+   colours in their inline styles.  Keep those pages source-compatible while
+   supplying a complete light palette from this single, shared stylesheet. */
+:root:is([data-theme='light'], [data-telemark-theme='light']) {
+  --muted: var(--tm-text-muted);
+  --cyan: var(--tm-accent);
+  --field: var(--tm-surface-2);
+  --grid: #a9c0cc;
+  --danger-2: var(--tm-danger);
+  --type-string: #176f9c;
+  --type-double: #168449;
+  --type-int: #9a5200;
+  --type-boolean: #9a6500;
+}
+
+/* Main editor/driver-station chrome. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(#editor-container, #left-panel) {
+  background: var(--tm-surface-1) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(#ds-container, #right-panel, #app, #main) {
+  background: var(--tm-bg) !important;
+  color: var(--tm-text) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.editor-header, .panel-header, #editor-header, .ds-status-bar, .bottom-bar) {
+  border-color: var(--tm-border) !important;
+  background: var(--tm-surface-1) !important;
+  color: var(--tm-text) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.editor-title, .panel-header-title, .ds-title, .panel-title,
+      .inspector-title, .input-monitor-title, .curve-title, .section-title,
+      .challenge-title, .mode-title, .power-bar-val) {
+  color: var(--tm-text-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.editor-subtitle, .panel-header-sub, .input-section-label,
+      .condition-breakdown, .truth-table-note, .status-label, .telem-label,
+      .req-section-title, #editor-header, #warning-label) {
+  color: var(--tm-text-muted) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(#resizer, #split-resizer) {
+  background: var(--tm-border-quiet) !important;
+}
+
+/* Cards, readouts, and the many legacy names for their nested rows. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.ds-header, .challenge-card, .challenge-panel, .inspector-panel,
+      .input-monitor-panel, .curve-panel, .panel-section, .explain-card,
+      .pattern-card, .gamepad-panel, .power-bar-panel, .motor-bars-panel,
+      .direction-panel, .mode-panel, .status-panel, .telem-panel,
+      .hub-section, .input-monitor-panel) {
+  border-color: var(--tm-border) !important;
+  background: var(--tm-surface-2) !important;
+  color: var(--tm-text) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.challenge-header, .pattern-hdr, .hub-header) {
+  border-color: var(--tm-border) !important;
+  background: var(--tm-surface-3) !important;
+  color: var(--tm-accent) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.challenge-body, .challenge-desc, .req, .req-row) {
+  color: var(--tm-text) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  .challenge-header i.chev {
+  color: var(--tm-text-muted) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.task, .var-row, .button-indicator, .axis-row, .curve-canvas-container,
+      #flowchart-container, .condition-row, .truth-table th, .truth-table td,
+      .sensor-row, .toggle-container, .loop-var-display, .iter-log, .iter-out,
+      .pattern-body, .hub-body, .hw-slot, .port-row, .status-item, .dir-item,
+      .dir-state, .zpb-item) {
+  border-color: var(--tm-border-quiet) !important;
+  background: var(--tm-surface-3) !important;
+  color: var(--tm-text) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.condition-expr, .axis-label, .sensor-label, .var-name, .dir-name,
+      .motor-value, .axis-value, .trigger-value, .status-value, .mode-value,
+      .loop-var, .vn, .vv, .iter-num, .iter-vars, .iter-out) {
+  color: var(--tm-text-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light']) .ds-timer {
+  color: var(--tm-blue) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.motor-power-label .label-text, .telem-empty) {
+  color: var(--tm-text-muted) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light']) .motor-visual {
+  border: 1px solid var(--tm-border) !important;
+  background: var(--tm-surface-3) !important;
+  color: var(--tm-text) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.motor-power-label .power-value, .status-value, .telem-val) {
+  color: var(--tm-success) !important;
+}
+
+/* Inspector badges need their own ink colours on the light swatches. */
+:root:is([data-theme='light'], [data-telemark-theme='light']) .badge-String {
+  background: #ddecf5 !important;
+  color: #0b557a !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light']) .badge-double {
+  background: #d9f4e3 !important;
+  color: #116329 !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light']) .badge-int {
+  background: #f8e5c6 !important;
+  color: #7a4100 !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light']) .badge-boolean {
+  background: #f6e8bd !important;
+  color: #6f4900 !important;
+}
+
+/* Tracks and inactive hardware use visible, neutral light surfaces. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.vis-bar-bg, .axis-bar-container, .trigger-bar-container, .bar-track,
+      .power-bar-track, .power-bar-container, .progress-bar-wrap,
+      .lift-bar, .height-bar, .lift-bar-container) {
+  border-color: var(--tm-border-quiet) !important;
+  background: var(--tm-surface-3) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.axis-bar-center, .bar-center, .power-bar-center) {
+  background: #748d99 !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light']) .hw-badge.inactive {
+  border-color: var(--tm-border-quiet) !important;
+  background: var(--tm-surface-3) !important;
+  color: var(--tm-text-muted) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light']) .hw-badge {
+  border-color: var(--tm-border-quiet) !important;
+  background: var(--tm-surface-2) !important;
+  color: var(--tm-text-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light']) .hw-badge.active,
+:root:is([data-theme='light'], [data-telemark-theme='light']) .hw-badge.tel {
+  border-color: var(--tm-accent) !important;
+  background: rgba(8, 127, 156, 0.09) !important;
+  color: var(--tm-accent) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.challenge-desc code, .badge) {
+  border-color: var(--tm-border) !important;
+  background: rgba(23, 111, 156, 0.09) !important;
+  color: var(--tm-blue) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  .challenge-desc strong[style*='#fff'] {
+  color: var(--tm-text-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.power-bar-name, .motor-label.fr, .motor-label.br) {
+  color: var(--tm-blue) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.motor-label.fl, .motor-label.bl) {
+  color: var(--tm-danger) !important;
+}
+
+/* Telemetry is a readout, not a permanently dark terminal. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.telemetry-panel, .telem-panel) {
+  border-color: var(--tm-border) !important;
+  background: #f8fbfd !important;
+  color: #116329 !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.telemetry-key, .telem-key) {
+  color: #055f73 !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.telemetry-panel, .telem-panel) > span[style*='#666'] {
+  color: var(--tm-text-muted) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light']) .telem-row {
+  border-bottom-color: var(--tm-border-quiet) !important;
+}
+
+/* Semantic messages retain meaning without pale-on-white text. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.hint.error, .hint.warning, .hint-error, .telemetry-error, .telem-error,
+      .dir-bad, .dir-banner.bad, .misconfig-list, .scene-hint.error,
+      .blocking-warn) {
+  color: var(--tm-danger) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.hint, .hint-warning, .scene-hint) {
+  color: var(--tm-warn) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light']) .hint.info {
+  color: var(--tm-blue) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.success-banner, .complete-banner, .dir-ok, .dir-banner.good,
+      .req-pass) {
+  color: var(--tm-success) !important;
+}
+
+/* Run/stop/reset actions override the old `.controls-row button {color:white}`
+   rule as a unit so each fill and label remains a tested contrast pair. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.controls-row, .controls, .step-controls, #controls) .btn-run {
+  border-color: #0f7140 !important;
+  background: #0f7140 !important;
+  color: #ffffff !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.controls-row, .controls, .step-controls, #controls) :is(.btn-stop, #btn-stop) {
+  border-color: var(--tm-danger) !important;
+  background: var(--tm-danger) !important;
+  color: #ffffff !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.controls-row, .controls, .step-controls, #controls)
+  :is(.btn-reset, .btn-step) {
+  border: 1px solid var(--tm-border-quiet) !important;
+  background: var(--tm-surface-3) !important;
+  color: var(--tm-text-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(#btn-main, .btn-init, .ds-init-btn, .toggle-btn.active) {
+  border-color: var(--tm-blue) !important;
+  background: var(--tm-blue) !important;
+  color: #ffffff !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.btn-run, #btn-main, .btn-init, .ds-init-btn):disabled {
+  border-color: var(--tm-border-quiet) !important;
+  background: var(--tm-surface-3) !important;
+  color: var(--tm-text-muted) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light']) .camera-follow-btn {
+  border-color: var(--tm-border) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  color: var(--tm-text-strong) !important;
+}
+
+/* Scene shell and labels. Three.js materials are switched by simulator_base;
+   these rules cover the DOM around the canvas and the pre-render fallback. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(#scene-container, #scene-wrap) {
+  border-color: var(--tm-border) !important;
+  background: var(--tm-surface-3) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.scene-label, .axis-readout, .gp-instruction) {
+  border-color: var(--tm-border) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: var(--tm-text-strong) !important;
+  text-shadow: none !important;
+}
+
+/* Floating gamepad chrome, including the alternate names used by Units 3–5
+   and the ID-only implementation in Unit 9.1. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.gamepad-float-card, .gamepad-card, #gamepad-card) {
+  border-color: var(--tm-border) !important;
+  background: var(--tm-surface-1) !important;
+  color: var(--tm-text-strong) !important;
+  box-shadow: none !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.gamepad-titlebar, #gamepad-titlebar) {
+  border-bottom-color: var(--tm-border) !important;
+  background: var(--tm-surface-3) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.gamepad-titlebar-label, #gamepad-titlebar-label) {
+  color: var(--tm-text-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.gp-collapse-btn, .gamepad-collapse-btn, #gp-collapse-btn) {
+  border-color: var(--tm-border) !important;
+  background: #ffffff !important;
+  color: var(--tm-text-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.gp-collapse-btn, .gamepad-collapse-btn, #gp-collapse-btn):hover {
+  background: var(--tm-surface-2) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.gamepad-card-body, #gamepad-body) {
+  background: var(--tm-surface-1) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  .gamepad-resize-handle::after {
+  border-color: var(--tm-text-muted) !important;
+}
+
+/* Prism Tomorrow supplies a dark-only token palette.  This GitHub-inspired
+   palette explicitly recolours both plain source and every Java token family. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(#highlighting, #sim-highlighting),
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(#highlighting, #sim-highlighting) code[class*='language-'],
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(#highlighting, #sim-highlighting) pre[class*='language-'] {
+  background: #f8fbfd !important;
+  color: #24292f !important;
+  text-shadow: none !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(#highlighting, #sim-highlighting)
+  :is(.token.comment, .token.prolog, .token.doctype, .token.cdata) {
+  color: #57606a !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(#highlighting, #sim-highlighting) :is(.token.punctuation, .token.operator) {
+  color: #24292f !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(#highlighting, #sim-highlighting)
+  :is(.token.property, .token.tag, .token.constant, .token.symbol,
+      .token.deleted, .token.keyword, .token.atrule, .token.important) {
+  color: #cf222e !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(#highlighting, #sim-highlighting)
+  :is(.token.boolean, .token.number, .token.entity, .token.url) {
+  color: #0550ae !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(#highlighting, #sim-highlighting)
+  :is(.token.selector, .token.attr-name, .token.string, .token.char,
+      .token.builtin, .token.inserted, .token.attr-value, .token.regex) {
+  color: #0a5b31 !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(#highlighting, #sim-highlighting)
+  :is(.token.function, .token.class-name, .token.annotation, .token.namespace) {
+  color: #6639ba !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(#highlighting, #sim-highlighting) :is(.token.variable, .token.parameter) {
+  color: #953800 !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light']) #code-editor {
+  background: transparent !important;
+  caret-color: var(--tm-text-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #code-editor::selection {
+  background: rgba(23, 111, 156, 0.2) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light']) #sim-code-editor {
+  background: transparent !important;
+  caret-color: var(--tm-text-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-code-editor::selection {
+  background: rgba(23, 111, 156, 0.2) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light']) #sim-line-numbers {
+  border-right-color: var(--tm-border) !important;
+  background: var(--tm-surface-3) !important;
+  color: var(--tm-text-muted-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  .sim-telemetry-panel {
+  border-color: var(--tm-border) !important;
+  background: #f8fbfd !important;
+  color: #116329 !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  .sim-telemetry-key {
+  color: #055f73 !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  .sim-telemetry-error {
+  color: var(--tm-danger) !important;
+}
+
+/* Unit 9.1 embeds the Dracula CodeMirror theme instead of Prism. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.CodeMirror, .CodeMirror-scroll, .CodeMirror-lines) {
+  background: #f8fbfd !important;
+  color: #24292f !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light']) .CodeMirror-gutters {
+  border-right-color: var(--tm-border) !important;
+  background: var(--tm-surface-3) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.CodeMirror-linenumber, .CodeMirror-foldgutter-open,
+      .CodeMirror-foldgutter-folded) {
+  color: var(--tm-text-muted-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light']) .CodeMirror-cursor {
+  border-left-color: #24292f !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.CodeMirror-selected, .CodeMirror-focused .CodeMirror-selected) {
+  background: #d9eaf3 !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.cm-s-dracula span.cm-comment, .cm-s-dracula span.cm-quote) {
+  color: #57606a !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.cm-s-dracula span.cm-keyword, .cm-s-dracula span.cm-tag,
+      .cm-s-dracula span.cm-error) {
+  color: #cf222e !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.cm-s-dracula span.cm-number, .cm-s-dracula span.cm-atom,
+      .cm-s-dracula span.cm-operator, .cm-s-dracula span.cm-link) {
+  color: #0550ae !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.cm-s-dracula span.cm-string, .cm-s-dracula span.cm-string-2,
+      .cm-s-dracula span.cm-builtin) {
+  color: #0a5b31 !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.cm-s-dracula span.cm-def, .cm-s-dracula span.cm-variable,
+      .cm-s-dracula span.cm-variable-2, .cm-s-dracula span.cm-variable-3,
+      .cm-s-dracula span.cm-property, .cm-s-dracula span.cm-qualifier,
+      .cm-s-dracula span.cm-attribute, .cm-s-dracula span.cm-meta) {
+  color: #6639ba !important;
+}
+
+/* ── Full-mode lesson overlays (Units 10–15) ────────────────────────────────────
+   These lessons add their own readouts after simulator_base has mounted. Their
+   source stays independent, while this shared bridge replaces literal dark
+   fills and pale ink whenever the iframe is using the light theme. */
+:root:is([data-theme='light'], [data-telemark-theme='light']) {
+  --panel2: var(--tm-surface-3);
+  --panel-2: var(--tm-surface-3);
+  --line: var(--tm-border);
+  --blue: var(--tm-blue);
+  --green: var(--tm-success);
+  --yellow: var(--tm-warn);
+  --red: var(--tm-danger);
+  --purple: #6639ba;
+  --wrist-panel: var(--tm-surface-2);
+  --wrist-panel-2: var(--tm-surface-1);
+  --wrist-border: var(--tm-border);
+  --wrist-text: var(--tm-text-strong);
+  --wrist-muted: var(--tm-text-muted-strong);
+  --wrist-green: var(--tm-success);
+  --wrist-red: var(--tm-danger);
+  --wrist-orange: var(--tm-accent);
+}
+
+/* A page-level two-ID rule otherwise keeps several Units 13–15 scene shells
+   black even after Three.js has switched its canvas and materials. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel #sim-scene-container {
+  border-color: var(--tm-border) !important;
+  background: var(--tm-surface-3) !important;
+}
+
+/* Units 10.1–10.2: dynamically injected encoder/winch monitors. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.sim-unit101-readout, .sim-unit102-readout) {
+  border-color: var(--tm-border) !important;
+  background: rgba(255, 255, 255, 0.94) !important;
+  color: var(--tm-text) !important;
+  box-shadow: none !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.sim-unit101-readout-title, .sim-unit102-title) {
+  color: var(--tm-blue) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.sim-unit101-label, .sim-unit102-label, .sim-unit102-formula) {
+  border-color: var(--tm-border-quiet) !important;
+  color: var(--tm-text-muted-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.sim-unit101-value, .sim-unit102-value) {
+  color: var(--tm-text-strong) !important;
+}
+
+/* Units 10.3–10.5: lift, encoder, and slider cards. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.lift-panel, .encoder-panel, .slider-panel) {
+  border-color: var(--tm-border) !important;
+  background: var(--tm-surface-2) !important;
+  color: var(--tm-text) !important;
+  box-shadow: none !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.lift-title, .encoder-title, .slider-title) {
+  color: var(--tm-blue) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.lift-position, .slider-position, .encoder-title, .motor-row strong,
+      .status-line) {
+  color: var(--tm-text-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.lift-side-label, .lift-mode, .motor-row, .mode-badge,
+      .lift-panel [style*='color:#d1d5db'],
+      .slider-panel [style*='color:#d1d5db']) {
+  color: var(--tm-text-muted-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.lift-bar, .lift-side, .lift-power-bar, .wheel-velocity-bar,
+      .progress-wrap, .power-bar, .status-box, .step) {
+  border-color: var(--tm-border-quiet) !important;
+  background: var(--tm-surface-3) !important;
+  color: var(--tm-text) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light']) .motor-card {
+  border-color: var(--tm-border-quiet) !important;
+  background: var(--tm-surface-1) !important;
+  color: var(--tm-text) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.mode-badge, .mode-badge.mode-grey, .velocity-check) {
+  border-color: var(--tm-border-quiet) !important;
+  background: var(--tm-surface-3) !important;
+  color: var(--tm-text-muted-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  .mode-badge.mode-blue {
+  border-color: var(--tm-blue) !important;
+  background: rgba(23, 111, 156, 0.09) !important;
+  color: var(--tm-blue) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.motor-short-left, .velocity-check.bad) {
+  color: var(--tm-danger) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.motor-short-right, .lift-busy) {
+  color: var(--tm-blue) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.lift-busy.at-target, .velocity-check.ok, .busy-indicator.done) {
+  color: var(--tm-success) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light']) .motor-card.ok {
+  border-color: rgba(22, 132, 73, 0.5) !important;
+  background: rgba(22, 132, 73, 0.09) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light']) .motor-card.bad {
+  border-color: rgba(180, 35, 44, 0.5) !important;
+  background: rgba(180, 35, 44, 0.09) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.lift-overlay, #sim-scene-container > .overlay) {
+  background: rgba(244, 248, 251, 0.94) !important;
+  color: var(--tm-text-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.lift-overlay, #sim-scene-container > .overlay) button {
+  background: #0f7140 !important;
+  color: #ffffff !important;
+}
+
+/* Units 11.1–11.5: sensor, wrist, tile and HUD presentations. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.sensor-panel, .wrist-panel, #panel, #hud, #imu-panel,
+      #strafe-panel, #ui-panel) {
+  border-color: var(--tm-border) !important;
+  background: var(--tm-surface-2) !important;
+  color: var(--tm-text) !important;
+  box-shadow: none !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(#viewer, #viewer-wrap, #viewport) {
+  border-color: var(--tm-border) !important;
+  background: var(--tm-surface-3) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.status-row, .logic-panel, .logic-line, .wrist-card, .card,
+      .imu-card, .strafe-card, .panel-card) {
+  border-color: var(--tm-border-quiet) !important;
+  background: var(--tm-surface-1) !important;
+  color: var(--tm-text) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.panel-title, .logic-title, .wrist-big, .big, .big-value,
+      .sensor-state, .h-title) {
+  color: var(--tm-text-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.bar-label, .wrist-line, .imu-title, .strafe-title, .label,
+      .slider-group label, .u153-dock-note,
+      #imu-panel [style*='color:#8b949e'],
+      #strafe-panel [style*='color:#8b949e']) {
+  color: var(--tm-text-muted-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.bar, .bar-bg, .bar-wrap, .height-meter, .axis-box,
+      #condition-box, #heading-history) {
+  border-color: var(--tm-border-quiet) !important;
+  background: var(--tm-surface-3) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.dropdown, #ui-panel button, .strafe-card .btn) {
+  border-color: var(--tm-border) !important;
+  background: var(--tm-surface-1) !important;
+  color: var(--tm-text-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.trigger-btn, .apply-btn, #hud button) {
+  border-color: var(--tm-blue) !important;
+  background: var(--tm-blue) !important;
+  color: #ffffff !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  .tileBtn[style*='#16a34a'] {
+  background: #0f7140 !important;
+  color: #ffffff !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  .stateTable :is(td, th) {
+  border-color: var(--tm-border-quiet) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light']) .activeRow {
+  background: rgba(22, 132, 73, 0.12) !important;
+  color: var(--tm-success) !important;
+}
+
+/* Unit 12.5 uses a prefixed dashboard and a canvas error graph. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel .u125-panel {
+  border-color: var(--tm-border) !important;
+  background: var(--tm-surface-2) !important;
+  color: var(--tm-text) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel :is(.u125-card, .u125-phase) {
+  border-color: var(--tm-border-quiet) !important;
+  background: var(--tm-surface-1) !important;
+  color: var(--tm-text) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel .u125-label {
+  color: var(--tm-text-muted-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel .u125-value {
+  color: var(--tm-text-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel :is(.u125-bar, #u125-error-graph) {
+  border-color: var(--tm-border-quiet) !important;
+  background: var(--tm-surface-3) !important;
+}
+
+/* Semantic overlays shared by the Unit 10–12 custom presentations. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.lift-warning.warn, .warning-chip.warn, #wrap-indicator,
+      .u125-hint) {
+  border-color: rgba(154, 101, 0, 0.42) !important;
+  background: rgba(154, 101, 0, 0.1) !important;
+  color: var(--tm-warn) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.lift-warning.error, .warning-chip.error, .overlay-warning,
+      .wrist-scene-warning, .warning-overlay, #warning.show,
+      .scene-hint.error) {
+  border-color: rgba(180, 35, 44, 0.42) !important;
+  background: rgba(180, 35, 44, 0.1) !important;
+  color: var(--tm-danger) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.lift-target-reached, .target-hit, .limit-badge, .wrist-scene-badge,
+      .success, #success, .safe-overlay, .correct, .velocity-check.ok) {
+  border-color: rgba(22, 132, 73, 0.42) !important;
+  background: rgba(22, 132, 73, 0.1) !important;
+  color: var(--tm-success) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.damage-overlay, .wrist-damage) {
+  color: var(--tm-danger) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  .wrist-scene-badge.unsafe,
+:root:is([data-theme='light'], [data-telemark-theme='light']) .incorrect {
+  border-color: rgba(180, 35, 44, 0.42) !important;
+  background: rgba(180, 35, 44, 0.1) !important;
+  color: var(--tm-danger) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.sensor-state.pressed, .logic-value.true, .wrist-safe, .good, .green) {
+  color: var(--tm-success) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.sensor-state.notpressed, .logic-value.false, .wrist-unsafe, .bad, .red) {
+  color: var(--tm-danger) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.warn, .yellow, .busy-indicator) {
+  color: var(--tm-warn) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light']) .blue {
+  color: var(--tm-blue) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light']) .unknown {
+  color: var(--tm-text-muted-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.threshold, .marker) {
+  background: var(--tm-text-strong) !important;
+}
+
+/* Units 13–15 share a deliberately regular uNNN-* vocabulary. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel
+  :is(.u131-panel, .u132-panel, .u135-panel,
+      .u141-panel, .u142-panel, .u143-panel, .u144-panel, .u145-panel,
+      .u151-panel, .u152-panel, .u153-panel, .u154-panel, .u155-panel,
+      .overlay-panel, #oop-root, .panel) {
+  border-color: var(--tm-border) !important;
+  background: var(--tm-surface-2) !important;
+  color: var(--tm-text) !important;
+  box-shadow: none !important;
+}
+
+/* Primary cards, class diagrams, status rows and pathing widgets. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel
+  :is(.u131-class, .u131-node, .u131-stat,
+      .u132-class, .u132-node, .u132-stat,
+      .u135-class, .u135-step, .u135-status,
+      .u141-step, .u141-status,
+      .u142-tag-card, .u142-status-card, .u142-step,
+      .u143-tag-card, .u143-status-card,
+      .u144-zone-row, .u144-card, .u144-mini-frame,
+      .u145-card, .u145-location,
+      .u151-card, .u151-branch,
+      .u152-card, .u152-step,
+      .u153-card, .u153-point-row,
+      .u154-card, .u154-guard, .u154-conversion,
+      .u155-card, .u155-step,
+      .class-box, .panel-section, .constant-row, .metric, .req) {
+  border-color: var(--tm-border-quiet) !important;
+  background: var(--tm-surface-1) !important;
+  color: var(--tm-text) !important;
+}
+
+/* Secondary rows, headers, formulas and neutral controls. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel
+  :is(.u131-class-header, .u132-class-header, .u135-class-header,
+      .class-header, .formula, .delegation-step, .preset-btn,
+      .u153-vertical-resizer, .u153-visualizer-wrap,
+      .u153-pedro-visualizer, .rename-box input) {
+  border-color: var(--tm-border-quiet) !important;
+  background: var(--tm-surface-3) !important;
+  color: var(--tm-text-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.u153-modal-card, .u153-modal-header, .u153-modal-body,
+      .u153-modal-body .u153-pedro-visualizer) {
+  border-color: var(--tm-border) !important;
+  background: var(--tm-surface-1) !important;
+  color: var(--tm-text-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.u153-visualizer-wrap::-webkit-scrollbar-track,
+      .u153-modal-body::-webkit-scrollbar-track) {
+  background: var(--tm-surface-3) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.u153-visualizer-wrap::-webkit-scrollbar-thumb,
+      .u153-modal-body::-webkit-scrollbar-thumb) {
+  border-color: var(--tm-surface-3) !important;
+  background: var(--tm-blue) !important;
+}
+
+/* Class-section/table separators no longer disappear into white cards. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel
+  :is(.u131-section, .u132-section, .u135-section,
+      .u142-table th, .u142-table td,
+      #constants-table th, #constants-table td) {
+  border-color: var(--tm-border-quiet) !important;
+}
+
+/* Muted explanatory values and strong numeric/readout values. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel
+  :is(.u131-item, .u131-node, .u131-label,
+      .u132-item, .u132-node, .u132-label, .u132-legend,
+      .u135-item, .u135-step, .u135-status,
+      .u141-step, .u141-status,
+      .u142-tag-card, .u142-status-card, .u142-step,
+      .u143-tag-card, .u143-status-card,
+      .u144-zone-row, .u144-card, .u144-mini-frame,
+      .u145-card, .u145-location,
+      .u151-card, .u151-branch,
+      .u152-card, .u152-step,
+      .u153-card, .u153-point-row,
+      .u154-card, .u154-guard, .u154-conversion,
+      .u155-card, .u155-step) {
+  color: var(--tm-text-muted-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel
+  :is(.u131-value, .u132-value, .u125-value,
+      .u152-card strong, .u153-card strong, .u154-card strong,
+      .u155-card strong, .metric strong, .panel-title) {
+  color: var(--tm-text-strong) !important;
+}
+
+/* Tracks remain neutral while their fill elements retain lesson semantics. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel
+  :is(.u145-bar, .u151-bar, .u153-bar, .u155-bar) {
+  border-color: var(--tm-border-quiet) !important;
+  background: var(--tm-surface-3) !important;
+}
+
+/* Buttons use the same dark-blue/white pair as the main simulator actions. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel
+  :is(.preset-btn, .rename-box button,
+      .u141-button, .u142-button, .u143-button, .u144-button, .u145-button,
+      .u152-button, .u153-button, .u154-button) {
+  border-color: var(--tm-blue) !important;
+  background: var(--tm-blue) !important;
+  color: #ffffff !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel
+  :is(.u142-toggle, .u142-input, .u143-toggle, .u143-input,
+      .u143-range, .u145-range) {
+  border-color: var(--tm-border) !important;
+  background: var(--tm-surface-1) !important;
+  color: var(--tm-text-strong) !important;
+}
+
+/* Callouts are neutral cards; warnings and completions receive light washes. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel
+  :is(.u135-callout,
+      .u141-callout, .u142-callout, .u143-callout, .u144-callout,
+      .u145-callout, .u151-callout, .u152-callout, .u153-callout,
+      .u154-callout, .u155-callout, .explanation) {
+  border-color: var(--tm-border) !important;
+  background: var(--tm-surface-3) !important;
+  color: var(--tm-text) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel
+  :is(.u131-warning, .u135-warning,
+      .u141-warning, .u142-warning, .u143-warning, .u144-warning,
+      .u145-warning, .u151-warning, .u152-warning, .u153-warning,
+      .u154-warning, .u155-warning, .hint-box) {
+  border-color: rgba(154, 101, 0, 0.42) !important;
+  background: rgba(154, 101, 0, 0.1) !important;
+  color: var(--tm-warn) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel
+  :is(.u132-warning, .u135-warning.error,
+      .u141-warning.error, .u142-warning.error, .u143-warning.error,
+      .u144-warning.error, .u145-warning.error, .u151-warning.error,
+      .u152-warning.error, .u153-warning.error, .u154-warning.error,
+      .u155-warning.error, .warning-row) {
+  border-color: rgba(180, 35, 44, 0.42) !important;
+  background: rgba(180, 35, 44, 0.1) !important;
+  color: var(--tm-danger) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel
+  :is(.u135-success,
+      .u141-success, .u142-success, .u143-success, .u144-success,
+      .u145-success, .u151-success, .u152-success, .u153-success,
+      .u154-success, .u155-success, .success-banner) {
+  border-color: rgba(22, 132, 73, 0.42) !important;
+  background: rgba(22, 132, 73, 0.1) !important;
+  color: var(--tm-success) !important;
+}
+
+/* State-specific card ink must override the original pale-on-dark colours. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel
+  :is(.u125-phase.done,
+      .u131-item.valid, .u131-node.active,
+      .u132-item.valid,
+      .u135-class.valid, .u135-item.valid, .u135-step.active,
+      .u135-status.good,
+      .u141-step.good, .u141-status.good,
+      .u142-tag-card.active, .u142-toggle.active,
+      .u142-status-card.good, .u142-step.good,
+      .u143-tag-card.active, .u143-toggle.active, .u143-status-card.good,
+      .u144-zone-row.good, .u144-card.good, .u144-param.good,
+      .u145-card.good, .u145-location.active,
+      .u151-card.good, .u151-branch.active,
+      .u152-card.good, .u152-step.good,
+      .u153-card.good, .u153-point-row.good,
+      .u154-card.good, .u154-guard.good, .u154-conversion.good,
+      .u155-card.good, .u155-step.good,
+      .constant-row.detected, .usage-hit, .metric strong.good,
+      .req.good) {
+  border-color: rgba(22, 132, 73, 0.5) !important;
+  background: rgba(22, 132, 73, 0.09) !important;
+  color: var(--tm-success) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel
+  :is(.u125-phase.active, .u132-node.active,
+      .u142-tag-card.target, .u142-step.active,
+      .u143-tag-card.target,
+      .u145-button.active,
+      .u153-button:hover, .u154-button.active, .u154-button:hover) {
+  border-color: rgba(23, 111, 156, 0.5) !important;
+  background: rgba(23, 111, 156, 0.09) !important;
+  color: var(--tm-blue) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel
+  :is(.u141-status.warn,
+      .u142-status-card.warn,
+      .u143-status-card.warn,
+      .u144-zone-row.warn, .u144-card.warn,
+      .u145-card.warn,
+      .u151-card.warn,
+      .u152-card.warn, .u152-step.active,
+      .u153-card.warn,
+      .u154-card.warn, .u154-guard.warn,
+      .u155-card.warn, .u155-step.warn) {
+  border-color: rgba(154, 101, 0, 0.5) !important;
+  background: rgba(154, 101, 0, 0.09) !important;
+  color: var(--tm-warn) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel
+  :is(.u141-status.bad,
+      .u142-tag-card.null-meta, .u142-toggle.danger,
+      .u142-status-card.bad,
+      .u143-tag-card.null-meta, .u143-toggle.danger,
+      .u143-status-card.bad,
+      .u144-zone-row.bad, .u144-card.bad, .u144-param.bad,
+      .u145-card.bad,
+      .u151-card.bad,
+      .u152-card.bad,
+      .u153-card.bad, .u153-point-row.bad,
+      .u154-card.bad, .u154-guard.bad, .u154-conversion.bad,
+      .u155-card.bad, .u155-step.bad,
+      .metric strong.bad) {
+  border-color: rgba(180, 35, 44, 0.5) !important;
+  background: rgba(180, 35, 44, 0.09) !important;
+  color: var(--tm-danger) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel .req.bad {
+  border-color: var(--tm-border-quiet) !important;
+  background: var(--tm-surface-3) !important;
+  color: var(--tm-text-muted-strong) !important;
+}
+
+/* Unit 13.3's unprefixed UML/delegation states. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #warning-banner.danger,
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  .status-red {
+  border-color: rgba(180, 35, 44, 0.5) !important;
+  background: rgba(180, 35, 44, 0.1) !important;
+  color: var(--tm-danger) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #warning-banner.safe,
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  .status-green {
+  border-color: rgba(22, 132, 73, 0.5) !important;
+  background: rgba(22, 132, 73, 0.1) !important;
+  color: var(--tm-success) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel :is(.member.good, .constant-row.detected td:first-child) {
+  color: var(--tm-success) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel :is(.member.bad, #constants-table th) {
+  color: var(--tm-text-muted-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel :is(.override-badge, .u142-table tr.target) {
+  border-color: rgba(23, 111, 156, 0.4) !important;
+  background: rgba(23, 111, 156, 0.09) !important;
+  color: var(--tm-blue) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel :is(.u132-arrow, .u135-arrow) {
+  color: var(--tm-blue) !important;
+}
+
+/* Scene HUDs use translucent light cards so labels remain readable over both
+   pale floors and darker robot geometry. */
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-scene-container
+  :is(.u125-banner,
+      .u131-badge, .u131-success,
+      .u132-badge, .u132-origin, .u132-success,
+      .u135-scene-badge, .u135-call-badge, .u135-label,
+      .u141-scene-status, .u141-feed-message, .u141-scene-timeline,
+      .u141-mini-step,
+      .u142-stream-badge, .u142-result-badge,
+      .u143-scene-badge, .u143-distance-badge, .u143-drag-hint,
+      .u144-scene-badge, .u144-coord-badge,
+      .u145-scene-badge, .u145-result-badge,
+      .u151-scene-badge, .u151-tx-badge, .u151-lock-badge,
+      .u152-scene-badge, .u152-pose-badge, .u152-phase-badge,
+      .u153-scene-badge, .u153-pose-badge, .u153-phase-badge,
+      .u154-scene-badge, .u154-drift-badge, .u154-correction-badge,
+      .u155-badge, .u155-score-badge, .u155-stuck-badge, .u155-diagram,
+      .u155-state-node, .u155-arrow-node, .device-label) {
+  border-color: var(--tm-border) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  color: var(--tm-text-strong) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-scene-container
+  :is(.u125-banner, .u131-success, .u132-success,
+      .u141-mini-step.good, .u142-stream-badge, .u143-scene-badge,
+      .u145-scene-badge, .device-label.good) {
+  border-color: rgba(22, 132, 73, 0.5) !important;
+  background: rgba(238, 249, 242, 0.94) !important;
+  color: var(--tm-success) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-scene-container :is(.device-label.bad, .u155-state-node.stuck) {
+  border-color: rgba(180, 35, 44, 0.5) !important;
+  background: rgba(252, 239, 240, 0.94) !important;
+  color: var(--tm-danger) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-scene-container .u155-state-node.active {
+  border-color: rgba(23, 111, 156, 0.5) !important;
+  background: rgba(235, 245, 250, 0.94) !important;
+  color: var(--tm-blue) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-scene-container
+  :is(.u155-state-node.done, .u155-arrow-node.pulse) {
+  border-color: rgba(22, 132, 73, 0.5) !important;
+  background: rgba(238, 249, 242, 0.94) !important;
+  color: var(--tm-success) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel :is([style*='color:#22c55e'], [style*='color:#3fb950']) {
+  color: var(--tm-success) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel :is([style*='color:#f59e0b'], [style*='color:#d29922']) {
+  color: var(--tm-warn) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-right-panel :is([style*='color:#ef4444'], [style*='color:#f85149']) {
+  color: var(--tm-danger) !important;
+}
+
+/* simulator_base mounts these controls after this stylesheet.  Important
+   light-only declarations keep its literal dark palette from winning merely
+   because its generated <style> appears later in the document. */
+:root:is([data-theme='light'], [data-telemark-theme='light']) #sim-resizer {
+  background: var(--tm-border-quiet) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  #sim-resizer:is(:hover, .active) {
+  background: var(--tm-blue) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  :is(.sim-ds-timer, .sim-hw-badge.active) {
+  color: var(--tm-blue) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  .sim-hw-badge.active {
+  border-color: var(--tm-blue) !important;
+  background: rgba(23, 111, 156, 0.09) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  .sim-hw-badge.inactive {
+  border-color: var(--tm-border-quiet) !important;
+  background: var(--tm-surface-3) !important;
+  color: var(--tm-text-muted-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  .sim-fault-control {
+  border-color: rgba(122, 82, 0, 0.38) !important;
+  background: rgba(154, 101, 0, 0.09) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  .sim-fault-control label {
+  color: var(--tm-warn-ink) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  .sim-fault-control select {
+  border-color: rgba(122, 82, 0, 0.38) !important;
+  background: var(--tm-surface-1) !important;
+  color: var(--tm-text-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  .sim-fault-description {
+  color: var(--tm-text-muted-strong) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light']) .sim-hint {
+  border-left-color: var(--tm-warn-ink) !important;
+  background: rgba(154, 101, 0, 0.1) !important;
+  color: var(--tm-warn-ink) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  .sim-hint.error {
+  border-left-color: var(--tm-danger) !important;
+  background: rgba(180, 35, 44, 0.1) !important;
+  color: var(--tm-danger) !important;
+}
+
+:root:is([data-theme='light'], [data-telemark-theme='light'])
+  .sim-hint.info {
+  border-left-color: var(--tm-blue) !important;
+  background: rgba(23, 111, 156, 0.1) !important;
+  color: var(--tm-blue) !important;
+}

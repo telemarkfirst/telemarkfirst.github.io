@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Telemark Unit 13.4 Simulator</title>
+
+    <script src="./simulator_base.js"></script>
+
+    <style>
+        :root {
+            --bg: #0f172a;
+            --panel: #111827;
+            --panel-2: #1f2937;
+            --line: #374151;
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --green: #22c55e;
+            --yellow: #f59e0b;
+            --red: #ef4444;
+            --blue: #3b82f6;
+            --orange: #22d3ee;
+            --cyan: #22d3ee;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Inter, Arial, sans-serif;
+        }
+
+        #oop-root {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .oop-grid {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 16px;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--line);
+            background: rgba(255,255,255,0.03);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-body {
+            padding: 16px;
+        }
+
+        #constants-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        #constants-table th,
+        #constants-table td {
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding: 10px 8px;
+            text-align: left;
+        }
+
+        #constants-table th {
+            color: var(--muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .constant-row {
+            transition: 0.25s ease;
+            background: rgba(255,255,255,0.02);
+        }
+
+        .constant-row.detected {
+            background: rgba(34,197,94,0.12);
+        }
+
+        .constant-row.detected td:first-child {
+            color: var(--green);
+            font-weight: 700;
+        }
+
+        .usage-hit {
+            color: var(--green);
+            font-weight: 700;
+        }
+
+        .warning-row {
+            background: rgba(239,68,68,0.14);
+            color: #fecaca;
+        }
+
+        #scene-container {
+            height: 460px;
+            position: relative;
+        }
+
+        #constants-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        #sim-right-panel #sim-scene-container {
+            flex: 1 0 clamp(360px, 55vh, 620px);
+            min-height: 360px;
+            background: #020204;
+        }
+
+        .device-label {
+            position: absolute;
+            background: rgba(0,0,0,0.78);
+            border: 1px solid rgba(243,234,215,0.22);
+            border-radius: 10px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #f3ead7;
+            backdrop-filter: blur(4px);
+        }
+
+        .device-label.good {
+            box-shadow: 0 0 14px rgba(243,234,215,0.22);
+            border-color: rgba(243,234,215,0.52);
+            color: #f3ead7;
+        }
+
+        .device-label.bad {
+            color: #fecaca;
+            border-color: rgba(239,68,68,0.5);
+            background: rgba(127,29,29,0.7);
+        }
+
+        #claw-label {
+            top: 50px;
+            left: 70px;
+        }
+
+        #wrist-label {
+            top: 180px;
+            left: 300px;
+        }
+
+        #sensor-label {
+            top: 90px;
+            right: 70px;
+        }
+
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .rename-box {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .rename-box input {
+            flex: 1;
+            background: #0b1220;
+            color: var(--text);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 14px;
+        }
+
+        .rename-box button {
+            background: var(--orange);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 14px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.03);
+        }
+
+        .metric strong.good {
+            color: var(--green);
+        }
+
+        .metric strong.bad {
+            color: var(--red);
+        }
+
+        .explanation {
+            margin-top: 14px;
+            padding: 12px;
+            border-radius: 12px;
+            background: rgba(59,130,246,0.08);
+            border: 1px solid rgba(59,130,246,0.25);
+            line-height: 1.5;
+            color: #cbd5e1;
+            font-size: 14px;
+        }
+
+        .success-banner {
+            margin-top: 14px;
+            padding: 14px;
+            border-radius: 12px;
+            background: rgba(34,197,94,0.16);
+            border: 1px solid rgba(34,197,94,0.4);
+            color: #bbf7d0;
+            font-weight: 700;
+            display: none;
+        }
+
+        .hint-box {
+            margin-top: 14px;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(245,158,11,0.35);
+            background: rgba(245,158,11,0.1);
+            color: #fde68a;
+            display: none;
+        }
+
+        .requirement-list {
+            display: grid;
+            gap: 8px;
+        }
+
+        .req {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.03);
+        }
+
+        .req.good {
+            color: #bbf7d0;
+            background: rgba(34,197,94,0.12);
+        }
+
+        .req.bad {
+            color: #d1d5db;
+        }
+
+        #sim-right-panel #oop-root {
+            flex: 0 1 auto;
+            min-height: 0;
+            max-height: clamp(260px, 38vh, 460px);
+            overflow: auto;
+            margin: 10px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #0b0b0f;
+        }
+
+        #sim-right-panel #oop-root.scene-in-base .oop-grid {
+            grid-template-columns: 1fr;
+        }
+
+        #sim-right-panel #oop-root .oop-grid,
+        #sim-right-panel #oop-root .bottom-grid {
+            min-width: 720px;
+        }
+
+        #sim-scene-container #constants-overlay {
+            z-index: 5;
+        }
+    </style>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+<div id="oop-root">
+    <div class="oop-grid">
+        <div class="panel">
+            <div class="panel-header">
+                <i class="fa-solid fa-database"></i>
+                Constants Registry Visualization
+            </div>
+
+            <div class="panel-body">
+                <table id="constants-table">
+                    <thead>
+                    <tr>
+                        <th>Constant Name</th>
+                        <th>Type</th>
+                        <th>Value</th>
+                        <th>Used In</th>
+                    </tr>
+                    </thead>
+                    <tbody id="constants-body"></tbody>
+                </table>
+
+                <div id="hardcoded-warning"></div>
+
+                <div id="success-banner" class="success-banner">
+                    <i class="fa-solid fa-circle-check"></i>
+                    Challenge Complete! HardwareNames configuration class is correctly implemented.
+                </div>
+
+                <div id="hint-box" class="hint-box"></div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <i class="fa-solid fa-robot"></i>
+                Hardware Visualization
+            </div>
+
+            <div id="scene-container">
+                <div id="constants-overlay">
+                    <div id="claw-label" class="device-label">
+                        HardwareNames.CLAW_SERVO
+                    </div>
+
+                    <div id="wrist-label" class="device-label">
+                        HardwareNames.WRIST_MOTOR
+                    </div>
+
+                    <div id="sensor-label" class="device-label">
+                        HardwareNames.RANGE_SENSOR
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-grid">
+        <div class="panel">
+            <div class="panel-header">
+                <i class="fa-solid fa-code-branch"></i>
+                Single Source of Truth
+            </div>
+
+            <div class="panel-body">
+                <div class="metric">
+                    <span>
+                        <i class="fa-solid fa-tag"></i>
+                        Current CLAW_SERVO Value
+                    </span>
+                    <strong id="rename-value">claw_servo</strong>
+                </div>
+
+                <div class="rename-box">
+                    <input id="rename-input" value="intake_claw" />
+                    <button id="rename-btn">
+                        <i class="fa-solid fa-pen"></i>
+                        Rename
+                    </button>
+                </div>
+
+                <div style="margin-top:16px;" class="metric">
+                    <span>
+                        <i class="fa-solid fa-repeat"></i>
+                        References Updated Automatically
+                    </span>
+                    <strong id="rename-count" class="good">3 references</strong>
+                </div>
+
+                <div class="metric">
+                    <span>
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        Manual Changes Without Constants
+                    </span>
+                    <strong class="bad">3 hardcoded strings</strong>
+                </div>
+
+                <div class="explanation">
+                    <strong>static</strong> means the value belongs to the class itself —
+                    access constants as <code>HardwareNames.CLAW_SERVO</code> without creating
+                    a new object instance.
+                </div>
+
+                <div class="explanation">
+                    <strong>final</strong> means the value cannot change after assignment —
+                    protecting robot configuration from accidental edits.
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <i class="fa-solid fa-list-check"></i>
+                Validation Status
+            </div>
+
+            <div class="panel-body">
+                <div id="requirements" class="requirement-list"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const starterCode = `import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.Servo;
+
+// Configuration class - single source of truth for all hardware names and constants
+class HardwareNames {
+    // TODO: Add name constants for the claw, wrist, and range sensor
+    // TODO: Add numeric constants for claw positions and wrist power
+}
+
+// OpMode referencing HardwareNames constants
+@TeleOp(name="Hardware_Names")
+public class HardwareNamesOp extends OpMode {
+
+    Servo          claw;
+    DcMotor        wrist;
+    DistanceSensor range;
+
+    @Override
+    public void init() {
+        // TODO: Map claw using the config constant
+        // TODO: Map wrist using the config constant
+        // TODO: Map range using the config constant
+
+        // TODO: Move the claw to the configured open position
+        telemetry.addData("Status", "Initialized");
+    }
+
+    @Override
+    public void loop() {
+        // TODO: Display the constants with telemetry
+        telemetry.update();
+    }
+}`;
+
+const constantsSpec = [
+    ["CLAW_SERVO", "String", `"claw_servo"`, "hardwareMap.get()"],
+    ["WRIST_MOTOR", "String", `"wrist_motor"`, "hardwareMap.get()"],
+    ["RANGE_SENSOR", "String", `"range_sensor"`, "hardwareMap.get()"],
+    ["CLAW_OPEN", "double", `0.1`, "servo.setPosition()"],
+    ["CLAW_CLOSED", "double", `0.9`, "servo.setPosition()"],
+    ["WRIST_MAX_POWER", "double", `0.5`, "motor.setPower()"]
+];
+
+const requirementChecks = [
+    {
+        label: "class HardwareNames declared",
+        test: code => /class\s+HardwareNames/.test(code)
+    },
+    {
+        label: "CLAW_SERVO string constant defined",
+        test: code => /public\s+static\s+final\s+String\s+CLAW_SERVO\s*=\s*"claw_servo"/.test(code)
+    },
+    {
+        label: "WRIST_MOTOR string constant defined",
+        test: code => /public\s+static\s+final\s+String\s+WRIST_MOTOR\s*=\s*"wrist_motor"/.test(code)
+    },
+    {
+        label: "RANGE_SENSOR string constant defined",
+        test: code => /public\s+static\s+final\s+String\s+RANGE_SENSOR\s*=\s*"range_sensor"/.test(code)
+    },
+    {
+        label: "CLAW_OPEN double constant defined",
+        test: code => /public\s+static\s+final\s+double\s+CLAW_OPEN/.test(code)
+    },
+    {
+        label: "CLAW_CLOSED double constant defined",
+        test: code => /public\s+static\s+final\s+double\s+CLAW_CLOSED/.test(code)
+    },
+    {
+        label: "WRIST_MAX_POWER double constant defined",
+        test: code => /public\s+static\s+final\s+double\s+WRIST_MAX_POWER/.test(code)
+    },
+    {
+        label: "All constants declared public static final",
+        test: code => {
+            const matches = code.match(/(public\s+static\s+final)/g) || [];
+            return matches.length >= 6;
+        }
+    },
+    {
+        label: "HardwareNames.CLAW_SERVO used in hardwareMap call",
+        test: code => /hardwareMap\.get\([^)]*HardwareNames\.CLAW_SERVO/.test(code)
+    },
+    {
+        label: "No hardcoded string literals in hardwareMap calls",
+        test: code => !/hardwareMap\.get\([^)]*"claw_servo"|hardwareMap\.get\([^)]*"wrist_motor"|hardwareMap\.get\([^)]*"range_sensor"/.test(code)
+    }
+];
+
+let robot;
+let clawLeft;
+let clawRight;
+let wrist;
+let sensorBeam;
+let sceneRoot;
+let animationRegistered = false;
+
+let currentClawPos = 0.1;
+let currentWristPower = 0.0;
+let currentRangeDistance = 24;
+let currentClawName = "claw_servo";
+let currentWristName = "wrist_motor";
+let currentRangeName = "range_sensor";
+let currentClawOpen = 0.1;
+let currentClawClosed = 0.9;
+let currentWristMaxPower = 0.5;
+let telemetryStatus = "Ready";
+let compiledLoopFn = null;
+let compiledSource = "";
+
+const sceneTheme = {
+    background: 0x000000,
+    floor: 0x050505,
+    floorLine: 0xf3ead7,
+    floorGrid: 0x1f1f1f,
+    robot: 0x080808,
+    hardwareDark: 0x24231f,
+    albedo: 0xf3ead7,
+    albedoDim: 0x8f8778,
+    beam: 0xd8c7a5
+};
+
+function makeAlbedoMaterial(color, options) {
+    const opts = options || {};
+    return new THREE.MeshStandardMaterial({
+        color: color,
+        roughness: opts.roughness ?? 0.72,
+        metalness: opts.metalness ?? 0.08,
+        emissive: opts.emissive ?? 0x000000,
+        transparent: !!opts.transparent,
+        opacity: opts.opacity ?? 1
+    });
+}
+
+function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, function (ch) {
+        return {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        }[ch];
+    });
+}
+
+function installDistanceSensorShim() {
+    if (!window.hardwareMap || hardwareMap.registerDistanceSensor) return;
+
+    hardwareMap.registerDistanceSensor = function (name) {
+        const sensor = {
+            _name: name,
+            _distance: currentRangeDistance,
+            getDistance: function () {
+                return this._distance;
+            },
+            _setDistance: function (value) {
+                this._distance = Number(value) || 0;
+                currentRangeDistance = this._distance;
+            }
+        };
+        hardwareMap._devices[name] = sensor;
+        return sensor;
+    };
+
+    const originalGet = hardwareMap.get.bind(hardwareMap);
+    hardwareMap.get = function (type, name) {
+        const typeStr = String(type).toLowerCase();
+        if (typeStr.includes("distance")) {
+            return hardwareMap._devices[name] || hardwareMap.registerDistanceSensor(name);
+        }
+        return originalGet(type, name);
+    };
+}
+
+function ensureOopRoot() {
+    if (document.getElementById("oop-root")) return;
+
+    const root = document.createElement("div");
+    root.id = "oop-root";
+    root.innerHTML = `
+        <div class="oop-grid">
+            <div class="panel">
+                <div class="panel-header"><i class="fa-solid fa-database"></i> Constants Registry Visualization</div>
+                <div class="panel-body">
+                    <table id="constants-table">
+                        <thead>
+                        <tr>
+                            <th>Constant Name</th>
+                            <th>Type</th>
+                            <th>Value</th>
+                            <th>Used In</th>
+                        </tr>
+                        </thead>
+                        <tbody id="constants-body"></tbody>
+                    </table>
+                    <div id="hardcoded-warning"></div>
+                    <div id="success-banner" class="success-banner">
+                        <i class="fa-solid fa-circle-check"></i>
+                        Challenge Complete! HardwareNames configuration class is correctly implemented.
+                    </div>
+                    <div id="hint-box" class="hint-box"></div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><i class="fa-solid fa-robot"></i> Hardware Visualization</div>
+                <div id="scene-container">
+                    <div id="constants-overlay">
+                        <div id="claw-label" class="device-label">HardwareNames.CLAW_SERVO</div>
+                        <div id="wrist-label" class="device-label">HardwareNames.WRIST_MOTOR</div>
+                        <div id="sensor-label" class="device-label">HardwareNames.RANGE_SENSOR</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-grid">
+            <div class="panel">
+                <div class="panel-header"><i class="fa-solid fa-code-branch"></i> Single Source of Truth</div>
+                <div class="panel-body">
+                    <div class="metric">
+                        <span><i class="fa-solid fa-tag"></i> Current CLAW_SERVO Value</span>
+                        <strong id="rename-value">claw_servo</strong>
+                    </div>
+                    <div class="rename-box">
+                        <input id="rename-input" value="intake_claw" />
+                        <button id="rename-btn"><i class="fa-solid fa-pen"></i> Rename</button>
+                    </div>
+                    <div style="margin-top:16px;" class="metric">
+                        <span><i class="fa-solid fa-repeat"></i> References Updated Automatically</span>
+                        <strong id="rename-count" class="good">3 references</strong>
+                    </div>
+                    <div class="metric">
+                        <span><i class="fa-solid fa-triangle-exclamation"></i> Manual Changes Without Constants</span>
+                        <strong class="bad">3 hardcoded strings</strong>
+                    </div>
+                    <div class="explanation">
+                        <strong>static</strong> means the value belongs to the class itself. Access constants as <code>HardwareNames.CLAW_SERVO</code> without creating a new object instance.
+                    </div>
+                    <div class="explanation">
+                        <strong>final</strong> means the value cannot change after assignment, protecting robot configuration from accidental edits.
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><i class="fa-solid fa-list-check"></i> Validation Status</div>
+                <div class="panel-body">
+                    <div id="requirements" class="requirement-list"></div>
+                </div>
+            </div>
+        </div>`;
+    document.body.appendChild(root);
+}
+
+function attachChallengeToSimulator() {
+    ensureOopRoot();
+    const root = document.getElementById("oop-root");
+    const rightPanel = document.getElementById("sim-right-panel");
+    const baseScene = document.getElementById("sim-scene-container");
+    const overlay = document.getElementById("constants-overlay");
+    const customScene = document.getElementById("scene-container");
+    const customScenePanel = customScene && customScene.closest(".panel");
+
+    if (rightPanel && root && root.parentElement !== rightPanel) {
+        rightPanel.appendChild(root);
+    }
+
+    if (baseScene) {
+        baseScene.style.display = "";
+        if (overlay && overlay.parentElement !== baseScene) {
+            baseScene.appendChild(overlay);
+        }
+    }
+
+    if (customScenePanel) {
+        customScenePanel.style.display = "none";
+        if (root) root.classList.add("scene-in-base");
+    }
+}
+
+function setDeviceLabels(mode) {
+    const renamed = mode === "renamed";
+    const labels = {
+        "claw-label": renamed
+            ? '<i class="fa-solid fa-circle-check"></i> HardwareNames.CLAW_SERVO -> ' + escapeHTML(currentClawName)
+            : "HardwareNames.CLAW_SERVO -> " + escapeHTML(currentClawName),
+        "wrist-label": "HardwareNames.WRIST_MOTOR -> " + escapeHTML(currentWristName),
+        "sensor-label": "HardwareNames.RANGE_SENSOR -> " + escapeHTML(currentRangeName)
+    };
+
+    Object.keys(labels).forEach(id => {
+        const label = document.getElementById(id);
+        if (label) label.innerHTML = labels[id];
+    });
+}
+
+function setDeviceLabelState(hasHardcodedNames) {
+    document.querySelectorAll(".device-label").forEach(el => {
+        el.classList.toggle("bad", hasHardcodedNames);
+        el.classList.toggle("good", !hasHardcodedNames);
+    });
+}
+
+function createConstantsTable(code) {
+    const body = document.getElementById("constants-body");
+    if (!body) return;
+    body.innerHTML = "";
+    const parsed = parseHardwareConstants(code);
+
+    constantsSpec.forEach(([name, type, value, usage]) => {
+        const row = document.createElement("tr");
+
+        const detected = new RegExp(`\\b${name}\\b`).test(code);
+        const used = new RegExp(`HardwareNames\\.${name}`).test(code);
+        const actualValue = detected && Object.prototype.hasOwnProperty.call(parsed, name)
+            ? formatConstantValue(parsed[name])
+            : value;
+
+        row.className = `constant-row ${detected ? "detected" : ""}`;
+
+        row.innerHTML = `
+            <td>${name}</td>
+            <td>${type}</td>
+            <td>${escapeHTML(actualValue)}</td>
+            <td class="${used ? "usage-hit" : ""}">
+                ${used ? usage : "Not Used"}
+            </td>
+        `;
+
+        body.appendChild(row);
+    });
+
+    const hardcoded = [];
+    const lines = code.split("\n");
+
+    lines.forEach((line, index) => {
+        if (
+            line.includes('hardwareMap.get') &&
+            (
+                line.includes('"claw_servo"') ||
+                line.includes('"wrist_motor"') ||
+                line.includes('"range_sensor"')
+            )
+        ) {
+            hardcoded.push(index + 1);
+        }
+    });
+
+    const warning = document.getElementById("hardcoded-warning");
+    if (!warning) return;
+
+    if (hardcoded.length > 0) {
+        warning.innerHTML = `
+            <table style="width:100%; margin-top:12px;">
+                <tr class="warning-row">
+                    <td style="padding:12px;">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        Direct String Detected — hardcoded hardware names found on lines:
+                        ${hardcoded.join(", ")}
+                    </td>
+                </tr>
+            </table>
+        `;
+
+        setDeviceLabelState(true);
+    } else {
+        warning.innerHTML = "";
+
+        setDeviceLabelState(false);
+    }
+}
+
+function renderRequirements(code) {
+    const container = document.getElementById("requirements");
+    if (!container) return;
+    container.innerHTML = "";
+
+    let passed = 0;
+
+    requirementChecks.forEach((req, index) => {
+        const ok = req.test(code);
+
+        if (ok) passed++;
+        if (typeof setRequirement === "function") setRequirement(index, ok);
+
+        const row = document.createElement("div");
+        row.className = `req ${ok ? "good" : "bad"}`;
+
+        row.innerHTML = `
+            <i class="fa-solid ${ok ? "fa-circle-check" : "fa-circle"}"></i>
+            <span>${index + 1}. ${req.label}</span>
+        `;
+
+        container.appendChild(row);
+    });
+
+    const banner = document.getElementById("success-banner");
+    if (banner) {
+        banner.style.display =
+            passed === requirementChecks.length ? "block" : "none";
+    }
+}
+
+function showHint(code) {
+    const box = document.getElementById("hint-box");
+    if (!box) return;
+
+    if (/new\s+HardwareNames\s*\(/.test(code)) {
+        box.style.display = "block";
+        box.innerHTML = `
+            <i class="fa-solid fa-circle-xmark"></i>
+            Don't instantiate HardwareNames — access static constants directly as
+            HardwareNames.CLAW_SERVO
+        `;
+        return;
+    }
+
+    if (
+        /public\s+String\s+CLAW_SERVO/.test(code) ||
+        /public\s+double\s+CLAW_OPEN/.test(code)
+    ) {
+        box.style.display = "block";
+        box.innerHTML = `
+            <i class="fa-solid fa-circle-xmark"></i>
+            Add static to your constants — static means the value belongs to the class itself.
+        `;
+        return;
+    }
+
+    if (
+        /public\s+static\s+String/.test(code) ||
+        /public\s+static\s+double/.test(code)
+    ) {
+        box.style.display = "block";
+        box.innerHTML = `
+            <i class="fa-solid fa-lightbulb"></i>
+            Add final to your constants — final prevents accidental reassignment.
+        `;
+        return;
+    }
+
+    if (
+        /hardwareMap\.get\([^)]*"claw_servo"/.test(code) ||
+        /hardwareMap\.get\([^)]*"wrist_motor"/.test(code) ||
+        /hardwareMap\.get\([^)]*"range_sensor"/.test(code)
+    ) {
+        box.style.display = "block";
+        box.innerHTML = `
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            Hardcoded string detected — use HardwareNames constants instead of direct strings.
+        `;
+        return;
+    }
+
+    if (!/telemetry\.update\s*\(/.test(code)) {
+        box.style.display = "block";
+        box.innerHTML = `
+            <i class="fa-solid fa-lightbulb"></i>
+            Call telemetry.update() to send data to the Driver Station.
+        `;
+        return;
+    }
+
+    box.style.display = "none";
+}
+
+function buildScene() {
+    if (!window.THREE || !window.scene) return;
+    if (sceneRoot) window.scene.remove(sceneRoot);
+
+    sceneRoot = new THREE.Group();
+    sceneRoot.name = "unit13_4_scene";
+    window.scene.add(sceneRoot);
+    window.scene.background = new THREE.Color(sceneTheme.background);
+
+    if (typeof setFieldVisible === "function") setFieldVisible(false);
+    if (typeof setCameraOrbit === "function") {
+        setCameraOrbit({
+            theta: -0.08,
+            phi: 0.78,
+            radius: 8.5,
+            target: { x: 0, y: 0.7, z: -2.1 }
+        });
+    }
+
+    const ambient = new THREE.AmbientLight(0xffffff, 1.15);
+    sceneRoot.add(ambient);
+
+    const dir = new THREE.DirectionalLight(0xf6efe1, 1.05);
+    dir.position.set(8, 20, 10);
+    sceneRoot.add(dir);
+
+    const plane = new THREE.Mesh(
+        new THREE.PlaneGeometry(24, 24),
+        makeAlbedoMaterial(sceneTheme.floor, { roughness: 0.94, metalness: 0.02 })
+    );
+
+    plane.rotation.x = -Math.PI / 2;
+    sceneRoot.add(plane);
+
+    const grid = new THREE.GridHelper(24, 24, sceneTheme.floorLine, sceneTheme.floorGrid);
+    grid.position.y = 0.015;
+    sceneRoot.add(grid);
+
+    robot = new THREE.Mesh(
+        new THREE.BoxGeometry(6, 1.2, 6),
+        makeAlbedoMaterial(sceneTheme.robot, { roughness: 0.78, metalness: 0.14 })
+    );
+
+    robot.position.y = 0.6;
+    sceneRoot.add(robot);
+
+    wrist = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.5, 0.5, 3, 24),
+        makeAlbedoMaterial(sceneTheme.albedo, { roughness: 0.56, metalness: 0.18 })
+    );
+
+    wrist.rotation.z = Math.PI / 2;
+    wrist.position.set(0, 1.6, -1.8);
+
+    sceneRoot.add(wrist);
+
+    clawLeft = new THREE.Mesh(
+        new THREE.BoxGeometry(0.4, 1.2, 2),
+        makeAlbedoMaterial(sceneTheme.hardwareDark, { roughness: 0.62, metalness: 0.16 })
+    );
+
+    clawRight = new THREE.Mesh(
+        new THREE.BoxGeometry(0.4, 1.2, 2),
+        makeAlbedoMaterial(sceneTheme.albedoDim, { roughness: 0.64, metalness: 0.12 })
+    );
+
+    sceneRoot.add(clawLeft);
+    sceneRoot.add(clawRight);
+
+    sensorBeam = new THREE.Mesh(
+        new THREE.BoxGeometry(0.15, 0.15, 7),
+        new THREE.MeshBasicMaterial({
+            color: sceneTheme.beam,
+            transparent: true,
+            opacity: 0.38
+        })
+    );
+
+    sensorBeam.position.set(0, 0.8, -6);
+    sceneRoot.add(sensorBeam);
+
+    if (!animationRegistered && typeof addAnimationCallback === "function") {
+        addAnimationCallback(animateScene);
+        animationRegistered = true;
+    }
+}
+
+function updateVisuals() {
+    const spread = THREE.MathUtils.lerp(0.5, 2.0, 1.0 - currentClawPos);
+
+    clawLeft.position.set(-spread, 1.3, -4.0);
+    clawRight.position.set(spread, 1.3, -4.0);
+
+    wrist.rotation.y += currentWristPower * 0.04;
+
+    if (sensorBeam) {
+        const length = THREE.MathUtils.clamp(currentRangeDistance / 4, 1.2, 7);
+        sensorBeam.scale.z = length / 7;
+        sensorBeam.position.z = -2.5 - length / 2;
+    }
+}
+
+function animateScene() {
+    if (!wrist || !clawLeft || !clawRight) return;
+
+    updateVisuals();
+}
+
+function updateClawVisual(name, value) {
+    currentClawPos = value;
+}
+
+function updateWristVisual(name, value) {
+    currentWristPower = value;
+}
+
+function getCodeSafe() {
+    if (typeof getCode !== "function") return starterCode;
+
+    try {
+        return getCode();
+    } catch (err) {
+        return starterCode;
+    }
+}
+
+function getAnalysisState() {
+    const code = getCodeSafe();
+    applyStudentConstants(code);
+    const passed = requirementChecks.filter(req => req.test(code)).length;
+    const hardcoded = /hardwareMap\.get\([^)]*"claw_servo"|hardwareMap\.get\([^)]*"wrist_motor"|hardwareMap\.get\([^)]*"range_sensor"/.test(code);
+
+    return {
+        code,
+        passed,
+        total: requirementChecks.length,
+        hardcoded
+    };
+}
+
+function publishTelemetry(status) {
+    if (typeof clearTelemetry !== "function" ||
+        typeof addTelemetry !== "function" ||
+        typeof updateTelemetry !== "function") {
+        return;
+    }
+
+    if (status) telemetryStatus = status;
+    const analysis = getAnalysisState();
+
+    clearTelemetry();
+    addTelemetry("Status", telemetryStatus);
+    addTelemetry("Checks", analysis.passed + "/" + analysis.total);
+    addTelemetry("CLAW_SERVO", currentClawName);
+    addTelemetry("WRIST_MOTOR", currentWristName);
+    addTelemetry("RANGE_SENSOR", currentRangeName);
+    addTelemetry("Claw Open", currentClawOpen);
+    addTelemetry("Claw Closed", currentClawClosed);
+    addTelemetry("Max Power", currentWristMaxPower);
+    addTelemetry("Hardcoded Names", analysis.hardcoded ? "Detected" : "None");
+    updateTelemetry();
+}
+
+function failStudentExecution(message) {
+    if (typeof stopExecution === "function") stopExecution();
+    if (typeof _simShowTelemetryError === "function") {
+        _simShowTelemetryError(message);
+    } else {
+        addTelemetry("ERROR", message);
+        updateTelemetry();
+    }
+}
+
+function parseHardwareConstants(code) {
+    const body = extractClassBody(code || "", "HardwareNames");
+    const parsed = {
+        CLAW_SERVO: "claw_servo",
+        WRIST_MOTOR: "wrist_motor",
+        RANGE_SENSOR: "range_sensor",
+        CLAW_OPEN: 0.1,
+        CLAW_CLOSED: 0.9,
+        WRIST_MAX_POWER: 0.5
+    };
+
+    const stringRe = /\bpublic\s+static\s+final\s+String\s+([A-Z_][A-Z0-9_]*)\s*=\s*"([^"]+)"\s*;/g;
+    let match;
+    while ((match = stringRe.exec(body))) {
+        parsed[match[1]] = match[2];
+    }
+
+    const numberRe = /\bpublic\s+static\s+final\s+double\s+([A-Z_][A-Z0-9_]*)\s*=\s*([-+]?\d+(?:\.\d+)?)\s*;/g;
+    while ((match = numberRe.exec(body))) {
+        parsed[match[1]] = Number(match[2]);
+    }
+
+    return parsed;
+}
+
+function formatConstantValue(value) {
+    return typeof value === "string" ? '"' + value + '"' : String(value);
+}
+
+function applyStudentConstants(code) {
+    const constants = parseHardwareConstants(code || getCodeSafe());
+    currentClawName = constants.CLAW_SERVO || "claw_servo";
+    currentWristName = constants.WRIST_MOTOR || "wrist_motor";
+    currentRangeName = constants.RANGE_SENSOR || "range_sensor";
+    currentClawOpen = Number(constants.CLAW_OPEN);
+    currentClawClosed = Number(constants.CLAW_CLOSED);
+    currentWristMaxPower = Number(constants.WRIST_MAX_POWER);
+    if (!Number.isFinite(currentClawOpen)) currentClawOpen = 0.1;
+    if (!Number.isFinite(currentClawClosed)) currentClawClosed = 0.9;
+    if (!Number.isFinite(currentWristMaxPower)) currentWristMaxPower = 0.5;
+    registerConfiguredHardware();
+    setDeviceLabels();
+    const renameValue = document.getElementById("rename-value");
+    if (renameValue) renameValue.textContent = currentClawName;
+    return constants;
+}
+
+function registerConfiguredHardware() {
+    if (!window.hardwareMap) return;
+    if (!hardwareMap._devices || !hardwareMap._devices[currentClawName]) {
+        hardwareMap.registerServo(currentClawName);
+    }
+    if (!hardwareMap._devices || !hardwareMap._devices[currentWristName]) {
+        hardwareMap.registerMotor(currentWristName);
+    }
+    if (!hardwareMap._devices || !hardwareMap._devices[currentRangeName]) {
+        hardwareMap.registerDistanceSensor(currentRangeName);
+    }
+}
+
+function makeHardwareNamesObject() {
+    return {
+        CLAW_SERVO: currentClawName,
+        WRIST_MOTOR: currentWristName,
+        RANGE_SENSOR: currentRangeName,
+        CLAW_OPEN: currentClawOpen,
+        CLAW_CLOSED: currentClawClosed,
+        WRIST_MAX_POWER: currentWristMaxPower
+    };
+}
+
+function getHardwareDevice(type, name) {
+    const typeName = String(type || "").toLowerCase();
+    if (typeName.includes("servo")) {
+        return hardwareMap._devices[name] || hardwareMap.registerServo(name);
+    }
+    if (typeName.includes("motor")) {
+        return hardwareMap._devices[name] || hardwareMap.registerMotor(name);
+    }
+    if (typeName.includes("distance")) {
+        return hardwareMap._devices[name] || hardwareMap.registerDistanceSensor(name);
+    }
+    return hardwareMap.get(type, name);
+}
+
+function setClawPosition(value) {
+    currentClawPos = Number(value);
+    const device = getHardwareDevice("Servo", currentClawName);
+    if (device && typeof device.setPosition === "function") device.setPosition(currentClawPos);
+}
+
+function setWristPower(value) {
+    currentWristPower = Number(value) || 0;
+    const device = getHardwareDevice("DcMotor", currentWristName);
+    if (device && typeof device.setPower === "function") device.setPower(currentWristPower);
+}
+
+function getRangeDistance() {
+    return currentRangeDistance;
+}
+
+function runStudentInit() {
+    const code = getCodeSafe();
+    applyStudentConstants(code);
+    const opBody = extractOpModeBody(code);
+    const initBody = extractMethodBody(opBody, "init");
+    if (!initBody) {
+        publishTelemetry("Initialized");
+        return;
+    }
+
+    try {
+        const initFn = new Function(
+            "hardwareMap",
+            "HardwareNames",
+            "getHardwareDevice",
+            "setClawPosition",
+            "setWristPower",
+            "getRangeDistance",
+            "addTelemetry",
+            "updateTelemetry",
+            '"use strict"; let claw, wrist, range;\n' + transpileHardwareBody(initBody)
+        );
+        clearTelemetry();
+        initFn(hardwareMap, makeHardwareNamesObject(), getHardwareDevice, setClawPosition, setWristPower, getRangeDistance, addTelemetry, updateTelemetry);
+        updateTelemetry();
+    } catch (err) {
+        failStudentExecution("init() runtime error: " + err.message);
+    }
+}
+
+function compileStudentLoop() {
+    const code = getCodeSafe();
+    if (code === compiledSource && compiledLoopFn) return true;
+    applyStudentConstants(code);
+    const opBody = extractOpModeBody(code);
+    const loopBody = extractMethodBody(opBody, "loop");
+    if (!loopBody) {
+        failStudentExecution("loop() was not found.");
+        return false;
+    }
+
+    try {
+        compiledLoopFn = new Function(
+            "hardwareMap",
+            "HardwareNames",
+            "getHardwareDevice",
+            "setClawPosition",
+            "setWristPower",
+            "getRangeDistance",
+            "addTelemetry",
+            "updateTelemetry",
+            '"use strict"; let claw, wrist, range;\n' + transpileHardwareBody(loopBody)
+        );
+        compiledSource = code;
+        return true;
+    } catch (err) {
+        compiledLoopFn = null;
+        compiledSource = "";
+        failStudentExecution("loop() compile error: " + err.message);
+        return false;
+    }
+}
+
+function startStudentLoop() {
+    if (!compileStudentLoop()) return;
+    const runFrame = function () {
+        if (!compileStudentLoop()) return;
+        try {
+            clearTelemetry();
+            compiledLoopFn(hardwareMap, makeHardwareNamesObject(), getHardwareDevice, setClawPosition, setWristPower, getRangeDistance, addTelemetry, updateTelemetry);
+            updateTelemetry();
+            refreshAnalysis();
+        } catch (err) {
+            failStudentExecution("loop() runtime error: " + err.message);
+        }
+    };
+    if (typeof _simStartLoop === "function") _simStartLoop(runFrame);
+    else window.setInterval(runFrame, 50);
+}
+
+function transpileHardwareBody(body) {
+    let js = body || "";
+    js = js
+        .replace(/\bhardwareMap\s*\.\s*get\s*\(\s*(Servo|DcMotor|DistanceSensor)\.class\s*,\s*([^)]+?)\s*\)/g, 'getHardwareDevice("$1", $2)')
+        .replace(/\bclaw\s*\.\s*setPosition\s*\(/g, "setClawPosition(")
+        .replace(/\bwrist\s*\.\s*setPower\s*\(/g, "setWristPower(")
+        .replace(/\brange\s*\.\s*getDistance\s*\([^)]*\)/g, "getRangeDistance()")
+        .replace(/\bDistanceUnit\s*\.\s*INCH\b/g, '"INCH"')
+        .replace(/\btelemetry\s*\.\s*addData\s*\(/g, "addTelemetry(")
+        .replace(/\btelemetry\s*\.\s*update\s*\(\s*\)/g, "updateTelemetry()")
+        .replace(/\b(?:final\s+)?(?:double|int|boolean|String|float|long|byte|short|char|Servo|DcMotor|DistanceSensor)\s+(?=[A-Za-z_$])/g, "let ");
+    if (typeof _simTranspile === "function") js = _simTranspile(js);
+    return js;
+}
+
+function refreshAnalysis() {
+    const analysis = getAnalysisState();
+
+    applyStudentConstants(analysis.code);
+    createConstantsTable(analysis.code);
+    renderRequirements(analysis.code);
+    showHint(analysis.code);
+}
+
+window.onSimulatorReady = function () {
+    setCode(starterCode);
+
+    setChallenge(
+        "Telemark Unit 13.4 Simulator",
+        "Static constants for hardware names.",
+        [
+            "Declare class HardwareNames",
+            "Define CLAW_SERVO as a public static final String",
+            "Define WRIST_MOTOR as a public static final String",
+            "Define RANGE_SENSOR as a public static final String",
+            "Define CLAW_OPEN as a double constant",
+            "Define CLAW_CLOSED as a double constant",
+            "Define WRIST_MAX_POWER as a double constant",
+            "Declare all constants public static final",
+            "Use HardwareNames.CLAW_SERVO in hardwareMap.get()",
+            "Avoid hardcoded hardware names in hardwareMap.get()"
+        ]
+    );
+
+    setBadges([
+        { iconClass: "fa-solid fa-database", label: "Static", active: true },
+        { iconClass: "fa-solid fa-tag", label: "Constants", active: true },
+        { iconClass: "fa-solid fa-display", label: "Telemetry", active: true }
+    ]);
+
+    setActiveInputs([]);
+
+    attachChallengeToSimulator();
+    installDistanceSensorShim();
+
+    hardwareMap.registerServo("claw_servo");
+    hardwareMap.registerMotor("wrist_motor");
+    hardwareMap.registerDistanceSensor("range_sensor");
+
+    hardwareMap.onServoPosition(updateClawVisual);
+    hardwareMap.onMotorPower(updateWristVisual);
+
+    buildScene();
+
+    refreshAnalysis();
+
+    setInterval(function () {
+        refreshAnalysis();
+    }, 250);
+
+    const renameBtn = document.getElementById("rename-btn");
+    if (renameBtn) {
+        renameBtn.addEventListener("click", () => {
+            const renameInput = document.getElementById("rename-input");
+            const value = renameInput ? renameInput.value.trim() : "";
+            currentClawName = value || "claw_servo";
+            if (value && typeof getCode === "function" && typeof setCode === "function") {
+                const updatedCode = getCode().replace(
+                    /(public\s+static\s+final\s+String\s+CLAW_SERVO\s*=\s*")[^"]+("\s*;)/,
+                    "$1" + value + "$2"
+                );
+                setCode(updatedCode);
+            }
+            registerConfiguredHardware();
+
+            const renameValue = document.getElementById("rename-value");
+            if (renameValue) renameValue.textContent = currentClawName;
+
+            setDeviceLabels("renamed");
+            refreshAnalysis();
+            publishTelemetry("Renamed");
+        });
+    }
+
+    publishTelemetry("Ready");
+
+    window.onInit = function () {
+        refreshAnalysis();
+        runStudentInit();
+    };
+
+    window.onStart = function () {
+        refreshAnalysis();
+        telemetryStatus = "Running";
+        startStudentLoop();
+    };
+
+    window.onRun = window.onInit;
+
+    window.onStop = function () {
+        publishTelemetry("Stopped");
+    };
+
+    window.onReset = function () {
+        currentClawPos = 0.1;
+        currentWristPower = 0.0;
+        currentRangeDistance = 24;
+        currentClawName = "claw_servo";
+        currentWristName = "wrist_motor";
+        currentRangeName = "range_sensor";
+        currentClawOpen = 0.1;
+        currentClawClosed = 0.9;
+        currentWristMaxPower = 0.5;
+        compiledLoopFn = null;
+        compiledSource = "";
+        const rangeSensor = hardwareMap._devices && hardwareMap._devices.range_sensor;
+        if (rangeSensor && typeof rangeSensor._setDistance === "function") {
+            rangeSensor._setDistance(currentRangeDistance);
+        }
+
+        const renameValue = document.getElementById("rename-value");
+        if (renameValue) renameValue.textContent = currentClawName;
+
+        setDeviceLabels();
+
+        refreshAnalysis();
+        publishTelemetry("Reset");
+    };
+};
+
+function extractOpModeBody(code) {
+    const match = /\bclass\s+([A-Za-z_$][\w$]*)\s+extends\s+OpMode\b/.exec(code || "");
+    return match ? extractClassBody(code, match[1]) : "";
+}
+
+function extractClassBody(code, name) {
+    const re = new RegExp("\\bclass\\s+" + name + "\\b[^{]*\\{");
+    const match = re.exec(code || "");
+    if (!match) return "";
+    let index = match.index + match[0].length;
+    let depth = 1;
+    for (; index < code.length; index++) {
+        if (code[index] === "{") depth++;
+        if (code[index] === "}") {
+            depth--;
+            if (depth === 0) return code.slice(match.index + match[0].length, index);
+        }
+    }
+    return "";
+}
+
+function extractMethodBody(scope, name) {
+    const re = new RegExp("\\b(?:public\\s+|private\\s+|protected\\s+)?(?:void|boolean|double|int|String)\\s+" + name + "\\s*\\([^)]*\\)\\s*\\{");
+    const match = re.exec(scope || "");
+    if (!match) return "";
+    let index = match.index + match[0].length;
+    let depth = 1;
+    for (; index < scope.length; index++) {
+        if (scope[index] === "{") depth++;
+        if (scope[index] === "}") {
+            depth--;
+            if (depth === 0) return scope.slice(match.index + match[0].length, index);
+        }
+    }
+    return "";
+}
+</script>
+</body>
+</html>

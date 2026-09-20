@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Telemark Unit 8.3 Simulator</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<style>
+:root{
+  --bg:#05080d;--panel:#0b1118;--panel-2:#071019;--text:#eaf8ff;--muted:#94a3b8;
+  --accent:#38bdf8;--accent-2:#22d3ee;--danger:#cc0000;--danger-2:#ff5252;--good:#00cc00;--warn:#ffcc00;
+  --border:#243746;--orange:#22d3ee;--cyan:#22d3ee;--field:#071019;--grid:#243746;
+}
+*{box-sizing:border-box;scrollbar-width:thin;scrollbar-color:#22d3ee #05080d}
+*::-webkit-scrollbar{width:6px;height:6px}
+*::-webkit-scrollbar-track{background:#05080d}
+*::-webkit-scrollbar-thumb{background:#22d3ee;border-radius:3px}
+*::-webkit-scrollbar-thumb:hover{background:#22d3ee}
+html,body{height:100%;margin:0}
+body{display:flex;height:100vh;overflow:hidden;background:var(--bg);color:var(--text);font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif}
+button,input,textarea{font-family:inherit}
+code{font-family:"Consolas","Courier New",monospace}
+/* Layout */
+#left-panel{width:55%;min-width:360px;height:100%;display:flex;flex-direction:column;background:#080d13;overflow:hidden}
+#right-panel{flex:1;min-width:390px;height:100%;display:flex;flex-direction:column;background:var(--panel-2);overflow:hidden}
+#resizer{width:6px;background:#243746;cursor:col-resize;z-index:20;transition:background .2s;flex-shrink:0}
+#resizer:hover,#resizer.active{background:var(--accent)}
+.panel-header{padding:10px 14px;background:#05080d;border-bottom:1px solid #243746;flex-shrink:0}
+.panel-header-title{font-weight:800;color:#fff;font-size:1.05rem}.panel-header-sub{color:var(--muted);font-size:.82rem;margin-top:2px}
+/* Challenge */
+.challenge-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;margin:8px 10px;overflow:hidden;flex-shrink:0}
+.challenge-header{padding:9px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:#0d1721;font-weight:800;font-size:.9rem;color:var(--orange);user-select:none}
+.challenge-header i.chev{color:#888;font-size:.75rem;transition:transform .2s}.challenge-header.open i.chev{transform:rotate(90deg)}
+.challenge-body{display:none;padding:10px 12px;font-size:.85rem;line-height:1.55;color:#bbb}.challenge-body.open{display:block}
+.task{margin:6px 0 10px;color:#dbeafe;background:#05080d;padding:9px 10px;border-radius:5px;font-family:"Consolas","Courier New",monospace;font-size:.82rem;line-height:1.55;white-space:pre-wrap}
+.req{display:flex;align-items:center;gap:7px;padding:3px 0;font-size:.83rem}.req .check{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0;background:rgba(100,100,100,.2);color:#555}
+.req .check.pass{background:rgba(0,204,0,.2);color:var(--good)}
+.success-banner{display:none;background:rgba(0,204,0,.12);border:1px solid var(--good);border-radius:6px;padding:10px;color:var(--good);font-weight:800;font-size:.9rem;margin-top:8px;text-align:center}.success-banner.visible{display:block}
+/* Editor */
+.code-wrapper{position:relative;flex:1;overflow:hidden;background:var(--bg);min-height:180px}
+#code-editor,#highlighting{position:absolute;inset:0;margin:0;padding:16px;font-family:"Consolas","Courier New",monospace;font-size:13px;line-height:1.6;tab-size:4;white-space:pre;border:0;outline:none}
+#code-editor{color:transparent;background:transparent;caret-color:#fff;z-index:2;resize:none;overflow:auto}
+#highlighting{z-index:1;overflow:hidden}#highlighting code{font-family:inherit;font-size:inherit;line-height:inherit;text-shadow:none}
+/* Bottom bar */
+.bottom-bar{background:var(--panel);border-top:1px solid var(--border);padding:8px 10px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;max-height:280px;overflow:auto}
+.controls-row{display:flex;gap:8px}.controls-row button{flex:1;padding:10px;border-radius:6px;border:none;font-size:.9rem;font-weight:800;cursor:pointer;color:#fff;transition:.1s}.controls-row button:active{transform:translateY(1px)}
+.btn-run{background:var(--good)}.btn-run:hover{filter:brightness(1.1)}.btn-run:disabled{background:#444;color:#888;cursor:not-allowed;transform:none}
+.btn-stop{background:var(--danger)}.btn-stop:hover{filter:brightness(1.1)}.btn-reset{background:#555}.btn-reset:hover{filter:brightness(1.2)}
+.ds-status{display:flex;justify-content:space-between;align-items:center;font-family:"Consolas","Courier New",monospace;font-size:.85rem}.ds-state{font-weight:800}.ds-state{color:var(--danger)}.ds-timer{color:#569cd6}
+.telemetry-panel{background:#000;border:1px solid #444;border-radius:6px;min-height:54px;max-height:110px;padding:8px;font-family:"Consolas","Courier New",monospace;font-size:.85rem;overflow-y:auto;color:#00ff00;line-height:1.45}
+.telemetry-line{margin:1px 0}.telemetry-key{color:#4ec9b0}.telemetry-error{color:#ff6666}
+#hint-container{display:flex;flex-direction:column;gap:4px}.hint{background:rgba(255,204,0,.12);border-left:3px solid var(--warn);padding:6px 8px;color:var(--warn);border-radius:3px;font-size:.82rem}.hint.error{background:rgba(204,0,0,.12);border-left-color:var(--danger);color:#ff6666}.hint.info{background:rgba(0,122,204,.12);border-left-color:var(--accent);color:#6db3f2}
+/* Right panel */
+.badge-strip{display:flex;gap:6px;flex-wrap:wrap;padding:10px 10px 0;flex-shrink:0}.hw-badge{padding:4px 10px;border-radius:6px;font-size:.78rem;font-weight:700;display:flex;align-items:center;gap:5px;border:1px solid var(--border)}.hw-badge.active{border-color:var(--orange);color:var(--orange);background:rgba(34,211,238,.1)}.hw-badge.tel{border-color:var(--accent);color:var(--accent);background:rgba(56,189,248,.1)}.hw-badge.inactive{background:#0d1721;color:#64748b}
+#scene-container{flex:1;position:relative;margin:10px;border-radius:8px;overflow:hidden;background:#0a0a0a;min-height:260px;border:1px solid #202020}
+#robot-canvas{display:block;width:100%;height:100%;cursor:grab}#robot-canvas:active{cursor:grabbing}
+.scene-label{position:absolute;left:10px;top:9px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.09);border-radius:6px;padding:5px 8px;color:#bbb;font-size:.76rem;pointer-events:none;font-family:"Consolas","Courier New",monospace;z-index:10;}
+.scene-hint{position:absolute;left:50%;top:16px;transform:translateX(-50%);max-width:86%;padding:9px 12px;border-radius:8px;background:rgba(255,204,0,.18);border:1px solid rgba(255,204,0,.9);color:var(--warn);font-weight:800;font-size:.9rem;text-align:center;box-shadow:0 0 18px rgba(255,204,0,.2);display:none;pointer-events:none;z-index:5}.scene-hint.visible{display:block;animation:pulseHint .85s infinite alternate}.scene-hint.error{background:rgba(204,0,0,.22);border-color:#ff5555;color:#ff7777;box-shadow:0 0 20px rgba(255,0,0,.2)}
+@keyframes pulseHint{from{transform:translateX(-50%) scale(1);opacity:.86}to{transform:translateX(-50%) scale(1.035);opacity:1}}
+.readouts{flex-shrink:0;margin:0 10px 10px;display:flex;flex-direction:column;gap:8px;max-height:245px;overflow:auto}
+.mode-panel{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px}
+.mode-title{font-size:1.1rem;font-weight:900;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.mode-value{font-size:2.2rem;font-weight:900;font-family:"Consolas","Courier New",monospace;letter-spacing:-2px}
+.mode-value.brake{color:#ff4444}
+.mode-value.float{color:#888888}
+.lift-status{display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:.85rem}
+.status-item{background:#0d1721;padding:8px;border-radius:6px}
+.status-label{color:var(--muted);font-size:.75rem}
+.status-value{font-family:"Consolas","Courier New",monospace;font-weight:700;color:#0f0}
+/* Gamepad card */
+.gamepad-float-card{position:fixed;bottom:12px;right:12px;width:380px;min-width:240px;background:var(--panel);border:1px solid var(--border);border-radius:12px;z-index:1000;display:flex;flex-direction:column;box-shadow:0 6px 24px rgba(0,0,0,.5);overflow:hidden}
+.gamepad-float-card.collapsed .gamepad-card-body,
+.gamepad-float-card.collapsed .gamepad-resize-handle{display:none}
+.gamepad-titlebar{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#0d1721;border-bottom:1px solid var(--border);cursor:grab;user-select:none;flex-shrink:0}
+.gamepad-titlebar:active{cursor:grabbing}
+.gamepad-titlebar.dragging{cursor:grabbing}
+.gamepad-titlebar-label{font-weight:700;font-size:.9rem;color:#fff;display:flex;align-items:center;gap:6px}
+.gamepad-titlebar-label i{color:var(--accent)}
+.gp-collapse-btn{width:24px;height:24px;padding:0;border-radius:4px;background:#101d29;border:1px solid #243746;color:#cbd5e1;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.gp-collapse-btn:hover{background:#444}
+.gamepad-card-body{padding:10px;overflow:hidden;flex:1}
+.gamepad-resize-handle{position:absolute;bottom:0;right:0;width:16px;height:16px;cursor:nwse-resize;z-index:10}
+.gamepad-resize-handle::after{content:'';position:absolute;bottom:3px;right:3px;width:6px;height:6px;border-right:2px solid #666;border-bottom:2px solid #666}
+.controller-wrap{width:100%;position:relative;aspect-ratio:768/512;border-radius:14px;overflow:hidden;background:#0f0f0f;touch-action:none;user-select:none}
+.controller-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:1}
+.overlay{position:absolute;border-radius:50%;touch-action:none;user-select:none}
+.stick-zone-left{left:35.5%;top:65.5%;width:17%;height:24%;transform:translate(-50%,-50%);background:transparent;z-index:5;cursor:grab}
+.stick-base-left{position:absolute;left:35.5%;top:65.5%;width:14%;height:21%;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;box-shadow:inset 0 0 0 2px rgba(255,255,255,.06);z-index:2}
+.stick-knob-left{position:absolute;left:35.5%;top:65.5%;width:9%;height:13%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 35% 35%,#3a3a3a,#121212 70%);border:1px solid rgba(255,255,255,.1);pointer-events:none;opacity:1;z-index:6}
+.stick-zone-right{left:64%;top:65.5%;width:17%;height:24%;transform:translate(-50%,-50%);background:transparent;z-index:5;cursor:grab}
+.stick-base-right{position:absolute;left:64%;top:65.5%;width:14%;height:21%;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;box-shadow:inset 0 0 0 2px rgba(255,255,255,.06);z-index:2}
+.stick-knob-right{position:absolute;left:64%;top:65.5%;width:9%;height:13%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 35% 35%,#3a3a3a,#121212 70%);border:1px solid rgba(255,255,255,.1);pointer-events:none;opacity:1;z-index:6}
+.button-overlay{border:2px solid rgba(255,255,255,.08);background:rgba(255,255,255,.01);cursor:default;opacity:.4;z-index:4}
+.button-overlay.pressed{background:rgba(255,255,255,.18);box-shadow:0 0 0 2px rgba(255,255,255,.25);opacity:1}
+.a-btn{left:75.5%;top:49%;width:7%;height:10%;transform:translate(-10%,-10%)}
+.b-btn{left:83%;top:38%;width:7%;height:10%;transform:translate(-10%,-10%)}
+.x-btn{left:68%;top:38%;width:7%;height:10%;transform:translate(-10%,-10%)}
+.y-btn{left:75.5%;top:27%;width:7%;height:10%;transform:translate(-10%,-10%)}
+.small-button{width:5.2%;height:6.4%;border-radius:16px;border:2px solid rgba(255,255,255,.08);pointer-events:auto;opacity:.4}
+.back-btn{left:37.5%;top:28%;transform:translate(-10%,-10%)}.start-btn{left:58%;top:28%;transform:translate(-10%,-10%)}
+.bumper-btn{width:14%;height:6%;border-radius:8px;border:2px solid rgba(255,255,255,.08);background:rgba(255,255,255,.01);opacity:.4}
+.left-bumper-btn{left:20%;top:12%;transform:translate(-50%,-50%)}.right-bumper-btn{left:80%;top:12%;transform:translate(-50%,-50%)}
+.trigger-slider{position:absolute;width:10%;height:14%;background:rgba(0,0,0,.4);border-radius:6px;border:1px solid rgba(255,255,255,.15);cursor:pointer;overflow:hidden;z-index:4}
+.trigger-slider-fill{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,var(--accent-2),var(--accent));transition:height .05s}
+.left-trigger-slider{left:21%;top:0;transform:translate(-50%,0)}
+.right-trigger-slider{left:79%;top:0;transform:translate(-50%,0)}
+.trigger-label{position:absolute;font-size:.6rem;font-family:monospace;color:var(--accent);font-weight:700;white-space:nowrap;z-index:4}
+.lt-label{left:5%;top:15%;transform:translate(0,-50%)}
+.rt-label{right:5%;top:15%;transform:translate(0,-50%)}
+.dpad-container{position:absolute;left:21.5%;top:41%;width:16%;height:24%;transform:translate(-50%,-50%);pointer-events:none;opacity:.3;z-index:4}
+.dpad-btn{position:absolute;width:33%;height:33%;background:rgba(40,40,40,.8);border:1px solid rgba(255,255,255,.05)}
+.dpad-btn svg{width:50%;height:50%;fill:rgba(255,255,255,.3);display:block;margin:auto}
+.dpad-up{top:0;left:33%;border-radius:4px 4px 0 0}.dpad-down{bottom:0;left:33%;border-radius:0 0 4px 4px}
+.dpad-left{left:0;top:33%;border-radius:4px 0 0 4px}.dpad-right{right:0;top:33%;border-radius:0 4px 4px 0}
+.dpad-center{position:absolute;left:33%;top:33%;width:34%;height:34%;background:rgba(30,30,30,.9)}
+.axis-readout{position:absolute;left:50%;bottom:4%;transform:translateX(-50%);font-family:"Consolas","Courier New",monospace;color:#ccc;font-size:.69rem;z-index:7;background:rgba(0,0,0,.75);padding:4px 8px;border-radius:4px;white-space:nowrap;border:1px solid #444;}
+.gp-instruction{position:absolute;left:50%;top:4%;transform:translateX(-50%);font-size:.72rem;color:#ddd;font-family:"Consolas","Courier New",monospace;white-space:nowrap;z-index:7;background:rgba(0,0,0,0.6);padding:3px 8px;border-radius:4px;border:1px solid #444;}
+</style>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+<script src="./telemark-project.js"></script>
+<script src="telemark-project-checks.js"></script>
+<link rel="stylesheet" href="./telemark-project.css"/>
+  <script src="./gamepad-controls.js"></script>
+  <script src="./simulator_base.js" data-telemark-mode="legacy"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+<div id="left-panel">
+  <div class="panel-header">
+    <div class="panel-header-title">Telemark Unit 8.3 Simulator</div>
+    <div class="panel-header-sub">ZeroPowerBehavior · BRAKE vs FLOAT · Gravity simulation</div>
+  </div>
+  <div class="challenge-card">
+    <div class="challenge-header open" id="challenge-toggle">
+      <span><i class="fa-solid fa-trophy" style="margin-right:4px"></i> CHALLENGE 3 — ZeroPowerBehavior: BRAKE vs FLOAT</span>
+      <i class="fa-solid fa-chevron-right chev"></i>
+    </div>
+    <div class="challenge-body open" id="challenge-body">
+      <div class="task">Create a safety configuration for a motor named "lift".
+If the driver presses gamepad1.y, set behavior to BRAKE.
+If they press gamepad1.x, set it back to FLOAT.
+Display the current mode on the Driver Station.</div>
+      <div class="req" id="req-map"><span class="check"><i class="fa-solid fa-check"></i></span> lift mapped in init()</div>
+      <div class="req" id="req-brake"><span class="check"><i class="fa-solid fa-check"></i></span> gamepad1.y sets BRAKE</div>
+      <div class="req" id="req-float"><span class="check"><i class="fa-solid fa-check"></i></span> gamepad1.x sets FLOAT</div>
+      <div class="req" id="req-telemetry"><span class="check"><i class="fa-solid fa-check"></i></span> Current mode displayed via telemetry</div>
+      <div class="success-banner" id="success-banner"><i class="fa-solid fa-circle-check"></i> Challenge Complete! Your lift safety configuration is working.</div>
+    </div>
+  </div>
+  <div class="code-wrapper">
+    <textarea id="code-editor" spellcheck="false" oninput="onCodeChange()" onscroll="syncScroll(this)">@TeleOp(name="Brake_Float_Demo")
+public class BrakeFloatDemo extends OpMode {
+
+    DcMotor lift;
+
+    String currentMode = "BRAKE";
+
+    @Override
+    public void init() {
+        lift = hardwareMap.get(DcMotor.class, "lift");
+        lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        telemetry.addData("Status", "Initialized");
+    }
+
+    @Override
+    public void loop() {
+        double liftPower = -gamepad1.left_stick_y;
+        lift.setPower(liftPower);
+
+        // TODO: If gamepad1.y is pressed, switch to BRAKE mode
+        // TODO: If gamepad1.x is pressed, switch to FLOAT mode
+        // TODO: Report the current mode with telemetry
+        telemetry.addData("Lift Power", liftPower);
+        telemetry.update();
+    }
+}</textarea>
+    <pre id="highlighting" aria-hidden="true"><code class="language-java" id="highlighting-content"></code></pre>
+  </div>
+  <div class="bottom-bar">
+    <div class="controls-row">
+      <button class="btn-run" id="btn-run" onclick="handleRun()"><i class="fa-solid fa-play"></i> Run</button>
+      <button class="btn-stop" onclick="handleStop()"><i class="fa-solid fa-stop"></i> Stop</button>
+      <button class="btn-reset" onclick="resetSimulation()"><i class="fa-solid fa-rotate"></i> Reset Lift</button>
+    </div>
+    <div class="ds-status">
+      <span class="ds-state" id="ds-state" style="color:var(--danger)">STOPPED</span>
+      <span class="ds-timer">Time: <span id="timer-val">0.00</span>s</span>
+    </div>
+    <div class="telemetry-panel" id="telemetry-log"><span style="color:#666">Press Run to start simulation...</span></div>
+    <div id="hint-container"></div>
+  </div>
+</div>
+<div id="resizer"></div>
+<div id="right-panel">
+  <div class="badge-strip">
+    <div class="hw-badge active"><i class="fa-solid fa-screwdriver-wrench"></i> DcMotor (lift)</div>
+    <div class="hw-badge tel"><i class="fa-solid fa-tower-broadcast"></i> Telemetry</div>
+    <div class="hw-badge inactive"><i class="fa-solid fa-gamepad"></i> Gamepad</div>
+    <div class="hw-badge inactive"><i class="fa-solid fa-arrow-up"></i> Lift</div>
+  </div>
+  <div id="scene-container">
+    <canvas id="robot-canvas"></canvas>
+    <div class="scene-label">Left stick Y = lift power · Y = BRAKE · X = FLOAT</div>
+    <div class="scene-hint" id="scene-hint"></div>
+  </div>
+  <div class="readouts">
+    <div class="mode-panel">
+      <div class="mode-title">
+        <i class="fa-solid fa-lock" id="mode-icon"></i>
+        <span>ZeroPowerBehavior</span>
+      </div>
+      <div class="mode-value" id="mode-value">FLOAT</div>
+      
+      <div class="lift-status">
+        <div class="status-item">
+          <div class="status-label">Lift Power</div>
+          <div class="status-value" id="lift-power-val">0.00</div>
+        </div>
+        <div class="status-item">
+          <div class="status-label">Height</div>
+          <div class="status-value" id="lift-height-val">42%</div>
+        </div>
+      </div>
+      
+      <div style="margin-top:10px;height:8px;background:#111;border-radius:4px;overflow:hidden">
+        <div id="height-bar" style="height:100%;width:42%;background:linear-gradient(90deg,#38bdf8,#22d3ee);transition:width .15s"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Gamepad floating card -->
+<div class="gamepad-float-card" id="gamepad-float-card">
+  <div class="gamepad-titlebar" id="gamepad-titlebar">
+    <span class="gamepad-titlebar-label"><i class="fa-solid fa-gamepad"></i> Gamepad 1</span>
+    <button class="gp-collapse-btn" id="gp-collapse-btn" title="Collapse / Expand">−</button>
+  </div>
+  <div class="gamepad-card-body" id="gamepad-card-body">
+    <div class="controller-wrap" id="controller-wrap">
+      <img class="controller-img" alt="controller" src="https://resource.logitechg.com/w_776,h_437,ar_16:9,c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/gaming/en/products/f310/f310-feature-3.png">
+      <div class="trigger-slider left-trigger-slider" id="left-trigger-slider"><div class="trigger-slider-fill" id="left-trigger-fill"></div></div>
+      <div class="trigger-slider right-trigger-slider" id="right-trigger-slider"><div class="trigger-slider-fill" id="right-trigger-fill"></div></div>
+      <div class="trigger-label lt-label">left_trigger</div>
+      <div class="trigger-label rt-label">right_trigger</div>
+      <div class="overlay bumper-btn left-bumper-btn" id="btn-lb"></div>
+      <div class="overlay bumper-btn right-bumper-btn" id="btn-rb"></div>
+      <div class="overlay stick-zone-left" id="stick-zone-left"></div>
+      <div class="stick-base-left"></div>
+      <div class="stick-knob-left" id="stick-knob-left"></div>
+      <div class="overlay stick-zone-right" id="stick-zone-right"></div>
+      <div class="stick-base-right"></div>
+      <div class="stick-knob-right" id="stick-knob-right"></div>
+      <div class="overlay button-overlay y-btn" id="btn-y"></div>
+      <div class="overlay button-overlay x-btn" id="btn-x"></div>
+      <div class="overlay button-overlay a-btn" id="btn-a"></div>
+      <div class="overlay button-overlay b-btn" id="btn-b"></div>
+      <div class="overlay button-overlay small-button back-btn" id="btn-back"></div>
+      <div class="overlay button-overlay small-button start-btn" id="btn-start"></div>
+      <div class="dpad-container" id="dpad-container">
+        <div class="dpad-center"></div>
+        <div class="dpad-btn dpad-up" id="dpad-up"><svg viewBox="0 0 24 24"><path d="M12 4l-8 8h16z"/></svg></div>
+        <div class="dpad-btn dpad-down" id="dpad-down"><svg viewBox="0 0 24 24"><path d="M12 20l8-8H4z"/></svg></div>
+        <div class="dpad-btn dpad-left" id="dpad-left"><svg viewBox="0 0 24 24"><path d="M4 12l8-8v16z"/></svg></div>
+        <div class="dpad-btn dpad-right" id="dpad-right"><svg viewBox="0 0 24 24"><path d="M20 12l-8 8V4z"/></svg></div>
+      </div>
+      <div class="axis-readout" id="axis-readout">LX 0.00 &nbsp; LY 0.00 &nbsp; RX 0.00 &nbsp; RY 0.00</div>
+    </div>
+  </div>
+  <div class="gamepad-resize-handle" id="gamepad-resize-handle"></div>
+</div>
+
+<script>
+// =============== FTC UNIT 8.3 SIMULATOR (GHOST = "What if FLOAT?") ===============
+'use strict';
+
+let scene, camera, renderer, robotGroup, liftCarriage, liftRails, brakeClamps, floatClamps;
+let liftHeight = 0.42;
+let liftVelocity = 0;
+let currentPower = 0;
+let zeroPowerBehavior = "FLOAT";
+let running = false;
+let loopInterval = null;
+let timerInterval = null;
+let runtimeStart = 0;
+let activeHints = [];
+let currentMode = "FLOAT";
+let telemetryBuffer = [];
+
+const codeEditor = document.getElementById('code-editor');
+
+let gamepad = {
+  left_stick_x: 0, left_stick_y: 0,
+  right_stick_x: 0, right_stick_y: 0,
+  left_trigger: 0, right_trigger: 0,
+  a: false, b: false, x: false, y: false,
+  left_bumper: false, right_bumper: false,
+  back: false, start: false,
+  dpad_up: false, dpad_down: false, dpad_left: false, dpad_right: false
+};
+
+let ghostCarriage = null;
+let ghostHeight = 0.42;
+
+// =============== UI SETUP (unchanged) ===============
+document.getElementById('challenge-toggle').addEventListener('click', function() {
+  this.classList.toggle('open');
+  var body = document.getElementById('challenge-body');
+  body.classList.toggle('open');
+});
+
+(function setupPanelResizer() {
+  var resizer = document.getElementById('resizer');
+  var leftPanel = document.getElementById('left-panel');
+  var resizing = false, startX, startW;
+  resizer.addEventListener('pointerdown', function(e) {
+    resizing = true;
+    startX = e.clientX;
+    startW = leftPanel.offsetWidth;
+    resizer.classList.add('active');
+    resizer.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  resizer.addEventListener('pointermove', function(e) {
+    if (!resizing) return;
+    var newW = startW + (e.clientX - startX);
+    leftPanel.style.width = Math.max(360, Math.min(window.innerWidth - 400, newW)) + 'px';
+  });
+  resizer.addEventListener('pointerup', function(e) {
+    resizing = false;
+    resizer.classList.remove('active');
+    resizer.releasePointerCapture(e.pointerId);
+  });
+})();
+
+// =============== TRANSPILER ===============
+function getMethodBody(code, name) {
+  var re = new RegExp('void\\s+' + name + '\\s*\\([^)]*\\)\\s*\\{');
+  var m = re.exec(code);
+  if (!m) return null;
+  var idx = m.index + m[0].length;
+  var depth = 1;
+  while (idx < code.length) {
+    if (code[idx] === '{') depth++;
+    else if (code[idx] === '}') {
+      depth--;
+      if (depth === 0) return code.slice(m.index + m[0].length, idx);
+    }
+    idx++;
+  }
+  return null;
+}
+
+function transpile(code) {
+  var adapted = code
+    .replace(/lift\s*=\s*hardwareMap\.get\([^)]*\);/g, '// Motor mapped')
+    .replace(/lift\.setPower\s*\(/g, 'setLiftPower(')
+    .replace(/lift\.setZeroPowerBehavior\(DcMotor\.ZeroPowerBehavior\.BRAKE\)/g, 'setZeroPowerBehavior("BRAKE")')
+    .replace(/lift\.setZeroPowerBehavior\(DcMotor\.ZeroPowerBehavior\.FLOAT\)/g, 'setZeroPowerBehavior("FLOAT")')
+  return window.TelemarkJava
+    ? window.TelemarkJava.transpileBody(adapted, {
+        gamepad1Name: 'gamepad',
+        addTelemetryName: 'addTelemetry',
+        updateTelemetryName: 'updateTelemetry'
+      })
+    : adapted;
+}
+
+// =============== SIMULATION STATE ===============
+function setLiftPower(power) {
+  currentPower = Math.max(-1, Math.min(1, Number(power) || 0));
+}
+
+function setZeroPowerBehavior(mode) {
+  if (mode === "BRAKE" || mode === "FLOAT") {
+    zeroPowerBehavior = mode;
+    currentMode = mode;
+    updateModePanel();
+  }
+}
+
+function addTelemetry(key, value) {
+  telemetryBuffer.push('<div class="telemetry-line"><span class="telemetry-key">' + esc(key) + '</span>: ' + esc(value) + '</div>');
+}
+
+function updateTelemetry() {
+  document.getElementById('telemetry-log').innerHTML = telemetryBuffer.join('');
+}
+
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// =============== 3D SCENE ===============
+function initScene() {
+  var container = document.getElementById('scene-container');
+  var canvas = document.getElementById('robot-canvas');
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0a0a0a);
+  camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 100);
+  renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  var ambient = new THREE.AmbientLight(0xcccccc, 0.6);
+  ambient.userData.telemarkThemeRole = 'ambient';
+  scene.add(ambient);
+  var dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+  dirLight.userData.telemarkThemeRole = 'directional';
+  dirLight.position.set(5, 10, 7);
+  dirLight.castShadow = true;
+  dirLight.shadow.mapSize.width = 1024;
+  dirLight.shadow.mapSize.height = 1024;
+  dirLight.shadow.camera.near = 0.5;
+  dirLight.shadow.camera.far = 50;
+  dirLight.shadow.camera.left = -5;
+  dirLight.shadow.camera.right = 5;
+  dirLight.shadow.camera.top = 5;
+  dirLight.shadow.camera.bottom = -5;
+  scene.add(dirLight);
+
+  var fl = new THREE.PointLight(0x88ccff, 0.5, 20); fl.position.set(-3, 4, -2); scene.add(fl);
+  var bl = new THREE.PointLight(0xff8844, 0.3, 15); bl.position.set(2, 3, -3); scene.add(bl);
+
+  var floor = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), new THREE.MeshPhongMaterial({ color: 0x1a1a2e, shininess: 10 }));
+  floor.userData.telemarkThemeRole = 'floor';
+  floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+  var grid = new THREE.GridHelper(8, 16, 0x2a2a44, 0x1e1e36); grid.userData.telemarkThemeRole = 'grid'; grid.position.y = 0.005; scene.add(grid);
+
+  robotGroup = new THREE.Group(); scene.add(robotGroup);
+  
+  var bodyMat = new THREE.MeshPhongMaterial({ color: 0x2a2a2a, shininess: 70 });
+  var body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.35, 1.4), bodyMat);
+  body.position.y = 0.35; body.castShadow = true; robotGroup.add(body);
+
+  var wheelMat = new THREE.MeshPhongMaterial({ color: 0x111111 });
+  var wheelGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.12, 16);
+  [[-0.65,0.18,0.45],[0.65,0.18,0.45],[-0.65,0.18,-0.45],[0.65,0.18,-0.45]].forEach(p => {
+    var wh = new THREE.Mesh(wheelGeo, wheelMat);
+    wh.position.set(p[0],p[1],p[2]); wh.rotation.z = Math.PI/2; wh.castShadow = true; robotGroup.add(wh);
+  });
+
+  var railMat = new THREE.MeshPhongMaterial({ color: 0x555555 });
+  liftRails = new THREE.Group();
+  var lr = new THREE.Mesh(new THREE.BoxGeometry(0.06,2.8,0.06), railMat); lr.position.set(-0.42,1.75,0.35); liftRails.add(lr);
+  var rr = lr.clone(); rr.position.x = 0.42; liftRails.add(rr);
+  for (let i = 0; i < 4; i++) {
+    var br = new THREE.Mesh(new THREE.BoxGeometry(0.78,0.04,0.04), new THREE.MeshPhongMaterial({color:0x444444}));
+    br.position.set(0, 0.7 + i*0.7, 0.35); liftRails.add(br);
+  }
+  robotGroup.add(liftRails);
+
+  liftCarriage = new THREE.Mesh(new THREE.BoxGeometry(0.8,0.2,0.3), 
+    new THREE.MeshPhongMaterial({ color:0x0066aa, shininess:80, emissive:0x002244 }));
+  liftCarriage.position.set(0,1.5,0.35); liftCarriage.castShadow=true; robotGroup.add(liftCarriage);
+
+  brakeClamps = new THREE.Group();
+  var cm = new THREE.MeshPhongMaterial({ color:0xcc2222, emissive:0x440000 });
+  [-0.5,0.5].forEach(x => {
+    var c = new THREE.Mesh(new THREE.BoxGeometry(0.12,0.06,0.2), cm);
+    c.position.set(x,0,0); brakeClamps.add(c);
+  });
+  liftCarriage.add(brakeClamps);
+
+  floatClamps = new THREE.Group();
+  var fm = new THREE.MeshPhongMaterial({ color:0x888888, transparent:true, opacity:0.6 });
+  [-0.5,0.5].forEach(x => {
+    var c = new THREE.Mesh(new THREE.BoxGeometry(0.12,0.06,0.2), fm);
+    c.position.set(x,0,0); floatClamps.add(c);
+  });
+  liftCarriage.add(floatClamps);
+
+  ghostCarriage = new THREE.Mesh(new THREE.BoxGeometry(0.8,0.2,0.3), 
+    new THREE.MeshPhongMaterial({ color:0x00ff88, transparent:true, opacity:0.45, emissive:0x003322 }));
+  ghostCarriage.position.set(0,1.5,0.35); robotGroup.add(ghostCarriage);
+
+  updateLiftVisuals();
+
+  // Camera orbit
+  let isDragging = false, prevX = 0, prevY = 0;
+  let orbitAngle = 0.65, orbitPitch = 0.45, orbitDist = 4.8;
+  let lookTarget = new THREE.Vector3(0, 1.2, 0);
+
+  function updateCameraOrbit() {
+    camera.position.x = lookTarget.x + Math.sin(orbitAngle) * Math.cos(orbitPitch) * orbitDist;
+    camera.position.y = lookTarget.y + Math.sin(orbitPitch) * orbitDist;
+    camera.position.z = lookTarget.z + Math.cos(orbitAngle) * Math.cos(orbitPitch) * orbitDist;
+    camera.lookAt(lookTarget);
+  }
+  updateCameraOrbit();
+
+  canvas.addEventListener('pointerdown', e => {
+    isDragging = true; prevX = e.clientX; prevY = e.clientY;
+    if (canvas.setPointerCapture) canvas.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (!isDragging) return;
+    orbitAngle -= (e.clientX - prevX) * 0.008;
+    orbitPitch = Math.max(0.1, Math.min(1.4, orbitPitch + (e.clientY - prevY) * 0.006));
+    prevX = e.clientX; prevY = e.clientY;
+    updateCameraOrbit();
+  });
+  function releaseOrbit() { isDragging = false; }
+  canvas.addEventListener('pointerup', releaseOrbit);
+  canvas.addEventListener('pointercancel', releaseOrbit);
+  canvas.addEventListener('lostpointercapture', releaseOrbit);
+  window.addEventListener('blur', releaseOrbit);
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    orbitDist = Math.max(2.5, Math.min(11, orbitDist + e.deltaY * 0.008));
+    updateCameraOrbit();
+  }, { passive: false });
+
+  applySimulatorTheme(window.TelemarkSimulatorBase.getTheme());
+
+  function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+  }
+  animate();
+}
+
+function updateLiftVisuals() {
+  if (!liftCarriage || !ghostCarriage) return;
+
+  const realY = 0.55 + Math.max(0, Math.min(1, liftHeight)) * 2.25;
+  const ghostY = 0.55 + Math.max(0, Math.min(1, ghostHeight)) * 2.25;
+
+  liftCarriage.position.y = realY;
+  ghostCarriage.position.y = ghostY;
+  liftCarriage.position.z = ghostCarriage.position.z = 0.35;
+
+  document.getElementById('lift-height-val').textContent = Math.round(liftHeight * 100) + '%';
+  document.getElementById('lift-power-val').textContent = currentPower.toFixed(2);
+  document.getElementById('height-bar').style.width = (liftHeight * 100) + '%';
+
+  brakeClamps.visible = zeroPowerBehavior === "BRAKE";
+  floatClamps.visible = zeroPowerBehavior === "FLOAT";
+
+  const modeEl = document.getElementById('mode-value');
+  modeEl.textContent = zeroPowerBehavior;
+  modeEl.className = 'mode-value ' + (zeroPowerBehavior === "BRAKE" ? "brake" : "float");
+  document.getElementById('mode-icon').className = zeroPowerBehavior === "BRAKE" ? "fa-solid fa-lock" : "fa-solid fa-feather";
+}
+
+function updateModePanel() { updateLiftVisuals(); }
+
+// =============== PHYSICS - CORRECT GHOST BEHAVIOR ===============
+function simulatePhysics() {
+  const dt = 0.016;
+  const stickInput = -gamepad.left_stick_y; // positive = raise
+
+  // Real lift follows current ZeroPowerBehavior
+  if (Math.abs(currentPower) > 0.05) {
+    liftVelocity = currentPower * 3.2;
+    liftHeight += liftVelocity * dt;
+  } else {
+    if (zeroPowerBehavior === "BRAKE") {
+      liftVelocity = 0;                    // Holds position
+    } else {
+      liftVelocity -= 4.5 * dt;            // Gravity when FLOAT
+      liftHeight += liftVelocity * dt;
+    }
+  }
+  liftHeight = Math.max(0, Math.min(1.0, liftHeight));
+  if (liftHeight < 0.01 || liftHeight > 0.99) liftVelocity = 0;
+
+  // Ghost logic - ONLY meaningfully active in BRAKE mode
+  // It shows "what would happen if we were in FLOAT instead"
+  if (zeroPowerBehavior === "BRAKE") {
+    if (Math.abs(currentPower) > 0.05) {
+      // Still responds to gamepad input (so you can see divergence)
+      ghostHeight += currentPower * 3.2 * dt;
+    } else {
+      // Falls due to gravity — this is the key teaching point
+      ghostHeight -= 3.8 * dt;
+    }
+  } else {
+    // In FLOAT mode, ghost matches real lift exactly
+    ghostHeight = liftHeight;
+  }
+
+  ghostHeight = Math.max(0, Math.min(1.0, ghostHeight));
+
+  updateLiftVisuals();
+}
+
+function updateAxisReadout() {
+  document.getElementById('axis-readout').textContent =
+    `LX ${(gamepad.left_stick_x).toFixed(2)} LY ${(gamepad.left_stick_y).toFixed(2)} | ` +
+    `RX ${(gamepad.right_stick_x).toFixed(2)} RY ${(gamepad.right_stick_y).toFixed(2)}`;
+}
+
+function applySimulatorTheme(theme) {
+  var container = document.getElementById('scene-container');
+  if (container) container.style.backgroundColor = theme === 'light' ? '#eaf1f5' : '#0a0a0a';
+  if (scene && window.TelemarkSimulatorBase) {
+    window.TelemarkSimulatorBase.themeThreeScene(scene, theme);
+  }
+}
+
+// =============== VALIDATION, RUN/STOP, STARTUP (same as before) ===============
+function validate() {
+  TelemarkProjectChecks.render("8.3", codeEditor);
+}
+
+function renderHints() {
+  var container = document.getElementById('hint-container');
+  container.innerHTML = '';
+  activeHints.forEach(h => {
+    var div = document.createElement('div');
+    div.className = 'hint ' + (h.type || '');
+    div.innerHTML = h.msg;
+    container.appendChild(div);
+  });
+}
+
+function onCodeChange() {
+  updateCode(codeEditor.value);
+}
+TelemarkEditor.attach(codeEditor, {onChange: onCodeChange});
+
+function validateFullJavaSource(code) {
+  let result;
+  try {
+    result = window.TelemarkSimulatorBase.compileStudentSource(code);
+  } catch (error) {
+    result = {ok: false, diagnostics: [{message: error.message, line: 1, column: 1}]};
+  }
+  if (result.ok) return true;
+  const diagnostic = result.diagnostics?.[0] || {};
+  const message = `${diagnostic.message || 'Invalid Java source'} (line ${diagnostic.line || 1}, column ${diagnostic.column || 1})`;
+  document.getElementById('telemetry-log').innerHTML = `<span class="telemetry-error">Java compile error: ${esc(message)}</span>`;
+  console.error('Unit 8.3 Java compile error', diagnostic);
+  return false;
+}
+
+let projectRunner = null;
+function handleRun() {
+  if (running) return;
+  if (!validateFullJavaSource(codeEditor.value)) return;
+  const projectSource = codeEditor.__telemarkProject ? codeEditor.__telemarkProject.source() : codeEditor.value;
+  const requiredInitBody = getMethodBody(projectSource, 'init');
+  const requiredLoopBody = getMethodBody(projectSource, 'loop');
+  if (requiredInitBody === null || requiredLoopBody === null) {
+    const missingMethod = requiredInitBody === null ? 'init()' : 'loop()';
+    document.getElementById('telemetry-log').innerHTML = `<span class="telemetry-error">Java compile error: Required ${missingMethod} method is missing or has unmatched braces</span>`;
+    console.error(`Unit 8.3 Java compile error: invalid ${missingMethod} method`);
+    return;
+  }
+  running = true;
+  runtimeStart = Date.now();
+  currentMode = "FLOAT";
+  zeroPowerBehavior = "FLOAT";
+  telemetryBuffer = [];
+  
+  document.getElementById('ds-state').textContent = "RUNNING";
+  document.getElementById('ds-state').style.color = "var(--good)";
+  document.getElementById('btn-run').disabled = true;
+  document.getElementById('telemetry-log').innerHTML = '';
+  validate();
+
+  const initBody = requiredInitBody;
+  if (initBody !== null) {
+    try {
+      projectRunner = TelemarkProject.createRunner(codeEditor, {gamepad1: gamepad, onPower: setLiftPower,
+        onZeroPowerBehavior: setZeroPowerBehavior, onTelemetry: addTelemetry, onTelemetryUpdate: updateTelemetry,
+        getRuntime: () => (Date.now() - runtimeStart) / 1000});
+      projectRunner.init();
+    } catch(e) {
+      document.getElementById('telemetry-log').innerHTML = `<span class="telemetry-error">init() compile/runtime error: ${esc(e.message)}</span>`;
+      console.error('Unit 8.3 init() failed', e);
+      handleStop();
+      return;
+    }
+  }
+
+  timerInterval = setInterval(() => {
+    document.getElementById('timer-val').textContent = ((Date.now() - runtimeStart) / 1000).toFixed(2);
+  }, 30);
+
+  loopInterval = setInterval(() => {
+    const loopBody = requiredLoopBody;
+    if (loopBody === null) {
+      document.getElementById('telemetry-log').innerHTML = '<span class="telemetry-error">Java compile error: Required loop() method is missing or has unmatched braces</span>';
+      console.error('Unit 8.3 Java compile error: invalid loop() method');
+      handleStop();
+      return;
+    }
+    telemetryBuffer = [];
+    try {
+      projectRunner.loop();
+    } catch(e) {
+      document.getElementById('telemetry-log').innerHTML = `<span class="telemetry-error">loop() compile/runtime error: ${esc(e.message)}</span>`;
+      console.error('Unit 8.3 loop() failed', e);
+      handleStop();
+      return;
+    }
+    simulatePhysics();
+  }, 16);
+}
+
+function handleStop() {
+  if (projectRunner) { const stopped = projectRunner; projectRunner = null; try { stopped.stop(); } catch (e) { console.error(e); } }
+  running = false;
+  if (loopInterval) clearInterval(loopInterval);
+  if (timerInterval) clearInterval(timerInterval);
+  loopInterval = timerInterval = null;
+  currentPower = 0;
+  document.getElementById('ds-state').textContent = "STOPPED";
+  document.getElementById('ds-state').style.color = "var(--danger)";
+  document.getElementById('btn-run').disabled = false;
+  document.getElementById('timer-val').textContent = "0.00";
+  updateLiftVisuals();
+}
+
+function resetSimulation() {
+  liftHeight = 0.42;
+  ghostHeight = 0.42;
+  liftVelocity = 0;
+  currentPower = 0;
+  updateLiftVisuals();
+}
+
+// =============== STARTUP ===============
+window.addEventListener('load', function() {
+  updateCode(codeEditor.value);
+  requestAnimationFrame(() => {
+    initScene();
+    updateLiftVisuals();
+  });
+});
+
+function updateCode(t) {
+  var el = document.getElementById('highlighting-content');
+  if (t && t[t.length - 1] === '\n') t += ' ';
+  el.innerHTML = (t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  if (window.Prism) Prism.highlightElement(el);
+}
+
+function syncScroll(el) {
+  var h = document.getElementById('highlighting');
+  h.scrollTop = el.scrollTop;
+  h.scrollLeft = el.scrollLeft;
+}
+window.TelemarkSimulatorBase.installLegacy({
+  state: gamepad,
+  onInput: updateAxisReadout,
+  onThemeChange: applySimulatorTheme
+});
+</script>
+</body>
+</html>

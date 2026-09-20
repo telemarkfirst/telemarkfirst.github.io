@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>Telemark Unit 11.2 Simulator</title>
+
+<script src="simulator_base.js"></script>
+
+<style>
+:root{
+    --wrist-panel:#111827;
+    --wrist-panel-2:#0f172a;
+    --wrist-border:rgba(255,255,255,.08);
+    --wrist-text:#eef2ff;
+    --wrist-muted:#94a3b8;
+    --wrist-green:#22c55e;
+    --wrist-red:#ef4444;
+    --wrist-orange:#22d3ee;
+}
+
+.wrist-panel{
+    margin:0 10px 10px;
+    padding:12px;
+    border-radius:8px;
+    background:var(--wrist-panel);
+    border:1px solid var(--wrist-border);
+    color:var(--wrist-text);
+    font-family:Inter,system-ui,sans-serif;
+}
+
+.wrist-grid{
+    display:grid;
+    grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr) minmax(0,1fr);
+    gap:10px;
+}
+
+.wrist-card{
+    min-width:0;
+    padding:10px;
+    border-radius:8px;
+    background:var(--wrist-panel-2);
+    border:1px solid var(--wrist-border);
+}
+
+.wrist-big{
+    font-size:1.15rem;
+    font-weight:900;
+    letter-spacing:0;
+    white-space:normal;
+}
+
+.wrist-line{
+    margin-top:6px;
+    color:#dbe4f7;
+    font-size:.9rem;
+}
+
+.wrist-safe{
+    color:var(--wrist-green);
+}
+
+.wrist-unsafe{
+    color:#f87171;
+}
+
+.wrist-angle-bar{
+    position:relative;
+    height:18px;
+    margin-top:10px;
+    overflow:hidden;
+    border-radius:999px;
+    background:linear-gradient(
+        90deg,
+        var(--wrist-red) 0%,
+        var(--wrist-red) 11.111%,
+        var(--wrist-green) 11.111%,
+        var(--wrist-green) 88.888%,
+        var(--wrist-red) 88.888%,
+        var(--wrist-red) 100%
+    );
+}
+
+.wrist-marker{
+    position:absolute;
+    top:-4px;
+    bottom:-4px;
+    width:4px;
+    left:50%;
+    border-radius:999px;
+    background:var(--wrist-orange);
+    box-shadow:0 0 12px rgba(34,211,238,.45);
+}
+
+.wrist-logic{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    margin-top:6px;
+    font-family:"JetBrains Mono",monospace;
+    font-size:.82rem;
+}
+
+.wrist-logic strong{
+    font-weight:900;
+}
+
+.wrist-formula{
+    font-family:"JetBrains Mono",monospace;
+    font-size:.86rem;
+    line-height:1.45;
+}
+
+.wrist-scene-badge,
+.wrist-scene-warning,
+.wrist-damage{
+    position:absolute;
+    z-index:110;
+    font-family:Inter,system-ui,sans-serif;
+}
+
+.wrist-scene-badge{
+    right:18px;
+    top:18px;
+    padding:9px 13px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.14);
+    font-weight:900;
+    background:rgba(5,46,22,.96);
+    color:#86efac;
+}
+
+.wrist-scene-badge.unsafe{
+    background:rgba(69,10,10,.96);
+    color:#fecaca;
+}
+
+.wrist-scene-warning{
+    left:18px;
+    top:18px;
+    display:none;
+    padding:10px 14px;
+    border-radius:8px;
+    border:1px solid rgba(239,68,68,.35);
+    background:rgba(69,10,10,.96);
+    color:#fecaca;
+    font-weight:800;
+}
+
+.wrist-scene-warning.visible{
+    display:block;
+}
+
+.wrist-damage{
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:rgba(239,68,68,.16);
+    color:#fecaca;
+    font-size:1.8rem;
+    font-weight:900;
+    letter-spacing:0;
+}
+
+.wrist-damage.visible{
+    display:flex;
+    animation:wristDamageFlash .24s linear infinite;
+}
+
+@keyframes wristDamageFlash{
+    0%{background:rgba(239,68,68,.10)}
+    50%{background:rgba(239,68,68,.26)}
+    100%{background:rgba(239,68,68,.10)}
+}
+
+@media (max-width:900px){
+    .wrist-grid{
+        grid-template-columns:1fr;
+    }
+}
+</style>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+
+<body>
+
+<script>
+(() => {
+
+"use strict";
+
+const starterCode = `@TeleOp(name="Wrist_Potentiometer")
+public class WristPotentiometer extends OpMode {
+
+    AnalogInput wrist_pot;
+    Servo wrist;
+    double wristPosition = 0.5;
+
+    @Override
+    public void init() {
+        wrist_pot = hardwareMap.get(AnalogInput.class, "wrist_pot");
+        wrist     = hardwareMap.get(Servo.class, "wrist");
+        wrist.setPosition(wristPosition);
+        telemetry.addData("Status", "Initialized");
+    }
+
+    boolean isSafe() {
+        double angle = 0.0;
+        // TODO: convert the wrist sensor voltage to degrees.
+        // TODO: return true only inside the safe angle range.
+        return false;
+    }
+
+    @Override
+    public void loop() {
+        wristPosition += -gamepad1.left_stick_y * 0.01;
+        wristPosition  = Math.max(0.0, Math.min(1.0, wristPosition));
+        wrist.setPosition(wristPosition);
+
+        double voltage = 0.0;
+        double angle   = 0.0;
+        // TODO: read the potentiometer voltage and calculate angle.
+
+        telemetry.addData("Voltage", voltage);
+        telemetry.addData("Angle",   angle);
+        telemetry.addData("Safe",    isSafe());
+        telemetry.update();
+    }
+}`;
+
+const requirements = [
+    "Map AnalogInput wrist_pot in init()",
+    "Read wrist_pot.getVoltage()",
+    "Convert voltage to degrees",
+    "Implement isSafe()",
+    "Check safe range from 20.0 to 160.0 degrees",
+    "Show angle with telemetry.addData()"
+];
+
+const sim = {
+    running:false,
+    targetPosition:0.5,
+    visualPosition:0.5,
+    voltage:1.65,
+    angle:90,
+    studentSafe:true,
+    expectedSafe:true,
+    damage:false,
+    damageCooldown:false,
+    setupOk:false,
+    loopFunction:null,
+    safeFunction:null,
+    classScope:{},
+    requirements:[false,false,false,false,false,false]
+};
+
+let wristGroup;
+let wristPaddle;
+let needle;
+let badge;
+let warning;
+let damageOverlay;
+let angleText;
+let voltageText;
+let safeText;
+let safeValueText;
+let marker;
+let formulaText;
+let logicLower;
+let logicUpper;
+let logicSafe;
+let lastSafeState = true;
+let animationId = null;
+
+function clamp(value,min,max){
+    return Math.max(min,Math.min(max,value));
+}
+
+function getComputedAngle(){
+    sim.angle = sim.targetPosition * 180;
+    sim.voltage = (sim.angle / 180) * 3.3;
+    sim.expectedSafe = sim.angle >= 20 && sim.angle <= 160;
+}
+
+function installAnalogInputSupport(){
+    if(!window.hardwareMap || hardwareMap.registerAnalogInput){
+        return;
+    }
+
+    const originalGet = hardwareMap.get.bind(hardwareMap);
+
+    hardwareMap.registerAnalogInput = function(name){
+        const sensor = {
+            _name:name,
+            getVoltage:function(){
+                return getPotVoltage(name);
+            }
+        };
+
+        this._devices[name] = sensor;
+        return sensor;
+    };
+
+    hardwareMap.get = function(type,name){
+        const typeStr = String(type).toLowerCase();
+
+        if(typeStr.includes("analog")){
+            return this._devices[name] ||
+                this.registerAnalogInput(name);
+        }
+
+        return originalGet(type,name);
+    };
+}
+
+function updateRequirementStates(){
+    const setRequirement =
+        window.setRequirementState ||
+        window.setRequirement;
+
+    sim.requirements.forEach((passed,index)=>{
+        if(setRequirement){
+            setRequirement(index,passed);
+        }
+    });
+
+    const banner =
+        document.getElementById("sim-success-banner");
+
+    const complete =
+        sim.setupOk &&
+        sim.requirements.every(Boolean);
+
+    if(complete && banner){
+        banner.classList.add("visible");
+        banner.innerHTML =
+            '<i class="fa-solid fa-circle-check"></i> Challenge Complete! Your wrist angle is read and safety checked correctly.';
+    }else if(banner){
+        banner.classList.remove("visible");
+    }
+}
+
+function addRelevantHints(source){
+    if(window.clearHints){
+        window.clearHints();
+    }
+
+    if(!/wrist_pot\s*\.\s*getVoltage\s*\(\s*\)/.test(source)){
+        window.addHint?.(
+            "getVoltage() returns raw voltage 0.0-3.3V - convert to degrees with (voltage / 3.3) * 180.0",
+            "error"
+        );
+    }
+
+    if(!/(\/\s*3\.3[\s\S]{0,40}\*\s*180(?:\.0)?|\*\s*180(?:\.0)?[\s\S]{0,40}\/\s*3\.3)/.test(source)){
+        window.addHint?.(
+            "getVoltage() returns raw voltage 0.0-3.3V - convert to degrees with (voltage / 3.3) * 180.0",
+            "error"
+        );
+    }
+
+    if(/return\s+true\s*;/.test(source)){
+        window.addHint?.(
+            "Your isSafe() never returns false - check your boundary conditions",
+            "error"
+        );
+    }
+
+    if(/return\s+false\s*;/.test(source)){
+        window.addHint?.(
+            "Your isSafe() never returns true - check your comparison operators, use >= and <=",
+            "error"
+        );
+    }
+
+    if(/isSafe\s*\(\s*\)[\s\S]*getVoltage\s*\(\s*\)[\s\S]*return[\s\S]*(?:0\.367|2\.933)/.test(source)){
+        window.addHint?.(
+            "Convert to degrees first then check the 20.0-160.0 range - voltage values for those angles are 0.367V and 2.933V",
+            "info"
+        );
+    }
+
+    if(!/angle\s*>=\s*20(?:\.0)?[\s\S]*angle\s*<=\s*160(?:\.0)?/.test(source)){
+        window.addHint?.(
+            "Safe range is 20.0 to 160.0 degrees - check your comparison operators",
+            "error"
+        );
+    }
+
+    if(!/telemetry\s*\.\s*update\s*\(\s*\)/.test(source)){
+        window.addHint?.(
+            "Call telemetry.update() to send data to the Driver Station",
+            "info"
+        );
+    }
+
+    if(!/gamepad1\s*\.\s*left_stick_y/.test(source)){
+        window.addHint?.(
+            "Use gamepad1.left_stick_y to move the wrist so you can test different angles",
+            "info"
+        );
+    }
+}
+
+function analyzeSource(source){
+    sim.requirements[0] =
+        /hardwareMap\s*\.\s*get\s*\(\s*AnalogInput\s*\.\s*class\s*,\s*"wrist_pot"\s*\)/.test(source);
+
+    sim.requirements[1] =
+        /wrist_pot\s*\.\s*getVoltage\s*\(\s*\)/.test(source);
+
+    sim.requirements[2] =
+        /(\/\s*3\.3[\s\S]{0,40}\*\s*180(?:\.0)?|\*\s*180(?:\.0)?[\s\S]{0,40}\/\s*3\.3)/.test(source);
+
+    sim.requirements[3] =
+        /\bboolean\s+isSafe\s*\(\s*\)\s*\{/.test(source);
+
+    sim.requirements[5] =
+        /telemetry\s*\.\s*addData\s*\(\s*"Angle"/.test(source);
+}
+
+function stripMethodBodies(code){
+    const chars = code.split("");
+    const re =
+        /(?:@\w+(?:\([^)]*\))?\s*)*(?:public|private|protected)?\s*(?:static\s+)?(?:void|boolean|double|int|float|String|[\w<>[\]]+)\s+\w+\s*\([^)]*\)\s*\{/g;
+    let match;
+
+    while((match = re.exec(code)) !== null){
+        let index = re.lastIndex;
+        let depth = 1;
+
+        for(; index < code.length; index++){
+            if(code[index] === "{") depth++;
+            else if(code[index] === "}"){
+                depth--;
+                if(depth === 0) break;
+            }
+        }
+
+        for(let i = re.lastIndex; i < index; i++){
+            chars[i] = " ";
+        }
+
+        re.lastIndex = index + 1;
+    }
+
+    return chars.join("");
+}
+
+function extractClassFields(source){
+    const fields = [];
+    const seen = {};
+    const classOnly = stripMethodBodies(source);
+    const re =
+        /\b(AnalogInput|Servo|double|int|boolean|String|float|long|byte|short|char)\s+([^;]+);/g;
+    let match;
+
+    while((match = re.exec(classOnly)) !== null){
+        match[2].split(",").forEach(part=>{
+            const fieldMatch =
+                part.trim().match(/^([A-Za-z_$][\w$]*)(?:\s*=\s*([\s\S]+))?$/);
+
+            if(fieldMatch && !seen[fieldMatch[1]]){
+                seen[fieldMatch[1]] = true;
+                fields.push({
+                    name:fieldMatch[1],
+                    initializer:fieldMatch[2]
+                        ? transpileBlock(fieldMatch[2].trim())
+                        : undefined
+                });
+            }
+        });
+    }
+
+    return fields;
+}
+
+function wrapWithClassScope(js,fields){
+    if(!fields.length){
+        return js;
+    }
+
+    const load = fields.map(field=>{
+        let value = "__scope." + field.name;
+
+        if(field.initializer !== undefined){
+            value =
+                "(__scope." + field.name +
+                "!==undefined?__scope." + field.name +
+                ":(" + field.initializer + "))";
+        }
+
+        return "var " + field.name + "=" + value + ";";
+    }).join("\n");
+
+    const store = fields.map(field=>{
+        return "__scope." + field.name + "=" + field.name + ";";
+    }).join("\n");
+
+    return load + "\n" + js + "\n" + store;
+}
+
+function getMethodBody(source,name,returnType){
+    const typePattern = returnType || "(?:void|boolean|double|int|float|String)";
+    const re = new RegExp(
+        "(?:public\\s+|private\\s+|protected\\s+)?(?:" +
+        typePattern +
+        ")\\s+" + name + "\\s*\\([^)]*\\)\\s*\\{"
+    );
+
+    const match = re.exec(source);
+
+    if(!match){
+        return null;
+    }
+
+    let index = match.index + match[0].length;
+    let depth = 1;
+
+    for(; index < source.length; index++){
+        if(source[index] === "{") depth++;
+        else if(source[index] === "}"){
+            depth--;
+            if(depth === 0){
+                return source.slice(
+                    match.index + match[0].length,
+                    index
+                );
+            }
+        }
+    }
+
+    return null;
+}
+
+function transpileBlock(code){
+    return code
+        .replace(
+            /\b(double|int|boolean|String|float|long|byte|short|char)\s+(?=[A-Za-z_$])/g,
+            "let "
+        )
+        .replace(
+            /\b(AnalogInput|Servo|DcMotor|DcMotorEx|TouchSensor|DigitalChannel|CRServo)\s+(?=[A-Za-z_$])/g,
+            "let "
+        )
+        .replace(
+            /\bhardwareMap\s*\.\s*get\s*\(\s*(\w+)\.class\s*,/g,
+            'hardwareMap.get("$1",'
+        )
+        .replace(
+            /\bwrist_pot\s*\.\s*getVoltage\s*\(\s*\)/g,
+            'getPotVoltage("wrist_pot")'
+        )
+        .replace(
+            /\bwrist\s*\.\s*setPosition\s*\(/g,
+            'setServoPosition("wrist",'
+        )
+        .replace(
+            /\bgamepad1\./g,
+            "gamepad."
+        )
+        .replace(
+            /\btelemetry\s*\.\s*addData\s*\(/g,
+            "addTelemetry("
+        )
+        .replace(
+            /\btelemetry\s*\.\s*update\s*\(\s*\)/g,
+            "updateTelemetry()"
+        )
+        .replace(
+            /\btelemetry\s*\.\s*clear\s*\(\s*\)/g,
+            "clearTelemetry()"
+        )
+        .replace(
+            /\bisSafe\s*\(\s*\)/g,
+            "__studentIsSafe()"
+        );
+}
+
+function compileStudentCode(source){
+    const fields = extractClassFields(source);
+    sim.classScope = {};
+
+    fields.forEach(field=>{
+        sim.classScope[field.name] = undefined;
+    });
+
+    const initBody = getMethodBody(source,"init","void");
+    const loopBody = getMethodBody(source,"loop","void");
+    const safeBody = getMethodBody(source,"isSafe","boolean");
+
+    if(initBody === null || loopBody === null || safeBody === null){
+        throw new Error("Missing init(), loop(), or isSafe() method");
+    }
+
+    const initJS =
+        wrapWithClassScope(
+            transpileBlock(initBody),
+            fields
+        );
+
+    const loopJS =
+        wrapWithClassScope(
+            transpileBlock(loopBody),
+            fields
+        );
+
+    const safeJS =
+        wrapWithClassScope(
+            transpileBlock(safeBody),
+            fields
+        );
+
+    const args = [
+        "gamepad",
+        "hardwareMap",
+        "addTelemetry",
+        "updateTelemetry",
+        "clearTelemetry",
+        "getPotVoltage",
+        "setServoPosition",
+        "__studentIsSafe",
+        "__scope"
+    ];
+
+    const initFn =
+        new Function(
+            ...args,
+            '"use strict";\n' + initJS
+        );
+
+    const loopFn =
+        new Function(
+            ...args,
+            '"use strict";\n' + loopJS
+        );
+
+    const safeFn =
+        new Function(
+            ...args,
+            '"use strict";\n' + safeJS
+        );
+
+    sim.safeFunction = function(){
+        return Boolean(
+            safeFn(
+                window.gamepad,
+                window.hardwareMap,
+                window.addTelemetry,
+                window.updateTelemetry,
+                window.clearTelemetry,
+                window.getPotVoltage,
+                window.setServoPosition,
+                sim.safeFunction,
+                sim.classScope
+            )
+        );
+    };
+
+    initFn(
+        window.gamepad,
+        window.hardwareMap,
+        window.addTelemetry,
+        window.updateTelemetry,
+        window.clearTelemetry,
+        window.getPotVoltage,
+        window.setServoPosition,
+        sim.safeFunction,
+        sim.classScope
+    );
+
+    sim.loopFunction = function(){
+        loopFn(
+            window.gamepad,
+            window.hardwareMap,
+            window.addTelemetry,
+            window.updateTelemetry,
+            window.clearTelemetry,
+            window.getPotVoltage,
+            window.setServoPosition,
+            sim.safeFunction,
+            sim.classScope
+        );
+    };
+}
+
+function testStudentSafeLogic(){
+    if(!sim.safeFunction){
+        sim.requirements[4] = false;
+        return;
+    }
+
+    const oldTarget = sim.targetPosition;
+    const cases = [
+        [90,true],
+        [20,true],
+        [160,true],
+        [10,false],
+        [170,false]
+    ];
+
+    let passed = true;
+
+    for(const item of cases){
+        sim.targetPosition = item[0] / 180;
+        getComputedAngle();
+
+        try{
+            if(sim.safeFunction() !== item[1]){
+                passed = false;
+            }
+        }catch(err){
+            passed = false;
+        }
+    }
+
+    sim.targetPosition = oldTarget;
+    getComputedAngle();
+    sim.requirements[4] = passed;
+}
+
+function createPanel(){
+    const right =
+        document.getElementById("sim-right-panel");
+
+    if(!right || document.getElementById("wrist-panel")){
+        return;
+    }
+
+    const panel =
+        document.createElement("div");
+
+    panel.className = "wrist-panel";
+    panel.id = "wrist-panel";
+
+    panel.innerHTML = `
+        <div class="wrist-grid">
+            <div class="wrist-card">
+                <div class="wrist-big" id="wrist-angle-text">
+                    ANGLE: 90.0 degrees
+                </div>
+                <div class="wrist-line" id="wrist-voltage-text">
+                    VOLTAGE: 1.65V
+                </div>
+                <div class="wrist-angle-bar">
+                    <div class="wrist-marker" id="wrist-marker"></div>
+                </div>
+            </div>
+
+            <div class="wrist-card">
+                <div class="wrist-big wrist-safe" id="wrist-safe-text">
+                    <i class="fa-solid fa-shield-halved"></i> SAFE
+                </div>
+                <div class="wrist-line" id="wrist-safe-value">
+                    isSafe(): true
+                </div>
+                <div class="wrist-logic">
+                    <span>angle &gt;= 20.0</span>
+                    <strong id="wrist-logic-lower">true</strong>
+                </div>
+                <div class="wrist-logic">
+                    <span>angle &lt;= 160.0</span>
+                    <strong id="wrist-logic-upper">true</strong>
+                </div>
+                <div class="wrist-logic">
+                    <span>isSafe()</span>
+                    <strong id="wrist-logic-safe">true</strong>
+                </div>
+            </div>
+
+            <div class="wrist-card">
+                <div class="wrist-formula" id="wrist-formula">
+                    angle = (1.65 / 3.3) x 180 = 90.0 degrees
+                </div>
+            </div>
+        </div>
+    `;
+
+    right.appendChild(panel);
+
+    angleText = document.getElementById("wrist-angle-text");
+    voltageText = document.getElementById("wrist-voltage-text");
+    safeText = document.getElementById("wrist-safe-text");
+    safeValueText = document.getElementById("wrist-safe-value");
+    marker = document.getElementById("wrist-marker");
+    formulaText = document.getElementById("wrist-formula");
+    logicLower = document.getElementById("wrist-logic-lower");
+    logicUpper = document.getElementById("wrist-logic-upper");
+    logicSafe = document.getElementById("wrist-logic-safe");
+
+    const sceneContainer =
+        document.getElementById("sim-scene-container");
+
+    badge = document.createElement("div");
+    badge.className = "wrist-scene-badge";
+    badge.innerHTML =
+        '<i class="fa-solid fa-shield-halved"></i> SAFE';
+    sceneContainer.appendChild(badge);
+
+    warning = document.createElement("div");
+    warning.className = "wrist-scene-warning";
+    warning.innerHTML =
+        '<i class="fa-solid fa-triangle-exclamation"></i> UNSAFE WRIST POSITION';
+    sceneContainer.appendChild(warning);
+
+    damageOverlay = document.createElement("div");
+    damageOverlay.className = "wrist-damage";
+    damageOverlay.textContent = "HARDWARE DAMAGE";
+    sceneContainer.appendChild(damageOverlay);
+}
+
+function makeArc(THREE,startDeg,endDeg,radius,color,lineWidth){
+    const points = [];
+
+    for(let deg = startDeg; deg <= endDeg; deg += 2){
+        const rad = deg * Math.PI / 180;
+        points.push(
+            new THREE.Vector3(
+                Math.sin(rad) * radius,
+                -Math.cos(rad) * radius,
+                -0.08
+            )
+        );
+    }
+
+    const geometry =
+        new THREE.BufferGeometry().setFromPoints(points);
+
+    const material =
+        new THREE.LineBasicMaterial({
+            color:color,
+            linewidth:lineWidth || 1
+        });
+
+    return new THREE.Line(geometry,material);
+}
+
+function buildScene(){
+    requestAnimationFrame(()=>{
+        if(!window.THREE || !window.scene){
+            return;
+        }
+
+        const THREE = window.THREE;
+        const scene = window.scene;
+
+        if(window.setFieldVisible){
+            window.setFieldVisible(false);
+        }
+
+        scene.background =
+            new THREE.Color(0x07111f);
+
+        scene.add(
+            new THREE.AmbientLight(0xffffff,1.15)
+        );
+
+        const key =
+            new THREE.DirectionalLight(0xffffff,1.6);
+        key.position.set(3,5,6);
+        scene.add(key);
+
+        const fill =
+            new THREE.PointLight(0x67e8f9,.75,10);
+        fill.position.set(-3,3,4);
+        scene.add(fill);
+
+        const floor =
+            new THREE.Mesh(
+                new THREE.PlaneGeometry(9,7),
+                new THREE.MeshStandardMaterial({
+                    color:0x0b1324,
+                    metalness:.45,
+                    roughness:.35
+                })
+            );
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = -.02;
+        scene.add(floor);
+
+        const forearm =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(3.6,.55,.75),
+                new THREE.MeshStandardMaterial({
+                    color:0x2b313d,
+                    metalness:.9,
+                    roughness:.2
+                })
+            );
+        forearm.position.set(-1.25,1.45,0);
+        scene.add(forearm);
+
+        const pivot =
+            new THREE.Mesh(
+                new THREE.CylinderGeometry(.34,.34,.8,32),
+                new THREE.MeshStandardMaterial({
+                    color:0x94a3b8,
+                    metalness:1,
+                    roughness:.12
+                })
+            );
+        pivot.rotation.x = Math.PI / 2;
+        pivot.position.set(.85,1.45,0);
+        scene.add(pivot);
+
+        const arcGroup = new THREE.Group();
+        arcGroup.position.set(.85,1.45,-.42);
+        arcGroup.add(makeArc(THREE,0,180,1.7,0x334155,2));
+        arcGroup.add(makeArc(THREE,0,20,1.82,0xef4444,2));
+        arcGroup.add(makeArc(THREE,20,160,1.82,0x22c55e,2));
+        arcGroup.add(makeArc(THREE,160,180,1.82,0xef4444,2));
+
+        [20,160].forEach(deg=>{
+            const rad = deg * Math.PI / 180;
+            const stop =
+                new THREE.Mesh(
+                    new THREE.BoxGeometry(.16,.36,.16),
+                    new THREE.MeshStandardMaterial({
+                        color:0xdc2626,
+                        emissive:0x260000,
+                        metalness:.4,
+                        roughness:.25
+                    })
+                );
+            stop.position.set(
+                Math.sin(rad) * 1.92,
+                -Math.cos(rad) * 1.92,
+                0
+            );
+            stop.rotation.z = rad;
+            arcGroup.add(stop);
+        });
+
+        needle =
+            new THREE.Group();
+        const needleMesh =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(.055,1.72,.055),
+                new THREE.MeshBasicMaterial({
+                    color:0xfb923c
+                })
+            );
+        needleMesh.position.y = .86;
+        needle.add(needleMesh);
+        arcGroup.add(needle);
+        scene.add(arcGroup);
+
+        wristGroup = new THREE.Group();
+        wristGroup.position.set(.85,1.45,0);
+
+        wristPaddle =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(.38,2.15,.42),
+                new THREE.MeshStandardMaterial({
+                    color:0x22c55e,
+                    emissive:0x003a16,
+                    metalness:.65,
+                    roughness:.18
+                })
+            );
+        wristPaddle.position.y = 1.08;
+        wristGroup.add(wristPaddle);
+        scene.add(wristGroup);
+
+        if(window.setCameraOrbit){
+            window.setCameraOrbit({
+                theta:0,
+                phi:Math.PI / 2,
+                radius:6.1,
+                target:{x:.5,y:1.6,z:0}
+            });
+        }
+
+        updateMechanism();
+    });
+}
+
+function updateMechanism(){
+    if(!wristGroup || !wristPaddle){
+        return;
+    }
+
+    const angle =
+        sim.visualPosition * 180;
+
+    const rad =
+        angle * Math.PI / 180;
+
+    wristGroup.rotation.z =
+        Math.PI + rad;
+
+    if(needle){
+        needle.rotation.z = Math.PI + rad;
+    }
+
+    const unsafeFlash =
+        !sim.expectedSafe &&
+        Math.floor(performance.now() / 180) % 2 === 0;
+
+    if(sim.expectedSafe){
+        wristPaddle.material.color.setHex(0x22c55e);
+        wristPaddle.material.emissive.setHex(0x003a16);
+    }else{
+        wristPaddle.material.color.setHex(
+            unsafeFlash ? 0xff2222 : 0x7f1d1d
+        );
+        wristPaddle.material.emissive.setHex(
+            unsafeFlash ? 0x660000 : 0x190000
+        );
+    }
+}
+
+function updateUI(){
+    getComputedAngle();
+
+    const lower =
+        sim.angle >= 20;
+
+    const upper =
+        sim.angle <= 160;
+
+    const safeResult =
+        sim.studentSafe;
+
+    angleText.textContent =
+        "ANGLE: " + sim.angle.toFixed(1) + " degrees";
+
+    voltageText.textContent =
+        "VOLTAGE: " + sim.voltage.toFixed(2) + "V";
+
+    formulaText.textContent =
+        "angle = (" + sim.voltage.toFixed(2) +
+        " / 3.3) x 180 = " +
+        sim.angle.toFixed(1) + " degrees";
+
+    marker.style.left =
+        "calc(" + ((sim.angle / 180) * 100).toFixed(3) +
+        "% - 2px)";
+
+    safeText.className =
+        sim.expectedSafe
+            ? "wrist-big wrist-safe"
+            : "wrist-big wrist-unsafe";
+
+    safeText.innerHTML =
+        sim.expectedSafe
+            ? '<i class="fa-solid fa-shield-halved"></i> SAFE'
+            : '<i class="fa-solid fa-triangle-exclamation"></i> UNSAFE';
+
+    safeValueText.textContent =
+        "isSafe(): " + safeResult;
+
+    logicLower.textContent = String(lower);
+    logicUpper.textContent = String(upper);
+    logicSafe.textContent = String(safeResult);
+
+    [logicLower,logicUpper,logicSafe].forEach(el=>{
+        el.style.color =
+            el.textContent === "true"
+                ? "var(--wrist-green)"
+                : "#f87171";
+    });
+
+    badge.className =
+        sim.expectedSafe
+            ? "wrist-scene-badge"
+            : "wrist-scene-badge unsafe";
+
+    badge.innerHTML =
+        sim.expectedSafe
+            ? '<i class="fa-solid fa-shield-halved"></i> SAFE'
+            : '<i class="fa-solid fa-triangle-exclamation"></i> UNSAFE';
+
+    warning.classList.toggle(
+        "visible",
+        !sim.expectedSafe
+    );
+
+    damageOverlay.classList.toggle(
+        "visible",
+        sim.damage
+    );
+
+    if(lastSafeState && !sim.expectedSafe){
+        playWarningSound();
+    }
+
+    lastSafeState = sim.expectedSafe;
+}
+
+function playWarningSound(){
+    try{
+        const AudioContext =
+            window.AudioContext ||
+            window.webkitAudioContext;
+
+        if(!AudioContext){
+            return;
+        }
+
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = "square";
+        osc.frequency.value = 440;
+        gain.gain.value = .12;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        gain.gain.exponentialRampToValueAtTime(
+            .0001,
+            ctx.currentTime + .18
+        );
+        osc.stop(ctx.currentTime + .18);
+    }catch(err){
+        console.warn(err);
+    }
+}
+
+function triggerDamage(){
+    if(sim.damageCooldown){
+        return;
+    }
+
+    sim.damage = true;
+    sim.damageCooldown = true;
+    updateUI();
+
+    setTimeout(()=>{
+        sim.damage = false;
+        updateUI();
+    },900);
+
+    setTimeout(()=>{
+        sim.damageCooldown = false;
+    },1800);
+}
+
+function updateWristVisual(name,value){
+    if(name !== "wrist"){
+        return;
+    }
+
+    sim.targetPosition =
+        clamp(Number(value) || 0,0,1);
+
+    getComputedAngle();
+}
+
+window.getPotVoltage = function(name){
+    if(name !== "wrist_pot"){
+        return 0;
+    }
+
+    getComputedAngle();
+    return sim.voltage;
+};
+
+window.setServoPosition = function(name,value){
+    value = clamp(Number(value) || 0,0,1);
+
+    const servo =
+        window.hardwareMap?._devices?.[name];
+
+    if(
+        servo &&
+        typeof servo.setPosition === "function"
+    ){
+        servo.setPosition(value);
+    }else{
+        updateWristVisual(name,value);
+    }
+};
+
+window.onSimulatorReady = function(){
+    setCode(starterCode);
+
+    setChallenge(
+        "Potentiometer Wrist Angle with Safety Check",
+        "Use a potentiometer voltage to calculate wrist angle, then report whether the wrist is inside the 20.0 to 160.0 degree safe zone.",
+        requirements
+    );
+
+    setHeader(
+        "Telemark Unit 11.2 Simulator",
+        "Potentiometer Wrist Angle with Safety Check"
+    );
+
+    setBadges([
+        {
+            iconClass:"fa-solid fa-microchip",
+            label:"AnalogInput",
+            active:true
+        },
+        {
+            iconClass:"fa-solid fa-rotate",
+            label:"Servo",
+            active:true
+        },
+        {
+            iconClass:"fa-solid fa-display",
+            label:"Telemetry",
+            active:true
+        },
+        {
+            iconClass:"fa-solid fa-gamepad",
+            label:"Gamepad",
+            active:true
+        }
+    ]);
+
+    setActiveInputs([
+        "left_stick_y"
+    ]);
+
+    installAnalogInputSupport();
+
+    hardwareMap.registerAnalogInput(
+        "wrist_pot"
+    );
+
+    hardwareMap.registerServo(
+        "wrist"
+    );
+
+    hardwareMap.onServoPosition(
+        (name,value)=>{
+            updateWristVisual(name,value);
+        }
+    );
+
+    createPanel();
+    buildScene();
+    updateUI();
+
+    if(animationId === null && window.addAnimationCallback){
+        animationId = window.addAnimationCallback(()=>{
+            sim.visualPosition +=
+                (sim.targetPosition - sim.visualPosition) * .14;
+            updateMechanism();
+        });
+    }
+};
+
+let executionGeneration = 0;
+let preparedLoopRunner = null;
+
+window.onInit = function(){
+    const generation = ++executionGeneration;
+    sim.running = false;
+    sim.setupOk = false;
+    sim.loopFunction = null;
+    sim.safeFunction = null;
+    preparedLoopRunner = null;
+
+    const editor =
+        document.getElementById("sim-code-editor");
+
+    const source =
+        editor?.value ||
+        starterCode;
+
+    analyzeSource(source);
+    addRelevantHints(source);
+
+    try{
+        compileStudentCode(source);
+        testStudentSafeLogic();
+        sim.setupOk = true;
+        updateRequirementStates();
+    }catch(err){
+        console.error(err);
+        window._simShowTelemetryError?.(
+            "setup error: " + err.message
+        );
+        updateRequirementStates();
+        window.stopExecution?.();
+        return;
+    }
+
+    preparedLoopRunner = function tick(){
+        if(!sim.running || generation !== executionGeneration){
+            return;
+        }
+
+        const beforePosition =
+            sim.targetPosition;
+
+        try{
+            window.clearTelemetry?.();
+            sim.loopFunction();
+
+            if(sim.safeFunction){
+                sim.studentSafe =
+                    Boolean(sim.safeFunction());
+            }
+        }catch(err){
+            console.error(err);
+            window._simShowTelemetryError?.(
+                "loop error: " + err.message
+            );
+            sim.running = false;
+            window.stopExecution?.();
+            return;
+        }
+
+        getComputedAngle();
+
+        const movingOutOfBounds =
+            Math.abs(window.gamepad.left_stick_y || 0) > .15;
+
+        const positionChanged =
+            Math.abs(sim.targetPosition - beforePosition) > .0005;
+
+        if(
+            !sim.expectedSafe &&
+            movingOutOfBounds &&
+            positionChanged
+        ){
+            triggerDamage();
+        }
+
+        updateUI();
+
+        setTimeout(tick,50);
+    };
+};
+
+window.onStart = function(){
+    if(!sim.setupOk || !preparedLoopRunner) return;
+
+    sim.running = true;
+    preparedLoopRunner();
+};
+
+window.onStop = function(){
+    executionGeneration++;
+    sim.running = false;
+    preparedLoopRunner = null;
+};
+
+window.onReset = function(){
+    window.onStop();
+
+    sim.targetPosition = .5;
+    sim.visualPosition = .5;
+    sim.studentSafe = true;
+    sim.expectedSafe = true;
+    sim.damage = false;
+    sim.damageCooldown = false;
+    sim.setupOk = false;
+    sim.loopFunction = null;
+    sim.safeFunction = null;
+    sim.requirements = [false,false,false,false,false,false];
+
+    const servo =
+        window.hardwareMap?._devices?.wrist;
+
+    if(servo && typeof servo.setPosition === "function"){
+        servo.setPosition(.5);
+    }
+
+    updateRequirementStates();
+    updateUI();
+};
+
+})();
+</script>
+
+</body>
+</html>

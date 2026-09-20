@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Telemark Unit 8.2 Simulator</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
+<style>
+:root{
+  --bg:#05080d;--panel:#0b1118;--panel-2:#071019;--text:#eaf8ff;--muted:#94a3b8;
+  --accent:#38bdf8;--accent-2:#22d3ee;--danger:#cc0000;--danger-2:#ff5252;--good:#00cc00;--warn:#ffcc00;
+  --border:#243746;--orange:#22d3ee;--cyan:#22d3ee;--field:#071019;--grid:#243746;
+}
+*{box-sizing:border-box;scrollbar-width:thin;scrollbar-color:#22d3ee #05080d}
+*::-webkit-scrollbar{width:6px;height:6px}
+*::-webkit-scrollbar-track{background:#05080d}
+*::-webkit-scrollbar-thumb{background:#22d3ee;border-radius:3px}
+*::-webkit-scrollbar-thumb:hover{background:#22d3ee}
+html,body{height:100%;margin:0}
+body{display:flex;height:100vh;overflow:hidden;background:var(--bg);color:var(--text);font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif}
+button,input,textarea{font-family:inherit}
+code{font-family:"Consolas","Courier New",monospace}
+/* Layout */
+#left-panel{width:55%;min-width:360px;height:100%;display:flex;flex-direction:column;background:#080d13;overflow:hidden}
+#right-panel{flex:1;min-width:390px;height:100%;display:flex;flex-direction:column;background:var(--panel-2);overflow:hidden}
+#resizer{width:6px;background:#243746;cursor:col-resize;z-index:20;transition:background .2s;flex-shrink:0}
+#resizer:hover,#resizer.active{background:var(--accent)}
+.panel-header{padding:10px 14px;background:#05080d;border-bottom:1px solid #243746;flex-shrink:0}
+.panel-header-title{font-weight:800;color:#fff;font-size:1rem}.panel-header-sub{color:var(--muted);font-size:.82rem;margin-top:2px}
+/* Challenge */
+.challenge-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;margin:8px 10px;overflow:hidden;flex-shrink:0}
+.challenge-header{padding:9px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:#0d1721;font-weight:800;font-size:.9rem;color:var(--orange);user-select:none}
+.challenge-header i.chev{color:#888;font-size:.75rem;transition:transform .2s}.challenge-header.open i.chev{transform:rotate(90deg)}
+.challenge-body{display:none;padding:10px 12px;font-size:.85rem;line-height:1.55;color:#bbb}.challenge-body.open{display:block}
+.task{margin:6px 0 10px;color:#dbeafe;background:#05080d;padding:9px 10px;border-radius:5px;font-family:"Consolas","Courier New",monospace;font-size:.82rem;line-height:1.55;white-space:pre-wrap}
+.req{display:flex;align-items:center;gap:7px;padding:3px 0;font-size:.83rem}.req .check{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0;background:rgba(100,100,100,.2);color:#555}
+.req .check.pass{background:rgba(0,204,0,.2);color:var(--good)}
+.success-banner{display:none;background:rgba(0,204,0,.12);border:1px solid var(--good);border-radius:6px;padding:10px;color:var(--good);font-weight:800;font-size:.9rem;margin-top:8px;text-align:center}.success-banner.visible{display:block}
+/* Editor */
+.code-wrapper{position:relative;flex:1;overflow:hidden;background:var(--bg);min-height:180px}
+#code-editor,#highlighting{position:absolute;inset:0;margin:0;padding:16px;font-family:"Consolas","Courier New",monospace;font-size:13px;line-height:1.6;tab-size:4;white-space:pre;border:0;outline:none}
+#code-editor{color:transparent;background:transparent;caret-color:#fff;z-index:2;resize:none;overflow:auto}
+#highlighting{z-index:1;overflow:hidden}#highlighting code{font-family:inherit;font-size:inherit;line-height:inherit;text-shadow:none}
+/* Bottom bar */
+.bottom-bar{background:var(--panel);border-top:1px solid var(--border);padding:8px 10px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;max-height:270px;overflow:auto}
+.controls-row{display:flex;gap:8px}.controls-row button{flex:1;padding:10px;border-radius:6px;border:none;font-size:.9rem;font-weight:800;cursor:pointer;color:#fff;transition:.1s}.controls-row button:active{transform:translateY(1px)}
+.btn-run{background:var(--good)}.btn-run:hover{filter:brightness(1.1)}.btn-run:disabled{background:#444;color:#888;cursor:not-allowed;transform:none}
+.btn-stop{background:var(--danger)}.btn-stop:hover{filter:brightness(1.1)}.btn-reset{background:#555}.btn-reset:hover{filter:brightness(1.2)}
+.ds-status{display:flex;justify-content:space-between;align-items:center;font-family:"Consolas","Courier New",monospace;font-size:.85rem}.ds-state{font-weight:800}.ds-timer{color:#569cd6}
+.telemetry-panel{background:#000;border:1px solid #444;border-radius:6px;min-height:54px;max-height:110px;padding:8px;font-family:"Consolas","Courier New",monospace;font-size:.85rem;overflow-y:auto;color:#00ff00}.telemetry-line{margin:1px 0}.telemetry-key{color:#4ec9b0}.telemetry-error{color:#ff6666}
+#hint-container{display:flex;flex-direction:column;gap:4px}.hint{background:rgba(255,204,0,.12);border-left:3px solid var(--warn);padding:6px 8px;color:var(--warn);border-radius:3px;font-size:.82rem}.hint.error{background:rgba(204,0,0,.12);border-left-color:var(--danger);color:#ff6666}.hint.info{background:rgba(0,122,204,.12);border-left-color:var(--accent);color:#6db3f2}
+.camera-follow-btn{
+  position:absolute;
+  right:10px;
+  top:9px;
+  z-index:6;
+  background:rgba(0,0,0,.55);
+  border:1px solid rgba(255,255,255,.16);
+  color:#bbb;
+  border-radius:6px;
+  padding:6px 10px;
+  font-family:"Consolas","Courier New",monospace;
+  font-size:.76rem;
+  font-weight:800;
+  cursor:pointer;
+  transition:.15s;
+}
+.camera-follow-btn:hover{
+  background:rgba(0,0,0,.8);
+  color:#fff;
+}
+.camera-follow-btn.active{
+  border-color:var(--accent-2);
+  color:var(--accent-2);
+  background:rgba(0,183,255,.14);
+}
+/* Right panel */
+.badge-strip{display:flex;gap:6px;flex-wrap:wrap;padding:10px 10px 0;flex-shrink:0}.hw-badge{padding:4px 10px;border-radius:6px;font-size:.78rem;font-weight:700;display:flex;align-items:center;gap:5px;border:1px solid var(--border)}.hw-badge.active{border-color:var(--orange);color:var(--orange);background:rgba(34,211,238,.1)}.hw-badge.tel{border-color:var(--accent);color:var(--accent);background:rgba(56,189,248,.1)}.hw-badge.inactive{background:#0d1721;color:#64748b}
+#scene-container{flex:1;position:relative;margin:10px;border-radius:8px;overflow:hidden;background:#0a0a0a;min-height:260px;border:1px solid #202020}
+#robot-canvas{display:block;width:100%;height:100%;cursor:grab}#robot-canvas:active{cursor:grabbing}
+.scene-label{position:absolute;left:10px;top:9px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.09);border-radius:6px;padding:5px 8px;color:#bbb;font-size:.76rem;pointer-events:none;font-family:"Consolas","Courier New",monospace}
+.scene-hint{position:absolute;left:50%;top:16px;transform:translateX(-50%);max-width:86%;padding:9px 12px;border-radius:8px;background:rgba(255,204,0,.18);border:1px solid rgba(255,204,0,.9);color:var(--warn);font-weight:800;font-size:.9rem;text-align:center;box-shadow:0 0 18px rgba(255,204,0,.2);display:none;pointer-events:none;z-index:5}.scene-hint.visible{display:block;animation:pulseHint .85s infinite alternate}.scene-hint.error{background:rgba(204,0,0,.22);border-color:#ff5555;color:#ff7777;box-shadow:0 0 20px rgba(255,0,0,.2)}
+@keyframes pulseHint{from{transform:translateX(-50%) scale(1);opacity:.86}to{transform:translateX(-50%) scale(1.035);opacity:1}}
+.readouts{flex-shrink:0;margin:0 10px 10px;display:flex;flex-direction:column;gap:8px;max-height:245px;overflow:auto}.motor-bars-panel,.direction-panel{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px}.section-title{font-size:.82rem;font-weight:900;color:#fff;margin-bottom:8px;display:flex;align-items:center;gap:6px}.section-title i{color:var(--orange)}
+.motor-row{display:grid;grid-template-columns:42px 1fr 48px;align-items:center;gap:8px;margin:7px 0;font-family:"Consolas","Courier New",monospace;font-size:.84rem}.motor-label{font-weight:900}.motor-label.fl,.motor-label.bl{color:#ff8888}.motor-label.fr,.motor-label.br{color:#80b9ff}.motor-value{text-align:right;color:#fff}.bar-track{height:14px;background:#101d29;border-radius:7px;position:relative;overflow:hidden;border:1px solid #243746}.bar-center{position:absolute;left:50%;top:0;bottom:0;width:1px;background:#64748b}.bar-fill{position:absolute;top:2px;bottom:2px;border-radius:5px;transition:left .05s,width .05s;background:var(--good)}
+.direction-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.dir-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 9px;border-radius:6px;background:#0d1721;border:1px solid #243746;font-family:"Consolas","Courier New",monospace;font-size:.8rem}.dir-name{font-weight:900}.dir-state{font-weight:900;padding:2px 6px;border-radius:4px;background:#101d29;color:#dbeafe}.dir-ok{color:var(--good)}.dir-bad{color:#ff6666}.dir-item.ok{border-color:rgba(0,204,0,.45);background:rgba(0,204,0,.06)}.dir-item.bad{border-color:rgba(204,0,0,.55);background:rgba(204,0,0,.08)}.dir-banner{display:none;margin-top:8px;padding:8px;border-radius:6px;font-size:.84rem;font-weight:900;text-align:center}.dir-banner.good{display:block;background:rgba(0,204,0,.12);border:1px solid var(--good);color:var(--good)}.dir-banner.bad{display:block;background:rgba(204,0,0,.12);border:1px solid var(--danger);color:#ff6666}.misconfig-list{font-weight:700;margin-top:3px;color:#ff8a8a;font-family:"Consolas","Courier New",monospace;font-size:.78rem;text-align:center}
+/* Gamepad card */
+.gamepad-float-card{position:fixed;bottom:12px;right:12px;width:390px;min-width:260px;background:var(--panel);border:1px solid var(--border);border-radius:12px;z-index:1000;display:flex;flex-direction:column;box-shadow:0 6px 24px rgba(0,0,0,.5);overflow:hidden}.gamepad-titlebar{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#0d1721;border-bottom:1px solid var(--border);cursor:grab;user-select:none;flex-shrink:0}.gamepad-titlebar:active{cursor:grabbing}.gamepad-titlebar-label{font-weight:800;font-size:.9rem;color:#fff;display:flex;align-items:center;gap:6px}.gamepad-titlebar-label i{color:var(--accent)}.gp-collapse-btn{width:24px;height:24px;padding:0;border-radius:4px;background:#101d29;border:1px solid #243746;color:#cbd5e1;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center}.gp-collapse-btn:hover{background:#172638}.gamepad-card-body{padding:10px;overflow:hidden;flex:1}.gamepad-resize-handle{position:absolute;bottom:0;right:0;width:16px;height:16px;cursor:nwse-resize;z-index:10}.gamepad-resize-handle::after{content:'';position:absolute;bottom:3px;right:3px;width:7px;height:7px;border-right:2px solid #64748b;border-bottom:2px solid #64748b}
+.controller-wrap{width:100%;position:relative;aspect-ratio:768/512;border-radius:14px;overflow:hidden;background:#0f0f0f;touch-action:none;user-select:none}
+.controller-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:1;}
+.overlay{position:absolute;border-radius:50%;touch-action:none;user-select:none;z-index:4;}
+.stick-zone-left{left:35.5%;top:65.5%;width:17%;height:24%;transform:translate(-50%,-50%);background:transparent;z-index:5;}
+.stick-base-left{position:absolute;left:35.5%;top:65.5%;width:14%;height:21%;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;box-shadow:inset 0 0 0 2px rgba(255,255,255,.12);z-index:2;}
+.stick-knob-left{position:absolute;left:35.5%;top:65.5%;width:9%;height:13%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 35% 35%,#444,#121212 70%);border:1px solid rgba(255,255,255,.18);pointer-events:none;box-shadow:0 4px 10px rgba(0,0,0,.45);z-index:6;}
+.stick-zone-right{left:64%;top:65.5%;width:17%;height:24%;transform:translate(-50%,-50%);background:transparent;z-index:5;}
+.stick-base-right{position:absolute;left:64%;top:65.5%;width:14%;height:21%;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;box-shadow:inset 0 0 0 2px rgba(255,255,255,.12);z-index:2;}
+.stick-knob-right{position:absolute;left:64%;top:65.5%;width:9%;height:13%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 35% 35%,#444,#121212 70%);border:1px solid rgba(255,255,255,.18);pointer-events:none;box-shadow:0 4px 10px rgba(0,0,0,.45);z-index:6;}
+.button-overlay{border:2px solid rgba(255,255,255,.15);background:rgba(255,255,255,.02);cursor:pointer;transition:.05s;z-index:4;}
+.button-overlay.pressed{background:rgba(255,255,255,.18);box-shadow:0 0 0 2px rgba(255,255,255,.25),inset 0 0 20px rgba(255,255,255,.22)}
+.a-btn{left:75.5%;top:49%;width:7%;height:10%;transform:translate(-10%,-10%)}
+.b-btn{left:83%;top:38%;width:7%;height:10%;transform:translate(-10%,-10%)}
+.x-btn{left:68%;top:38%;width:7%;height:10%;transform:translate(-10%,-10%)}
+.y-btn{left:75.5%;top:27%;width:7%;height:10%;transform:translate(-10%,-10%)}
+.small-button{width:5.2%;height:6.4%;border-radius:16px;border:2px solid rgba(255,255,255,.14);pointer-events:auto;z-index:4;}
+.back-btn{left:37.5%;top:28%;transform:translate(-10%,-10%)}.start-btn{left:58%;top:28%;transform:translate(-10%,-10%)}
+.bumper-btn{position:absolute;width:14%;height:6%;border-radius:8px;border:2px solid rgba(255,255,255,.15);background:rgba(255,255,255,.02);cursor:pointer;z-index:4;}
+.left-bumper-btn{left:20%;top:12%;transform:translate(-50%,-50%)}.right-bumper-btn{left:80%;top:12%;transform:translate(-50%,-50%)}
+.dpad-container{position:absolute;left:21.5%;top:41%;width:16%;height:24%;transform:translate(-50%,-50%);pointer-events:none;z-index:4;}
+.dpad-btn{position:absolute;width:33%;height:33%;background:rgba(40,40,40,.8);border:1px solid rgba(255,255,255,.1);cursor:pointer;pointer-events:auto;display:flex;align-items:center;justify-content:center}
+.dpad-btn svg{width:50%;height:50%;fill:rgba(255,255,255,.5)}
+.dpad-up{top:0;left:33%;border-radius:4px 4px 0 0}.dpad-down{bottom:0;left:33%;border-radius:0 0 4px 4px}
+.dpad-left{left:0;top:33%;border-radius:4px 0 0 4px}.dpad-right{right:0;top:33%;border-radius:0 4px 4px 0}
+.dpad-center{position:absolute;left:33%;top:33%;width:34%;height:34%;background:rgba(30,30,30,.9);pointer-events:none}
+.axis-readout{position:absolute;left:50%;bottom:5%;transform:translateX(-50%);font-family:"Consolas","Courier New",monospace;color:#ccc;font-size:.69rem;z-index:7;background:rgba(0,0,0,.75);padding:4px 8px;border-radius:4px;white-space:nowrap;border:1px solid #444;}
+.gp-instruction{position:absolute;left:50%;top:4%;transform:translateX(-50%);font-size:.72rem;color:#ddd;font-family:"Consolas","Courier New",monospace;white-space:nowrap;z-index:7;background:rgba(0,0,0,0.6);padding:3px 8px;border-radius:4px;border:1px solid #444;}
+@media (max-width:900px){#left-panel{width:52%;min-width:310px}#right-panel{min-width:330px}.gamepad-float-card{width:320px}.direction-grid{grid-template-columns:1fr}}
+</style>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+<script src="./telemark-project.js"></script>
+<script src="telemark-project-checks.js"></script>
+<link rel="stylesheet" href="./telemark-project.css"/>
+  <script src="./gamepad-controls.js"></script>
+  <script src="./simulator_base.js" data-telemark-mode="legacy"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+<div id="left-panel">
+  <div class="panel-header">
+    <div class="panel-header-title">Telemark Unit 8.2 Simulator</div>
+    <div class="panel-header-sub">Mecanum Drive Motor Directions &middot; Reverse left motors &middot; Direction visualization</div>
+  </div>
+  <div class="challenge-card">
+    <div class="challenge-header open" id="challenge-toggle">
+      <span><i class="fa-solid fa-trophy" style="margin-right:4px"></i> CHALLENGE 2 — Mecanum Drive Motor Directions</span>
+      <i class="fa-solid fa-chevron-right chev"></i>
+    </div>
+    <div class="challenge-body open" id="challenge-body">
+      <div class="task">Your robot has a 4-motor mecanum drivetrain. Both motors
+on the left side are mounted facing the opposite direction.
+Map the drivetrain with the lesson hardware names and reverse both left motors in init().</div>
+      <div class="req" id="req-lf-map"><span class="check"><i class="fa-solid fa-check"></i></span> leftFront mapped in init()</div>
+      <div class="req" id="req-rf-map"><span class="check"><i class="fa-solid fa-check"></i></span> rightFront mapped in init()</div>
+      <div class="req" id="req-lb-map"><span class="check"><i class="fa-solid fa-check"></i></span> leftBack mapped in init()</div>
+      <div class="req" id="req-rb-map"><span class="check"><i class="fa-solid fa-check"></i></span> rightBack mapped in init()</div>
+      <div class="req" id="req-lf-rev"><span class="check"><i class="fa-solid fa-check"></i></span> leftFront set to REVERSE</div>
+      <div class="req" id="req-lb-rev"><span class="check"><i class="fa-solid fa-check"></i></span> leftBack set to REVERSE</div>
+      <div class="req" id="req-math"><span class="check"><i class="fa-solid fa-check"></i></span> Mecanum drive math in loop()</div>
+      <div class="success-banner" id="success-banner"><i class="fa-solid fa-circle-check"></i> Challenge Complete! Your mecanum drive is configured correctly.</div>
+    </div>
+  </div>
+  <div class="code-wrapper">
+    <textarea id="code-editor" spellcheck="false" oninput="onCodeChange()" onscroll="syncScroll(this)">@TeleOp(name="Mecanum_Directions")
+public class MecanumDirections extends OpMode {
+    DcMotor leftFront, rightFront, leftBack, rightBack;
+    @Override
+    public void init() {
+        leftFront  = hardwareMap.get(DcMotor.class, "left_front");
+        rightFront = hardwareMap.get(DcMotor.class, "right_front");
+        leftBack   = hardwareMap.get(DcMotor.class, "left_back");
+        rightBack  = hardwareMap.get(DcMotor.class, "right_back");
+        
+        // TODO: Reverse the left-side motors here
+        
+        telemetry.addData("Status", "Initialized");
+    }
+    @Override
+    public void loop() {
+        double drive  = -gamepad1.left_stick_y;
+        double strafe =  gamepad1.left_stick_x;
+        double rotate =  gamepad1.right_stick_x;
+
+        double fl = drive + strafe + rotate;
+        double fr = drive - strafe - rotate;
+        double bl = drive - strafe + rotate;
+        double br = drive + strafe - rotate;
+
+        double max = Math.max(1.0, Math.max(
+            Math.max(Math.abs(fl), Math.abs(fr)),
+            Math.max(Math.abs(bl), Math.abs(br))
+        ));
+
+        leftFront.setPower(fl / max);
+        rightFront.setPower(fr / max);
+        leftBack.setPower(bl / max);
+        rightBack.setPower(br / max);
+
+        telemetry.addData("FL", fl / max);
+        telemetry.addData("FR", fr / max);
+        telemetry.addData("BL", bl / max);
+        telemetry.addData("BR", br / max);
+        telemetry.update();
+    }
+}</textarea>
+    <pre id="highlighting" aria-hidden="true"><code class="language-java" id="highlighting-content"></code></pre>
+  </div>
+  <div class="bottom-bar">
+    <div class="controls-row">
+      <button class="btn-run" id="btn-run" onclick="handleRun()"><i class="fa-solid fa-play"></i> Run</button>
+      <button class="btn-stop" onclick="handleStop()"><i class="fa-solid fa-stop"></i> Stop</button>
+      <button class="btn-reset" onclick="resetRobot()"><i class="fa-solid fa-location-crosshairs"></i> Reset Robot</button>
+    </div>
+    <div class="ds-status">
+      <span class="ds-state" id="ds-state" style="color:var(--danger)">STOPPED</span>
+      <span class="ds-timer">Time: <span id="timer-val">0.00</span>s</span>
+    </div>
+    <div class="telemetry-panel" id="telemetry-log"><span style="color:#666">Press Run to start...</span></div>
+    <div id="hint-container"></div>
+  </div>
+</div>
+<div id="resizer"></div>
+<div id="right-panel">
+  <div class="badge-strip">
+    <div class="hw-badge active"><i class="fa-solid fa-screwdriver-wrench"></i> DcMotor x4</div>
+    <div class="hw-badge tel"><i class="fa-solid fa-tower-broadcast"></i> Telemetry</div>
+    <div class="hw-badge inactive"><i class="fa-solid fa-compass"></i> IMU</div>
+    <div class="hw-badge inactive"><i class="fa-solid fa-circle-dot"></i> Servos</div>
+    <div class="hw-badge inactive"><i class="fa-solid fa-camera"></i> Vision</div>
+  </div>
+  <div id="scene-container">
+    <canvas id="robot-canvas"></canvas>
+    <div class="scene-label">
+      Drag scene to orbit &middot; Right-click to pan &middot; Scroll to zoom
+    </div>
+    <button class="camera-follow-btn" id="camera-follow-btn" type="button">
+      Follow Robot: OFF
+    </button>
+  <div class="scene-hint" id="scene-hint"></div>
+</div>
+  <div class="readouts">
+    <div class="motor-bars-panel">
+      <div class="section-title"><i class="fa-solid fa-gauge-high"></i> Motor Power</div>
+      <div class="motor-row"><div class="motor-label fl">FL</div><div class="bar-track"><div class="bar-center"></div><div class="bar-fill" id="bar-leftFront"></div></div><div class="motor-value" id="val-leftFront">0.00</div></div>
+      <div class="motor-row"><div class="motor-label fr">FR</div><div class="bar-track"><div class="bar-center"></div><div class="bar-fill" id="bar-rightFront"></div></div><div class="motor-value" id="val-rightFront">0.00</div></div>
+      <div class="motor-row"><div class="motor-label bl">BL</div><div class="bar-track"><div class="bar-center"></div><div class="bar-fill" id="bar-leftBack"></div></div><div class="motor-value" id="val-leftBack">0.00</div></div>
+      <div class="motor-row"><div class="motor-label br">BR</div><div class="bar-track"><div class="bar-center"></div><div class="bar-fill" id="bar-rightBack"></div></div><div class="motor-value" id="val-rightBack">0.00</div></div>
+    </div>
+    <div class="direction-panel">
+      <div class="section-title"><i class="fa-solid fa-arrows-spin"></i> Direction Configuration</div>
+      <div class="direction-grid">
+        <div class="dir-item" id="dir-leftFront"><span class="dir-name">leftFront</span><span><span class="dir-state" id="dir-state-leftFront">FORWARD</span> <i id="dir-icon-leftFront" class="fa-solid fa-xmark dir-bad"></i></span></div>
+        <div class="dir-item" id="dir-rightFront"><span class="dir-name">rightFront</span><span><span class="dir-state" id="dir-state-rightFront">FORWARD</span> <i id="dir-icon-rightFront" class="fa-solid fa-check dir-ok"></i></span></div>
+        <div class="dir-item" id="dir-leftBack"><span class="dir-name">leftBack</span><span><span class="dir-state" id="dir-state-leftBack">FORWARD</span> <i id="dir-icon-leftBack" class="fa-solid fa-xmark dir-bad"></i></span></div>
+        <div class="dir-item" id="dir-rightBack"><span class="dir-name">rightBack</span><span><span class="dir-state" id="dir-state-rightBack">FORWARD</span> <i id="dir-icon-rightBack" class="fa-solid fa-check dir-ok"></i></span></div>
+      </div>
+      <div class="dir-banner" id="dir-banner"></div>
+      <div class="misconfig-list" id="misconfig-list"></div>
+    </div>
+  </div>
+</div>
+<div class="gamepad-float-card" id="gamepad-float-card">
+  <div class="gamepad-titlebar" id="gamepad-titlebar">
+    <span class="gamepad-titlebar-label"><i class="fa-solid fa-gamepad"></i> Gamepad 1</span>
+    <button class="gp-collapse-btn" id="gp-collapse-btn">−</button>
+  </div>
+  <div class="gamepad-card-body" id="gamepad-card-body">
+    <div class="controller-wrap" id="controller-wrap">
+      <img class="controller-img" alt="controller" src="https://resource.logitechg.com/w_776,h_437,ar_16:9,c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/gaming/en/products/f310/f310-feature-3.png">
+      <div class="gp-instruction">Left stick: drive/strafe &nbsp; | &nbsp; Right stick X: rotate</div>
+      
+      <div class="overlay bumper-btn left-bumper-btn" id="btn-lb"></div><div class="overlay bumper-btn right-bumper-btn" id="btn-rb"></div>
+      
+      <div class="overlay stick-zone-left" id="stick-zone-left"></div>
+      <div class="stick-base-left"></div>
+      <div class="stick-knob-left" id="stick-knob-left"></div>
+      
+      <div class="overlay stick-zone-right" id="stick-zone-right"></div>
+      <div class="stick-base-right"></div>
+      <div class="stick-knob-right" id="stick-knob-right"></div>
+      
+      <div class="overlay button-overlay y-btn"></div><div class="overlay button-overlay x-btn"></div>
+      <div class="overlay button-overlay a-btn"></div><div class="overlay button-overlay b-btn"></div>
+      <div class="overlay button-overlay small-button back-btn"></div>
+      <div class="overlay button-overlay small-button start-btn"></div>
+      
+      <div class="dpad-container"><div class="dpad-center"></div>
+        <div class="dpad-btn dpad-up"><svg viewBox="0 0 24 24"><path d="M12 4l-8 8h16z"/></svg></div>
+        <div class="dpad-btn dpad-down"><svg viewBox="0 0 24 24"><path d="M12 20l8-8H4z"/></svg></div>
+        <div class="dpad-btn dpad-left"><svg viewBox="0 0 24 24"><path d="M4 12l8-8v16z"/></svg></div>
+        <div class="dpad-btn dpad-right"><svg viewBox="0 0 24 24"><path d="M20 12l-8 8V4z"/></svg></div>
+      </div>
+      
+      <div class="axis-readout" id="axis-readout">LX 0.00 &nbsp; LY 0.00 &nbsp; RX 0.00</div>
+    </div>
+  </div>
+  <div class="gamepad-resize-handle" id="gamepad-resize-handle"></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+'use strict';
+/* ── Global State ─────────────────────────────────────────────────────────── */
+var MOTORS       = ['leftFront','rightFront','leftBack','rightBack'];
+var MOTOR_SHORT  = {leftFront:'FL',rightFront:'FR',leftBack:'BL',rightBack:'BR'};
+var EXPECTED_DIR = {leftFront:'REVERSE',leftBack:'REVERSE',rightFront:'FORWARD',rightBack:'FORWARD'};
+var MOUNT_SIGN   = {leftFront:-1,leftBack:-1,rightFront:1,rightBack:1};
+var DIR_SIGN     = {FORWARD:1,REVERSE:-1};
+var commandPower       = {leftFront:0,rightFront:0,leftBack:0,rightBack:0};
+var appliedPower       = {leftFront:0,rightFront:0,leftBack:0,rightBack:0};
+var motorDirections    = {leftFront:'FORWARD',rightFront:'FORWARD',leftBack:'FORWARD',rightBack:'FORWARD'};
+var codePreviewDirections = {leftFront:'FORWARD',rightFront:'FORWARD',leftBack:'FORWARD',rightBack:'FORWARD'};
+var gamepad = {left_stick_y:0,left_stick_x:0,right_stick_x:0};
+var running=false, loopInterval=null, timerInterval=null, runtimeStart=0;
+var activeHints=[];
+var codeEditor=document.getElementById('code-editor');
+var lastLoopError='';
+/* ── Three.js globals ─────────────────────────────────────────────────────── */
+var scene, camera, renderer, robotGroup, robotHeading=0;
+var wheels = {};
+var arrowCache = {};
+var lastFrameTime = 0;
+/* Camera orbit state */
+var orbit={theta:Math.PI,phi:0.85,radius:4.5,target:{x:0,y:3,z:2},dragging:false,panning:false,prevX:0,prevY:0};
+var FIELD_HALF = 3, ROBOT_MARGIN = 0.48;
+var cameraFollowRobot = false;
+var FIELD_CENTER_TARGET = {x:0, y:3, z:2};
+/* ── Utility ──────────────────────────────────────────────────────────────── */
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function clamp(v,mn,mx){return Math.max(mn,Math.min(mx,v))}
+function addHint(m,t){for(var i=0;i<activeHints.length;i++){if(activeHints[i].msg===m)return}activeHints.push({msg:m,type:t||'warn'})}
+function renderHints(){
+  var c=document.getElementById('hint-container');c.innerHTML='';
+  activeHints.forEach(function(h){
+    var cls='hint';if(h.type==='error')cls+=' error';else if(h.type==='info')cls+=' info';
+    c.innerHTML+='<div class="'+cls+'">'+h.msg+'</div>';
+  });
+}
+function setReq(id,pass){var el=document.getElementById(id);if(!el)return;el.querySelector('.check').className='check '+(pass?'pass':'')}
+/* ── Cached Arrow Sprites ─────────────────────────────────────────────────── */
+function getArrowMaterial(char,colorHex){
+  var key=char+'_'+colorHex;
+  if(arrowCache[key])return arrowCache[key];
+  var canvas=document.createElement('canvas');canvas.width=64;canvas.height=64;
+  var ctx=canvas.getContext('2d');
+  ctx.fillStyle='rgba(0,0,0,0.6)';ctx.beginPath();ctx.arc(32,32,29,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.25)';ctx.lineWidth=3.5;ctx.stroke();
+  ctx.font='bold 38px Arial';ctx.fillStyle=colorHex;ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.shadowColor='rgba(0,0,0,0.9)';ctx.shadowBlur=8;ctx.fillText(char,32,34);
+  var tex=new THREE.CanvasTexture(canvas);
+  var mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false,depthWrite:false});
+  arrowCache[key]=mat;return mat;
+}
+function prewarmArrowMaterials(){
+  getArrowMaterial('↻','#33ff66');getArrowMaterial('↺','#ff5555');
+  getArrowMaterial('↻','#777777');getArrowMaterial('↺','#777777');
+}
+/* ── UI helpers ───────────────────────────────────────────────────────────── */
+document.getElementById('challenge-toggle').addEventListener('click',function(){
+  this.classList.toggle('open');document.getElementById('challenge-body').classList.toggle('open');
+});
+function updateCode(t){
+  var el=document.getElementById('highlighting-content');
+  if(t&&t[t.length-1]==='\n')t+=' ';
+  el.innerHTML=(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  if(window.Prism)Prism.highlightElement(el);
+}
+function syncScroll(el){var h=document.getElementById('highlighting');h.scrollTop=el.scrollTop;h.scrollLeft=el.scrollLeft}
+function onCodeChange(){updateCode(codeEditor.value);syncScroll(codeEditor)}
+TelemarkEditor.attach(codeEditor, {onChange: onCodeChange});
+function setCameraFollowRobot(enabled){
+  cameraFollowRobot = !!enabled;
+  var btn = document.getElementById('camera-follow-btn');
+  if(btn){
+    btn.classList.toggle('active', cameraFollowRobot);
+    btn.textContent = cameraFollowRobot ? 'Follow Robot: ON' : 'Follow Robot: OFF';
+  }
+}
+/* ── Resizer ──────────────────────────────────────────────────────────────── */
+var resizer=document.getElementById('resizer'),leftPanel=document.getElementById('left-panel'),isResizing=false;
+resizer.addEventListener('mousedown',function(){isResizing=true;resizer.classList.add('active')});
+document.addEventListener('mousemove',function(e){
+  if(!isResizing)return;var pct=(e.clientX/window.innerWidth)*100;
+  if(pct>22&&pct<78)leftPanel.style.width=pct+'%';
+});
+document.addEventListener('mouseup',function(){isResizing=false;resizer.classList.remove('active')});
+/* ── Transpiler ───────────────────────────────────────────────────────────── */
+function getMethodBody(code,name){
+  var re=new RegExp('void\\s+'+name+'\\s*\\([^)]*\\)\\s*\\{');
+  var m=re.exec(code);if(!m)return null;
+  var idx=m.index+m[0].length,depth=1;
+  for(;idx<code.length;idx++){
+    if(code[idx]==='{')depth++;
+    else if(code[idx]==='}'){depth--;if(depth===0)return code.slice(m.index+m[0].length,idx);}
+  }
+  return null;
+}
+function transpileCommon(js){
+  return window.TelemarkJava
+    ? window.TelemarkJava.transpileBody(js,{
+        gamepad1Name:'gamepad',
+        addTelemetryName:'addTelemetry',
+        updateTelemetryName:'updateTelemetry'
+      })
+    : js;
+}
+function transpileInit(java){
+  var js=java;
+  js=js.replace(/(leftFront|rightFront|leftBack|rightBack)\s*=\s*hardwareMap\.get\s*\(\s*DcMotor\.class\s*,\s*"([^"]+)"\s*\)\s*;?/g,'mapHardware("$1","$2");');
+  js=js.replace(/(leftFront|rightFront|leftBack|rightBack)\.setDirection\s*\(\s*DcMotorSimple\.Direction\.(REVERSE|FORWARD)\s*\)\s*;?/g,'setMotorDirection("$1","$2");');
+  return transpileCommon(js);
+}
+function transpileLoop(java){
+  var js=java;
+  js=js.replace(/leftFront\.setPower\s*\(/g,'setMotorPower("leftFront",');
+  js=js.replace(/rightFront\.setPower\s*\(/g,'setMotorPower("rightFront",');
+  js=js.replace(/leftBack\.setPower\s*\(/g,'setMotorPower("leftBack",');
+  js=js.replace(/rightBack\.setPower\s*\(/g,'setMotorPower("rightBack",');
+  js=js.replace(/(leftFront|rightFront|leftBack|rightBack)\.setDirection\s*\(\s*DcMotorSimple\.Direction\.(REVERSE|FORWARD)\s*\)\s*;?/g,'setMotorDirection("$1","$2");');
+  return transpileCommon(js);
+}
+/* ── Motor helpers ────────────────────────────────────────────────────────── */
+function resetDirections(){MOTORS.forEach(function(m){motorDirections[m]='FORWARD'})}
+function setMotorDirection(m,dir){if(MOTORS.indexOf(m)>=0&&(dir==='FORWARD'||dir==='REVERSE')){motorDirections[m]=dir;updateDirectionPanel(motorDirections);}}
+function setMotorPower(m,p){if(MOTORS.indexOf(m)<0)return;var n=Number(p);commandPower[m]=isFinite(n)?clamp(n,-1,1):0;}
+function updateAppliedPowers(){
+  MOTORS.forEach(function(m){appliedPower[m]=commandPower[m]*MOUNT_SIGN[m]*DIR_SIGN[motorDirections[m]];});
+}
+/* ── Telemetry ────────────────────────────────────────────────────────────── */
+function renderTelemetry(lines){
+  var log=document.getElementById('telemetry-log');
+  log.innerHTML=lines?lines.map(function(l){return'<div class="telemetry-line"><span class="telemetry-key">'+esc(l.key)+'</span>: '+esc(l.val)+'</div>'}).join(''):'';
+}
+function renderError(msg){document.getElementById('telemetry-log').innerHTML='<div class="telemetry-error">'+esc(msg)+'</div>';}
+function validateFullJavaSource(code){
+  if(!window.TelemarkSimulatorBase){renderError('Java compile error: Telemark Java compiler is unavailable (line 1, column 1)');handleStop();return false}
+  var result;
+  try{result=window.TelemarkSimulatorBase.compileStudentSource(code)}
+  catch(error){renderError('Java compile error: '+error.message+' (line 1, column 1)');handleStop();return false}
+  if(result.ok)return true;
+  var diagnostic=result.diagnostics&&result.diagnostics[0]||{};
+  renderError('Java compile error: '+(diagnostic.message||'Invalid Java source')+' (line '+(diagnostic.line||1)+', column '+(diagnostic.column||1)+')');
+  console.error('Unit 8.2 Java compile error',diagnostic);
+  handleStop();
+  return false;
+}
+/* ── Execute Java ─────────────────────────────────────────────────────────── */
+var projectRunner=null,projectTelemetry=[];
+function executeInit(){
+  var initBody=getMethodBody(codeEditor.__telemarkProject?codeEditor.__telemarkProject.source():codeEditor.value,'init');
+  if(initBody===null){renderError('Java compile error: Required init() method is missing or has unmatched braces');return false}
+  resetDirections();
+  projectTelemetry=[];
+  function addTelemetry(k,v){if(typeof v==='number'&&v!==Math.floor(v))v=v.toFixed(2);projectTelemetry.push({key:String(k),val:String(v)})}
+  function updateTelemetry(){renderTelemetry(projectTelemetry)}
+  function mapHardware(){return{}}
+  try{
+    var names={left_front:'leftFront',right_front:'rightFront',left_back:'leftBack',right_back:'rightBack'};
+    projectRunner=TelemarkProject.createRunner(codeEditor,{gamepad1:gamepad,
+      onPower:function(power,device){setMotorPower(names[device.name]||device.name,power)},
+      onDirection:function(direction,device){setMotorDirection(names[device.name]||device.name,direction)},
+      getRuntime:function(){return(Date.now()-runtimeStart)/1000},onTelemetry:addTelemetry,onTelemetryUpdate:updateTelemetry});
+    projectRunner.init();
+  }catch(e){renderError('init() compile/runtime error: '+e.message);console.error('Unit 8.2 init() failed',e);return false}
+  updateDirectionPanel(motorDirections);
+  return true;
+}
+function runLoop(){
+  var loopBody=getMethodBody(codeEditor.__telemarkProject?codeEditor.__telemarkProject.source():codeEditor.value,'loop');
+  if(loopBody===null){renderError('Java compile error: Required loop() method is missing or has unmatched braces');handleStop();return false}
+  projectTelemetry=[];
+  function addTelemetry(k,v){if(typeof v==='number'&&v!==Math.floor(v))v=v.toFixed(2);projectTelemetry.push({key:String(k),val:String(v)})}
+  function updateTelemetry(){renderTelemetry(projectTelemetry)}
+  try{
+    projectRunner.runtime.addTelemetry=addTelemetry;
+    projectRunner.runtime.updateTelemetry=updateTelemetry;
+    projectRunner.loop();
+    lastLoopError='';
+  }catch(e){
+    if(e.message!==lastLoopError){renderError('loop() compile/runtime error: '+e.message);lastLoopError=e.message}
+    console.error('Unit 8.2 loop() failed',e);
+    handleStop();
+    return false;
+  }
+  updateAppliedPowers();
+  updateMotorBars();
+  updateDirectionPanel(motorDirections);
+  return true;
+}
+/* ── Run control ──────────────────────────────────────────────────────────── */
+function handleRun(){
+  if(running)return;
+  if(!validateFullJavaSource(codeEditor.value))return;
+  running=true;runtimeStart=Date.now();lastLoopError='';
+  commandPower={leftFront:0,rightFront:0,leftBack:0,rightBack:0};updateAppliedPowers();
+  document.getElementById('ds-state').textContent='RUNNING';
+  document.getElementById('ds-state').style.color='var(--good)';
+  document.getElementById('btn-run').disabled=true;
+  document.getElementById('telemetry-log').innerHTML='';
+  validate();
+  if(!executeInit()){handleStop();return}
+  if(!runLoop())return;
+  timerInterval=setInterval(function(){document.getElementById('timer-val').textContent=((Date.now()-runtimeStart)/1000).toFixed(2)},50);
+  loopInterval=setInterval(function(){runLoop()},40);
+}
+function handleStop(){
+  if(projectRunner){var stopped=projectRunner;projectRunner=null;try{stopped.stop()}catch(e){console.error(e)}}
+  running=false;
+  if(loopInterval)clearInterval(loopInterval);
+  if(timerInterval)clearInterval(timerInterval);
+  loopInterval=timerInterval=null;
+  MOTORS.forEach(function(m){commandPower[m]=0;appliedPower[m]=0});
+  updateMotorBars();
+  document.getElementById('ds-state').textContent='STOPPED';
+  document.getElementById('ds-state').style.color='var(--danger)';
+  document.getElementById('btn-run').disabled=false;
+  document.getElementById('timer-val').textContent='0.00';
+  updateSceneHint('');
+}
+function resetRobot(){
+  if(robotGroup){robotGroup.position.set(0,0,0);robotGroup.rotation.y=0;robotHeading=0}
+  // Reset camera target and angle back to default
+  orbit.target.x = FIELD_CENTER_TARGET.x;
+  orbit.target.y = FIELD_CENTER_TARGET.y;
+  orbit.target.z = FIELD_CENTER_TARGET.z;
+  orbit.theta = Math.PI;
+  updateCameraOrbit();
+  MOTORS.forEach(function(m){commandPower[m]=0;appliedPower[m]=0});
+  updateMotorBars();
+}
+/* ── Validation ───────────────────────────────────────────────────────────── */
+function directionSnapshotFromInit(initBody){
+  var dirs={leftFront:'FORWARD',rightFront:'FORWARD',leftBack:'FORWARD',rightBack:'FORWARD'};
+  MOTORS.forEach(function(m){
+    var re=new RegExp(m+'\\.setDirection\\s*\\(\\s*DcMotorSimple\\.Direction\\.(REVERSE|FORWARD)\\s*\\)','g');
+    var match,last=null;while((match=re.exec(initBody))!==null)last=match[1];if(last)dirs[m]=last;
+  });
+  return dirs;
+}
+var HARDWARE_NAMES={
+  leftFront:['left_front','leftFront'],
+  rightFront:['right_front','rightFront'],
+  leftBack:['left_back','leftBack'],
+  rightBack:['right_back','rightBack']
+};
+function hasMap(initBody,m){
+  var names=HARDWARE_NAMES[m]||[m];
+  return new RegExp(m+'\\s*=\\s*hardwareMap\\.get\\s*\\(\\s*DcMotor\\.class\\s*,\\s*"(?:'+names.join('|')+')"\\s*\\)').test(initBody);
+}
+function hasReverse(initBody,m){return new RegExp(m+'\\.setDirection\\s*\\(\\s*DcMotorSimple\\.Direction\\.REVERSE\\s*\\)').test(initBody)}
+function detectMecanumMath(loopBody){
+  return /drive\s*=\s*-?gamepad1\.left_stick_y/.test(loopBody)&&
+         /strafe\s*=\s*gamepad1\.left_stick_x/.test(loopBody)&&
+         /rotate\s*=\s*gamepad1\.right_stick_x/.test(loopBody)&&
+         /fl\s*=.*drive.*strafe.*rotate/.test(loopBody)&&
+         /setPower/.test(loopBody);
+}
+function validate() {
+  TelemarkProjectChecks.render("8.2", codeEditor);
+}
+/* ── Direction / motor bar UI ─────────────────────────────────────────────── */
+function updateDirectionPanel(dirs){
+  var wrong=[];
+  MOTORS.forEach(function(m){
+    var state=dirs[m]||'FORWARD',ok=state===EXPECTED_DIR[m];
+    document.getElementById('dir-state-'+m).textContent=state;
+    var item=document.getElementById('dir-'+m),icon=document.getElementById('dir-icon-'+m);
+    item.className='dir-item '+(ok?'ok':'bad');
+    icon.className='fa-solid '+(ok?'fa-check dir-ok':'fa-xmark dir-bad');
+    if(!ok)wrong.push(MOTOR_SHORT[m]+' should be '+EXPECTED_DIR[m]);
+  });
+  var banner=document.getElementById('dir-banner'),mis=document.getElementById('misconfig-list');
+  if(wrong.length===0){
+    banner.className='dir-banner good';
+    banner.innerHTML='✅ Motor directions correct — robot drives cleanly';
+    mis.textContent='';
+  }else{
+    banner.className='dir-banner bad';
+    banner.innerHTML='Motor directions need attention';
+    mis.textContent='Misconfigured: '+wrong.join(' · ');
+  }
+}
+function updateBar(id,p){
+  var fill=document.getElementById('bar-'+id),val=document.getElementById('val-'+id);
+  if(!fill||!val)return;
+  val.textContent=p.toFixed(2);
+  var pct=Math.abs(p)*52;
+  if(p>=0){fill.style.left='50%';fill.style.width=pct+'%';fill.style.background='var(--good)'}
+  else{fill.style.left=(50-pct)+'%';fill.style.width=pct+'%';fill.style.background='var(--danger-2)'}
+}
+function updateMotorBars(){MOTORS.forEach(function(m){updateBar(m,commandPower[m])})}
+/* ═══════════════════════════════════════════════════════════════════════════
+   THREE.JS SCENE
+   ═══════════════════════════════════════════════════════════════════════════ */
+function updateCameraOrbit(){
+  if(!camera)return;
+  var o=orbit;
+  camera.position.x=o.target.x+o.radius*Math.sin(o.phi)*Math.sin(o.theta);
+  camera.position.y=o.target.y+o.radius*Math.cos(o.phi);
+  camera.position.z=o.target.z+o.radius*Math.sin(o.phi)*Math.cos(o.theta);
+  camera.lookAt(o.target.x,o.target.y,o.target.z);
+}
+function addGrid(){
+  var mat=new THREE.LineBasicMaterial({color:0x2a2a44,transparent:true,opacity:.8});
+  var pts=[];
+  for(var i=-3;i<=3;i++){
+    pts.push(new THREE.Vector3(i,0.012,-3),new THREE.Vector3(i,0.012,3));
+    pts.push(new THREE.Vector3(-3,0.012,i),new THREE.Vector3(3,0.012,i));
+  }
+  var grid=new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts),mat);
+  grid.userData.telemarkThemeRole='grid';scene.add(grid);
+}
+function createWheel(name,x,z,color){
+  var group=new THREE.Group();group.position.set(x,0.19,z);
+  var geo=new THREE.CylinderGeometry(0.145,0.145,0.12,24);
+  var mat=new THREE.MeshPhongMaterial({color:color,emissive:color,emissiveIntensity:.05,shininess:35});
+  var wheel=new THREE.Mesh(geo,mat);wheel.rotation.z=Math.PI/2;wheel.castShadow=true;group.add(wheel);
+  var stripe=new THREE.Mesh(new THREE.BoxGeometry(0.13,0.018,0.30),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.2}));
+  stripe.position.y=0.01;wheel.add(stripe);
+  var sprite=new THREE.Sprite(getArrowMaterial('↻','#777777'));
+  sprite.scale.set(0.42,0.42,1);sprite.position.y=0.29;group.add(sprite);
+  wheels[name]={group:group,mesh:wheel,arrow:sprite};
+  robotGroup.add(group);
+}
+function initScene(){
+  var container=document.getElementById('scene-container'),canvas=document.getElementById('robot-canvas');
+  var w=container.clientWidth,h=container.clientHeight;
+  scene=new THREE.Scene();scene.background=new THREE.Color(0x0a0a0a);
+  camera=new THREE.PerspectiveCamera(45,w/h,0.1,100);updateCameraOrbit();
+  renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true});
+  renderer.setSize(w,h);renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));renderer.shadowMap.enabled=true;
+  var ambient=new THREE.AmbientLight(0x505060,.75);ambient.userData.telemarkThemeRole='ambient';scene.add(ambient);
+  var dl=new THREE.DirectionalLight(0xffffff,.9);dl.position.set(3,6,4);dl.castShadow=true;
+  dl.userData.telemarkThemeRole='directional';
+  dl.shadow.camera.left=-5;dl.shadow.camera.right=5;dl.shadow.camera.top=5;dl.shadow.camera.bottom=-5;scene.add(dl);
+  scene.add(new THREE.PointLight(0x00e5ff,.25,9)).position.set(0,3,2);
+  var floor=new THREE.Mesh(new THREE.PlaneGeometry(6,6),new THREE.MeshPhongMaterial({color:0x1a1a2e}));
+  floor.userData.telemarkThemeRole='floor';floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);addGrid();
+  var wallMat=new THREE.MeshPhongMaterial({color:0x303038});
+  var wallH=.35,wallT=.10;
+  var north=new THREE.Mesh(new THREE.BoxGeometry(6.2,wallH,wallT),wallMat);north.userData.telemarkThemeRole='wall';north.position.set(0,wallH/2,3.05);scene.add(north);
+  var south=north.clone();south.userData.telemarkThemeRole='wall';south.position.z=-3.05;scene.add(south);
+  var east=new THREE.Mesh(new THREE.BoxGeometry(wallT,wallH,6.2),wallMat);east.userData.telemarkThemeRole='wall';east.position.set(3.05,wallH/2,0);scene.add(east);
+  var west=east.clone();west.userData.telemarkThemeRole='wall';west.position.x=-3.05;scene.add(west);
+  robotGroup=new THREE.Group();scene.add(robotGroup);
+  var body=new THREE.Mesh(new THREE.BoxGeometry(.86,.28,.98),new THREE.MeshPhongMaterial({color:0x2a2a2a,shininess:60,specular:0x222222}));
+  body.position.y=.25;body.castShadow=true;robotGroup.add(body);
+  var marker=new THREE.Mesh(new THREE.BoxGeometry(.48,.16,.035),new THREE.MeshPhongMaterial({color:0x007acc,shininess:90,emissive:0x003366}));
+  marker.position.set(0,.31,.51);robotGroup.add(marker);
+  var arrowShape=new THREE.Shape();
+  arrowShape.moveTo(0,.18);arrowShape.lineTo(.16,-.12);arrowShape.lineTo(.055,-.08);
+  arrowShape.lineTo(.055,-.24);arrowShape.lineTo(-.055,-.24);arrowShape.lineTo(-.055,-.08);
+  arrowShape.lineTo(-.16,-.12);arrowShape.lineTo(0,.18);
+  var arrowMesh=new THREE.Mesh(new THREE.ShapeGeometry(arrowShape),new THREE.MeshPhongMaterial({color:0x00aaff,shininess:100,emissive:0x003366,transparent:true,opacity:0.95}));
+  arrowMesh.rotation.x=-Math.PI/2;arrowMesh.position.set(0,.42,.08);robotGroup.add(arrowMesh);
+  createWheel('leftFront', -.50, .36, 0x222222);
+  createWheel('rightFront', .50, .36, 0x222222);
+  createWheel('leftBack',  -.50,-.36, 0x222222);
+  createWheel('rightBack',  .50,-.36, 0x222222);
+  prewarmArrowMaterials();
+  canvas.addEventListener('pointerdown',function(e){
+    if(e.button===0){orbit.dragging=true;orbit.panning=false}
+    else if(e.button===1||e.button===2){orbit.dragging=false;orbit.panning=true}
+    orbit.prevX=e.clientX;orbit.prevY=e.clientY;
+    canvas.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  canvas.addEventListener('pointermove',function(e){
+    if(!orbit.dragging&&!orbit.panning)return;
+    var dx=e.clientX-orbit.prevX,dy=e.clientY-orbit.prevY;
+    orbit.prevX=e.clientX;orbit.prevY=e.clientY;
+    if(orbit.dragging){
+      orbit.theta-=dx*0.008;
+      orbit.phi=Math.max(0.1,Math.min(Math.PI-0.1,orbit.phi-dy*0.008));
+    }
+    if(orbit.panning){
+      var panSpeed=0.005*orbit.radius;
+      var right=new THREE.Vector3();
+      var up=new THREE.Vector3();
+      right.setFromMatrixColumn(camera.matrixWorld,0);
+      up.setFromMatrixColumn(camera.matrixWorld,1);
+      orbit.target.x-=right.x*dx*panSpeed-up.x*dy*panSpeed;
+      orbit.target.y-=right.y*dx*panSpeed-up.y*dy*panSpeed;
+      orbit.target.z-=right.z*dx*panSpeed-up.z*dy*panSpeed;
+      orbit.target.y=Math.max(-0.5,orbit.target.y);
+    }
+    updateCameraOrbit();
+  });
+  function releaseOrbit(){orbit.dragging=false;orbit.panning=false}
+  canvas.addEventListener('pointerup',releaseOrbit);
+  canvas.addEventListener('pointercancel',releaseOrbit);
+  canvas.addEventListener('lostpointercapture',releaseOrbit);
+  window.addEventListener('blur',releaseOrbit);
+  canvas.addEventListener('wheel',function(e){
+    e.preventDefault();
+    orbit.radius=Math.max(1.5,Math.min(15,orbit.radius+e.deltaY*0.008));
+    updateCameraOrbit();
+  },{passive:false});
+  canvas.addEventListener('contextmenu',function(e){e.preventDefault()});
+  applySimulatorTheme(window.TelemarkSimulatorBase.getTheme());
+}
+function updateRobotPhysics(dt){
+  if(!robotGroup)return;
+  var fl=appliedPower.leftFront, fr=appliedPower.rightFront,
+      bl=appliedPower.leftBack,  br=appliedPower.rightBack;
+  var forward = (fl + fr + bl + br) * 0.25;
+  var strafe  = (fl - fr - bl + br) * 0.25;
+  var rotate  = (-fl + fr - bl + br) * 0.25;
+  var SPEED     = 3.8;
+  var ROT_SPEED = 3.0;
+  var h   = robotHeading;
+  var cos = Math.cos(h), sin = Math.sin(h);
+  // The model's nose points along local +Z (see the blue front marker in
+  // initScene), so positive drivetrain power must move it along local +Z.
+  var nx = robotGroup.position.x + ( forward  *sin + strafe*  cos)  *SPEED*  dt;
+  var nz = robotGroup.position.z + ( forward  *cos - strafe*  sin)  *SPEED*  dt;
+  nx = clamp(nx, -FIELD_HALF+ROBOT_MARGIN, FIELD_HALF-ROBOT_MARGIN);
+  nz = clamp(nz, -FIELD_HALF+ROBOT_MARGIN, FIELD_HALF-ROBOT_MARGIN);
+  robotGroup.position.x = nx;
+  robotGroup.position.z = nz;
+  robotHeading = (robotHeading + rotate  *ROT_SPEED*  dt) % (Math.PI*2);
+  robotGroup.rotation.y = robotHeading;
+  if(cameraFollowRobot){
+    orbit.target.x += (nx - orbit.target.x) * 0.08;
+    orbit.target.y += (3  - orbit.target.y) * 0.08;
+    orbit.target.z += (nz + 2 - orbit.target.z) * 0.08;
+  }
+  var spinRate = -1 * 22 * dt;
+  wheels.leftFront.mesh.rotation.x  += fl * spinRate;
+  wheels.rightFront.mesh.rotation.x += fr * spinRate;
+  wheels.leftBack.mesh.rotation.x   += bl * spinRate;
+  wheels.rightBack.mesh.rotation.x  += br * spinRate;
+  MOTORS.forEach(function(m){
+    var p=appliedPower[m], w=wheels[m];
+    var absP=Math.abs(p);
+    var sign=(absP>0.03)?p:(MOUNT_SIGN[m]*DIR_SIGN[motorDirections[m]]*0.07);
+    var char=sign>=0?'↻':'↺';
+    var color=absP<=0.03?'#777777':(p>0?'#33ff66':'#ff5555');
+    w.arrow.material=getArrowMaterial(char,color);
+  });
+}
+var currentSceneHintMsg=null;
+function updateSceneHint(msg,type){
+  type=type||'';
+  if(msg===currentSceneHintMsg)return;currentSceneHintMsg=msg;
+  var el=document.getElementById('scene-hint');
+  if(!msg){el.className='scene-hint';el.textContent='';return}
+  el.textContent=msg;el.className='scene-hint visible '+(type==='error'?'error':'');
+}
+function evaluateSceneHints(){
+  var dirs=running?motorDirections:codePreviewDirections;
+  var leftRevCount=(dirs.leftFront==='REVERSE'?1:0)+(dirs.leftBack==='REVERSE'?1:0);
+  if(leftRevCount===1){updateSceneHint('Both left motors need to be reversed','warn');return}
+  if(dirs.rightFront==='REVERSE'&&dirs.rightBack==='REVERSE'&&leftRevCount<2){updateSceneHint('Reverse the LEFT motors','error');return}
+  var drivingForward=running&&gamepad.left_stick_y<-0.55&&Math.abs(gamepad.left_stick_x)<.25&&Math.abs(gamepad.right_stick_x)<.25;
+  if(drivingForward&&!MOTORS.every(function(m){return dirs[m]===EXPECTED_DIR[m]})){
+    updateSceneHint("Check motor directions — robot isn't going straight",'warn');return;
+  }
+  updateSceneHint('');
+}
+function animateScene(){
+  requestAnimationFrame(animateScene);
+  var now = performance.now();
+  var dt  = lastFrameTime ? Math.min((now - lastFrameTime) / 1000, 0.05) : 0.016;
+  lastFrameTime = now;
+  updateRobotPhysics(dt);
+  updateCameraOrbit();
+  evaluateSceneHints();
+  if(renderer) renderer.render(scene, camera);
+}
+window.addEventListener('resize',function(){
+  var container=document.getElementById('scene-container');
+  if(!container||!camera||!renderer)return;
+  var w=container.clientWidth,h=container.clientHeight;
+  camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);
+});
+function updateAxisReadout(){
+  document.getElementById('axis-readout').textContent='LX '+gamepad.left_stick_x.toFixed(2)+'   LY '+gamepad.left_stick_y.toFixed(2)+'   RX '+gamepad.right_stick_x.toFixed(2);
+}
+function applySimulatorTheme(theme){
+  var container=document.getElementById('scene-container');
+  if(container)container.style.backgroundColor=theme==='light'?'#eaf1f5':'#0a0a0a';
+  if(scene&&window.TelemarkSimulatorBase)window.TelemarkSimulatorBase.themeThreeScene(scene,theme);
+}
+window.addEventListener('load',function(){
+  updateCode(codeEditor.value);
+  initScene();
+  animateScene();
+  updateMotorBars();
+  updateAppliedPowers();
+  updateAxisReadout();
+  var followBtn = document.getElementById('camera-follow-btn');
+  if(followBtn){
+    followBtn.addEventListener('click', function(){
+      setCameraFollowRobot(!cameraFollowRobot);
+    });
+  }
+  setCameraFollowRobot(false);
+});
+window.TelemarkSimulatorBase.installLegacy({
+  state: gamepad,
+  onInput: updateAxisReadout,
+  onThemeChange: applySimulatorTheme
+});
+</script>
+</body>
+</html>

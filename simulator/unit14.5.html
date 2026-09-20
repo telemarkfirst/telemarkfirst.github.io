@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Telemark Unit 14.5 Simulator</title>
+<style>
+  #sim-right-panel #sim-scene-container {
+    flex: 1 0 clamp(360px, 55vh, 620px);
+    min-height: 360px;
+    background: #020204;
+  }
+
+  #sim-right-panel .u145-panel {
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: clamp(285px, 38vh, 500px);
+    overflow-y: auto;
+    margin: 10px;
+    padding: 12px;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #0b0b0f;
+    color: #e5e7eb;
+    font-family: var(--font-ui, Arial, sans-serif);
+  }
+
+  #sim-scene-container .u145-scene-badge,
+  #sim-scene-container .u145-result-badge {
+    position: absolute;
+    z-index: 5;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: rgba(4, 4, 7, 0.9);
+    color: #f4f4f5;
+    pointer-events: none;
+    font-weight: 800;
+  }
+
+  #sim-scene-container .u145-scene-badge {
+    top: 12px;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 11px;
+    color: #bbf7d0;
+  }
+
+  #sim-scene-container .u145-result-badge {
+    right: 12px;
+    bottom: 12px;
+    padding: 10px 13px;
+    font-size: 1.1rem;
+  }
+
+  #sim-right-panel .u145-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0 8px;
+    font-weight: 800;
+  }
+
+  #sim-right-panel .u145-title:first-child {
+    margin-top: 0;
+  }
+
+  #sim-right-panel .u145-controls,
+  #sim-right-panel .u145-positions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  #sim-right-panel .u145-button,
+  #sim-right-panel .u145-range {
+    border: 1px solid #374151;
+    border-radius: 8px;
+    background: #101018;
+    color: #e5e7eb;
+    padding: 7px 9px;
+    font: inherit;
+  }
+
+  #sim-right-panel .u145-button {
+    cursor: pointer;
+    font-weight: 700;
+  }
+
+  #sim-right-panel .u145-button.active {
+    border-color: #22d3ee;
+    color: #a5f3fc;
+    box-shadow: 0 0 12px rgba(34, 211, 238, 0.16);
+  }
+
+  #sim-right-panel .u145-range {
+    width: 160px;
+    padding: 0;
+  }
+
+  #sim-right-panel .u145-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  #sim-right-panel .u145-card,
+  #sim-right-panel .u145-location {
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #08080c;
+    color: #9ca3af;
+    padding: 9px;
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  #sim-right-panel .u145-card.large strong {
+    font-size: 1.35rem;
+  }
+
+  #sim-right-panel .u145-card.good,
+  #sim-right-panel .u145-location.active {
+    border-color: #22cc66;
+    color: #bbf7d0;
+  }
+
+  #sim-right-panel .u145-card.bad {
+    border-color: #b91c1c;
+    color: #fecaca;
+  }
+
+  #sim-right-panel .u145-card.warn {
+    border-color: #8a6a20;
+    color: #fde68a;
+  }
+
+  #sim-right-panel .u145-bar {
+    height: 10px;
+    margin-top: 6px;
+    border-radius: 999px;
+    background: #1f2937;
+    overflow: hidden;
+  }
+
+  #sim-right-panel .u145-fill {
+    height: 100%;
+    width: 0%;
+    background: #22d3ee;
+  }
+
+  #sim-right-panel .u145-callout,
+  #sim-right-panel .u145-warning,
+  #sim-right-panel .u145-success {
+    margin-top: 10px;
+    border-radius: 8px;
+    padding: 9px;
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  #sim-right-panel .u145-callout {
+    border: 1px solid #374151;
+    background: rgba(244, 244, 245, 0.05);
+    color: #e5e7eb;
+  }
+
+  #sim-right-panel .u145-warning {
+    display: none;
+    border: 1px solid #8a6a20;
+    background: rgba(255, 204, 102, 0.08);
+    color: #fde68a;
+  }
+
+  #sim-right-panel .u145-warning.error {
+    border-color: #7f1d1d;
+    background: rgba(239, 68, 68, 0.1);
+    color: #fecaca;
+  }
+
+  #sim-right-panel .u145-success {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #22cc66;
+    background: rgba(34, 204, 102, 0.1);
+    color: #22cc66;
+    font-weight: 800;
+  }
+</style>
+<script src="./simulator_base.js"></script>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+<script>
+window.onSimulatorReady = function () {
+  "use strict";
+
+  const starterCode = `import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import org.opencv.core.Mat;
+import org.opencv.core.Rect;
+
+@TeleOp(name="Process_Frame")
+public class ProcessFrame extends OpMode {
+
+    // Spike location enum
+    enum SpikeLocation { LEFT, RIGHT }
+    SpikeLocation detectedLocation = SpikeLocation.RIGHT;
+
+    // Zone definitions - 640x480 frame
+    static final Rect LEFT_ZONE  = new Rect(60,  350, 60, 60);
+    static final Rect RIGHT_ZONE = new Rect(510, 350, 60, 60);
+
+    @Override
+    public void init() {
+        telemetry.addData("Status", "Initialized");
+    }
+
+    // Called every frame by the vision processor
+    void processFrame(Mat frame) {
+        // TODO: Read saturation from LEFT_ZONE into leftSat
+        // TODO: Read saturation from RIGHT_ZONE into rightSat
+
+        // TODO: If leftSat > rightSat, set detectedLocation to SpikeLocation.LEFT
+        // TODO: Otherwise set detectedLocation to SpikeLocation.RIGHT
+    }
+
+    // Helper - returns average HSV saturation of a zone (provided by framework)
+    double getAverageSaturation(Mat frame, Rect zone) {
+        // Implementation provided by framework
+        return 0;
+    }
+
+    @Override
+    public void loop() {
+        telemetry.addData("Detected", detectedLocation);
+        telemetry.addData("Status",   "Running");
+        telemetry.update();
+    }
+}`;
+
+  const requirements = [
+    "Reference the SpikeLocation enum",
+    "Define LEFT_ZONE and RIGHT_ZONE",
+    "Call getAverageSaturation(frame, LEFT_ZONE)",
+    "Call getAverageSaturation(frame, RIGHT_ZONE)",
+    "Compare leftSat > rightSat",
+    "Assign SpikeLocation.LEFT when left saturation is higher",
+    "Assign SpikeLocation.RIGHT when right saturation is higher or equal",
+    "Use a single if/else structure",
+    "Show detected location with telemetry.addData()"
+  ];
+
+  const zones = {
+    LEFT: { x: 60, y: 350, width: 60, height: 60, color: "#3b82f6" },
+    RIGHT: { x: 510, y: 350, width: 60, height: 60, color: "#ef4444" }
+  };
+
+  const state = {
+    running: false,
+    elementPosition: "LEFT",
+    manual: false,
+    leftSat: 180,
+    rightSat: 20,
+    detectedLocation: "RIGHT",
+    frames: 0,
+    flash: 0,
+    lastNoiseAt: 0
+  };
+
+  let sceneRoot;
+  let frameCanvas;
+  let frameContext;
+  let frameTexture;
+  let frameMesh;
+  let processFn = null;
+  let loopFn = null;
+  let animationRegistered = false;
+
+  function el(id) {
+    return document.getElementById(id);
+  }
+
+  function safeCall(fn) {
+    if (typeof fn !== "function") return undefined;
+    const args = Array.prototype.slice.call(arguments, 1);
+    return fn.apply(null, args);
+  }
+
+  setCode(starterCode);
+  setChallenge(
+    "Telemark Unit 14.5 Simulator",
+    "processFrame - Two-Zone Saturation Comparison",
+    requirements
+  );
+  setBadges([
+    { icon: "fa-camera", iconClass: "fa-solid fa-camera", label: "Vision", active: true },
+    { icon: "fa-palette", iconClass: "fa-solid fa-palette", label: "Saturation", active: true },
+    { icon: "fa-map-pin", iconClass: "fa-solid fa-map-pin", label: "SpikeLocation", active: true },
+    { icon: "fa-display", iconClass: "fa-solid fa-display", label: "Telemetry", active: true }
+  ]);
+  setActiveInputs([]);
+
+  const banner = el("sim-success-banner");
+  if (banner) {
+    banner.innerHTML = '<i class="fa-solid fa-circle-check"></i> Challenge Complete! processFrame correctly detects spike location using saturation comparison.';
+  }
+
+  createPanel();
+  setupScene();
+  updateSaturations();
+  validateCode();
+  updatePanel();
+
+  window.onRun = function () {
+    state.running = true;
+    state.frames = 0;
+    if (!compileStudentCode()) return;
+    if (!runInit()) return;
+    startLoop();
+  };
+
+  window.onStop = function () {
+    state.running = false;
+    updatePanel();
+  };
+
+  window.onReset = function () {
+    state.running = false;
+    state.elementPosition = "LEFT";
+    state.manual = false;
+    state.leftSat = 180;
+    state.rightSat = 20;
+    state.detectedLocation = "RIGHT";
+    state.frames = 0;
+    state.flash = 0;
+    processFn = null;
+    loopFn = null;
+    safeCall(clearTelemetry);
+    syncSliders();
+    validateCode();
+    updatePanel();
+  };
+
+  if (!animationRegistered && typeof addAnimationCallback === "function") {
+    addAnimationCallback(tick);
+    animationRegistered = true;
+  }
+
+  function createPanel() {
+    const rightPanel = el("sim-right-panel");
+    const sceneContainer = el("sim-scene-container");
+    if (!rightPanel || !sceneContainer) return;
+
+    ["u145-panel", "u145-scene-badge", "u145-result-badge"].forEach(function (id) {
+      const old = el(id);
+      if (old) old.remove();
+    });
+
+    const sceneBadge = document.createElement("div");
+    sceneBadge.id = "u145-scene-badge";
+    sceneBadge.className = "u145-scene-badge";
+    sceneBadge.innerHTML = '<i class="fa-solid fa-circle-play"></i> CAMERA FRAME';
+    sceneContainer.appendChild(sceneBadge);
+
+    const resultBadge = document.createElement("div");
+    resultBadge.id = "u145-result-badge";
+    resultBadge.className = "u145-result-badge";
+    sceneContainer.appendChild(resultBadge);
+
+    const panel = document.createElement("div");
+    panel.id = "u145-panel";
+    panel.className = "u145-panel";
+    panel.innerHTML = `
+      <div class="u145-title"><i class="fa-solid fa-location-dot"></i> Game Element Position</div>
+      <div class="u145-positions">
+        <button class="u145-button" type="button" data-position="LEFT"><i class="fa-solid fa-arrow-left"></i> LEFT</button>
+        <button class="u145-button" type="button" data-position="CENTER"><i class="fa-solid fa-circle"></i> CENTER</button>
+        <button class="u145-button" type="button" data-position="RIGHT"><i class="fa-solid fa-arrow-right"></i> RIGHT</button>
+      </div>
+
+      <div class="u145-title"><i class="fa-solid fa-sliders"></i> Edge Case Saturation Sliders</div>
+      <div class="u145-controls">
+        <label for="u145-left-slider">LEFT SAT</label>
+        <input class="u145-range" id="u145-left-slider" type="range" min="0" max="255" value="180" />
+        <label for="u145-right-slider">RIGHT SAT</label>
+        <input class="u145-range" id="u145-right-slider" type="range" min="0" max="255" value="20" />
+        <button class="u145-button" type="button" id="u145-auto"><i class="fa-solid fa-rotate-right"></i> Auto From Element</button>
+      </div>
+
+      <div class="u145-title"><i class="fa-solid fa-chart-simple"></i> Saturation Analysis</div>
+      <div class="u145-summary">
+        <div class="u145-card" id="u145-left-card"></div>
+        <div class="u145-card" id="u145-right-card"></div>
+        <div class="u145-card" id="u145-compare-card"></div>
+        <div class="u145-card large" id="u145-detected-card"></div>
+        <div class="u145-card" id="u145-condition-card"></div>
+        <div class="u145-card" id="u145-frame-card"></div>
+      </div>
+
+      <div class="u145-title"><i class="fa-solid fa-map-location-dot"></i> Spike Location Display</div>
+      <div class="u145-summary">
+        <div class="u145-location" id="u145-loc-left">LEFT</div>
+        <div class="u145-location" id="u145-loc-center">CENTER<br><small>use AprilTags for center</small></div>
+        <div class="u145-location" id="u145-loc-right">RIGHT</div>
+      </div>
+
+      <div class="u145-callout">
+        <i class="fa-solid fa-circle-info"></i>
+        Two zones are sufficient - if the element is not on LEFT or RIGHT it must be CENTER. Center detection uses AprilTags instead of color zones.
+      </div>
+      <div class="u145-success" id="u145-success"><i class="fa-solid fa-circle-check"></i> Challenge Complete! processFrame correctly detects spike location using saturation comparison.</div>
+      <div class="u145-warning" id="u145-warning"></div>
+    `;
+    rightPanel.appendChild(panel);
+
+    document.querySelectorAll("[data-position]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        state.elementPosition = button.getAttribute("data-position");
+        state.manual = false;
+        updateSaturations(true);
+      });
+    });
+
+    const left = el("u145-left-slider");
+    const right = el("u145-right-slider");
+    if (left) {
+      left.addEventListener("input", function () {
+        state.manual = true;
+        state.leftSat = Number(left.value);
+        updatePanel();
+      });
+    }
+    if (right) {
+      right.addEventListener("input", function () {
+        state.manual = true;
+        state.rightSat = Number(right.value);
+        updatePanel();
+      });
+    }
+    const auto = el("u145-auto");
+    if (auto) {
+      auto.addEventListener("click", function () {
+        state.manual = false;
+        updateSaturations(true);
+      });
+    }
+  }
+
+  function setupScene() {
+    if (!window.THREE || !window.scene) return;
+    if (sceneRoot) window.scene.remove(sceneRoot);
+
+    sceneRoot = new THREE.Group();
+    sceneRoot.name = "unit14_5_scene";
+    window.scene.add(sceneRoot);
+    window.scene.background = new THREE.Color(0x000000);
+    safeCall(setFieldVisible, false);
+    safeCall(setCameraOrbit, {
+      theta: 0,
+      phi: 0.52,
+      radius: 5.3,
+      target: { x: 0, y: 0, z: 0 }
+    });
+
+    frameCanvas = document.createElement("canvas");
+    frameCanvas.width = 640;
+    frameCanvas.height = 480;
+    frameContext = frameCanvas.getContext("2d");
+    frameTexture = new THREE.CanvasTexture(frameCanvas);
+    frameTexture.minFilter = THREE.LinearFilter;
+    frameTexture.magFilter = THREE.LinearFilter;
+
+    frameMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(4.8, 3.6),
+      new THREE.MeshBasicMaterial({ map: frameTexture })
+    );
+    sceneRoot.add(frameMesh);
+
+    wireFrameClicks();
+  }
+
+  function wireFrameClicks() {
+    const container = el("sim-scene-container");
+    if (!container) return;
+    container.addEventListener("pointerdown", function (event) {
+      const point = eventToFramePoint(event);
+      if (!point) return;
+      if (point.x < 235) state.elementPosition = "LEFT";
+      else if (point.x > 405) state.elementPosition = "RIGHT";
+      else state.elementPosition = "CENTER";
+      state.manual = false;
+      updateSaturations(true);
+    });
+  }
+
+  function eventToFramePoint(event) {
+    const container = el("sim-scene-container");
+    if (!container) return null;
+    const rect = container.getBoundingClientRect();
+    const size = Math.min(rect.width, rect.height * (640 / 480));
+    const frameW = size;
+    const frameH = size * 480 / 640;
+    const left = rect.left + (rect.width - frameW) / 2;
+    const top = rect.top + (rect.height - frameH) / 2;
+    const x = (event.clientX - left) / frameW * 640;
+    const y = (event.clientY - top) / frameH * 480;
+    if (x < 0 || x > 640 || y < 0 || y > 480) return null;
+    return { x: Math.round(x), y: Math.round(y) };
+  }
+
+  function tick() {
+    updateSaturations(false);
+    state.flash = Math.max(0, state.flash - 0.04);
+    drawFrame();
+    updatePanel();
+  }
+
+  function updateSaturations(force) {
+    const now = performance.now();
+    if (!force && (state.manual || now - state.lastNoiseAt < 260)) return;
+    if (state.manual) return;
+    state.lastNoiseAt = now;
+    const high = 180 + randomNoise();
+    const low = 20 + randomNoise();
+    if (state.elementPosition === "LEFT") {
+      state.leftSat = clampSat(high);
+      state.rightSat = clampSat(low);
+    } else if (state.elementPosition === "RIGHT") {
+      state.leftSat = clampSat(low);
+      state.rightSat = clampSat(high);
+    } else {
+      state.leftSat = clampSat(low);
+      state.rightSat = clampSat(20 + randomNoise());
+    }
+    syncSliders();
+  }
+
+  function randomNoise() {
+    return Math.round(Math.random() * 10 - 5);
+  }
+
+  function clampSat(value) {
+    return Math.max(0, Math.min(255, Math.round(value)));
+  }
+
+  function syncSliders() {
+    const left = el("u145-left-slider");
+    const right = el("u145-right-slider");
+    if (left) left.value = String(Math.round(state.leftSat));
+    if (right) right.value = String(Math.round(state.rightSat));
+  }
+
+  function drawFrame() {
+    if (!frameContext) return;
+    const ctx = frameContext;
+    ctx.clearRect(0, 0, 640, 480);
+    ctx.fillStyle = "#182033";
+    ctx.fillRect(0, 0, 640, 480);
+
+    const grad = ctx.createLinearGradient(0, 170, 0, 480);
+    grad.addColorStop(0, "#28344a");
+    grad.addColorStop(1, "#151d30");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 120, 640, 360);
+
+    drawSpikeMarks(ctx);
+    drawElement(ctx);
+    drawZone(ctx, "LEFT", state.leftSat);
+    drawZone(ctx, "RIGHT", state.rightSat);
+    drawComparison(ctx);
+
+    if (state.flash > 0) {
+      ctx.save();
+      ctx.globalAlpha = state.flash * 0.25;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, 640, 480);
+      ctx.restore();
+    }
+
+    frameTexture.needsUpdate = true;
+  }
+
+  function drawSpikeMarks(ctx) {
+    const points = getSpikePoints();
+    Object.keys(points).forEach(function (name) {
+      const p = points[name];
+      ctx.strokeStyle = name === "LEFT" ? "#3b82f6" : name === "RIGHT" ? "#ef4444" : "#facc15";
+      ctx.lineWidth = 9;
+      ctx.beginPath();
+      ctx.moveTo(p.x - 24, p.y);
+      ctx.lineTo(p.x + 24, p.y);
+      ctx.moveTo(p.x, p.y - 24);
+      ctx.lineTo(p.x, p.y + 24);
+      ctx.stroke();
+    });
+  }
+
+  function drawElement(ctx) {
+    const p = getSpikePoints()[state.elementPosition];
+    if (!p) return;
+    const gradient = ctx.createRadialGradient(p.x - 8, p.y - 8, 4, p.x, p.y, 25);
+    gradient.addColorStop(0, "#fde68a");
+    gradient.addColorStop(0.45, "#c084fc");
+    gradient.addColorStop(1, "#6d28d9");
+    ctx.shadowColor = "#a855f7";
+    ctx.shadowBlur = state.elementPosition === "CENTER" ? 4 : 16;
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 24, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  function drawZone(ctx, side, saturation) {
+    const zone = zones[side];
+    const intensity = Math.max(0.1, saturation / 255);
+    ctx.save();
+    ctx.globalAlpha = 0.18 + intensity * 0.34;
+    ctx.fillStyle = side === "LEFT" ? "#7c3aed" : "#f59e0b";
+    ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
+    ctx.restore();
+
+    const wins = side === state.detectedLocation;
+    ctx.strokeStyle = wins ? "#22cc66" : zone.color;
+    ctx.lineWidth = wins ? 5 : 3;
+    ctx.strokeRect(zone.x, zone.y, zone.width, zone.height);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 13px Arial";
+    ctx.fillText(side + "_ZONE", zone.x + 5, zone.y + 18);
+    ctx.fillText("SAT: " + Math.round(saturation), zone.x + 5, zone.y + 38);
+  }
+
+  function drawComparison(ctx) {
+    const leftW = Math.round((state.leftSat / 255) * 170);
+    const rightW = Math.round((state.rightSat / 255) * 170);
+    const leftWins = state.leftSat > state.rightSat;
+    ctx.fillStyle = "rgba(0,0,0,0.62)";
+    roundRect(ctx, 145, 36, 350, 74, 14);
+    ctx.fill();
+
+    ctx.fillStyle = "#cbd5e1";
+    ctx.font = "bold 13px Arial";
+    ctx.fillText("LEFT SAT", 162, 58);
+    ctx.fillText("RIGHT SAT", 332, 58);
+    ctx.fillStyle = leftWins ? "#22cc66" : "#3b82f6";
+    ctx.fillRect(162, 70, leftW, 14);
+    ctx.fillStyle = !leftWins ? "#22cc66" : "#ef4444";
+    ctx.fillRect(332, 70, rightW, 14);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 16px Arial";
+    ctx.fillText(leftWins ? "< SPIKE: LEFT" : "SPIKE: RIGHT >", 250, 102);
+    ctx.font = "bold 28px Arial";
+    ctx.fillText("DETECTED: " + state.detectedLocation, 205, 150);
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function getSpikePoints() {
+    return {
+      LEFT: { x: 90, y: 380 },
+      CENTER: { x: 320, y: 380 },
+      RIGHT: { x: 540, y: 380 }
+    };
+  }
+
+  function compileStudentCode() {
+    const code = getCodeSafe();
+    const opBody = extractOpModeBody(code);
+    const processBody = extractMethodBody(opBody, "processFrame");
+    const loopBody = extractMethodBody(opBody, "loop");
+    if (!processBody || !loopBody) {
+      failStudentExecution("processFrame() or loop() was not found.");
+      return false;
+    }
+
+    try {
+      processFn = new Function(
+        "frame",
+        "getZoneSaturation",
+        "setDetectedLocation",
+        '"use strict";\n' + transpileProcessFrame(processBody)
+      );
+      loopFn = new Function(
+        "detectedLocation",
+        "addTelemetry",
+        "updateTelemetry",
+        '"use strict";\n' + transpileLoop(loopBody)
+      );
+    } catch (err) {
+      processFn = null;
+      loopFn = null;
+      failStudentExecution("compile error: " + err.message);
+      return false;
+    }
+    return true;
+  }
+
+  function runInit() {
+    const opBody = extractOpModeBody(getCodeSafe());
+    const initBody = extractMethodBody(opBody, "init");
+    if (!initBody) return true;
+    try {
+      const initFn = new Function("addTelemetry", "updateTelemetry", '"use strict";\n' + transpileLoop(initBody));
+      clearTelemetry();
+      initFn(addTelemetry, updateTelemetry);
+      updateTelemetry();
+      return true;
+    } catch (err) {
+      failStudentExecution("init() runtime error: " + err.message);
+      return false;
+    }
+  }
+
+  function startLoop() {
+    const runFrame = function () {
+      if (!processFn || !loopFn) {
+        if (!compileStudentCode()) return;
+      }
+      try {
+        clearTelemetry();
+        processFn({}, getZoneSaturation, setDetectedLocation);
+        state.frames += 1;
+        state.flash = 1;
+        loopFn(state.detectedLocation, addTelemetry, updateTelemetry);
+        validateCode();
+      } catch (err) {
+        failStudentExecution("runtime error: " + err.message);
+      }
+    };
+
+    if (typeof _simStartLoop === "function") _simStartLoop(runFrame);
+    else window.setInterval(runFrame, 50);
+  }
+
+  function getZoneSaturation(side) {
+    return side === "LEFT" ? state.leftSat : state.rightSat;
+  }
+
+  function setDetectedLocation(value) {
+    state.detectedLocation = value === "LEFT" ? "LEFT" : "RIGHT";
+  }
+
+  function transpileProcessFrame(body) {
+    let js = body || "";
+    js = js
+      .replace(/\bgetAverageSaturation\s*\(\s*frame\s*,\s*LEFT_ZONE\s*\)/g, 'getZoneSaturation("LEFT")')
+      .replace(/\bgetAverageSaturation\s*\(\s*frame\s*,\s*RIGHT_ZONE\s*\)/g, 'getZoneSaturation("RIGHT")')
+      .replace(/\bdetectedLocation\s*=\s*SpikeLocation\s*\.\s*(LEFT|RIGHT)\s*;/g, 'setDetectedLocation("$1");')
+      .replace(/\bSpikeLocation\s*\.\s*(LEFT|RIGHT)\b/g, '"$1"')
+      .replace(/\b(?:final\s+)?(?:double|int|boolean|String|float|long|byte|short|char|Mat|Rect|SpikeLocation)\s+(?=[A-Za-z_$])/g, "let ");
+    if (typeof _simTranspile === "function") js = _simTranspile(js);
+    return js;
+  }
+
+  function transpileLoop(body) {
+    let js = body || "";
+    js = js
+      .replace(/\bSpikeLocation\s*\.\s*(LEFT|RIGHT)\b/g, '"$1"')
+      .replace(/\btelemetry\s*\.\s*addData\s*\(/g, "addTelemetry(")
+      .replace(/\btelemetry\s*\.\s*update\s*\(\s*\)/g, "updateTelemetry()")
+      .replace(/\b(?:final\s+)?(?:double|int|boolean|String|float|long|byte|short|char|Mat|Rect|SpikeLocation)\s+(?=[A-Za-z_$])/g, "let ");
+    if (typeof _simTranspile === "function") js = _simTranspile(js);
+    return js;
+  }
+
+  function updatePanel() {
+    const leftWins = state.leftSat > state.rightSat;
+    renderCard("u145-left-card", '<i class="fa-solid fa-palette"></i> LEFT zone saturation<br><strong>' + Math.round(state.leftSat) + '</strong><div class="u145-bar"><div class="u145-fill" style="width:' + (state.leftSat / 255 * 100) + '%"></div></div>', leftWins ? "good" : "");
+    renderCard("u145-right-card", '<i class="fa-solid fa-palette"></i> RIGHT zone saturation<br><strong>' + Math.round(state.rightSat) + '</strong><div class="u145-bar"><div class="u145-fill" style="width:' + (state.rightSat / 255 * 100) + '%"></div></div>', !leftWins ? "good" : "");
+    renderCard("u145-compare-card", '<i class="fa-solid fa-code-compare"></i> Comparison<br><strong>LEFT (' + Math.round(state.leftSat) + ") " + (leftWins ? ">" : "<=") + " RIGHT (" + Math.round(state.rightSat) + ") - SpikeLocation." + (leftWins ? "LEFT" : "RIGHT") + "</strong>", "warn");
+    renderCard("u145-detected-card", '<i class="fa-solid fa-map-pin"></i> detectedLocation<br><strong>' + state.detectedLocation + "</strong>", state.detectedLocation === (leftWins ? "LEFT" : "RIGHT") ? "good" : "bad");
+    renderCard("u145-condition-card", '<i class="fa-solid fa-code"></i> Condition<br><strong>leftSat > rightSat: ' + leftWins + "<br>detectedLocation = SpikeLocation." + state.detectedLocation + "</strong>", "");
+    renderCard("u145-frame-card", '<i class="fa-solid fa-film"></i> Frames processed<br><strong>' + state.frames + "</strong>", "good");
+
+    ["LEFT", "CENTER", "RIGHT"].forEach(function (name) {
+      const item = el("u145-loc-" + name.toLowerCase());
+      if (item) item.classList.toggle("active", name === state.detectedLocation || (name === "CENTER" && state.elementPosition === "CENTER"));
+    });
+
+    document.querySelectorAll("[data-position]").forEach(function (button) {
+      button.classList.toggle("active", button.getAttribute("data-position") === state.elementPosition);
+    });
+
+    const badge = el("u145-result-badge");
+    if (badge) {
+      badge.style.color = state.detectedLocation === "LEFT" ? "#93c5fd" : "#fecaca";
+      badge.innerHTML = '<i class="fa-solid fa-map-pin"></i> DETECTED: ' + state.detectedLocation;
+    }
+  }
+
+  function renderCard(id, html, status) {
+    const card = el(id);
+    if (!card) return;
+    card.classList.toggle("good", status === "good");
+    card.classList.toggle("bad", status === "bad");
+    card.classList.toggle("warn", status === "warn");
+    card.innerHTML = html;
+  }
+
+  function validateCode() {
+    const code = stripComments(getCodeSafe());
+    const opBody = extractOpModeBody(code);
+    const processBody = extractMethodBody(opBody, "processFrame");
+    const loopBody = extractMethodBody(opBody, "loop");
+    const shape = analyzeProcessFrame(processBody);
+    const checks = [
+      /enum\s+SpikeLocation\b/.test(code) || /SpikeLocation\s*\.\s*(LEFT|RIGHT)/.test(code),
+      /LEFT_ZONE\b[\s\S]*new\s+Rect/.test(code) && /RIGHT_ZONE\b[\s\S]*new\s+Rect/.test(code),
+      /getAverageSaturation\s*\(\s*frame\s*,\s*LEFT_ZONE\s*\)/.test(processBody),
+      /getAverageSaturation\s*\(\s*frame\s*,\s*RIGHT_ZONE\s*\)/.test(processBody),
+      shape.hasComparison,
+      shape.leftAssignedInIf,
+      shape.rightAssignedInElse,
+      shape.singleIfElse,
+      /telemetry\s*\.\s*addData\s*\([^;]*(Detected|detectedLocation)/i.test(loopBody)
+    ];
+
+    checks.forEach(function (passed, index) {
+      safeCall(setRequirement, index, !!passed);
+    });
+
+    const success = el("u145-success");
+    if (success) success.style.display = checks.every(Boolean) ? "flex" : "none";
+    updateWarning(code, processBody, loopBody, shape);
+    return checks;
+  }
+
+  function analyzeProcessFrame(body) {
+    const hasComparison = /leftSat\s*>\s*rightSat/.test(body) || /rightSat\s*<\s*leftSat/.test(body);
+    const reversed = /rightSat\s*>\s*leftSat/.test(body) && /if\s*\([^)]*rightSat\s*>\s*leftSat[^)]*\)\s*\{[\s\S]*SpikeLocation\s*\.\s*LEFT/.test(body);
+    const singleIfElse = /if\s*\([^)]*\)\s*\{[\s\S]*?\}\s*else\s*\{[\s\S]*?\}/.test(body);
+    const leftAssignedInIf = /if\s*\([^)]*(?:leftSat\s*>\s*rightSat|rightSat\s*<\s*leftSat)[^)]*\)\s*\{[\s\S]*detectedLocation\s*=\s*SpikeLocation\s*\.\s*LEFT/.test(body);
+    const rightAssignedInElse = /else\s*\{[\s\S]*detectedLocation\s*=\s*SpikeLocation\s*\.\s*RIGHT/.test(body);
+    const assignsLeft = /detectedLocation\s*=\s*SpikeLocation\s*\.\s*LEFT/.test(body);
+    const assignsRight = /detectedLocation\s*=\s*SpikeLocation\s*\.\s*RIGHT/.test(body);
+    const ifCount = (body.match(/\bif\s*\(/g) || []).length;
+    const leftUsesRightZone = /\bleftSat\s*=\s*getAverageSaturation\s*\(\s*frame\s*,\s*RIGHT_ZONE\s*\)/.test(body);
+    const rightUsesLeftZone = /\brightSat\s*=\s*getAverageSaturation\s*\(\s*frame\s*,\s*LEFT_ZONE\s*\)/.test(body);
+    return {
+      hasComparison: hasComparison,
+      reversed: reversed,
+      singleIfElse: singleIfElse,
+      leftAssignedInIf: leftAssignedInIf,
+      rightAssignedInElse: rightAssignedInElse,
+      assignsLeft: assignsLeft,
+      assignsRight: assignsRight,
+      ifCount: ifCount,
+      usesGreaterOrEqual: /leftSat\s*>=\s*rightSat/.test(body),
+      wrongZoneArgs: leftUsesRightZone || rightUsesLeftZone
+    };
+  }
+
+  function updateWarning(code, processBody, loopBody, shape) {
+    const warning = el("u145-warning");
+    if (!warning) return;
+    let message = "";
+    let type = "warn";
+
+    if (shape.reversed) {
+      message = "Your condition is backwards - assign LEFT when leftSat > rightSat not when rightSat > leftSat";
+      type = "error";
+    } else if (shape.assignsLeft && !shape.assignsRight) {
+      message = "Your code always detects LEFT - make sure you compare leftSat and rightSat before assigning detectedLocation";
+      type = "error";
+    } else if (shape.assignsRight && !shape.assignsLeft) {
+      message = "Your code always detects RIGHT - check your if/else condition";
+      type = "error";
+    } else if (shape.wrongZoneArgs) {
+      message = "Check your zone arguments - leftSat should use LEFT_ZONE and rightSat should use RIGHT_ZONE";
+      type = "error";
+    } else if (shape.ifCount > 1 && !shape.singleIfElse) {
+      message = "Use if/else not two separate if statements - both could execute in the same frame causing conflicting assignments";
+    } else if (/CENTER_ZONE/.test(code)) {
+      message = "A CENTER zone is not needed - if the element is not detected in LEFT or RIGHT it is assumed to be CENTER. This saves processing and avoids false positives.";
+      type = "info";
+    } else if (!/telemetry\s*\.\s*update\s*\(\s*\)/.test(code)) {
+      message = "Call telemetry.update() to send data to the Driver Station";
+    } else if (shape.usesGreaterOrEqual) {
+      message = "When saturations are equal leftSat > rightSat is false so the else branch runs - defaulting to RIGHT is correct behavior for a tie";
+    }
+
+    warning.classList.toggle("error", type === "error");
+    warning.style.display = message ? "block" : "none";
+    warning.innerHTML = message ? '<i class="fa-solid ' + (type === "info" ? "fa-circle-info" : "fa-triangle-exclamation") + '"></i> ' + escapeHTML(message) : "";
+    safeCall(clearHints);
+    if (message) safeCall(addHint, warning.innerHTML, type === "error" ? "error" : type === "info" ? "info" : "warn");
+  }
+
+  function showStudentError(message) {
+    const warning = el("u145-warning");
+    if (warning) {
+      warning.classList.add("error");
+      warning.style.display = "block";
+      warning.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(message);
+    }
+    safeCall(addHint, '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(message), "error");
+    if (typeof _simShowTelemetryError === "function") _simShowTelemetryError(message);
+    else {
+      safeCall(addTelemetry, "ERROR", message);
+      safeCall(updateTelemetry);
+    }
+  }
+
+  function failStudentExecution(message) {
+    if (typeof stopExecution === "function") stopExecution();
+    showStudentError(message);
+  }
+
+  function getCodeSafe() {
+    if (typeof getCode !== "function") return starterCode;
+    try {
+      return getCode();
+    } catch (err) {
+      return starterCode;
+    }
+  }
+
+  function extractOpModeBody(code) {
+    const match = /\bclass\s+([A-Za-z_$][\w$]*)\s+extends\s+OpMode\b/.exec(code);
+    return match ? extractClassBody(code, match[1]) : extractClassBody(code, "ProcessFrame");
+  }
+
+  function extractClassBody(code, name) {
+    const match = new RegExp("\\bclass\\s+" + name + "\\b[^\\{]*\\{").exec(code);
+    if (!match) return "";
+    let index = match.index + match[0].length;
+    let depth = 1;
+    for (; index < code.length; index++) {
+      if (code[index] === "{") depth++;
+      else if (code[index] === "}") {
+        depth--;
+        if (depth === 0) return code.slice(match.index + match[0].length, index);
+      }
+    }
+    return "";
+  }
+
+  function extractMethodBody(scope, name) {
+    if (!scope) return "";
+    const re = new RegExp("\\b(?:public\\s+|private\\s+|protected\\s+)?(?:void|boolean|double|int|String)\\s+" + name + "\\s*\\([^)]*\\)\\s*\\{");
+    const match = re.exec(scope);
+    if (!match) return "";
+    let index = match.index + match[0].length;
+    let depth = 1;
+    for (; index < scope.length; index++) {
+      if (scope[index] === "{") depth++;
+      else if (scope[index] === "}") {
+        depth--;
+        if (depth === 0) return scope.slice(match.index + match[0].length, index);
+      }
+    }
+    return "";
+  }
+
+  function stripComments(code) {
+    return String(code || "")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\/\/.*$/gm, "");
+  }
+
+  function escapeHTML(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+};
+</script>
+</body>
+</html>

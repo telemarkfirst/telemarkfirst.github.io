@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Telemark Unit 14.4 Simulator</title>
+<style>
+  #sim-right-panel #sim-scene-container {
+    flex: 1 0 clamp(360px, 55vh, 620px);
+    min-height: 360px;
+    background: #020204;
+  }
+
+  #sim-right-panel .u144-panel {
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: clamp(285px, 38vh, 500px);
+    overflow-y: auto;
+    margin: 10px;
+    padding: 12px;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #0b0b0f;
+    color: #e5e7eb;
+    font-family: var(--font-ui, Arial, sans-serif);
+  }
+
+  #sim-scene-container .u144-scene-badge,
+  #sim-scene-container .u144-coord-badge {
+    position: absolute;
+    z-index: 5;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: rgba(4, 4, 7, 0.9);
+    color: #f4f4f5;
+    pointer-events: none;
+    font-weight: 800;
+  }
+
+  #sim-scene-container .u144-scene-badge {
+    top: 12px;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 11px;
+  }
+
+  #sim-scene-container .u144-coord-badge {
+    right: 12px;
+    bottom: 12px;
+    padding: 8px 11px;
+    color: #a5f3fc;
+  }
+
+  #sim-right-panel .u144-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0 8px;
+    font-weight: 800;
+  }
+
+  #sim-right-panel .u144-title:first-child {
+    margin-top: 0;
+  }
+
+  #sim-right-panel .u144-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  #sim-right-panel .u144-zone-row,
+  #sim-right-panel .u144-card,
+  #sim-right-panel .u144-mini-frame {
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #08080c;
+    color: #9ca3af;
+  }
+
+  #sim-right-panel .u144-zone-row {
+    padding: 9px;
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
+
+  #sim-right-panel .u144-zone-row.good,
+  #sim-right-panel .u144-card.good {
+    border-color: #22cc66;
+    color: #bbf7d0;
+  }
+
+  #sim-right-panel .u144-zone-row.bad,
+  #sim-right-panel .u144-card.bad {
+    border-color: #b91c1c;
+    color: #fecaca;
+  }
+
+  #sim-right-panel .u144-zone-row.warn,
+  #sim-right-panel .u144-card.warn {
+    border-color: #8a6a20;
+    color: #fde68a;
+  }
+
+  #sim-right-panel .u144-param.good {
+    color: #bbf7d0;
+  }
+
+  #sim-right-panel .u144-param.bad {
+    color: #fecaca;
+  }
+
+  #sim-right-panel .u144-controls,
+  #sim-right-panel .u144-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  #sim-right-panel .u144-button {
+    border: 1px solid #3b82f6;
+    border-radius: 8px;
+    background: rgba(59, 130, 246, 0.12);
+    color: #bfdbfe;
+    padding: 8px 10px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  #sim-right-panel .u144-card {
+    padding: 9px;
+    font-size: 0.82rem;
+    line-height: 1.4;
+  }
+
+  #sim-right-panel .u144-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  #sim-right-panel .u144-mini-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 640 / 480;
+    overflow: hidden;
+  }
+
+  #sim-right-panel .u144-mini-zone {
+    position: absolute;
+    border: 2px solid currentColor;
+    background: currentColor;
+    opacity: 0.28;
+  }
+
+  #sim-right-panel .u144-callout,
+  #sim-right-panel .u144-warning,
+  #sim-right-panel .u144-success {
+    margin-top: 10px;
+    border-radius: 8px;
+    padding: 9px;
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  #sim-right-panel .u144-callout {
+    border: 1px solid #374151;
+    background: rgba(244, 244, 245, 0.05);
+    color: #e5e7eb;
+  }
+
+  #sim-right-panel .u144-warning {
+    display: none;
+    border: 1px solid #8a6a20;
+    background: rgba(255, 204, 102, 0.08);
+    color: #fde68a;
+  }
+
+  #sim-right-panel .u144-warning.error {
+    border-color: #7f1d1d;
+    background: rgba(239, 68, 68, 0.1);
+    color: #fecaca;
+  }
+
+  #sim-right-panel .u144-success {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #22cc66;
+    background: rgba(34, 204, 102, 0.1);
+    color: #22cc66;
+    font-weight: 800;
+  }
+</style>
+<script src="./simulator_base.js"></script>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+<script>
+window.onSimulatorReady = function () {
+  "use strict";
+
+  const starterCode = `import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import org.opencv.core.Rect;
+
+@TeleOp(name="Zone_Definitions")
+public class ZoneDefinitions extends OpMode {
+
+    // Spike mark detection zones - 640x480 camera frame
+    // (0,0) is top-left, y increases downward
+    // TODO: Move these starter zones onto the spike marks
+    static final Rect LEFT_ZONE   = new Rect(45,  250, 60, 60);
+    static final Rect CENTER_ZONE = new Rect(260, 250, 60, 60);
+    static final Rect RIGHT_ZONE  = new Rect(475, 250, 60, 60);
+
+    @Override
+    public void init() {
+        telemetry.addData("Left Zone",   "x=" + LEFT_ZONE.x   + " y=" + LEFT_ZONE.y);
+        telemetry.addData("Center Zone", "x=" + CENTER_ZONE.x + " y=" + CENTER_ZONE.y);
+        telemetry.addData("Right Zone",  "x=" + RIGHT_ZONE.x  + " y=" + RIGHT_ZONE.y);
+    }
+
+    @Override
+    public void loop() {
+        telemetry.addData("Left",   LEFT_ZONE.x   + "," + LEFT_ZONE.y   + " " + LEFT_ZONE.width   + "x" + LEFT_ZONE.height);
+        telemetry.addData("Center", CENTER_ZONE.x + "," + CENTER_ZONE.y + " " + CENTER_ZONE.width + "x" + CENTER_ZONE.height);
+        telemetry.addData("Right",  RIGHT_ZONE.x  + "," + RIGHT_ZONE.y  + " " + RIGHT_ZONE.width  + "x" + RIGHT_ZONE.height);
+        telemetry.update();
+    }
+}`;
+
+  const required = {
+    LEFT_ZONE: { x: 60, y: 350, width: 60, height: 60, label: "LEFT", color: "#3b82f6" },
+    CENTER_ZONE: { x: 290, y: 350, width: 60, height: 60, label: "CENTER", color: "#22cc66" },
+    RIGHT_ZONE: { x: 510, y: 350, width: 60, height: 60, label: "RIGHT", color: "#ef4444" }
+  };
+
+  const requirements = [
+    "Define LEFT_ZONE as a Rect",
+    "Define CENTER_ZONE as a Rect",
+    "Define RIGHT_ZONE as a Rect",
+    "Set LEFT_ZONE x to 60 within 5 pixels",
+    "Set CENTER_ZONE x to 290 within 5 pixels",
+    "Set RIGHT_ZONE x to 510 within 5 pixels",
+    "Set all zone y values to 350 within 5 pixels",
+    "Set all zone widths to 60",
+    "Set all zone heights to 60",
+    "Keep zones from overlapping"
+  ];
+
+  const state = {
+    running: false,
+    sphere: "CENTER_ZONE",
+    hover: null,
+    dragZone: null,
+    zones: {},
+    editorZones: null,
+    parsedOnce: false
+  };
+
+  let sceneRoot;
+  let frameCanvas;
+  let frameContext;
+  let frameTexture;
+  let frameMesh;
+  let animationRegistered = false;
+
+  function el(id) {
+    return document.getElementById(id);
+  }
+
+  function safeCall(fn) {
+    if (typeof fn !== "function") return undefined;
+    const args = Array.prototype.slice.call(arguments, 1);
+    return fn.apply(null, args);
+  }
+
+  setCode(starterCode);
+  setChallenge(
+    "Telemark Unit 14.4 Simulator",
+    "Spike Mark Zone Definitions",
+    requirements
+  );
+  setBadges([
+    { icon: "fa-camera", iconClass: "fa-solid fa-camera", label: "Vision", active: true },
+    { icon: "fa-vector-square", iconClass: "fa-solid fa-vector-square", label: "Zones", active: true },
+    { icon: "fa-display", iconClass: "fa-solid fa-display", label: "Telemetry", active: true }
+  ]);
+  setActiveInputs([]);
+
+  const banner = el("sim-success-banner");
+  if (banner) {
+    banner.innerHTML = '<i class="fa-solid fa-circle-check"></i> Challenge Complete! All three spike mark zones correctly positioned.';
+  }
+
+  createPanel();
+  setupScene();
+  parseAndUpdate();
+  updatePanel();
+
+  window.onRun = function () {
+    state.running = true;
+    parseAndUpdate();
+    runTeleOp();
+  };
+
+  window.onStop = function () {
+    state.running = false;
+    updatePanel();
+  };
+
+  window.onReset = function () {
+    state.running = false;
+    state.sphere = "CENTER_ZONE";
+    state.hover = null;
+    state.dragZone = null;
+    state.editorZones = null;
+    setCode(starterCode);
+    safeCall(clearTelemetry);
+    parseAndUpdate();
+    updatePanel();
+  };
+
+  if (!animationRegistered && typeof addAnimationCallback === "function") {
+    addAnimationCallback(tick);
+    animationRegistered = true;
+  }
+
+  function createPanel() {
+    const rightPanel = el("sim-right-panel");
+    const sceneContainer = el("sim-scene-container");
+    if (!rightPanel || !sceneContainer) return;
+
+    ["u144-panel", "u144-scene-badge", "u144-coord-badge"].forEach(function (id) {
+      const old = el(id);
+      if (old) old.remove();
+    });
+
+    const sceneBadge = document.createElement("div");
+    sceneBadge.id = "u144-scene-badge";
+    sceneBadge.className = "u144-scene-badge";
+    sceneContainer.appendChild(sceneBadge);
+
+    const coordBadge = document.createElement("div");
+    coordBadge.id = "u144-coord-badge";
+    coordBadge.className = "u144-coord-badge";
+    coordBadge.innerHTML = '<i class="fa-solid fa-crosshairs"></i> x: n/a y: n/a';
+    sceneContainer.appendChild(coordBadge);
+
+    const panel = document.createElement("div");
+    panel.id = "u144-panel";
+    panel.className = "u144-panel";
+    panel.innerHTML = `
+      <div class="u144-title"><i class="fa-solid fa-list-check"></i> Zone Inspector</div>
+      <div class="u144-grid" id="u144-zone-list"></div>
+
+      <div class="u144-title"><i class="fa-solid fa-table-cells"></i> Coverage Grid</div>
+      <div class="u144-mini-frame" id="u144-mini-frame"></div>
+
+      <div class="u144-title"><i class="fa-solid fa-magnifying-glass-chart"></i> Detection Checks</div>
+      <div class="u144-summary">
+        <div class="u144-card" id="u144-overlap-card"></div>
+        <div class="u144-card" id="u144-gap-card"></div>
+        <div class="u144-card" id="u144-sphere-card"></div>
+        <div class="u144-card" id="u144-coordinate-card"></div>
+      </div>
+
+      <div class="u144-title"><i class="fa-solid fa-pen-to-square"></i> Drag Editor</div>
+      <div class="u144-actions">
+        <button class="u144-button" type="button" id="u144-apply-code"><i class="fa-solid fa-code"></i> Apply to Code</button>
+        <button class="u144-button" type="button" id="u144-correct-code"><i class="fa-solid fa-wand-magic-sparkles"></i> Use Correct Values</button>
+      </div>
+      <div class="u144-callout">
+        <i class="fa-solid fa-circle-info"></i>
+        In camera coordinates (0,0) is top-left. y=350 is near the bottom of the 480px frame where the spike marks appear.
+      </div>
+      <div class="u144-success" id="u144-success"><i class="fa-solid fa-circle-check"></i> Challenge Complete! All three spike mark zones correctly positioned.</div>
+      <div class="u144-warning" id="u144-warning"></div>
+    `;
+    rightPanel.appendChild(panel);
+
+    const apply = el("u144-apply-code");
+    if (apply) apply.addEventListener("click", applyEditorToCode);
+    const correct = el("u144-correct-code");
+    if (correct) {
+      correct.addEventListener("click", function () {
+        state.editorZones = cloneZones(required);
+        applyEditorToCode();
+      });
+    }
+  }
+
+  function setupScene() {
+    if (!window.THREE || !window.scene) return;
+    if (sceneRoot) window.scene.remove(sceneRoot);
+
+    sceneRoot = new THREE.Group();
+    sceneRoot.name = "unit14_4_scene";
+    window.scene.add(sceneRoot);
+    window.scene.background = new THREE.Color(0x000000);
+    safeCall(setFieldVisible, false);
+    safeCall(setCameraOrbit, {
+      theta: 0,
+      phi: 0.48,
+      radius: 5.4,
+      target: { x: 0, y: 0, z: 0 }
+    });
+
+    frameCanvas = document.createElement("canvas");
+    frameCanvas.width = 640;
+    frameCanvas.height = 480;
+    frameContext = frameCanvas.getContext("2d");
+    frameTexture = new THREE.CanvasTexture(frameCanvas);
+    frameTexture.minFilter = THREE.LinearFilter;
+    frameTexture.magFilter = THREE.LinearFilter;
+
+    frameMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(4.8, 3.6),
+      new THREE.MeshBasicMaterial({ map: frameTexture })
+    );
+    sceneRoot.add(frameMesh);
+
+    wireFramePointer();
+  }
+
+  function wireFramePointer() {
+    const container = el("sim-scene-container");
+    if (!container) return;
+
+    container.addEventListener("pointerdown", function (event) {
+      const point = eventToFramePoint(event);
+      if (!point) return;
+      if (nearSpike(point)) {
+        state.sphere = nearestSpike(point);
+        updatePanel();
+        return;
+      }
+      const zoneName = hitZone(point);
+      if (zoneName) {
+        state.dragZone = zoneName;
+        state.editorZones = state.editorZones || cloneZones(state.zones);
+        event.preventDefault();
+        return;
+      }
+      state.sphere = nearestSpike(point);
+      updatePanel();
+    });
+
+    container.addEventListener("pointermove", function (event) {
+      const point = eventToFramePoint(event);
+      state.hover = point;
+      if (point && state.dragZone) {
+        state.editorZones = state.editorZones || cloneZones(state.zones);
+        const zone = state.editorZones[state.dragZone];
+        zone.x = clamp(Math.round(point.x - zone.width / 2), 0, 640 - zone.width);
+        zone.y = clamp(Math.round(point.y - zone.height / 2), 0, 480 - zone.height);
+      }
+      updatePanel();
+    });
+
+    window.addEventListener("pointerup", function () {
+      state.dragZone = null;
+    });
+    window.addEventListener("pointercancel", function () {
+      state.dragZone = null;
+    });
+  }
+
+  function eventToFramePoint(event) {
+    const container = el("sim-scene-container");
+    if (!container) return null;
+    const rect = container.getBoundingClientRect();
+    const size = Math.min(rect.width, rect.height * (640 / 480));
+    const frameW = size;
+    const frameH = size * 480 / 640;
+    const left = rect.left + (rect.width - frameW) / 2;
+    const top = rect.top + (rect.height - frameH) / 2;
+    const x = (event.clientX - left) / frameW * 640;
+    const y = (event.clientY - top) / frameH * 480;
+    if (x < 0 || x > 640 || y < 0 || y > 480) return null;
+    return { x: Math.round(x), y: Math.round(y) };
+  }
+
+  function tick() {
+    parseAndUpdate();
+    drawFrame();
+    updatePanel();
+  }
+
+  function drawFrame() {
+    if (!frameContext) return;
+    const ctx = frameContext;
+    const zones = getDisplayZones();
+
+    ctx.clearRect(0, 0, 640, 480);
+    ctx.fillStyle = "#182033";
+    ctx.fillRect(0, 0, 640, 480);
+
+    const grad = ctx.createLinearGradient(0, 180, 0, 480);
+    grad.addColorStop(0, "#243047");
+    grad.addColorStop(1, "#151d30");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 120, 640, 360);
+
+    drawRulers(ctx);
+    drawSpikeMarks(ctx);
+    drawZones(ctx, zones);
+    drawSphere(ctx);
+
+    if (state.hover) {
+      ctx.strokeStyle = "#a5f3fc";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(state.hover.x, 0);
+      ctx.lineTo(state.hover.x, 480);
+      ctx.moveTo(0, state.hover.y);
+      ctx.lineTo(640, state.hover.y);
+      ctx.stroke();
+    }
+
+    frameTexture.needsUpdate = true;
+  }
+
+  function drawRulers(ctx) {
+    ctx.fillStyle = "rgba(0,0,0,0.45)";
+    ctx.fillRect(0, 0, 640, 28);
+    ctx.fillRect(0, 0, 38, 480);
+    ctx.strokeStyle = "#64748b";
+    ctx.fillStyle = "#cbd5e1";
+    ctx.font = "12px Arial";
+    for (let x = 0; x <= 640; x += 50) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, x % 100 === 0 ? 22 : 14);
+      ctx.stroke();
+      if (x % 100 === 0) ctx.fillText(String(x), x + 2, 24);
+    }
+    for (let y = 0; y <= 480; y += 50) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(y % 100 === 0 ? 32 : 20, y);
+      ctx.stroke();
+      if (y % 100 === 0) ctx.fillText(String(y), 4, y - 3);
+    }
+  }
+
+  function drawSpikeMarks(ctx) {
+    const spikes = getSpikePoints();
+    Object.keys(spikes).forEach(function (name) {
+      const p = spikes[name];
+      ctx.strokeStyle = name === "LEFT_ZONE" ? "#3b82f6" : name === "CENTER_ZONE" ? "#22cc66" : "#ef4444";
+      ctx.lineWidth = 9;
+      ctx.beginPath();
+      ctx.moveTo(p.x - 24, p.y);
+      ctx.lineTo(p.x + 24, p.y);
+      ctx.moveTo(p.x, p.y - 24);
+      ctx.lineTo(p.x, p.y + 24);
+      ctx.stroke();
+    });
+  }
+
+  function drawZones(ctx, zones) {
+    Object.keys(required).forEach(function (name) {
+      const zone = zones[name];
+      const req = required[name];
+      const ok = zoneCorrect(name, zone);
+      if (!zone) {
+        drawRequiredGhost(ctx, req);
+        return;
+      }
+      ctx.save();
+      ctx.globalAlpha = ok ? 0.28 : 0.15;
+      ctx.fillStyle = ok ? req.color : "#9ca3af";
+      ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
+      ctx.restore();
+
+      ctx.strokeStyle = ok ? req.color : "#9ca3af";
+      ctx.lineWidth = activeZoneName() === name ? 5 : ok ? 3 : 2;
+      ctx.strokeRect(zone.x, zone.y, zone.width, zone.height);
+      if (!ok) drawArrowToRequired(ctx, zone, req);
+
+      ctx.fillStyle = ok ? "#ffffff" : "#e5e7eb";
+      ctx.font = "bold 12px Arial";
+      ctx.fillText(req.label, zone.x + 5, zone.y + 18);
+      ctx.font = "11px Arial";
+      ctx.fillText(zone.width + "x" + zone.height, zone.x + 5, zone.y + 35);
+      ctx.fillText(ok ? "CORRECT POSITION" : "WRONG POSITION", zone.x + 5, zone.y + zone.height + 15);
+    });
+  }
+
+  function drawRequiredGhost(ctx, req) {
+    ctx.setLineDash([6, 4]);
+    ctx.strokeStyle = req.color;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(req.x, req.y, req.width, req.height);
+    ctx.setLineDash([]);
+  }
+
+  function drawArrowToRequired(ctx, zone, req) {
+    const zx = zone.x + zone.width / 2;
+    const zy = zone.y + zone.height / 2;
+    const rx = req.x + req.width / 2;
+    const ry = req.y + req.height / 2;
+    ctx.strokeStyle = "#facc15";
+    ctx.fillStyle = "#facc15";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(zx, zy);
+    ctx.lineTo(rx, ry);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(rx, ry, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawSphere(ctx) {
+    const p = getSpikePoints()[state.sphere] || getSpikePoints().CENTER_ZONE;
+    const gradient = ctx.createRadialGradient(p.x - 8, p.y - 8, 4, p.x, p.y, 24);
+    gradient.addColorStop(0, "#c4b5fd");
+    gradient.addColorStop(1, "#6d28d9");
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 22, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function runTeleOp() {
+    const code = getCodeSafe();
+    const opBody = extractOpModeBody(code);
+    const initBody = extractMethodBody(opBody, "init");
+    const loopBody = extractMethodBody(opBody, "loop");
+    if (!loopBody) {
+      failStudentExecution("loop() was not found.");
+      return;
+    }
+
+    let initFn;
+    let loopFn;
+    try {
+      initFn = new Function("LEFT_ZONE", "CENTER_ZONE", "RIGHT_ZONE", "addTelemetry", "updateTelemetry", '"use strict";\n' + transpileBody(initBody || ""));
+      loopFn = new Function("LEFT_ZONE", "CENTER_ZONE", "RIGHT_ZONE", "addTelemetry", "updateTelemetry", '"use strict";\n' + transpileBody(loopBody));
+    } catch (err) {
+      failStudentExecution("compile error: " + err.message);
+      return;
+    }
+
+    try {
+      clearTelemetry();
+      const zones = state.zones;
+      initFn(zones.LEFT_ZONE, zones.CENTER_ZONE, zones.RIGHT_ZONE, addTelemetry, updateTelemetry);
+      updateTelemetry();
+    } catch (err) {
+      failStudentExecution("init() runtime error: " + err.message);
+      return;
+    }
+
+    const runFrame = function () {
+      try {
+        clearTelemetry();
+        parseAndUpdate();
+        const zones = state.zones;
+        loopFn(zones.LEFT_ZONE, zones.CENTER_ZONE, zones.RIGHT_ZONE, addTelemetry, updateTelemetry);
+        validateCode();
+      } catch (err) {
+        failStudentExecution("loop() runtime error: " + err.message);
+      }
+    };
+
+    if (typeof _simStartLoop === "function") _simStartLoop(runFrame);
+    else window.setInterval(runFrame, 50);
+  }
+
+  function transpileBody(body) {
+    let js = body || "";
+    js = js
+      .replace(/\bnew\s+Rect\s*\(/g, "createRect(")
+      .replace(/\btelemetry\s*\.\s*addData\s*\(/g, "addTelemetry(")
+      .replace(/\btelemetry\s*\.\s*update\s*\(\s*\)/g, "updateTelemetry()")
+      .replace(/\b(?:final\s+)?(?:double|int|boolean|String|float|long|byte|short|char|Rect)\s+(?=[A-Za-z_$])/g, "let ");
+    if (typeof _simTranspile === "function") js = _simTranspile(js);
+    return js;
+  }
+
+  function createRect(x, y, width, height) {
+    return { x: Number(x), y: Number(y), width: Number(width), height: Number(height) };
+  }
+
+  function parseAndUpdate() {
+    state.zones = parseZones(getCodeSafe());
+    if (!state.editorZones && !state.parsedOnce) {
+      state.editorZones = cloneZones(state.zones);
+      state.parsedOnce = true;
+    }
+    validateCode();
+  }
+
+  function parseZones(code) {
+    const zones = {};
+    Object.keys(required).forEach(function (name) {
+      const pattern = new RegExp("\\b" + name + "\\b\\s*=\\s*new\\s+Rect\\s*\\(\\s*(-?\\d+)\\s*,\\s*(-?\\d+)\\s*,\\s*(-?\\d+)\\s*,\\s*(-?\\d+)\\s*\\)");
+      const match = pattern.exec(code);
+      if (match) {
+        zones[name] = createRect(match[1], match[2], match[3], match[4]);
+      }
+    });
+    return zones;
+  }
+
+  function validateCode() {
+    const zones = state.zones || {};
+    const checks = [
+      !!zones.LEFT_ZONE,
+      !!zones.CENTER_ZONE,
+      !!zones.RIGHT_ZONE,
+      !!zones.LEFT_ZONE && close(zones.LEFT_ZONE.x, 60),
+      !!zones.CENTER_ZONE && close(zones.CENTER_ZONE.x, 290),
+      !!zones.RIGHT_ZONE && close(zones.RIGHT_ZONE.x, 510),
+      ["LEFT_ZONE", "CENTER_ZONE", "RIGHT_ZONE"].every(function (name) { return zones[name] && close(zones[name].y, 350); }),
+      ["LEFT_ZONE", "CENTER_ZONE", "RIGHT_ZONE"].every(function (name) { return zones[name] && zones[name].width === 60; }),
+      ["LEFT_ZONE", "CENTER_ZONE", "RIGHT_ZONE"].every(function (name) { return zones[name] && zones[name].height === 60; }),
+      !findOverlap(zones)
+    ];
+    checks.forEach(function (passed, index) {
+      safeCall(setRequirement, index, !!passed);
+    });
+    const success = el("u144-success");
+    if (success) success.style.display = checks.every(Boolean) ? "flex" : "none";
+    updateWarning(zones);
+    return checks;
+  }
+
+  function updatePanel() {
+    renderZoneRows();
+    renderMiniFrame();
+    renderCards();
+
+    const coords = el("u144-coord-badge");
+    if (coords) {
+      coords.innerHTML = state.hover
+        ? '<i class="fa-solid fa-crosshairs"></i> x: ' + state.hover.x + " y: " + state.hover.y
+        : '<i class="fa-solid fa-crosshairs"></i> x: n/a y: n/a';
+    }
+
+    const badge = el("u144-scene-badge");
+    if (badge) {
+      const ok = validateCode().every(Boolean);
+      badge.style.color = ok ? "#bbf7d0" : "#fde68a";
+      badge.innerHTML = ok
+        ? '<i class="fa-solid fa-circle-check"></i> CORRECT POSITION'
+        : '<i class="fa-solid fa-triangle-exclamation"></i> CHECK ZONES';
+    }
+  }
+
+  function renderZoneRows() {
+    const list = el("u144-zone-list");
+    if (!list) return;
+    const zones = getDisplayZones();
+    list.innerHTML = Object.keys(required).map(function (name) {
+      const zone = zones[name];
+      const req = required[name];
+      if (!zone) {
+        return '<div class="u144-zone-row bad"><strong>' + req.label + '</strong><br>Rect not defined</div>';
+      }
+      const params = ["x", "y", "width", "height"].map(function (key) {
+        const correct = key === "width" || key === "height" ? zone[key] === req[key] : close(zone[key], req[key]);
+        return '<span class="u144-param ' + (correct ? "good" : "bad") + '">' + key + ": " + zone[key] + " " + (correct ? "ok" : "wrong, should be " + req[key]) + "</span>";
+      }).join("<br>");
+      return '<div class="u144-zone-row ' + (zoneCorrect(name, zone) ? "good" : "bad") + '"><strong>' + req.label + "_ZONE</strong><br>" + params + "</div>";
+    }).join("");
+  }
+
+  function renderMiniFrame() {
+    const mini = el("u144-mini-frame");
+    if (!mini) return;
+    const zones = getDisplayZones();
+    mini.innerHTML = "";
+    Object.keys(required).forEach(function (name) {
+      const zone = zones[name];
+      if (!zone) return;
+      const div = document.createElement("div");
+      div.className = "u144-mini-zone";
+      div.style.color = required[name].color;
+      div.style.left = (zone.x / 640 * 100) + "%";
+      div.style.top = (zone.y / 480 * 100) + "%";
+      div.style.width = (zone.width / 640 * 100) + "%";
+      div.style.height = (zone.height / 480 * 100) + "%";
+      mini.appendChild(div);
+    });
+  }
+
+  function renderCards() {
+    const zones = getDisplayZones();
+    const overlap = findOverlap(zones);
+    const gaps = gapText(zones);
+    const active = activeZoneName();
+
+    setCard("u144-overlap-card", '<i class="fa-solid fa-vector-square"></i> Overlap<br><strong>' + (overlap ? "Zones overlap at x=" + overlap.x : "No overlap") + "</strong>", overlap ? "bad" : "good");
+    setCard("u144-gap-card", '<i class="fa-solid fa-arrows-left-right"></i> Gaps<br><strong>' + gaps + "</strong>", "warn");
+    setCard("u144-sphere-card", '<i class="fa-solid fa-circle-dot"></i> Game Element<br><strong>Sphere at ' + required[state.sphere].label + " spike mark - " + required[state.sphere].label + "_ZONE contains it: " + (active === state.sphere) + "</strong>", active === state.sphere ? "good" : "bad");
+    setCard("u144-coordinate-card", '<i class="fa-solid fa-location-crosshairs"></i> Frame Coordinates<br><strong>(0,0) top-left<br>(640,480) bottom-right<br>y increases downward</strong>', "good");
+  }
+
+  function setCard(id, html, status) {
+    const card = el(id);
+    if (!card) return;
+    card.classList.toggle("good", status === "good");
+    card.classList.toggle("bad", status === "bad");
+    card.classList.toggle("warn", status === "warn");
+    card.innerHTML = html;
+  }
+
+  function updateWarning(zones) {
+    const warning = el("u144-warning");
+    if (!warning) return;
+    let message = "";
+    let type = "warn";
+    const overlap = findOverlap(zones);
+    const firstYWrong = Object.keys(required).find(function (name) { return zones[name] && !close(zones[name].y, 350); });
+    const firstSizeWrong = Object.keys(required).find(function (name) { return zones[name] && (zones[name].width !== 60 || zones[name].height !== 60); });
+
+    if (firstYWrong) {
+      message = "Your zones are at y=" + zones[firstYWrong].y + " but should be at y=350 - y=350 is near the bottom of the 480px frame where the spike marks appear";
+      type = "error";
+    } else if (zones.LEFT_ZONE && !close(zones.LEFT_ZONE.x, 60)) {
+      message = "LEFT_ZONE should start at x=60 - this aligns with the left spike mark position";
+      type = "error";
+    } else if (zones.CENTER_ZONE && !close(zones.CENTER_ZONE.x, 290)) {
+      message = "CENTER_ZONE should start at x=290 - this centers the zone on the middle spike mark in a 640px wide frame";
+      type = "error";
+    } else if (zones.RIGHT_ZONE && !close(zones.RIGHT_ZONE.x, 510)) {
+      message = "RIGHT_ZONE should start at x=510 - this aligns with the right spike mark in a 640px wide frame";
+      type = "error";
+    } else if (overlap) {
+      message = "Your zones overlap at x=" + overlap.x + " - adjust positions so zones do not intersect";
+      type = "error";
+    } else if (firstSizeWrong) {
+      message = "Zones should be 60x60 pixels - large enough to capture the spike mark reliably";
+    } else if (!/telemetry\s*\.\s*update\s*\(\s*\)/.test(getCodeSafe())) {
+      message = "Call telemetry.update() to send data to the Driver Station";
+    } else if (/static\s+final\s+Rect/.test(getCodeSafe())) {
+      message = "Defining zones as fields is fine too - they could also be static final constants in a config class";
+      type = "info";
+    }
+
+    warning.classList.toggle("error", type === "error");
+    warning.style.display = message ? "block" : "none";
+    warning.innerHTML = message ? '<i class="fa-solid ' + (type === "info" ? "fa-circle-info" : "fa-triangle-exclamation") + '"></i> ' + escapeHTML(message) : "";
+    safeCall(clearHints);
+    if (message) safeCall(addHint, warning.innerHTML, type === "error" ? "error" : type === "info" ? "info" : "warn");
+  }
+
+  function applyEditorToCode() {
+    const zones = state.editorZones || getDisplayZones();
+    let code = getCodeSafe();
+    Object.keys(required).forEach(function (name) {
+      const zone = zones[name] || required[name];
+      const replacement = name.padEnd(11, " ") + " = new Rect(" + zone.x + ", " + zone.y + ", " + zone.width + ", " + zone.height + ")";
+      const pattern = new RegExp(name + "\\s*=\\s*new\\s+Rect\\s*\\(\\s*-?\\d+\\s*,\\s*-?\\d+\\s*,\\s*-?\\d+\\s*,\\s*-?\\d+\\s*\\)");
+      code = code.replace(pattern, replacement);
+    });
+    setCode(code);
+    state.editorZones = null;
+    parseAndUpdate();
+  }
+
+  function getDisplayZones() {
+    return state.editorZones || state.zones || {};
+  }
+
+  function cloneZones(source) {
+    const clone = {};
+    Object.keys(source || {}).forEach(function (name) {
+      clone[name] = createRect(source[name].x, source[name].y, source[name].width, source[name].height);
+    });
+    return clone;
+  }
+
+  function close(value, target) {
+    return Math.abs(Number(value) - Number(target)) <= 5;
+  }
+
+  function zoneCorrect(name, zone) {
+    if (!zone) return false;
+    const req = required[name];
+    return close(zone.x, req.x) && close(zone.y, req.y) && zone.width === req.width && zone.height === req.height;
+  }
+
+  function findOverlap(zones) {
+    const names = Object.keys(required).filter(function (name) { return zones[name]; });
+    for (let i = 0; i < names.length; i++) {
+      for (let j = i + 1; j < names.length; j++) {
+        const a = zones[names[i]];
+        const b = zones[names[j]];
+        const overlaps = a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+        if (overlaps) return { x: Math.max(a.x, b.x), zones: [names[i], names[j]] };
+      }
+    }
+    return null;
+  }
+
+  function gapText(zones) {
+    const ordered = Object.keys(required).map(function (name) { return zones[name]; }).filter(Boolean).sort(function (a, b) { return a.x - b.x; });
+    if (ordered.length < 2) return "Need at least two zones";
+    const gaps = [];
+    for (let i = 0; i < ordered.length - 1; i++) {
+      gaps.push(Math.max(0, ordered[i + 1].x - (ordered[i].x + ordered[i].width)));
+    }
+    return gaps.map(function (gap) { return gap + " px"; }).join(", ");
+  }
+
+  function hitZone(point) {
+    const zones = getDisplayZones();
+    return Object.keys(required).find(function (name) {
+      const zone = zones[name];
+      return zone && point.x >= zone.x && point.x <= zone.x + zone.width && point.y >= zone.y && point.y <= zone.y + zone.height;
+    });
+  }
+
+  function activeZoneName() {
+    const p = getSpikePoints()[state.sphere];
+    const zones = getDisplayZones();
+    return Object.keys(required).find(function (name) {
+      const zone = zones[name];
+      return zone && p.x >= zone.x && p.x <= zone.x + zone.width && p.y >= zone.y && p.y <= zone.y + zone.height;
+    }) || "";
+  }
+
+  function nearestSpike(point) {
+    const spikes = getSpikePoints();
+    let best = "CENTER_ZONE";
+    let bestDist = Infinity;
+    Object.keys(spikes).forEach(function (name) {
+      const dx = point.x - spikes[name].x;
+      const dy = point.y - spikes[name].y;
+      const dist = dx * dx + dy * dy;
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = name;
+      }
+    });
+    return best;
+  }
+
+  function nearSpike(point) {
+    const spikes = getSpikePoints();
+    return Object.keys(spikes).some(function (name) {
+      const dx = point.x - spikes[name].x;
+      const dy = point.y - spikes[name].y;
+      return dx * dx + dy * dy <= 45 * 45;
+    });
+  }
+
+  function getSpikePoints() {
+    return {
+      LEFT_ZONE: { x: 90, y: 380 },
+      CENTER_ZONE: { x: 320, y: 380 },
+      RIGHT_ZONE: { x: 540, y: 380 }
+    };
+  }
+
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function showStudentError(message) {
+    const warning = el("u144-warning");
+    if (warning) {
+      warning.classList.add("error");
+      warning.style.display = "block";
+      warning.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(message);
+    }
+    safeCall(addHint, '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(message), "error");
+    if (typeof _simShowTelemetryError === "function") _simShowTelemetryError(message);
+    else {
+      safeCall(addTelemetry, "ERROR", message);
+      safeCall(updateTelemetry);
+    }
+  }
+
+  function failStudentExecution(message) {
+    if (typeof stopExecution === "function") stopExecution();
+    showStudentError(message);
+  }
+
+  function getCodeSafe() {
+    if (typeof getCode !== "function") return starterCode;
+    try {
+      return getCode();
+    } catch (err) {
+      return starterCode;
+    }
+  }
+
+  function extractOpModeBody(code) {
+    const match = /\bclass\s+([A-Za-z_$][\w$]*)\s+extends\s+OpMode\b/.exec(code);
+    return match ? extractClassBody(code, match[1]) : extractClassBody(code, "ZoneDefinitions");
+  }
+
+  function extractClassBody(code, name) {
+    const match = new RegExp("\\bclass\\s+" + name + "\\b[^\\{]*\\{").exec(code);
+    if (!match) return "";
+    let index = match.index + match[0].length;
+    let depth = 1;
+    for (; index < code.length; index++) {
+      if (code[index] === "{") depth++;
+      else if (code[index] === "}") {
+        depth--;
+        if (depth === 0) return code.slice(match.index + match[0].length, index);
+      }
+    }
+    return "";
+  }
+
+  function extractMethodBody(scope, name) {
+    if (!scope) return "";
+    const re = new RegExp("\\b(?:public\\s+|private\\s+|protected\\s+)?(?:void|boolean|double|int|String)\\s+" + name + "\\s*\\([^)]*\\)\\s*\\{");
+    const match = re.exec(scope);
+    if (!match) return "";
+    let index = match.index + match[0].length;
+    let depth = 1;
+    for (; index < scope.length; index++) {
+      if (scope[index] === "{") depth++;
+      else if (scope[index] === "}") {
+        depth--;
+        if (depth === 0) return scope.slice(match.index + match[0].length, index);
+      }
+    }
+    return "";
+  }
+
+  function escapeHTML(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+};
+</script>
+</body>
+</html>

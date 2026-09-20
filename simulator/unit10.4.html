@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Telemark Unit 10.4 Simulator</title>
+
+    <script src="simulator_base.js"></script>
+
+    <style>
+        .encoder-panel {
+            margin: 0 10px 10px;
+            padding: 10px;
+            background: #252526;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #d4d4d4;
+            font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+            flex-shrink: 0;
+        }
+
+        .encoder-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #fff;
+            font-size: 0.86rem;
+            font-weight: 900;
+            margin-bottom: 8px;
+        }
+
+        .encoder-title i {
+            color: #22d3ee;
+        }
+
+        .motor-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .motor-card {
+            background: #171717;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 8px;
+            font-family: "JetBrains Mono", "Consolas", monospace;
+            min-width: 0;
+        }
+
+        .motor-card.ok {
+            border-color: rgba(0, 204, 0, 0.45);
+            background: rgba(0, 204, 0, 0.06);
+        }
+
+        .motor-card.bad {
+            border-color: rgba(204, 0, 0, 0.55);
+            background: rgba(204, 0, 0, 0.08);
+        }
+
+        .motor-name {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 0.8rem;
+            font-weight: 900;
+            margin-bottom: 7px;
+        }
+
+        .motor-short-left {
+            color: #ff8888;
+        }
+
+        .motor-short-right {
+            color: #80b9ff;
+        }
+
+        .mode-badge {
+            display: inline-block;
+            max-width: 100%;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #222;
+            color: #bbb;
+            font-size: 0.66rem;
+            font-weight: 900;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .mode-badge.mode-blue {
+            background: rgba(0, 122, 204, 0.18);
+            color: #69c8ff;
+            border: 1px solid rgba(0, 183, 255, 0.35);
+        }
+
+        .mode-badge.mode-grey {
+            background: #222;
+            color: #aaa;
+            border: 1px solid #383838;
+        }
+
+        .motor-row {
+            display: grid;
+            grid-template-columns: 60px 1fr;
+            gap: 8px;
+            margin-top: 5px;
+            color: #aaa;
+            font-size: 0.76rem;
+        }
+
+        .motor-row strong {
+            color: #f4f4f4;
+            font-weight: 800;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .wheel-velocity-bar {
+            position: relative;
+            height: 12px;
+            border-radius: 7px;
+            overflow: hidden;
+            background: #222;
+            border: 1px solid #333;
+            margin-top: 7px;
+        }
+
+        .wheel-velocity-bar::before {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: #666;
+        }
+
+        .wheel-velocity-fill {
+            position: absolute;
+            top: 2px;
+            bottom: 2px;
+            left: 50%;
+            width: 0;
+            border-radius: 5px;
+            background: #00cc00;
+        }
+
+        .velocity-check {
+            margin-top: 8px;
+            padding: 8px;
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.22);
+            border: 1px solid #333;
+            color: #bbb;
+            font-size: 0.8rem;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .velocity-check.ok {
+            color: #00cc00;
+            border-color: rgba(0, 204, 0, 0.45);
+            background: rgba(0, 204, 0, 0.08);
+        }
+
+        .velocity-check.bad {
+            color: #ff6666;
+            border-color: rgba(204, 0, 0, 0.55);
+            background: rgba(204, 0, 0, 0.08);
+        }
+
+        .warning-chip,
+        .scene-hint {
+            position: absolute;
+            z-index: 7;
+            pointer-events: none;
+            font-family: "Consolas", monospace;
+        }
+
+        .warning-chip {
+            left: 10px;
+            top: 10px;
+            display: none;
+            padding: 6px 9px;
+            border-radius: 6px;
+            font-size: 0.76rem;
+            font-weight: 800;
+        }
+
+        .warning-chip.warn {
+            display: block;
+            background: rgba(60, 44, 10, 0.94);
+            color: #ffd966;
+            border: 1px solid rgba(255, 196, 0, 0.35);
+        }
+
+        .warning-chip.error {
+            display: block;
+            background: rgba(52, 10, 10, 0.94);
+            color: #ff9f9f;
+            border: 1px solid rgba(255, 0, 0, 0.35);
+        }
+
+        .scene-hint {
+            left: 50%;
+            top: 12px;
+            transform: translateX(-50%);
+            display: none;
+            max-width: 82%;
+            padding: 8px 10px;
+            border-radius: 8px;
+            background: rgba(255, 204, 0, 0.18);
+            border: 1px solid rgba(255, 204, 0, 0.9);
+            color: #ffcc00;
+            font-size: 0.82rem;
+            font-weight: 900;
+            text-align: center;
+            box-shadow: 0 0 18px rgba(255, 204, 0, 0.18);
+        }
+
+        .scene-hint.visible {
+            display: block;
+        }
+
+        .scene-hint.error {
+            background: rgba(204, 0, 0, 0.22);
+            border-color: #ff5555;
+            color: #ff7777;
+        }
+
+        @media (max-width: 900px) {
+            .motor-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+<script src="./telemark-project.js"></script>
+<link rel="stylesheet" href="./telemark-project.css"/>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+
+<script>
+(function () {
+    "use strict";
+
+    const starterCode = `@TeleOp(name="Mecanum_Encoder_Drive")
+public class MecanumEncoderDrive extends OpMode {
+    DcMotorEx[] motors;
+
+    @Override
+    public void init() {
+        motors = new DcMotorEx[] {
+            hardwareMap.get(DcMotorEx.class, "left_front"),
+            hardwareMap.get(DcMotorEx.class, "right_front"),
+            hardwareMap.get(DcMotorEx.class, "left_back"),
+            hardwareMap.get(DcMotorEx.class, "right_back")
+        };
+
+        // TODO: Use a for-each loop to set every motor to RUN_USING_ENCODER
+        // TODO: Reverse the left-side motors, like Unit 8.2
+
+        telemetry.addData("Status", "Initialized");
+    }
+
+    @Override
+    public void loop() {
+        double drive  = -gamepad1.left_stick_y;
+        double strafe =  gamepad1.left_stick_x;
+        double rotate =  gamepad1.right_stick_x;
+
+        double fl = drive + strafe + rotate;
+        double fr = drive - strafe - rotate;
+        double bl = drive - strafe + rotate;
+        double br = drive + strafe - rotate;
+
+        double max = Math.max(1.0, Math.max(
+            Math.max(Math.abs(fl), Math.abs(fr)),
+            Math.max(Math.abs(bl), Math.abs(br))
+        ));
+
+        motors[0].setPower(fl / max);
+        motors[1].setPower(fr / max);
+        motors[2].setPower(bl / max);
+        motors[3].setPower(br / max);
+
+        telemetry.addData("FL", motors[0].getPower());
+        telemetry.addData("FR", motors[1].getPower());
+        telemetry.addData("BL", motors[2].getPower());
+        telemetry.addData("BR", motors[3].getPower());
+        telemetry.update();
+    }
+}`;
+
+    const requirements = [
+        "All four drivetrain motors mapped in init()",
+        "Motors stored in a DcMotorEx array",
+        "RUN_USING_ENCODER set on all four motors",
+        "leftFront set to REVERSE",
+        "leftBack set to REVERSE",
+        "Mecanum drive math in loop()",
+        "Telemetry updates while driving"
+    ];
+
+    const motorNames = ["leftFront", "rightFront", "leftBack", "rightBack"];
+    const motorShort = { leftFront: "FL", rightFront: "FR", leftBack: "BL", rightBack: "BR" };
+    const aliases = {
+        leftFront: ["leftFront", "left_front"],
+        rightFront: ["rightFront", "right_front"],
+        leftBack: ["leftBack", "left_back"],
+        rightBack: ["rightBack", "right_back"]
+    };
+    const expectedDirection = {
+        leftFront: "REVERSE",
+        leftBack: "REVERSE",
+        rightFront: "FORWARD",
+        rightBack: "FORWARD"
+    };
+    const mountSign = { leftFront: -1, leftBack: -1, rightFront: 1, rightBack: 1 };
+    const dirSign = { FORWARD: 1, REVERSE: -1 };
+    const fieldHalf = 3;
+    const robotMargin = 0.52;
+
+    const sim = {
+        running: false,
+        robotHeading: 0,
+        lastFrameTime: 0,
+        lastPanelUpdate: 0,
+        pathPoints: [],
+        requirements: requirements.map(function () { return false; }),
+        motors: {}
+    };
+
+    motorNames.forEach(function (name) {
+        sim.motors[name] = createMotorState();
+    });
+
+    let robotGroup = null;
+    let pathLine = null;
+    let animationCallbackId = -1;
+    let currentSceneHint = "";
+    const wheels = {};
+    const cards = {};
+
+    function createMotorState() {
+        return {
+            commandPower: 0,
+            appliedPower: 0,
+            mode: "RUN_WITHOUT_ENCODER",
+            velocity: 0,
+            ticks: 0,
+            direction: "FORWARD",
+            device: null
+        };
+    }
+
+    function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    function escapeRegExp(text) {
+        return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    function canonicalMotorName(name) {
+        for (let i = 0; i < motorNames.length; i++) {
+            const canonical = motorNames[i];
+            if (aliases[canonical].indexOf(name) !== -1) return canonical;
+        }
+        return null;
+    }
+
+    function getDevice(canonical) {
+        if (sim.motors[canonical].device) {
+            return sim.motors[canonical].device;
+        }
+
+        const names = aliases[canonical] || [];
+        for (let i = 0; i < names.length; i++) {
+            const device = window.hardwareMap && window.hardwareMap._devices[names[i]];
+            if (device) return device;
+        }
+        return null;
+    }
+
+    function getMethodBody(code, name) {
+        return (window._simGetMethodBody && window._simGetMethodBody(code, name)) || "";
+    }
+
+    function stripComments(code) {
+        return String(code || "")
+            .replace(/\/\*[\s\S]*?\*\//g, "")
+            .replace(/\/\/.*$/gm, "");
+    }
+
+    function setWarning(message, type) {
+        const chip = document.getElementById("warning-chip");
+        if (!chip) return;
+
+        if (!message) {
+            chip.style.display = "none";
+            chip.textContent = "";
+            chip.className = "warning-chip";
+            return;
+        }
+
+        chip.textContent = message;
+        chip.className = "warning-chip " + (type || "warn");
+    }
+
+    function setSceneHint(message, type) {
+        const hint = document.getElementById("scene-hint");
+        if (!hint || message === currentSceneHint) return;
+
+        currentSceneHint = message;
+        if (!message) {
+            hint.className = "scene-hint";
+            hint.textContent = "";
+            return;
+        }
+
+        hint.textContent = message;
+        hint.className = "scene-hint visible" + (type === "error" ? " error" : "");
+    }
+
+    function updateRequirements() {
+        sim.requirements.forEach(function (passed, index) {
+            window.setRequirement(index, passed);
+        });
+
+        const banner = document.getElementById("sim-success-banner");
+        if (banner && sim.requirements.every(Boolean)) {
+            banner.innerHTML =
+                '<i class="fa-solid fa-circle-check"></i> Challenge Complete! Mecanum drive is encoder-enabled and direction-correct.';
+        }
+    }
+
+    function createPanel() {
+        const right = document.getElementById("sim-right-panel");
+        const sceneContainer = document.getElementById("sim-scene-container");
+        if (!right || !sceneContainer) return;
+
+        const warning = document.createElement("div");
+        warning.id = "warning-chip";
+        warning.className = "warning-chip";
+        sceneContainer.appendChild(warning);
+
+        const sceneHint = document.createElement("div");
+        sceneHint.id = "scene-hint";
+        sceneHint.className = "scene-hint";
+        sceneContainer.appendChild(sceneHint);
+
+        const panel = document.createElement("div");
+        panel.className = "encoder-panel";
+        panel.innerHTML = [
+            '<div class="encoder-title"><i class="fa-solid fa-gauge-high"></i> Encoder Mecanum Status</div>',
+            '<div class="motor-grid" id="motor-grid"></div>',
+            '<div class="velocity-check bad" id="velocity-check">RUN_USING_ENCODER needed on all four motors</div>'
+        ].join("");
+        right.appendChild(panel);
+
+        const grid = document.getElementById("motor-grid");
+        motorNames.forEach(function (name) {
+            const sideClass = name.indexOf("left") === 0 ? "motor-short-left" : "motor-short-right";
+            const card = document.createElement("div");
+            card.className = "motor-card bad";
+            card.innerHTML = [
+                '<div class="motor-name"><span class="' + sideClass + '">' + motorShort[name] + '</span><span class="mode-badge mode-grey">RUN_WITHOUT_ENCODER</span></div>',
+                '<div class="motor-row"><span>Dir</span><strong class="dir">FORWARD</strong></div>',
+                '<div class="motor-row"><span>Power</span><strong class="power">0.00</strong></div>',
+                '<div class="motor-row"><span>Ticks</span><strong class="ticks">0</strong></div>',
+                '<div class="wheel-velocity-bar"><div class="wheel-velocity-fill"></div></div>'
+            ].join("");
+            grid.appendChild(card);
+            cards[name] = card;
+        });
+    }
+
+    function makeGrid(scene, THREE) {
+        const mat = new THREE.LineBasicMaterial({ color: 0x2a2a44, transparent: true, opacity: 0.8 });
+        const points = [];
+        for (let i = -3; i <= 3; i++) {
+            points.push(new THREE.Vector3(i, 0.012, -3), new THREE.Vector3(i, 0.012, 3));
+            points.push(new THREE.Vector3(-3, 0.012, i), new THREE.Vector3(3, 0.012, i));
+        }
+        const grid = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(points), mat);
+        grid.userData.telemarkThemeRole = "grid";
+        scene.add(grid);
+    }
+
+    function createWheel(THREE, name, x, z) {
+        const group = new THREE.Group();
+        group.position.set(x, 0.19, z);
+
+        const wheel = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.145, 0.145, 0.12, 24),
+            new THREE.MeshPhongMaterial({ color: 0x222222, emissive: 0x111111, emissiveIntensity: 0.04, shininess: 35 })
+        );
+        wheel.rotation.z = Math.PI / 2;
+        wheel.castShadow = true;
+        group.add(wheel);
+
+        const stripe = new THREE.Mesh(
+            new THREE.BoxGeometry(0.13, 0.018, 0.30),
+            new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.22 })
+        );
+        stripe.position.y = 0.01;
+        wheel.add(stripe);
+
+        wheels[name] = { group: group, mesh: wheel };
+        robotGroup.add(group);
+    }
+
+    function buildScene() {
+        requestAnimationFrame(function () {
+            if (!window.scene || !window.THREE) return;
+
+            const THREE = window.THREE;
+            const scene = window.scene;
+
+            window.setFieldVisible(false);
+            window.setCameraOrbit({
+                theta: 0.4,
+                phi: 0.75,
+                radius: 6,
+                target: { x: 0, y: 0.2, z: 0 }
+            });
+
+            scene.background = new THREE.Color(0x0a0a0a);
+            scene.add(new THREE.AmbientLight(0x505060, 0.45));
+
+            const point = new THREE.PointLight(0x00e5ff, 0.25, 9);
+            point.position.set(0, 3, 2);
+            scene.add(point);
+
+            const floor = new THREE.Mesh(
+                new THREE.PlaneGeometry(6, 6),
+                new THREE.MeshPhongMaterial({ color: 0x1a1a2e })
+            );
+            floor.userData.telemarkThemeRole = "floor";
+            floor.rotation.x = -Math.PI / 2;
+            floor.receiveShadow = true;
+            scene.add(floor);
+            makeGrid(scene, THREE);
+
+            const wallMat = new THREE.MeshPhongMaterial({ color: 0x303038 });
+            const wallH = 0.35;
+            const wallT = 0.10;
+            const north = new THREE.Mesh(new THREE.BoxGeometry(6.2, wallH, wallT), wallMat);
+            north.userData.telemarkThemeRole = "wall";
+            north.position.set(0, wallH / 2, 3.05);
+            scene.add(north);
+            const south = north.clone();
+            south.userData.telemarkThemeRole = "wall";
+            south.position.z = -3.05;
+            scene.add(south);
+            const east = new THREE.Mesh(new THREE.BoxGeometry(wallT, wallH, 6.2), wallMat);
+            east.userData.telemarkThemeRole = "wall";
+            east.position.set(3.05, wallH / 2, 0);
+            scene.add(east);
+            const west = east.clone();
+            west.userData.telemarkThemeRole = "wall";
+            west.position.x = -3.05;
+            scene.add(west);
+
+            robotGroup = new THREE.Group();
+            scene.add(robotGroup);
+
+            const body = new THREE.Mesh(
+                new THREE.BoxGeometry(0.86, 0.28, 0.98),
+                new THREE.MeshPhongMaterial({ color: 0x2a2a2a, shininess: 60, specular: 0x222222 })
+            );
+            body.position.y = 0.25;
+            body.castShadow = true;
+            robotGroup.add(body);
+
+            const marker = new THREE.Mesh(
+                new THREE.BoxGeometry(0.48, 0.16, 0.035),
+                new THREE.MeshPhongMaterial({ color: 0x007acc, shininess: 90, emissive: 0x003366 })
+            );
+            marker.position.set(0, 0.31, 0.51);
+            robotGroup.add(marker);
+
+            const arrowShape = new THREE.Shape();
+            arrowShape.moveTo(0, 0.18);
+            arrowShape.lineTo(0.16, -0.12);
+            arrowShape.lineTo(0.055, -0.08);
+            arrowShape.lineTo(0.055, -0.24);
+            arrowShape.lineTo(-0.055, -0.24);
+            arrowShape.lineTo(-0.055, -0.08);
+            arrowShape.lineTo(-0.16, -0.12);
+            arrowShape.lineTo(0, 0.18);
+
+            const arrow = new THREE.Mesh(
+                new THREE.ShapeGeometry(arrowShape),
+                new THREE.MeshPhongMaterial({ color: 0x00aaff, shininess: 100, emissive: 0x003366, transparent: true, opacity: 0.95 })
+            );
+            arrow.rotation.x = -Math.PI / 2;
+            arrow.position.set(0, 0.42, 0.08);
+            robotGroup.add(arrow);
+
+            createWheel(THREE, "leftFront", -0.50, 0.36);
+            createWheel(THREE, "rightFront", 0.50, 0.36);
+            createWheel(THREE, "leftBack", -0.50, -0.36);
+            createWheel(THREE, "rightBack", 0.50, -0.36);
+
+            pathLine = new THREE.Line(
+                new THREE.BufferGeometry(),
+                new THREE.LineBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.7 })
+            );
+            scene.add(pathLine);
+            window.TelemarkSimulatorBase.themeThreeScene(scene);
+        });
+    }
+
+    function getAppliedPower(name) {
+        const motor = sim.motors[name];
+        return motor.commandPower * mountSign[name] * (dirSign[motor.direction] || 1);
+    }
+
+    function updateDevicesAndPhysics(dt) {
+        if (!robotGroup) return;
+
+        const allEncoder = motorNames.every(function (name) {
+            return sim.motors[name].mode === "RUN_USING_ENCODER";
+        });
+
+        motorNames.forEach(function (name) {
+            const motor = sim.motors[name];
+            const device = getDevice(name);
+            if (device) {
+                motor.device = device;
+                motor.commandPower = Number(device._power || 0);
+                motor.mode = device._mode || motor.mode;
+                motor.direction = device._direction || motor.direction;
+            }
+
+            motor.appliedPower = getAppliedPower(name);
+            const variation = allEncoder ? 1 : (0.88 + Math.random() * 0.24);
+            motor.velocity = Math.abs(motor.commandPower) > 0.001 ? motor.appliedPower * 100 * variation : 0;
+            motor.ticks += motor.velocity * dt * 16;
+
+            if (device) {
+                device._currentPosition = Math.round(motor.ticks);
+            }
+        });
+
+        const fl = sim.motors.leftFront.appliedPower;
+        const fr = sim.motors.rightFront.appliedPower;
+        const bl = sim.motors.leftBack.appliedPower;
+        const br = sim.motors.rightBack.appliedPower;
+
+        const forward = (fl + fr + bl + br) * 0.25;
+        const strafe = (fl - fr - bl + br) * 0.25;
+        const rotate = (-fl + fr - bl + br) * 0.25;
+        const speed = allEncoder ? 3.8 : 3.55;
+        const rotSpeed = 3.0;
+        const h = sim.robotHeading;
+        const cos = Math.cos(h);
+        const sin = Math.sin(h);
+
+        robotGroup.position.x = clamp(
+            robotGroup.position.x + (forward * sin + strafe * cos) * speed * dt,
+            -fieldHalf + robotMargin,
+            fieldHalf - robotMargin
+        );
+        robotGroup.position.z = clamp(
+            robotGroup.position.z + (forward * cos - strafe * sin) * speed * dt,
+            -fieldHalf + robotMargin,
+            fieldHalf - robotMargin
+        );
+        sim.robotHeading = (sim.robotHeading + rotate * rotSpeed * dt) % (Math.PI * 2);
+        robotGroup.rotation.y = sim.robotHeading;
+
+        const spinRate = -22 * dt;
+        motorNames.forEach(function (name) {
+            const wheel = wheels[name];
+            if (!wheel) return;
+            const motor = sim.motors[name];
+            wheel.mesh.rotation.x += motor.appliedPower * spinRate;
+            wheel.mesh.material.color.setHex(motor.mode === "RUN_USING_ENCODER" ? 0x245dff : 0x222222);
+        });
+
+        if (sim.running) {
+            sim.pathPoints.push(new THREE.Vector3(robotGroup.position.x, 0.025, robotGroup.position.z));
+            if (sim.pathPoints.length > 260) sim.pathPoints.shift();
+            if (pathLine) pathLine.geometry.setFromPoints(sim.pathPoints);
+        }
+    }
+
+    function updateMotorCards() {
+        const allEncoder = motorNames.every(function (name) {
+            return sim.motors[name].mode === "RUN_USING_ENCODER";
+        });
+        const allDirections = motorNames.every(function (name) {
+            return sim.motors[name].direction === expectedDirection[name];
+        });
+
+        motorNames.forEach(function (name) {
+            const motor = sim.motors[name];
+            const card = cards[name];
+            if (!card) return;
+
+            const directionOk = motor.direction === expectedDirection[name];
+            const modeOk = motor.mode === "RUN_USING_ENCODER";
+            card.className = "motor-card " + (directionOk && modeOk ? "ok" : "bad");
+
+            const badge = card.querySelector(".mode-badge");
+            badge.className = "mode-badge " + (modeOk ? "mode-blue" : "mode-grey");
+            badge.textContent = motor.mode;
+
+            card.querySelector(".dir").textContent = motor.direction;
+            card.querySelector(".power").textContent = motor.commandPower.toFixed(2);
+            card.querySelector(".ticks").textContent = String(Math.round(motor.ticks));
+
+            const fill = card.querySelector(".wheel-velocity-fill");
+            const pct = Math.abs(motor.commandPower) * 50;
+            if (motor.commandPower >= 0) {
+                fill.style.left = "50%";
+                fill.style.width = pct + "%";
+                fill.style.background = "#00cc00";
+            } else {
+                fill.style.left = (50 - pct) + "%";
+                fill.style.width = pct + "%";
+                fill.style.background = "#ff5252";
+            }
+        });
+
+        const status = document.getElementById("velocity-check");
+        if (status) {
+            status.className = "velocity-check " + (allEncoder && allDirections ? "ok" : "bad");
+            if (!allEncoder) {
+                status.textContent = "RUN_USING_ENCODER needed on all four motors";
+            } else if (!allDirections) {
+                status.textContent = "Encoder mode is set. Reverse both left motors like Unit 8.2.";
+            } else {
+                status.textContent = "All motors are using encoders and directions match the mecanum setup";
+            }
+        }
+    }
+
+    function evaluateSceneHints() {
+        const leftReversed =
+            (sim.motors.leftFront.direction === "REVERSE" ? 1 : 0) +
+            (sim.motors.leftBack.direction === "REVERSE" ? 1 : 0);
+
+        const allEncoder = motorNames.every(function (name) {
+            return sim.motors[name].mode === "RUN_USING_ENCODER";
+        });
+
+        if (!allEncoder && sim.running) {
+            setSceneHint("Set all four motors to RUN_USING_ENCODER", "error");
+            return;
+        }
+
+        if (leftReversed === 1) {
+            setSceneHint("Both left motors need to be reversed", "warn");
+            return;
+        }
+
+        if (
+            sim.running &&
+            window.gamepad &&
+            window.gamepad.left_stick_y < -0.55 &&
+            Math.abs(window.gamepad.left_stick_x) < 0.25 &&
+            Math.abs(window.gamepad.right_stick_x) < 0.25 &&
+            !motorNames.every(function (name) { return sim.motors[name].direction === expectedDirection[name]; })
+        ) {
+            setSceneHint("Check motor directions - robot is not driving straight", "warn");
+            return;
+        }
+
+        setSceneHint("");
+    }
+
+    function animationFrame() {
+        const now = performance.now();
+        const dt = sim.lastFrameTime ? Math.min((now - sim.lastFrameTime) / 1000, 0.05) : 0.016;
+        sim.lastFrameTime = now;
+
+        updateDevicesAndPhysics(dt);
+        evaluateSceneHints();
+
+        if (now - sim.lastPanelUpdate > 80) {
+            updateMotorCards();
+            sim.lastPanelUpdate = now;
+        }
+    }
+
+    function installMotorTracking() {
+        window.hardwareMap.onMotorPower(function (name, power) {
+            const canonical = canonicalMotorName(name);
+            if (!canonical) return;
+            sim.motors[canonical].device = window.hardwareMap._devices[name] || sim.motors[canonical].device;
+            sim.motors[canonical].commandPower = Number(power) || 0;
+        });
+
+        window.hardwareMap.onMotorMode(function (name, mode) {
+            const canonical = canonicalMotorName(name);
+            if (!canonical) return;
+            const motor = sim.motors[canonical];
+            motor.device = window.hardwareMap._devices[name] || motor.device;
+            motor.mode = String(mode);
+            if (motor.mode === "STOP_AND_RESET_ENCODER") {
+                motor.ticks = 0;
+                const device = getDevice(canonical);
+                if (device) device._currentPosition = 0;
+            }
+            updateMotorCards();
+        });
+
+        window.hardwareMap.onMotorDirection(function (name, direction) {
+            const canonical = canonicalMotorName(name);
+            if (!canonical) return;
+            sim.motors[canonical].device = window.hardwareMap._devices[name] || sim.motors[canonical].device;
+            sim.motors[canonical].direction = direction === "REVERSE" ? "REVERSE" : "FORWARD";
+            updateMotorCards();
+        });
+    }
+
+    function prepareCodeForBaseTranspiler(code) {
+        let prepared = String(code || "");
+
+        prepared = prepared.replace(
+            /\bDcMotor(Ex)?\s*\[\s*\]\s+([A-Za-z_]\w*)/g,
+            "DcMotor$1 $2"
+        );
+
+        prepared = prepared.replace(
+            /new\s+DcMotor(?:Ex)?\s*\[\s*\]\s*\{([\s\S]*?)\}/g,
+            "[$1]"
+        );
+
+        prepared = prepared.replace(
+            /for\s*\(\s*DcMotor(?:Ex)?\s+([A-Za-z_]\w*)\s*:\s*([^)]+)\)/g,
+            "for (let $1 of $2)"
+        );
+
+        prepared = prepared.replace(
+            /\bDcMotor\s*\.\s*RunMode\s*\.\s*(RUN_WITHOUT_ENCODER|RUN_USING_ENCODER|RUN_TO_POSITION|STOP_AND_RESET_ENCODER)\b/g,
+            '"$1"'
+        );
+
+        return prepared;
+    }
+
+    function hasMap(initBody, canonical) {
+        const names = aliases[canonical].map(escapeRegExp).join("|");
+        return new RegExp(
+            "hardwareMap\\s*\\.\\s*get\\s*\\(\\s*DcMotor(?:Ex)?\\s*\\.\\s*class\\s*,\\s*\"(?:" + names + ")\"\\s*\\)"
+        ).test(initBody);
+    }
+
+    function hasReverse(initBody, canonical) {
+        const varNames = [canonical, motorShort[canonical].toLowerCase()];
+        const directVar = new RegExp(
+            "(?:" + varNames.map(escapeRegExp).join("|") + ")\\s*\\.\\s*setDirection\\s*\\(\\s*DcMotor(?:Simple)?\\s*\\.\\s*Direction\\s*\\.\\s*REVERSE\\s*\\)"
+        ).test(initBody);
+
+        const index = motorNames.indexOf(canonical);
+        const arrayVar = findArrayName(initBody);
+        const arrayReverse = arrayVar
+            ? new RegExp(
+                escapeRegExp(arrayVar) + "\\s*\\[\\s*" + index + "\\s*\\]\\s*\\.\\s*setDirection\\s*\\(\\s*DcMotor(?:Simple)?\\s*\\.\\s*Direction\\s*\\.\\s*REVERSE\\s*\\)"
+            ).test(initBody)
+            : false;
+
+        return directVar || arrayReverse;
+    }
+
+    function findArrayName(code) {
+        const decl = code.match(/\bDcMotor(?:Ex)?\s*\[\s*\]\s+([A-Za-z_]\w*)/);
+        if (decl) return decl[1];
+        const assign = code.match(/\b([A-Za-z_]\w*)\s*=\s*new\s+DcMotor(?:Ex)?\s*\[\s*\]/);
+        return assign ? assign[1] : "motors";
+    }
+
+    function hasEncoderMode(initBody) {
+        const arrayName = findArrayName(initBody);
+        const hasLoop =
+            new RegExp("for\\s*\\(\\s*DcMotor(?:Ex)?\\s+[A-Za-z_]\\w*\\s*:\\s*" + escapeRegExp(arrayName) + "\\s*\\)").test(initBody) &&
+            /RUN_USING_ENCODER/.test(initBody);
+
+        const individualCount = motorNames.reduce(function (count, name, index) {
+            const names = [name, motorShort[name].toLowerCase()];
+            const direct = new RegExp(
+                "(?:" + names.map(escapeRegExp).join("|") + ")\\s*\\.\\s*setMode\\s*\\(\\s*DcMotor\\s*\\.\\s*RunMode\\s*\\.\\s*RUN_USING_ENCODER\\s*\\)"
+            ).test(initBody);
+            const array = new RegExp(
+                escapeRegExp(arrayName) + "\\s*\\[\\s*" + index + "\\s*\\]\\s*\\.\\s*setMode\\s*\\(\\s*DcMotor\\s*\\.\\s*RunMode\\s*\\.\\s*RUN_USING_ENCODER\\s*\\)"
+            ).test(initBody);
+            return count + (direct || array ? 1 : 0);
+        }, 0);
+
+        return hasLoop || individualCount === 4;
+    }
+
+    function detectMecanumMath(loopBody) {
+        return /drive\s*=\s*-?\s*gamepad1\s*\.\s*left_stick_y/.test(loopBody) &&
+            /strafe\s*=\s*gamepad1\s*\.\s*left_stick_x/.test(loopBody) &&
+            /rotate\s*=\s*gamepad1\s*\.\s*right_stick_x/.test(loopBody) &&
+            /fl\s*=.*drive.*strafe.*rotate/s.test(loopBody) &&
+            /fr\s*=.*drive.*strafe.*rotate/s.test(loopBody) &&
+            /bl\s*=.*drive.*strafe.*rotate/s.test(loopBody) &&
+            /br\s*=.*drive.*strafe.*rotate/s.test(loopBody) &&
+            /setPower\s*\(/.test(loopBody);
+    }
+
+    function validateCode(code) {
+        const source = stripComments(code);
+        const initBody = getMethodBody(source, "init");
+        const loopBody = getMethodBody(source, "loop");
+
+        sim.requirements[0] = motorNames.every(function (name) { return hasMap(initBody, name); });
+        sim.requirements[1] = /\bDcMotor(?:Ex)?\s*\[\s*\]\s+[A-Za-z_]\w*/.test(source);
+        sim.requirements[2] = hasEncoderMode(initBody);
+        sim.requirements[3] = hasReverse(initBody, "leftFront");
+        sim.requirements[4] = hasReverse(initBody, "leftBack");
+        sim.requirements[5] = detectMecanumMath(loopBody);
+        sim.requirements[6] = /\btelemetry\s*\.\s*addData\s*\(/.test(loopBody) && /\btelemetry\s*\.\s*update\s*\(\s*\)/.test(loopBody);
+
+        updateRequirements();
+
+        if (/RUN_TO_POSITION/.test(initBody) || /RUN_TO_POSITION/.test(loopBody)) {
+            setWarning("Use RUN_USING_ENCODER for TeleOp velocity control, not RUN_TO_POSITION", "error");
+        } else if (/setMode\s*\(/.test(loopBody)) {
+            setWarning("Set motor modes in init(); loop() should focus on drive power", "warn");
+        } else if (!sim.requirements[2]) {
+            setWarning("Put every drivetrain motor in RUN_USING_ENCODER", "warn");
+        } else {
+            setWarning(null);
+        }
+    }
+
+    function resetSimulationState(keepHardware) {
+        sim.robotHeading = 0;
+        sim.pathPoints = [];
+        currentSceneHint = "";
+
+        motorNames.forEach(function (name) {
+            const old = sim.motors[name];
+            sim.motors[name] = createMotorState();
+            if (keepHardware && old.device) sim.motors[name].device = old.device;
+        });
+
+        Object.keys(window.hardwareMap._devices).forEach(function (name) {
+            const canonical = canonicalMotorName(name);
+            if (!canonical) return;
+            const device = window.hardwareMap._devices[name];
+            device._power = 0;
+            device._mode = "RUN_WITHOUT_ENCODER";
+            device._direction = "FORWARD";
+            device._currentPosition = 0;
+        });
+
+        if (robotGroup) {
+            robotGroup.position.set(0, 0, 0);
+            robotGroup.rotation.y = 0;
+        }
+        if (pathLine) {
+            pathLine.geometry.setFromPoints([]);
+        }
+
+        setSceneHint("");
+        updateMotorCards();
+    }
+
+    window.onSimulatorReady = function () {
+        window.setCode(starterCode);
+
+        window.setChallenge(
+            "Mecanum Drive with RUN_USING_ENCODER",
+            "Build the Unit 8.2 mecanum drivetrain, then configure every drive motor for RUN_USING_ENCODER so TeleOp velocity is more consistent.",
+            requirements
+        );
+
+        window.setHeader(
+            "Telemark Unit 10.4 Simulator",
+            "Encoder Mecanum Drive · RUN_USING_ENCODER"
+        );
+
+        window.setBadges([
+            { iconClass: "fa-solid fa-screwdriver-wrench", label: "DcMotorEx x4", active: true },
+            { iconClass: "fa-solid fa-gauge-high", label: "Encoder x4", active: true },
+            { iconClass: "fa-solid fa-gamepad", label: "Mecanum TeleOp", active: true },
+            { iconClass: "fa-solid fa-tower-broadcast", label: "Telemetry", active: true }
+        ]);
+
+        window.setActiveInputs(["left_stick_x", "left_stick_y", "right_stick_x"]);
+
+        createPanel();
+        installMotorTracking();
+        buildScene();
+        validateCode(starterCode);
+
+        if (animationCallbackId === -1) {
+            animationCallbackId = window.addAnimationCallback(animationFrame);
+        }
+    };
+
+    window.onRun = function () {
+        if (sim.running) return;
+
+        sim.running = true;
+        sim.lastFrameTime = 0;
+        window.clearHints();
+        resetSimulationState(true);
+
+        const code = window.getCode() || starterCode;
+        validateCode(code);
+
+        window.transpileAndRun(
+            prepareCodeForBaseTranspiler(code),
+            function (initFn) {
+                try {
+                    initFn();
+                    updateMotorCards();
+                } catch (err) {
+                    window._simShowTelemetryError("Init error: " + err.message);
+                }
+            }
+        );
+    };
+
+    window.onStop = function () {
+        sim.running = false;
+        motorNames.forEach(function (name) {
+            sim.motors[name].commandPower = 0;
+            sim.motors[name].appliedPower = 0;
+        });
+
+        Object.keys(window.hardwareMap._devices).forEach(function (name) {
+            const canonical = canonicalMotorName(name);
+            if (canonical) window.hardwareMap._devices[name]._power = 0;
+        });
+
+        updateMotorCards();
+        setSceneHint("");
+    };
+
+    window.onReset = function () {
+        window.onStop();
+        window.clearHints();
+        window.clearTelemetry();
+        resetSimulationState(true);
+        validateCode(window.getCode() || starterCode);
+    };
+})();
+</script>
+
+</body>
+</html>

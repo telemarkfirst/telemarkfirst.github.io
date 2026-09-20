@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Telemark Unit 14.1 Simulator</title>
+<style>
+  #sim-right-panel #sim-scene-container {
+    flex: 1 0 clamp(360px, 55vh, 620px);
+    min-height: 360px;
+    background: #020204;
+  }
+
+  #sim-right-panel .u141-panel {
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: clamp(250px, 38vh, 430px);
+    overflow-y: auto;
+    margin: 10px;
+    padding: 12px;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #0b0b0f;
+    color: #e5e7eb;
+    font-family: var(--font-ui, Arial, sans-serif);
+  }
+
+  #sim-scene-container .u141-scene-status,
+  #sim-scene-container .u141-feed-message,
+  #sim-scene-container .u141-scene-timeline {
+    position: absolute;
+    z-index: 5;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: rgba(4, 4, 7, 0.9);
+    color: #f4f4f5;
+    pointer-events: none;
+  }
+
+  #sim-scene-container .u141-scene-status {
+    top: 12px;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 11px;
+    font-weight: 700;
+  }
+
+  #sim-scene-container .u141-feed-message {
+    left: 50%;
+    top: 50%;
+    display: none;
+    transform: translate(-50%, -50%);
+    padding: 11px 14px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+  }
+
+  #sim-scene-container .u141-scene-timeline {
+    top: 12px;
+    right: 12px;
+    width: min(260px, 38%);
+    padding: 10px;
+    font-size: 0.74rem;
+  }
+
+  #sim-scene-container .u141-scene-timeline-title,
+  #sim-right-panel .u141-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 800;
+  }
+
+  #sim-scene-container .u141-scene-timeline-title {
+    margin-bottom: 7px;
+  }
+
+  #sim-right-panel .u141-title {
+    margin: 12px 0 8px;
+  }
+
+  #sim-right-panel .u141-title:first-child {
+    margin-top: 0;
+  }
+
+  #sim-scene-container .u141-mini-step,
+  #sim-right-panel .u141-step,
+  #sim-right-panel .u141-status {
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #08080c;
+    color: #85858f;
+  }
+
+  #sim-scene-container .u141-mini-step {
+    margin-top: 6px;
+    padding: 6px 7px;
+  }
+
+  #sim-scene-container .u141-mini-step.good,
+  #sim-right-panel .u141-step.good,
+  #sim-right-panel .u141-status.good {
+    border-color: #22cc66;
+    color: #bbf7d0;
+    box-shadow: 0 0 12px rgba(34, 204, 102, 0.16);
+  }
+
+  #sim-right-panel .u141-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  #sim-right-panel .u141-status {
+    padding: 9px;
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  #sim-right-panel .u141-status.bad {
+    border-color: #7f1d1d;
+    color: #fecaca;
+  }
+
+  #sim-right-panel .u141-status.warn {
+    border-color: #8a6a20;
+    color: #fde68a;
+  }
+
+  #sim-right-panel .u141-flow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  #sim-right-panel .u141-step {
+    padding: 8px;
+    font-size: 0.8rem;
+  }
+
+  #sim-right-panel .u141-callout,
+  #sim-right-panel .u141-warning,
+  #sim-right-panel .u141-success {
+    margin-top: 10px;
+    border-radius: 8px;
+    padding: 9px;
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  #sim-right-panel .u141-callout {
+    border: 1px solid #374151;
+    background: rgba(244, 244, 245, 0.05);
+    color: #e5e7eb;
+  }
+
+  #sim-right-panel .u141-warning {
+    display: none;
+    border: 1px solid #8a6a20;
+    background: rgba(255, 204, 102, 0.08);
+    color: #fde68a;
+  }
+
+  #sim-right-panel .u141-warning.error {
+    border-color: #7f1d1d;
+    background: rgba(239, 68, 68, 0.1);
+    color: #fecaca;
+  }
+
+  #sim-right-panel .u141-success {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #22cc66;
+    background: rgba(34, 204, 102, 0.1);
+    color: #22cc66;
+    font-weight: 800;
+  }
+
+  #sim-right-panel .u141-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  #sim-right-panel .u141-button {
+    border: 1px solid #3b82f6;
+    border-radius: 8px;
+    background: rgba(59, 130, 246, 0.12);
+    color: #bfdbfe;
+    padding: 8px 10px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  #sim-right-panel .u141-button:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+</style>
+<script src="./simulator_base.js"></script>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+<script>
+window.onSimulatorReady = function () {
+  "use strict";
+
+  const starterCode = `import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+
+@Autonomous(name="AprilTag_Init")
+public class AprilTagInit extends LinearOpMode {
+
+    AprilTagProcessor aprilTagProcessor;
+    VisionPortal      visionPortal;
+
+    @Override
+    public void runOpMode() {
+
+        // Initialize AprilTag processor with default settings
+        // TODO: Create the AprilTag processor with the default helper
+
+        // Build the vision portal with the webcam and processor
+        // TODO: Use the portal builder
+        // TODO: Set the camera to the configured webcam
+        // TODO: Attach the processor and finish the portal
+
+        telemetry.addData("Status",  "Camera Initializing...");
+        telemetry.update();
+
+        // Wait for start - drive team can see camera feed here
+        waitForStart();
+
+        // Stop streaming to free CPU for autonomous processing
+        // TODO: Stop streaming after the match starts
+
+        telemetry.addData("Status",  "Streaming Stopped");
+        telemetry.addData("Camera",  "front_cam");
+        telemetry.update();
+
+        while (opModeIsActive()) {
+            telemetry.addData("Status", "Running");
+            telemetry.update();
+        }
+    }
+}`;
+
+  const requirements = [
+    "Create the AprilTagProcessor with easyCreateWithDefaults()",
+    "Use a VisionPortal.Builder",
+    "Set the camera to hardwareMap.get(WebcamName.class, \"front_cam\")",
+    "Attach aprilTagProcessor with addProcessor(aprilTagProcessor)",
+    "Call build() to create the VisionPortal",
+    "Call waitForStart()",
+    "Call visionPortal.stopStreaming() after waitForStart()",
+    "Initialize the camera before waitForStart()"
+  ];
+
+  const state = {
+    portalState: "INITIALIZING",
+    phase: "NOT RUNNING",
+    processorCreated: false,
+    processorAttached: false,
+    webcamName: "",
+    portalBuilt: false,
+    detectionCount: 0,
+    cpu: "LOW",
+    waitingForStart: false,
+    startRequested: false,
+    active: false,
+    stopRequested: false,
+    runToken: 0,
+    lifecycle: { init: false, wait: false, start: false, running: false },
+    pulse: 0,
+    spinner: 0,
+    warning: ""
+  };
+
+  let webcamDevice;
+  let sceneRoot;
+  let feedGroup;
+  let wallMesh;
+  let noiseMesh;
+  let pauseMesh;
+  let webcamLight;
+  let robotGroup;
+  let tagOverlays = [];
+  let detectionLabels = [];
+  let animationRegistered = false;
+  const visionCallbacks = [];
+
+  function el(id) {
+    return document.getElementById(id);
+  }
+
+  function safeCall(fn) {
+    if (typeof fn !== "function") return undefined;
+    const args = Array.prototype.slice.call(arguments, 1);
+    return fn.apply(null, args);
+  }
+
+  ensureVisionHardware();
+
+  setCode(starterCode);
+  setChallenge(
+    "Telemark Unit 14.1 Simulator",
+    "AprilTag Camera Initialization",
+    requirements
+  );
+  setBadges([
+    { icon: "fa-camera", iconClass: "fa-solid fa-camera", label: "Webcam", active: true },
+    { icon: "fa-tag", iconClass: "fa-solid fa-tag", label: "AprilTag", active: true },
+    { icon: "fa-display", iconClass: "fa-solid fa-display", label: "Telemetry", active: true }
+  ]);
+  setActiveInputs([]);
+
+  const banner = el("sim-success-banner");
+  if (banner) {
+    banner.innerHTML = '<i class="fa-solid fa-circle-check"></i> Challenge Complete! Vision portal correctly initialized and streaming lifecycle managed.';
+  }
+
+  webcamDevice = hardwareMap.registerWebcam("front_cam");
+  hardwareMap.onVisionPortal(function (portalState) {
+    updateCameraVisual(portalState);
+  });
+
+  createPanel();
+  setupScene();
+  setPortalState("INITIALIZING");
+  validateCode();
+  updatePanel();
+
+  window.onInit = function () {
+    state.runToken++;
+    state.active = true;
+    state.stopRequested = false;
+    state.waitingForStart = false;
+    state.startRequested = false;
+    state.phase = "RUNNING SETUP";
+    state.processorCreated = false;
+    state.processorAttached = false;
+    state.webcamName = "";
+    state.portalBuilt = false;
+    state.lifecycle = { init: false, wait: false, start: false, running: false };
+    state.warning = "";
+    setPortalState("INITIALIZING");
+    validateCode();
+    runLinearOpMode(state.runToken);
+  };
+
+  window.onStart = function () {
+    state.startRequested = true;
+    releaseWaitForStart();
+  };
+
+  window.onStop = function () {
+    state.stopRequested = true;
+    state.active = false;
+    state.waitingForStart = false;
+    state.startRequested = false;
+    state.phase = "STOPPED";
+    releaseWaitForStart();
+    setPortalState("STOPPED");
+    updatePanel();
+  };
+
+  window.onReset = function () {
+    state.runToken++;
+    state.portalState = "INITIALIZING";
+    state.phase = "NOT RUNNING";
+    state.processorCreated = false;
+    state.processorAttached = false;
+    state.webcamName = "";
+    state.portalBuilt = false;
+    state.detectionCount = 0;
+    state.cpu = "LOW";
+    state.waitingForStart = false;
+    state.startRequested = false;
+    state.active = false;
+    state.stopRequested = false;
+    state.lifecycle = { init: false, wait: false, start: false, running: false };
+    state.pulse = 0;
+    state.warning = "";
+    releaseWaitForStart();
+    safeCall(clearTelemetry);
+    validateCode();
+    updatePanel();
+  };
+
+  if (!animationRegistered && typeof addAnimationCallback === "function") {
+    addAnimationCallback(tick);
+    animationRegistered = true;
+  }
+
+  function ensureVisionHardware() {
+    if (typeof hardwareMap.registerWebcam !== "function") {
+      hardwareMap.registerWebcam = function (name) {
+        const webcam = { _name: name, name: name, kind: "WebcamName" };
+        hardwareMap._devices[name] = webcam;
+        return webcam;
+      };
+    }
+
+    const originalGet = hardwareMap.get.bind(hardwareMap);
+    hardwareMap.get = function (type, name) {
+      const typeStr = String(type).toLowerCase();
+      if (typeStr.includes("webcam")) {
+        if (hardwareMap._devices[name]) return hardwareMap._devices[name];
+        return hardwareMap.registerWebcam(name);
+      }
+      return originalGet(type, name);
+    };
+
+    const originalOnVisionPortal = typeof hardwareMap.onVisionPortal === "function"
+      ? hardwareMap.onVisionPortal.bind(hardwareMap)
+      : null;
+    hardwareMap.onVisionPortal = function (cb) {
+      visionCallbacks.push(cb);
+      if (originalOnVisionPortal) originalOnVisionPortal(cb);
+    };
+  }
+
+  function emitVisionPortal() {
+    const payload = {
+      status: state.portalState,
+      camera: state.webcamName,
+      processorAttached: state.processorAttached,
+      portalBuilt: state.portalBuilt
+    };
+    visionCallbacks.forEach(function (cb) {
+      try {
+        cb(payload);
+      } catch (err) {
+        console.error("[VisionPortal callback error]", err);
+      }
+    });
+  }
+
+  function createPanel() {
+    const rightPanel = el("sim-right-panel");
+    const sceneContainer = el("sim-scene-container");
+    if (!rightPanel || !sceneContainer) return;
+
+    [
+      "u141-panel",
+      "u141-scene-status",
+      "u141-feed-message",
+      "u141-scene-timeline"
+    ].forEach(function (id) {
+      const old = el(id);
+      if (old) old.remove();
+    });
+
+    const sceneStatus = document.createElement("div");
+    sceneStatus.id = "u141-scene-status";
+    sceneStatus.className = "u141-scene-status";
+    sceneContainer.appendChild(sceneStatus);
+
+    const feedMessage = document.createElement("div");
+    feedMessage.id = "u141-feed-message";
+    feedMessage.className = "u141-feed-message";
+    sceneContainer.appendChild(feedMessage);
+
+    const sceneTimeline = document.createElement("div");
+    sceneTimeline.id = "u141-scene-timeline";
+    sceneTimeline.className = "u141-scene-timeline";
+    sceneTimeline.innerHTML = `
+      <div class="u141-scene-timeline-title"><i class="fa-solid fa-list-check"></i> Lifecycle</div>
+      <div class="u141-mini-step" id="u141-mini-init">INIT: Camera opens, streaming begins</div>
+      <div class="u141-mini-step" id="u141-mini-wait">WAIT FOR START: Detections visible</div>
+      <div class="u141-mini-step" id="u141-mini-start">START: stopStreaming() called</div>
+      <div class="u141-mini-step" id="u141-mini-running">OPMODE RUNNING: CPU freed</div>
+    `;
+    sceneContainer.appendChild(sceneTimeline);
+
+    const panel = document.createElement("div");
+    panel.id = "u141-panel";
+    panel.className = "u141-panel";
+    panel.innerHTML = `
+      <div class="u141-title"><i class="fa-solid fa-camera"></i> Camera State</div>
+      <div class="u141-grid">
+        <div class="u141-status" id="u141-state-card"></div>
+        <div class="u141-status" id="u141-processor-card"></div>
+        <div class="u141-status" id="u141-webcam-card"></div>
+        <div class="u141-status" id="u141-detection-card"></div>
+        <div class="u141-status" id="u141-cpu-card"></div>
+        <div class="u141-status" id="u141-phase-card"></div>
+      </div>
+      <div class="u141-actions">
+        <button class="u141-button" id="u141-resume-button" type="button"><i class="fa-solid fa-rotate-right"></i> Force Resume Streaming</button>
+      </div>
+      <div class="u141-title"><i class="fa-solid fa-route"></i> Lifecycle Flow</div>
+      <div class="u141-flow">
+        <div class="u141-step" id="u141-flow-init">OpMode setup</div>
+        <i class="fa-solid fa-arrow-right"></i>
+        <div class="u141-step" id="u141-flow-wait">waitForStart()</div>
+        <i class="fa-solid fa-arrow-right"></i>
+        <div class="u141-step" id="u141-flow-stop">stopStreaming()</div>
+        <i class="fa-solid fa-arrow-right"></i>
+        <div class="u141-step" id="u141-flow-run">Autonomous running</div>
+      </div>
+      <div class="u141-callout">
+        <i class="fa-solid fa-microchip"></i>
+        Stream before start so the drive team can see detections. Stop streaming after start to free CPU for autonomous.
+      </div>
+      <div class="u141-success" id="u141-success"><i class="fa-solid fa-circle-check"></i> Challenge Complete! Vision portal correctly initialized and streaming lifecycle managed.</div>
+      <div class="u141-warning" id="u141-warning"></div>
+    `;
+    rightPanel.appendChild(panel);
+
+    const resumeButton = el("u141-resume-button");
+    if (resumeButton) {
+      resumeButton.addEventListener("click", function () {
+        resumeStreaming();
+      });
+    }
+  }
+
+  function setupScene() {
+    if (!window.THREE || !window.scene) return;
+    if (sceneRoot) window.scene.remove(sceneRoot);
+
+    sceneRoot = new THREE.Group();
+    sceneRoot.name = "unit14_1_scene";
+    window.scene.add(sceneRoot);
+    window.scene.background = new THREE.Color(0x000000);
+    safeCall(setFieldVisible, false);
+    safeCall(setCameraOrbit, {
+      theta: -0.38,
+      phi: 0.94,
+      radius: 7.4,
+      target: { x: 0, y: 0.9, z: -0.25 }
+    });
+
+    const ambient = new THREE.AmbientLight(0xffffff, 0.82);
+    sceneRoot.add(ambient);
+    const key = new THREE.DirectionalLight(0xffffff, 1.15);
+    key.position.set(2.5, 5, 4);
+    sceneRoot.add(key);
+
+    feedGroup = new THREE.Group();
+    feedGroup.position.set(-0.25, 1.25, 0);
+    sceneRoot.add(feedGroup);
+
+    const frame = new THREE.Mesh(
+      new THREE.BoxGeometry(5.2, 3.12, 0.08),
+      new THREE.MeshStandardMaterial({ color: 0x08080b, roughness: 0.75, metalness: 0.08 })
+    );
+    frame.position.z = -0.08;
+    feedGroup.add(frame);
+
+    wallMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(4.8, 2.7),
+      new THREE.MeshBasicMaterial({ color: 0xb9b4aa })
+    );
+    wallMesh.position.z = 0.01;
+    feedGroup.add(wallMesh);
+
+    const rail = new THREE.Mesh(
+      new THREE.BoxGeometry(4.8, 0.08, 0.04),
+      new THREE.MeshBasicMaterial({ color: 0x4b5563 })
+    );
+    rail.position.set(0, 0.55, 0.04);
+    feedGroup.add(rail);
+
+    [
+      { id: 20, x: -1.45, y: 0.15, distance: "1.2m", pose: "x:-0.6 y:1.2" },
+      { id: 21, x: 0, y: 0.35, distance: "1.5m", pose: "x:0.0 y:1.5" },
+      { id: 22, x: 1.45, y: 0.15, distance: "1.3m", pose: "x:0.6 y:1.3" }
+    ].forEach(function (tag) {
+      const tagMesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.62, 0.62),
+        new THREE.MeshBasicMaterial({ map: makeTagTexture(tag.id), side: THREE.DoubleSide })
+      );
+      tagMesh.position.set(tag.x, tag.y, 0.06);
+      feedGroup.add(tagMesh);
+
+      const overlay = makeBoxOutline(0.78, 0.78, 0x22cc66);
+      overlay.position.set(tag.x, tag.y, 0.09);
+      feedGroup.add(overlay);
+      tagOverlays.push(overlay);
+
+      const topLabel = makeTextPlane("ID: " + tag.id, 0.92, 0.22, "#bbf7d0", "rgba(0,0,0,0.76)");
+      topLabel.position.set(tag.x, tag.y + 0.55, 0.1);
+      feedGroup.add(topLabel);
+      detectionLabels.push(topLabel);
+
+      const bottomLabel = makeTextPlane(tag.distance + "  " + tag.pose, 1.08, 0.22, "#bbf7d0", "rgba(0,0,0,0.76)");
+      bottomLabel.position.set(tag.x, tag.y - 0.55, 0.1);
+      feedGroup.add(bottomLabel);
+      detectionLabels.push(bottomLabel);
+    });
+
+    noiseMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(4.82, 2.72),
+      new THREE.MeshBasicMaterial({ map: makeNoiseTexture(), transparent: true, opacity: 0.9 })
+    );
+    noiseMesh.position.z = 0.14;
+    feedGroup.add(noiseMesh);
+
+    pauseMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(4.82, 2.72),
+      new THREE.MeshBasicMaterial({ color: 0x2d2d34, transparent: true, opacity: 0.92 })
+    );
+    pauseMesh.position.z = 0.13;
+    feedGroup.add(pauseMesh);
+
+    const pauseText = makeTextPlane("STREAM PAUSED", 1.7, 0.34, "#e5e7eb", "rgba(0,0,0,0.0)");
+    pauseText.name = "pauseText";
+    pauseText.position.set(0, 0, 0.17);
+    feedGroup.add(pauseText);
+
+    robotGroup = new THREE.Group();
+    robotGroup.position.set(2.75, -1.2, 0.8);
+    robotGroup.rotation.y = -0.5;
+    sceneRoot.add(robotGroup);
+
+    const robotBody = new THREE.Mesh(
+      new THREE.BoxGeometry(1.05, 0.38, 0.82),
+      new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.7, metalness: 0.12 })
+    );
+    robotGroup.add(robotBody);
+
+    const mast = new THREE.Mesh(
+      new THREE.BoxGeometry(0.12, 0.68, 0.12),
+      new THREE.MeshStandardMaterial({ color: 0xf4f4f5, roughness: 0.55, metalness: 0.08 })
+    );
+    mast.position.set(0, 0.5, -0.23);
+    robotGroup.add(mast);
+
+    const webcam = new THREE.Mesh(
+      new THREE.BoxGeometry(0.36, 0.22, 0.18),
+      new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.45, metalness: 0.2 })
+    );
+    webcam.position.set(0, 0.88, -0.35);
+    robotGroup.add(webcam);
+
+    const lens = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.08, 0.08, 0.05, 24),
+      new THREE.MeshStandardMaterial({ color: 0x60a5fa, emissive: 0x0b2444, roughness: 0.3, metalness: 0.1 })
+    );
+    lens.rotation.x = Math.PI / 2;
+    lens.position.set(0, 0.88, -0.46);
+    robotGroup.add(lens);
+    webcamLight = lens;
+  }
+
+  function makeTagTexture(id) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, 128, 128);
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(8, 8, 112, 112);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(22, 22, 84, 84);
+    ctx.fillStyle = "#000000";
+    const cells = String(id).split("").map(function (n) { return Number(n); });
+    for (let r = 0; r < 4; r++) {
+      for (let c = 0; c < 4; c++) {
+        const bit = ((cells[0] * 7 + cells[1] * 5 + r * 3 + c) % 2) === 0;
+        if (bit) ctx.fillRect(34 + c * 15, 34 + r * 15, 12, 12);
+      }
+    }
+    ctx.fillStyle = "#111111";
+    ctx.font = "bold 20px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(String(id), 64, 116);
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  function makeNoiseTexture() {
+    const canvas = document.createElement("canvas");
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext("2d");
+    const img = ctx.createImageData(128, 128);
+    for (let i = 0; i < img.data.length; i += 4) {
+      const value = 60 + Math.floor(Math.random() * 145);
+      img.data[i] = value;
+      img.data[i + 1] = value;
+      img.data[i + 2] = value;
+      img.data[i + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  function makeTextPlane(text, width, height, color, background) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 512;
+    canvas.height = 128;
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (background) {
+      ctx.fillStyle = background;
+      roundRect(ctx, 12, 14, 488, 96, 18);
+      ctx.fill();
+    }
+    ctx.fillStyle = color || "#ffffff";
+    ctx.font = "bold 42px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, 256, 64);
+    const texture = new THREE.CanvasTexture(canvas);
+    const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false });
+    return new THREE.Mesh(new THREE.PlaneGeometry(width, height), material);
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function makeBoxOutline(width, height, color) {
+    const points = [
+      new THREE.Vector3(-width / 2, -height / 2, 0),
+      new THREE.Vector3(width / 2, -height / 2, 0),
+      new THREE.Vector3(width / 2, height / 2, 0),
+      new THREE.Vector3(-width / 2, height / 2, 0),
+      new THREE.Vector3(-width / 2, -height / 2, 0)
+    ];
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    return new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: color, linewidth: 2 }));
+  }
+
+  function tick() {
+    state.spinner += 0.06;
+    state.pulse = Math.max(0, state.pulse - 0.016);
+    if (noiseMesh && state.portalState === "INITIALIZING" && noiseMesh.material.map) {
+      noiseMesh.material.map.offset.x = Math.sin(state.spinner) * 0.02;
+      noiseMesh.material.map.offset.y = Math.cos(state.spinner * 0.7) * 0.02;
+    }
+    if (webcamLight && webcamLight.material) {
+      const streaming = state.portalState === "STREAMING";
+      webcamLight.material.emissive.setHex(streaming ? 0x0f3d20 : state.portalState === "INITIALIZING" ? 0x3d310f : 0x111111);
+    }
+    updatePanel();
+  }
+
+  function setPortalState(nextState) {
+    state.portalState = nextState;
+    state.detectionCount = nextState === "STREAMING" ? 3 : 0;
+    state.cpu = nextState === "STREAMING" ? "HIGH" : "LOW";
+    state.pulse = 0.55;
+    emitVisionPortal();
+    publishStreamTelemetry();
+  }
+
+  function updateCameraVisual(portalState) {
+    if (portalState && portalState.status) {
+      state.portalState = portalState.status;
+    }
+    if (wallMesh) wallMesh.visible = state.portalState === "STREAMING";
+    if (noiseMesh) noiseMesh.visible = state.portalState === "INITIALIZING";
+    if (pauseMesh) pauseMesh.visible = state.portalState === "STOPPED";
+    tagOverlays.forEach(function (overlay) {
+      overlay.visible = state.portalState === "STREAMING";
+    });
+    detectionLabels.forEach(function (label) {
+      label.visible = state.portalState === "STREAMING";
+    });
+    if (feedGroup) {
+      const pauseText = feedGroup.getObjectByName("pauseText");
+      if (pauseText) pauseText.visible = state.portalState === "STOPPED";
+    }
+    updatePanel();
+  }
+
+  function createAprilTagProcessor() {
+    state.processorCreated = true;
+    validateCode();
+    return { type: "AprilTagProcessor", active: true };
+  }
+
+  function createVisionPortalBuilder() {
+    const builder = {
+      camera: "",
+      hasProcessor: false,
+      setCamera: function (cameraName) {
+        this.camera = typeof cameraName === "string" ? cameraName : (cameraName && cameraName.name) || "";
+        state.webcamName = this.camera;
+        validateCode();
+        return this;
+      },
+      addProcessor: function () {
+        this.hasProcessor = true;
+        state.processorAttached = true;
+        validateCode();
+        return this;
+      },
+      build: function () {
+        state.portalBuilt = true;
+        state.lifecycle.init = true;
+        state.phase = "INIT";
+        setPortalState("INITIALIZING");
+        window.setTimeout(function () {
+          if (state.active && state.portalState === "INITIALIZING") {
+            setPortalState("STREAMING");
+            state.phase = state.waitingForStart ? "WAIT FOR START" : "CAMERA READY";
+          }
+        }, 650);
+        validateCode();
+        return {
+          stopStreaming: stopStreaming,
+          resumeStreaming: resumeStreaming
+        };
+      }
+    };
+    return builder;
+  }
+
+  function stopStreaming() {
+    state.lifecycle.start = true;
+    state.lifecycle.running = true;
+    state.phase = "OPMODE RUNNING";
+    setPortalState("STOPPED");
+    validateCode();
+  }
+
+  function resumeStreaming() {
+    state.phase = state.waitingForStart ? "WAIT FOR START" : "STREAMING TEST";
+    setPortalState("STREAMING");
+    validateCode();
+  }
+
+  function waitForStart() {
+    state.waitingForStart = true;
+    state.lifecycle.wait = true;
+    state.phase = "WAIT FOR START";
+    if (state.portalBuilt && state.portalState !== "STREAMING") {
+      setPortalState("STREAMING");
+    }
+    updatePanel();
+
+    return new Promise(function (resolve) {
+      state._resolveStart = function () {
+        if (!state.active || state.stopRequested) {
+          resolve();
+          return;
+        }
+        state.waitingForStart = false;
+        state.lifecycle.start = true;
+        state.phase = "START";
+        updatePanel();
+        resolve();
+      };
+      if (state.startRequested) releaseWaitForStart();
+    });
+  }
+
+  function releaseWaitForStart() {
+    if (typeof state._resolveStart === "function") {
+      const resolve = state._resolveStart;
+      state._resolveStart = null;
+      resolve();
+    }
+  }
+
+  function opModeIsActive() {
+    return state.active && !state.stopRequested;
+  }
+
+  function linearTick() {
+    validateCode();
+    updatePanel();
+    publishStreamTelemetry();
+    return sleep(50);
+  }
+
+  async function runLinearOpMode(token) {
+    const code = getCodeSafe();
+    const runBody = extractMethodBody(code, "runOpMode");
+    if (!runBody) {
+      failStudentExecution("runOpMode() was not found.");
+      return;
+    }
+
+    const js = transpileLinearBody(runBody);
+    let fn;
+    try {
+      fn = new Function(
+        "hardwareMap",
+        "createAprilTagProcessor",
+        "createVisionPortalBuilder",
+        "stopStreaming",
+        "resumeStreaming",
+        "waitForStart",
+        "opModeIsActive",
+        "sleep",
+        "linearTick",
+        "addTelemetry",
+        "updateTelemetry",
+        "clearTelemetry",
+        '"use strict"; let aprilTagProcessor; let visionPortal; return (async function(){\n' + js + '\n})();'
+      );
+    } catch (err) {
+      failStudentExecution("compile error: " + err.message);
+      return;
+    }
+
+    try {
+      clearTelemetry();
+      await fn(
+        hardwareMap,
+        createAprilTagProcessor,
+        createVisionPortalBuilder,
+        stopStreaming,
+        resumeStreaming,
+        waitForStart,
+        opModeIsActive,
+        sleep,
+        linearTick,
+        addTelemetry,
+        publishStreamTelemetry,
+        clearTelemetry
+      );
+    } catch (err) {
+      if (token === state.runToken && !state.stopRequested) {
+        failStudentExecution("runOpMode() runtime error: " + err.message);
+      }
+    }
+  }
+
+  function transpileLinearBody(body) {
+    let js = body || "";
+    js = js
+      .replace(/\bAprilTagProcessor\s*\.\s*easyCreateWithDefaults\s*\(\s*\)/g, "createAprilTagProcessor()")
+      .replace(/\bnew\s+VisionPortal\s*\.\s*Builder\s*\(\s*\)/g, "createVisionPortalBuilder()")
+      .replace(/\.setCamera\s*\(\s*hardwareMap\s*\.\s*get\s*\(\s*WebcamName\.class\s*,\s*"front_cam"\s*\)\s*\)/g, '.setCamera("front_cam")')
+      .replace(/\.addProcessor\s*\(\s*aprilTagProcessor\s*\)/g, ".addProcessor()")
+      .replace(/\bvisionPortal\s*\.\s*stopStreaming\s*\(\s*\)/g, "stopStreaming()")
+      .replace(/\bvisionPortal\s*\.\s*resumeStreaming\s*\(\s*\)/g, "resumeStreaming()")
+      .replace(/\btelemetry\s*\.\s*addData\s*\(/g, "addTelemetry(")
+      .replace(/\btelemetry\s*\.\s*update\s*\(\s*\)/g, "updateTelemetry()")
+      .replace(/\bhardwareMap\s*\.\s*get\s*\(\s*(\w+)\.class\s*,/g, 'hardwareMap.get("$1",')
+      .replace(/\b(?:final\s+)?(?:double|int|boolean|String|float|long|byte|short|char|AprilTagProcessor|VisionPortal|WebcamName)\s+(?=[A-Za-z_$])/g, "let ")
+      .replace(/\bwaitForStart\s*\(\s*\)\s*;/g, "await waitForStart(); if (!opModeIsActive()) return;")
+      .replace(/\bsleep\s*\(/g, "await sleep(")
+      .replace(/\bwhile\s*\(\s*opModeIsActive\s*\(\s*\)\s*\)\s*\{/g, "while (opModeIsActive()) { await linearTick();");
+    return js;
+  }
+
+  function publishStreamTelemetry() {
+    if (typeof addTelemetry !== "function" || typeof updateTelemetry !== "function") return;
+
+    const statusText = state.portalState === "STREAMING"
+      ? "Streaming"
+      : state.portalState === "STOPPED"
+        ? "Streaming Stopped"
+        : "Camera Initializing...";
+
+    addTelemetry("Status", statusText);
+    addTelemetry("Stream State", state.portalState);
+    addTelemetry("Camera", state.webcamName || "front_cam");
+    addTelemetry("Detections", state.portalState === "STREAMING" ? "3 tags detected" : "0 tags");
+    addTelemetry("CPU Usage", state.cpu);
+    addTelemetry("Phase", state.phase);
+    updateTelemetry();
+  }
+
+  function validateCode() {
+    const code = getCodeSafe();
+    const clean = stripComments(code);
+    const runBody = stripComments(extractMethodBody(code, "runOpMode") || "");
+    const waitIndex = runBody.search(/\bwaitForStart\s*\(\s*\)/);
+    const stopIndex = runBody.search(/\bvisionPortal\s*\.\s*stopStreaming\s*\(\s*\)/);
+    const processorIndex = runBody.search(/\bAprilTagProcessor\s*\.\s*easyCreateWithDefaults\s*\(\s*\)/);
+    const builderIndex = runBody.search(/\bnew\s+VisionPortal\s*\.\s*Builder\s*\(\s*\)/);
+    const cameraIndex = runBody.search(/\.setCamera\s*\(\s*hardwareMap\s*\.\s*get\s*\(\s*WebcamName\.class\s*,\s*"front_cam"\s*\)\s*\)/);
+    const addProcessorIndex = runBody.search(/\.addProcessor\s*\(\s*aprilTagProcessor\s*\)/);
+    const buildIndex = runBody.search(/\.build\s*\(\s*\)/);
+
+    const checks = [
+      processorIndex >= 0,
+      builderIndex >= 0,
+      cameraIndex >= 0,
+      addProcessorIndex >= 0,
+      buildIndex >= 0,
+      waitIndex >= 0,
+      waitIndex >= 0 && stopIndex > waitIndex,
+      waitIndex >= 0 && processorIndex >= 0 && builderIndex >= 0 && cameraIndex >= 0 && addProcessorIndex >= 0 && buildIndex >= 0 &&
+        processorIndex < waitIndex && builderIndex < waitIndex && cameraIndex < waitIndex && addProcessorIndex < waitIndex && buildIndex < waitIndex
+    ];
+
+    checks.forEach(function (passed, index) {
+      safeCall(setRequirement, index, !!passed);
+    });
+
+    const allPass = checks.every(Boolean);
+    const success = el("u141-success");
+    if (success) success.style.display = allPass ? "flex" : "none";
+
+    updateWarning(clean, runBody, waitIndex, stopIndex, checks);
+    return checks;
+  }
+
+  function updateWarning(clean, runBody, waitIndex, stopIndex, checks) {
+    let message = "";
+    let type = "warn";
+
+    if (stopIndex >= 0 && (waitIndex < 0 || stopIndex < waitIndex)) {
+      message = "Stop streaming after waitForStart() - the drive team needs the camera feed during the init phase to position the robot";
+    } else if (stopIndex < 0) {
+      message = "Call visionPortal.stopStreaming() after waitForStart() to free CPU resources for autonomous processing";
+    } else if (/WebcamName\.class\s*,\s*"([^"]+)"/.test(runBody) && !/WebcamName\.class\s*,\s*"front_cam"/.test(runBody)) {
+      message = "Use 'front_cam' as the webcam name - it must match the name configured in the Robot Controller";
+      type = "error";
+    } else if (!checks[0]) {
+      message = "Use AprilTagProcessor.easyCreateWithDefaults() for the default configuration - no manual tuning needed for basic detection";
+    } else if (!checks[3]) {
+      message = "Attach the AprilTagProcessor to the VisionPortal with .addProcessor(aprilTagProcessor)";
+      type = "error";
+    } else if (waitIndex >= 0 && !checks[7]) {
+      message = "Initialize the camera before waitForStart() so it is ready and streaming when the drive team is positioning the robot";
+      type = "error";
+    } else if (!/telemetry\s*\.\s*update\s*\(\s*\)/.test(clean)) {
+      message = "Call telemetry.update() to send data to the Driver Station";
+    } else if (state.active && state.portalState === "STREAMING" && state.lifecycle.start && stopIndex < 0) {
+      message = "Camera still streaming during autonomous - this wastes CPU resources needed for other processing";
+    }
+
+    state.warning = message;
+    const warning = el("u141-warning");
+    if (warning) {
+      warning.classList.toggle("error", type === "error");
+      warning.style.display = message ? "block" : "none";
+      warning.innerHTML = message ? '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(message) : "";
+    }
+
+    safeCall(clearHints);
+    if (message) safeCall(addHint, '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(message), type === "error" ? "error" : "warn");
+  }
+
+  function updatePanel() {
+    const streaming = state.portalState === "STREAMING";
+    const stopped = state.portalState === "STOPPED";
+    const initializing = state.portalState === "INITIALIZING";
+
+    const sceneStatus = el("u141-scene-status");
+    if (sceneStatus) {
+      const icon = streaming ? "fa-circle-play" : stopped ? "fa-circle-stop" : "fa-spinner fa-spin";
+      const color = streaming ? "#22cc66" : stopped ? "#cbd5e1" : "#facc15";
+      sceneStatus.innerHTML = '<i class="fa-solid ' + icon + '"></i> ' + state.portalState;
+      sceneStatus.style.color = color;
+    }
+
+    const feedMessage = el("u141-feed-message");
+    if (feedMessage) {
+      feedMessage.style.display = initializing || stopped ? "block" : "none";
+      feedMessage.innerHTML = initializing
+        ? '<i class="fa-solid fa-spinner fa-spin"></i> Camera Initializing...'
+        : '<i class="fa-solid fa-pause"></i> STREAM PAUSED';
+      feedMessage.style.color = initializing ? "#facc15" : "#e5e7eb";
+    }
+
+    setStatusCard("u141-state-card", '<i class="fa-solid ' + (streaming ? "fa-circle-play" : stopped ? "fa-circle-stop" : "fa-spinner fa-spin") + '"></i> Camera State<br><strong>' + state.portalState + "</strong>", streaming ? "good" : initializing ? "warn" : "");
+    setStatusCard("u141-processor-card", '<i class="fa-solid fa-tag"></i> AprilTagProcessor<br><strong>' + (state.processorAttached ? "ACTIVE" : "NOT ATTACHED") + "</strong>", state.processorAttached ? "good" : "bad");
+    setStatusCard("u141-webcam-card", '<i class="fa-solid fa-camera"></i> Webcam Name<br><strong>' + escapeHTML(state.webcamName || "front_cam") + "</strong>", state.webcamName === "front_cam" || (!state.active && webcamDevice) ? "good" : "bad");
+    setStatusCard("u141-detection-card", '<i class="fa-solid fa-crosshairs"></i> Detection Count<br><strong>' + (streaming ? "3 tags detected" : "0 (stream paused)") + "</strong>", streaming ? "good" : "");
+    setStatusCard("u141-cpu-card", '<i class="fa-solid fa-microchip"></i> CPU Usage<br><strong>' + state.cpu + "</strong>", state.cpu === "LOW" ? "good" : "warn");
+    setStatusCard("u141-phase-card", '<i class="fa-solid fa-location-dot"></i> Lifecycle Phase<br><strong>' + escapeHTML(state.phase) + "</strong>", state.lifecycle.running ? "good" : "");
+
+    [
+      ["u141-mini-init", state.lifecycle.init],
+      ["u141-mini-wait", state.lifecycle.wait],
+      ["u141-mini-start", state.lifecycle.start],
+      ["u141-mini-running", state.lifecycle.running],
+      ["u141-flow-init", state.lifecycle.init],
+      ["u141-flow-wait", state.lifecycle.wait],
+      ["u141-flow-stop", stopped && state.lifecycle.start],
+      ["u141-flow-run", state.lifecycle.running]
+    ].forEach(function (pair) {
+      const item = el(pair[0]);
+      if (item) item.classList.toggle("good", !!pair[1]);
+    });
+  }
+
+  function setStatusCard(id, html, status) {
+    const card = el(id);
+    if (!card) return;
+    card.classList.toggle("good", status === "good");
+    card.classList.toggle("bad", status === "bad");
+    card.classList.toggle("warn", status === "warn");
+    card.innerHTML = html;
+  }
+
+  function showStudentError(message) {
+    state.warning = message;
+    const warning = el("u141-warning");
+    if (warning) {
+      warning.classList.add("error");
+      warning.style.display = "block";
+      warning.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(message);
+    }
+    safeCall(addHint, '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(message), "error");
+    if (typeof _simShowTelemetryError === "function") _simShowTelemetryError(message);
+    else {
+      safeCall(addTelemetry, "ERROR", message);
+      safeCall(updateTelemetry);
+    }
+  }
+
+  function failStudentExecution(message) {
+    if (typeof stopExecution === "function") stopExecution();
+    showStudentError(message);
+  }
+
+  function getCodeSafe() {
+    if (typeof getCode !== "function") return starterCode;
+    try {
+      return getCode();
+    } catch (err) {
+      return starterCode;
+    }
+  }
+
+  function extractMethodBody(code, name) {
+    if (!code) return "";
+    const re = new RegExp("\\b(?:public\\s+|private\\s+|protected\\s+)?(?:void|boolean|double|int|String)\\s+" + name + "\\s*\\([^)]*\\)\\s*\\{");
+    const match = re.exec(code);
+    if (!match) return "";
+    let index = match.index + match[0].length;
+    let depth = 1;
+    for (; index < code.length; index++) {
+      if (code[index] === "{") depth++;
+      else if (code[index] === "}") {
+        depth--;
+        if (depth === 0) return code.slice(match.index + match[0].length, index);
+      }
+    }
+    return "";
+  }
+
+  function stripComments(code) {
+    return String(code || "")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\/\/.*$/gm, "");
+  }
+
+  function escapeHTML(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  updateCameraVisual({ status: state.portalState });
+};
+</script>
+</body>
+</html>

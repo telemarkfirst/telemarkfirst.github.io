@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Telemark Unit 10.2 Simulator</title>
+    <script src="simulator_base.js"></script>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+<script src="./telemark-project.js"></script>
+<link rel="stylesheet" href="./telemark-project.css"/>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+<script>
+(function () {
+    "use strict";
+
+    const TICKS_PER_REV = 1120;
+    const TICKS_PER_FRAME = 28;
+    const DRUM_DIAMETER_IN = 2.0;
+    const DRUM_CIRCUMFERENCE_IN = Math.PI * DRUM_DIAMETER_IN;
+    const MAX_VISUAL_CABLE_IN = 18;
+    const MIN_WINCH_TICKS = 0;
+    const MAX_WINCH_TICKS = (MAX_VISUAL_CABLE_IN / DRUM_CIRCUMFERENCE_IN) * TICKS_PER_REV;
+    const HOOK_LOW_Y = 0.42;
+    const HOOK_HIGH_Y = 2.38;
+    const DRUM_CENTER = { x: 0, y: 2.75, z: 0.18 };
+    const CABLE_X = 0.28;
+    const CABLE_Z = 0.72;
+
+    let motor = null;
+    let drumGroup = null;
+    let hookGroup = null;
+    let cableMesh = null;
+    let cableGuideMesh = null;
+    let rotationsSprite = null;
+    let cableSprite = null;
+    let readoutEl = null;
+    let animationCallbackId = -1;
+
+    function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    function clampWinchTicks(ticks) {
+        return clamp(ticks, MIN_WINCH_TICKS, MAX_WINCH_TICKS);
+    }
+
+    function getEffectivePower(requestedPower) {
+        if (!motor) return 0;
+        const power = clamp(Number(requestedPower) || 0, -1, 1);
+        const ticks = clampWinchTicks(Number(motor._currentPosition || 0));
+
+        if ((ticks <= MIN_WINCH_TICKS && power < 0) || (ticks >= MAX_WINCH_TICKS && power > 0)) {
+            return 0;
+        }
+        return power;
+    }
+
+    function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+
+        if (fill) {
+            ctx.fillStyle = fill;
+            ctx.fill();
+        }
+        if (stroke) {
+            ctx.strokeStyle = stroke;
+            ctx.lineWidth = 4;
+            ctx.stroke();
+        }
+    }
+
+    function createCanvasSprite(width, height, scaleX, scaleY) {
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.needsUpdate = true;
+        const material = new THREE.SpriteMaterial({
+            map: texture,
+            transparent: true,
+            depthTest: true,
+            depthWrite: false
+        });
+        const sprite = new THREE.Sprite(material);
+        sprite.scale.set(scaleX, scaleY, 1);
+        sprite.userData.canvas = canvas;
+        sprite.userData.ctx = canvas.getContext("2d");
+        return sprite;
+    }
+
+    function getTicks() {
+        return motor ? Math.round(clampWinchTicks(motor._currentPosition)) : 0;
+    }
+
+    function getRotations() {
+        return getTicks() / TICKS_PER_REV;
+    }
+
+    function getCableInches() {
+        return getRotations() * DRUM_CIRCUMFERENCE_IN;
+    }
+
+    function updateRotationsSprite() {
+        if (!rotationsSprite) return;
+
+        const canvas = rotationsSprite.userData.canvas;
+        const ctx = rotationsSprite.userData.ctx;
+        const rotations = getRotations();
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        roundRect(
+            ctx,
+            12,
+            12,
+            canvas.width - 24,
+            canvas.height - 24,
+            24,
+            "rgba(8,8,14,0.92)",
+            "rgba(34,204,102,0.58)"
+        );
+
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "#7dc9a0";
+        ctx.font = '700 28px "JetBrains Mono", monospace';
+        ctx.fillText("MOTOR ROTATIONS", canvas.width / 2, 48);
+
+        ctx.fillStyle = "#22cc66";
+        ctx.font = '700 68px "JetBrains Mono", monospace';
+        ctx.fillText(rotations.toFixed(2), canvas.width / 2, 124);
+
+        rotationsSprite.material.map.needsUpdate = true;
+    }
+
+    function updateCableSprite() {
+        if (!cableSprite) return;
+
+        const canvas = cableSprite.userData.canvas;
+        const ctx = cableSprite.userData.ctx;
+        const cableIn = getCableInches();
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        roundRect(
+            ctx,
+            10,
+            10,
+            canvas.width - 20,
+            canvas.height - 20,
+            18,
+            "rgba(8,8,14,0.86)",
+            "rgba(34,211,238,0.48)"
+        );
+
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "#7dd3fc";
+        ctx.font = '700 24px "JetBrains Mono", monospace';
+        ctx.fillText("CABLE IN", canvas.width / 2, 38);
+
+        ctx.fillStyle = "#22d3ee";
+        ctx.font = '700 56px "JetBrains Mono", monospace';
+        ctx.fillText(cableIn.toFixed(2) + " in", canvas.width / 2, 96);
+
+        cableSprite.material.map.needsUpdate = true;
+    }
+
+    function ensureSceneOverlay() {
+        const container = document.getElementById("sim-scene-container");
+        if (!container) return;
+
+        if (!document.getElementById("sim-unit102-style")) {
+            const style = document.createElement("style");
+            style.id = "sim-unit102-style";
+            style.textContent = `
+                .sim-unit102-readout {
+                    position: absolute;
+                    right: 12px;
+                    bottom: 12px;
+                    min-width: 274px;
+                    z-index: 14;
+                    padding: 10px 12px;
+                    border-radius: 8px;
+                    background: rgba(8,8,14,0.88);
+                    border: 1px solid rgba(34,204,102,0.28);
+                    box-shadow: 0 10px 24px rgba(0,0,0,0.36);
+                    color: #e6e6ef;
+                    pointer-events: none;
+                    font: 600 0.84rem "IBM Plex Sans", Arial, sans-serif;
+                }
+                .sim-unit102-title {
+                    margin-bottom: 7px;
+                    color: #62d78e;
+                    font-weight: 700;
+                    display: flex;
+                    gap: 6px;
+                    align-items: center;
+                }
+                .sim-unit102-row {
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 12px;
+                    margin: 4px 0;
+                    font-family: "JetBrains Mono", monospace;
+                    font-size: 0.8rem;
+                }
+                .sim-unit102-label {
+                    color: #9ea0b5;
+                }
+                .sim-unit102-value {
+                    color: #f4f4fb;
+                    text-align: right;
+                }
+                .sim-unit102-formula {
+                    margin-top: 8px;
+                    padding-top: 7px;
+                    border-top: 1px solid rgba(255,255,255,0.08);
+                    color: #aab0cc;
+                    font-family: "JetBrains Mono", monospace;
+                    font-size: 0.74rem;
+                    line-height: 1.5;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        if (!readoutEl) {
+            readoutEl = document.createElement("div");
+            readoutEl.className = "sim-unit102-readout";
+            container.appendChild(readoutEl);
+        }
+
+        updateHtmlOverlay();
+    }
+
+    function updateHtmlOverlay() {
+        if (!readoutEl) return;
+
+        const ticks = getTicks();
+        const rotations = getRotations();
+        const cableIn = getCableInches();
+        const power = motor ? Number(motor._power || 0) : 0;
+
+        readoutEl.innerHTML = [
+            '<div class="sim-unit102-title"><i class="fa-solid fa-wind"></i> Winch Conversion</div>',
+            '<div class="sim-unit102-row"><span class="sim-unit102-label">Raw Ticks</span><span class="sim-unit102-value">' + ticks + '</span></div>',
+            '<div class="sim-unit102-row"><span class="sim-unit102-label">Ticks / Rev</span><span class="sim-unit102-value">' + TICKS_PER_REV.toFixed(0) + '</span></div>',
+            '<div class="sim-unit102-row"><span class="sim-unit102-label">Rotations</span><span class="sim-unit102-value">' + rotations.toFixed(3) + '</span></div>',
+            '<div class="sim-unit102-row"><span class="sim-unit102-label">Cable In</span><span class="sim-unit102-value">' + cableIn.toFixed(2) + ' in</span></div>',
+            '<div class="sim-unit102-row"><span class="sim-unit102-label">Motor Power</span><span class="sim-unit102-value">' + power.toFixed(2) + '</span></div>',
+            '<div class="sim-unit102-formula">rotations = ticks / ticksPerRev<br>cable = rotations * (PI * 2.0)</div>'
+        ].join("");
+    }
+
+    function createDrumGroup() {
+        const group = new THREE.Group();
+
+        const drum = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.48, 0.48, 1.42, 48),
+            new THREE.MeshPhongMaterial({ color: 0x565c68, shininess: 48 })
+        );
+        drum.rotation.z = Math.PI / 2;
+        drum.castShadow = true;
+        drum.receiveShadow = true;
+        group.add(drum);
+
+        const rimMat = new THREE.MeshPhongMaterial({ color: 0x9ba0aa, shininess: 52 });
+        [-0.76, 0.76].forEach(function (x) {
+            const rim = new THREE.Mesh(new THREE.TorusGeometry(0.52, 0.045, 16, 48), rimMat);
+            rim.rotation.y = Math.PI / 2;
+            rim.position.x = x;
+            rim.castShadow = true;
+            group.add(rim);
+        });
+
+        const wrapMat = new THREE.MeshPhongMaterial({ color: 0xff9933, emissive: 0x241000 });
+        for (let i = 0; i < 5; i++) {
+            const wrap = new THREE.Mesh(new THREE.TorusGeometry(0.41 - i * 0.012, 0.014, 8, 42), wrapMat);
+            wrap.rotation.y = Math.PI / 2;
+            wrap.position.x = -0.46 + i * 0.23;
+            wrap.castShadow = true;
+            group.add(wrap);
+        }
+
+        const axle = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.09, 0.09, 1.85, 24),
+            new THREE.MeshPhongMaterial({ color: 0xc5c7cf })
+        );
+        axle.rotation.z = Math.PI / 2;
+        axle.castShadow = true;
+        group.add(axle);
+
+        return group;
+    }
+
+    function createHookGroup() {
+        const group = new THREE.Group();
+
+        const block = new THREE.Mesh(
+            new THREE.BoxGeometry(0.64, 0.26, 0.42),
+            new THREE.MeshPhongMaterial({ color: 0x2e5f9f, emissive: 0x071326 })
+        );
+        block.castShadow = true;
+        group.add(block);
+
+        const hook = new THREE.Mesh(
+            new THREE.TorusGeometry(0.2, 0.035, 10, 32, Math.PI * 1.35),
+            new THREE.MeshPhongMaterial({ color: 0xffcc55, emissive: 0x302000 })
+        );
+        hook.position.set(0, -0.28, 0.02);
+        hook.rotation.z = Math.PI * 0.18;
+        hook.castShadow = true;
+        group.add(hook);
+
+        const load = new THREE.Mesh(
+            new THREE.BoxGeometry(0.72, 0.28, 0.52),
+            new THREE.MeshPhongMaterial({ color: 0x25252c })
+        );
+        load.position.set(0, -0.72, 0);
+        load.castShadow = true;
+        load.receiveShadow = true;
+        group.add(load);
+
+        return group;
+    }
+
+    function buildScene() {
+        const scene = window.scene;
+        if (!scene) return;
+
+        window.setFieldVisible(false);
+        window.setCameraOrbit({
+            radius: 7.4,
+            theta: 0.42,
+            phi: 0.78,
+            target: { x: 0, y: 1.75, z: 0.12 }
+        });
+
+        const floor = new THREE.Mesh(
+            new THREE.PlaneGeometry(12, 12),
+            new THREE.MeshPhongMaterial({ color: 0x14141b, side: THREE.DoubleSide })
+        );
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = -0.001;
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+        const grid = new THREE.GridHelper(12, 12, 0x303040, 0x1f1f2a);
+        grid.position.y = 0.003;
+        scene.add(grid);
+
+        const base = new THREE.Mesh(
+            new THREE.BoxGeometry(3.4, 0.5, 2.25),
+            new THREE.MeshPhongMaterial({ color: 0x25252c })
+        );
+        base.position.set(0, 0.25, 0);
+        base.castShadow = true;
+        base.receiveShadow = true;
+        scene.add(base);
+
+        const frameMat = new THREE.MeshPhongMaterial({ color: 0x6f7682, shininess: 36 });
+        [-1.05, 1.05].forEach(function (x) {
+            const tower = new THREE.Mesh(new THREE.BoxGeometry(0.14, 2.7, 0.18), frameMat);
+            tower.position.set(x, 1.73, 0.04);
+            tower.castShadow = true;
+            tower.receiveShadow = true;
+            scene.add(tower);
+        });
+
+        const topBar = new THREE.Mesh(new THREE.BoxGeometry(2.35, 0.16, 0.22), frameMat);
+        topBar.position.set(0, 3.02, 0.04);
+        topBar.castShadow = true;
+        scene.add(topBar);
+
+        const motorHousing = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.32, 0.32, 0.58, 32),
+            new THREE.MeshPhongMaterial({ color: 0x444452, shininess: 34 })
+        );
+        motorHousing.rotation.z = Math.PI / 2;
+        motorHousing.position.set(-1.42, DRUM_CENTER.y, DRUM_CENTER.z);
+        motorHousing.castShadow = true;
+        scene.add(motorHousing);
+
+        drumGroup = createDrumGroup();
+        drumGroup.position.set(DRUM_CENTER.x, DRUM_CENTER.y, DRUM_CENTER.z);
+        scene.add(drumGroup);
+
+        cableGuideMesh = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.035, 0.035, 0.58, 12),
+            new THREE.MeshPhongMaterial({ color: 0xffd38a, emissive: 0x553000, shininess: 30 })
+        );
+        cableGuideMesh.rotation.z = Math.PI / 2;
+        cableGuideMesh.position.set(CABLE_X / 2, DRUM_CENTER.y - 0.42, CABLE_Z);
+        cableGuideMesh.castShadow = true;
+        scene.add(cableGuideMesh);
+
+        cableMesh = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.04, 0.04, 1, 16),
+            new THREE.MeshPhongMaterial({ color: 0xffd38a, emissive: 0x553000, shininess: 30 })
+        );
+        cableMesh.castShadow = true;
+        scene.add(cableMesh);
+
+        hookGroup = createHookGroup();
+        hookGroup.position.set(CABLE_X, HOOK_LOW_Y, CABLE_Z);
+        scene.add(hookGroup);
+
+        rotationsSprite = createCanvasSprite(760, 184, 3.45, 1.18);
+        rotationsSprite.position.set(2.0, 4.08, 0.16);
+        scene.add(rotationsSprite);
+
+        cableSprite = createCanvasSprite(660, 138, 3.02, 0.88);
+        cableSprite.position.set(2.0, 3.08, 0.16);
+        scene.add(cableSprite);
+
+        ensureSceneOverlay();
+        resetVisuals();
+    }
+
+    function updateWinchTransform() {
+        if (!motor) return;
+
+        motor._currentPosition = clampWinchTicks(Number(motor._currentPosition || 0));
+        const rotations = getRotations();
+        const cableIn = getCableInches();
+        const visualT = clamp(cableIn / MAX_VISUAL_CABLE_IN, 0, 1);
+        const hookY = HOOK_LOW_Y + (HOOK_HIGH_Y - HOOK_LOW_Y) * visualT;
+        const cableTopY = DRUM_CENTER.y - 0.46;
+        const cableLength = Math.max(0.18, cableTopY - hookY);
+
+        if (drumGroup) {
+            drumGroup.rotation.x = rotations * Math.PI * 2;
+        }
+        if (hookGroup) {
+            hookGroup.position.y = hookY;
+        }
+        if (cableMesh) {
+            cableMesh.position.set(CABLE_X, hookY + cableLength / 2, CABLE_Z);
+            cableMesh.scale.set(1, cableLength, 1);
+        }
+    }
+
+    function updateMotorVisual(name, value) {
+        if (name !== "winch") return;
+        if (motor) {
+            motor._power = getEffectivePower(value);
+        }
+        updateHtmlOverlay();
+    }
+
+    function resetVisuals() {
+        if (motor) {
+            motor._power = 0;
+            motor._currentPosition = 0;
+        }
+        updateWinchTransform();
+        updateRotationsSprite();
+        updateCableSprite();
+        updateHtmlOverlay();
+    }
+
+    function extractMethodBody(code, name) {
+        return (window._simGetMethodBody && window._simGetMethodBody(code, name)) || "";
+    }
+
+    function escapeRegExp(text) {
+        return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    function telemetryCalls(loopBody) {
+        return loopBody.match(/\btelemetry\s*\.\s*addData\s*\([^;]+;?/g) || [];
+    }
+
+    function hasTelemetryCall(loopBody, labelRegex, valueRegex) {
+        return telemetryCalls(loopBody).some(function (call) {
+            return labelRegex.test(call) && (!valueRegex || valueRegex.test(call));
+        });
+    }
+
+    function findDoubleAssignment(body, predicate) {
+        const re = /\bdouble\s+([A-Za-z_]\w*)\s*=\s*([^;]+)\s*;/g;
+        let match;
+        while ((match = re.exec(body)) !== null) {
+            if (predicate(match[2], match[1])) {
+                return { name: match[1], expr: match[2] };
+            }
+        }
+        return null;
+    }
+
+    function setRequirementStatesFromCode(code) {
+        const initBody = extractMethodBody(code, "init");
+        const loopBody = extractMethodBody(code, "loop");
+
+        const ticksPerRevAssign = initBody.match(/\b([A-Za-z_]\w*)\s*=\s*[A-Za-z_]\w*\s*\.\s*getMotorType\s*\(\s*\)\s*\.\s*getTicksPerRev\s*\(\s*\)\s*;/);
+        const ticksPerRevVar = ticksPerRevAssign ? ticksPerRevAssign[1] : null;
+        const tickVarMatch = loopBody.match(/\bint\s+([A-Za-z_]\w*)\s*=\s*[A-Za-z_]\w*\s*\.\s*getCurrentPosition\s*\(\s*\)\s*;/);
+        const tickVar = tickVarMatch ? tickVarMatch[1] : null;
+
+        const rotationsAssign = findDoubleAssignment(loopBody, function (expr) {
+            const readsTicks = /\.\s*getCurrentPosition\s*\(\s*\)/.test(expr) || (tickVar && new RegExp("\\b" + escapeRegExp(tickVar) + "\\b").test(expr));
+            const divides = /\//.test(expr);
+            const usesTicksPerRev =
+                /\.\s*getMotorType\s*\(\s*\)\s*\.\s*getTicksPerRev\s*\(\s*\)/.test(expr) ||
+                (ticksPerRevVar && new RegExp("\\b" + escapeRegExp(ticksPerRevVar) + "\\b").test(expr)) ||
+                /\bticksPerRev\b/i.test(expr);
+            return readsTicks && divides && usesTicksPerRev;
+        });
+        const rotationsVar = rotationsAssign ? rotationsAssign.name : null;
+
+        const circumferenceAssign = findDoubleAssignment(code, function (expr) {
+            return /\bMath\s*\.\s*PI\b/.test(expr) && (/\bDRUM_DIAMETER_IN\b/.test(expr) || /\b2(?:\.0)?\b/.test(expr));
+        });
+        const circumferenceVar = circumferenceAssign ? circumferenceAssign.name : null;
+
+        const distanceAssign = findDoubleAssignment(loopBody, function (expr) {
+            const usesRotations = rotationsVar && new RegExp("\\b" + escapeRegExp(rotationsVar) + "\\b").test(expr);
+            const usesCircumference =
+                (circumferenceVar && new RegExp("\\b" + escapeRegExp(circumferenceVar) + "\\b").test(expr)) ||
+                (/\bMath\s*\.\s*PI\b/.test(expr) && (/\bDRUM_DIAMETER_IN\b/.test(expr) || /\b2(?:\.0)?\b/.test(expr)));
+            return usesRotations && /\*/.test(expr) && usesCircumference;
+        });
+        const distanceVar = distanceAssign ? distanceAssign.name : null;
+
+        const req0 = /\bhardwareMap\s*\.\s*get\s*\(\s*DcMotor\s*\.\s*class\s*,\s*"winch"\s*\)/.test(initBody);
+        const req1 = /\bDRUM_DIAMETER_IN\b\s*=\s*2(?:\.0)?\b/.test(code);
+        const req2 = Boolean(ticksPerRevVar);
+        const req3 = Boolean(rotationsVar);
+        const req4 = Boolean(distanceVar);
+        const req5 =
+            Boolean(rotationsVar && hasTelemetryCall(loopBody, /["'][^"']*Rotations?[^"']*["']/i, new RegExp("\\b" + escapeRegExp(rotationsVar) + "\\b"))) &&
+            Boolean(distanceVar && hasTelemetryCall(loopBody, /["'][^"']*(Cable|Distance|Length|Inches?|in\b)[^"']*["']/i, new RegExp("\\b" + escapeRegExp(distanceVar) + "\\b")));
+
+        window.setRequirement(0, req0);
+        window.setRequirement(1, req1);
+        window.setRequirement(2, req2);
+        window.setRequirement(3, req3);
+        window.setRequirement(4, req4);
+        window.setRequirement(5, req5);
+
+        configureHints(code, initBody, loopBody, ticksPerRevVar, rotationsVar, distanceVar);
+    }
+
+    function configureHints(code, initBody, loopBody, ticksPerRevVar, rotationsVar, distanceVar) {
+        if (/\bhardwareMap\s*\.\s*get\s*\(/.test(loopBody)) {
+            window.addHint("Map the winch motor in init(), not loop().", "error");
+        }
+
+        if (/\b360(?:\.0)?\b/.test(loopBody) || /degrees?/i.test(loopBody)) {
+            window.addHint("This challenge is distance, not degrees. Use drum circumference: Math.PI * DRUM_DIAMETER_IN.", "error");
+        }
+
+        if (!/\bDRUM_DIAMETER_IN\b\s*=\s*2(?:\.0)?\b/.test(code)) {
+            window.addHint("Define the drum diameter as 2.0 inches.", "warn");
+        }
+
+        if (!ticksPerRevVar) {
+            window.addHint("In init(), store winch.getMotorType().getTicksPerRev() in a double variable.", "warn");
+        }
+
+        if (!/\.\s*getCurrentPosition\s*\(\s*\)/.test(loopBody)) {
+            window.addHint("Read the encoder count with winch.getCurrentPosition() before calculating rotations.", "warn");
+        }
+
+        if (!rotationsVar) {
+            window.addHint("Calculate rotations with ticks divided by ticksPerRev.", "warn");
+        }
+
+        if (rotationsVar && !distanceVar) {
+            window.addHint("Convert rotations to cable length: rotations * (Math.PI * DRUM_DIAMETER_IN).", "warn");
+        }
+
+        if (!hasTelemetryCall(loopBody, /["'][^"']*Rotations?[^"']*["']/i)) {
+            window.addHint('Report rotations with telemetry.addData("Rotations", "%.2f", rotations).', "warn");
+        }
+
+        if (!hasTelemetryCall(loopBody, /["'][^"']*(Cable|Distance|Length|Inches?|in\b)[^"']*["']/i)) {
+            window.addHint('Report cable length with telemetry.addData("Cable In (in)", "%.2f", distanceIn).', "warn");
+        }
+
+        if (!/\btelemetry\s*\.\s*update\s*\(\s*\)/.test(code)) {
+            window.addHint("telemetry.update() keeps the simulator Driver Station refreshing each loop.", "info");
+        }
+    }
+
+    window.onSimulatorReady = function () {
+        const starterCode = `@TeleOp(name="Winch_Rotations_Challenge")
+public class WinchRotations extends OpMode {
+
+    private DcMotor winch;
+    private static final double DRUM_DIAMETER_IN = 2.0;
+    private double ticksPerRev;
+
+    @Override
+    public void init() {
+        winch = hardwareMap.get(DcMotor.class, "winch");
+        // TODO: Store the ticks per revolution from the motor type
+    }
+
+    @Override
+    public void loop() {
+        winch.setPower(-gamepad1.left_stick_y);
+
+        // TODO: Calculate motor rotations
+        // TODO: Calculate cable length in inches
+        // TODO: Display both values via telemetry
+        telemetry.update();
+    }
+}`;
+
+        window.setCode(starterCode);
+
+        window.setChallenge(
+            "Winch Rotations to Cable Length",
+            "Use the winch encoder and a 2.0 inch drum diameter to calculate motor rotations and cable length reeled in, then report both values to the Driver Station.",
+            [
+                "Map winch as a DcMotor in init()",
+                "Define DRUM_DIAMETER_IN as 2.0",
+                "Store ticksPerRev from winch.getMotorType()",
+                "Calculate rotations from ticks / ticksPerRev",
+                "Calculate cable inches using drum circumference",
+                "Display rotations and cable length with telemetry"
+            ]
+        );
+
+        window.setHeader(
+            "Telemark Unit 10.2 Simulator",
+            "Ticks to Distance · Convert encoder ticks into cable travel"
+        );
+
+        window.setBadges([
+            { iconClass: "fa-solid fa-gear", label: "DcMotor", active: true },
+            { iconClass: "fa-solid fa-circle-notch", label: "Encoder", active: true },
+            { iconClass: "fa-solid fa-wind", label: "Winch", active: true },
+            { iconClass: "fa-solid fa-ruler-combined", label: "Distance", active: true },
+            { iconClass: "fa-solid fa-tower-broadcast", label: "Telemetry", active: true }
+        ]);
+
+        window.setActiveInputs(["left_stick_y"]);
+
+        motor = window.hardwareMap.registerMotor("winch");
+        motor._ticksPerRev = TICKS_PER_REV;
+        motor._power = 0;
+        motor._currentPosition = 0;
+
+        buildScene();
+
+        if (animationCallbackId === -1) {
+            animationCallbackId = window.addAnimationCallback(function () {
+                if (!motor) return;
+                const nextTicks = Number(motor._currentPosition || 0) + getEffectivePower(motor._power) * TICKS_PER_FRAME;
+                motor._currentPosition = clampWinchTicks(nextTicks);
+                motor._power = getEffectivePower(motor._power);
+                updateWinchTransform();
+                updateRotationsSprite();
+                updateCableSprite();
+                updateHtmlOverlay();
+            });
+        }
+
+        window.hardwareMap.onMotorPower(function (name, value) {
+            updateMotorVisual(name, value);
+        });
+
+        const successBanner = document.getElementById("sim-success-banner");
+        if (successBanner) {
+            successBanner.innerHTML =
+                '<i class="fa-solid fa-circle-check"></i> Challenge Complete! The Driver Station is reporting winch rotations and cable length.';
+        }
+
+        resetVisuals();
+    };
+
+    window.onRun = function () {
+        window.clearHints();
+        resetVisuals();
+
+        const code = window.getCode();
+        setRequirementStatesFromCode(code);
+
+        window.transpileAndRun(
+            code,
+            function (initFn) {
+                try {
+                    initFn();
+                } catch (err) {
+                    window._simShowTelemetryError("Init error: " + err.message);
+                }
+            },
+            function (loopFn) {
+                window._simStartLoop(function () {
+                    try {
+                        loopFn();
+                    } catch (err) {
+                        window._simShowTelemetryError("Loop error: " + err.message);
+                    }
+                });
+            }
+        );
+    };
+
+    window.onStop = function () {
+        if (motor) {
+            motor._power = 0;
+        }
+        updateHtmlOverlay();
+    };
+
+    window.onReset = function () {
+        window.onStop();
+        window.clearHints();
+        if (motor) {
+            motor._currentPosition = 0;
+        }
+        updateWinchTransform();
+        updateRotationsSprite();
+        updateCableSprite();
+        updateHtmlOverlay();
+    };
+})();
+</script>
+</body>
+</html>

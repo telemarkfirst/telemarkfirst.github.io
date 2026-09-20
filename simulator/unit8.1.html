@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Telemark Unit 8.1 Simulator</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
+<style>
+:root{--bg:#05080d;--panel:#0b1118;--panel-2:#071019;--text:#eaf8ff;--accent:#38bdf8;--accent-2:#22d3ee;--danger:#cc0000;--good:#00cc00;--warn:#ffcc00;--border:#243746;--orange:#22d3ee}
+*{scrollbar-width:thin;scrollbar-color:#22d3ee #05080d;box-sizing:border-box}
+*::-webkit-scrollbar{width:6px;height:6px}*::-webkit-scrollbar-track{background:#05080d}*::-webkit-scrollbar-thumb{background:#22d3ee;border-radius:3px}*::-webkit-scrollbar-thumb:hover{background:#22d3ee}
+html,body{height:100%;margin:0}
+body{display:flex;height:100vh;overflow:hidden;background:var(--bg);color:var(--text);font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif}
+#left-panel{width:55%;min-width:320px;height:100%;display:flex;flex-direction:column;background:#080d13}
+.panel-header{padding:10px 14px;background:#05080d;border-bottom:1px solid #243746}
+.panel-header-title{font-weight:700;color:#fff;font-size:1rem}.panel-header-sub{color:#9aa0a6;font-size:.82rem}
+.challenge-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;margin:8px 10px;overflow:hidden}
+.challenge-header{padding:8px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:#0d1721;font-weight:700;font-size:.9rem;color:var(--orange)}
+.challenge-header i{color:#888;font-size:.75rem;transition:transform .2s}
+.challenge-header.open i{transform:rotate(90deg)}
+.challenge-body{display:none;padding:10px 12px;font-size:.85rem;line-height:1.6;color:#bbb}
+.challenge-body.open{display:block}
+.challenge-body .task{margin:6px 0 10px;color:#dbeafe;background:#05080d;padding:8px 10px;border-radius:4px;font-family:monospace;font-size:.82rem;line-height:1.5}
+.req{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:.83rem}
+.req .check{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0}
+.req .check.pass{background:rgba(0,204,0,.2);color:var(--good)}.req .check.fail{background:rgba(100,100,100,.2);color:#555}
+.success-banner{display:none;background:rgba(0,204,0,.12);border:1px solid var(--good);border-radius:6px;padding:10px;color:var(--good);font-weight:700;font-size:.9rem;margin-top:8px;text-align:center}
+.success-banner.visible{display:block}
+.code-wrapper{position:relative;flex:1;overflow:hidden;background:var(--bg)}
+#code-editor,#highlighting{position:absolute;inset:0;margin:0;padding:16px;font-family:"Consolas","Courier New",monospace;font-size:13px;line-height:1.6;tab-size:4;white-space:pre;border:0;outline:none}
+#code-editor{color:transparent;background:transparent;caret-color:#fff;z-index:2;resize:none;overflow:auto}
+#highlighting{z-index:1;overflow:hidden}#highlighting code{font-family:inherit;font-size:inherit;line-height:inherit;text-shadow:none}
+.bottom-bar{background:var(--panel);border-top:1px solid var(--border);padding:8px 10px;display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+.controls-row{display:flex;gap:8px}
+.controls-row button{flex:1;padding:10px;border-radius:6px;border:none;font-size:.9rem;font-weight:700;cursor:pointer;color:#fff;transition:.1s}
+.controls-row button:active{transform:translateY(1px)}
+.btn-run{background:var(--good)}.btn-run:hover{filter:brightness(1.1)}
+.btn-run:disabled{background:#444;color:#888;cursor:not-allowed;transform:none}
+.btn-stop{background:var(--danger)}.btn-stop:hover{filter:brightness(1.1)}
+.btn-reset{background:#555}.btn-reset:hover{filter:brightness(1.2)}
+.ds-status{display:flex;justify-content:space-between;align-items:center;font-family:monospace;font-size:.85rem}
+.ds-state{font-weight:700}.ds-timer{color:#569cd6}
+.telemetry-panel{background:#000;border:1px solid #444;border-radius:6px;min-height:50px;max-height:100px;padding:8px;font-family:monospace;font-size:.85rem;overflow-y:auto;color:#00ff00}
+.telemetry-line{margin:1px 0}.telemetry-key{color:#4ec9b0}
+#hint-container{display:flex;flex-direction:column;gap:4px}
+.hint{background:rgba(255,204,0,.12);border-left:3px solid var(--warn);padding:6px 8px;color:var(--warn);border-radius:3px;font-size:.82rem}
+.hint.error{background:rgba(204,0,0,.12);border-left-color:var(--danger);color:#ff6666}
+.hint.info{background:rgba(0,122,204,.12);border-left-color:var(--accent);color:#6db3f2}
+#right-panel{flex:1;display:flex;flex-direction:column;background:var(--panel-2);min-width:350px;overflow:hidden}
+.badge-strip{display:flex;gap:6px;flex-wrap:wrap;padding:10px 10px 0}
+.hw-badge{padding:4px 10px;border-radius:6px;font-size:.78rem;font-weight:600;display:flex;align-items:center;gap:5px;border:1px solid var(--border)}
+.hw-badge.active{border-color:var(--orange);color:var(--orange);background:rgba(34,211,238,.1)}
+.hw-badge.tel{border-color:var(--accent);color:var(--accent);background:rgba(0,122,204,.1)}
+.hw-badge.samples{border-color:var(--good);color:var(--good);background:rgba(0,204,0,.1)}
+.hw-badge.inactive{background:#0d1721;color:#64748b}
+#scene-container{flex:1;position:relative;margin:10px;border-radius:8px;overflow:hidden;background:#0a0a0a}
+#robot-canvas{display:block;width:100%;height:100%;cursor:grab}
+#robot-canvas:active{cursor:grabbing}
+.power-bar-panel{margin:0 10px 10px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px}
+.power-bar-label{display:flex;justify-content:space-between;align-items:center;font-family:monospace;font-size:.85rem;margin-bottom:6px}
+.power-bar-name{color:var(--orange);font-weight:700}
+.power-bar-val{color:#fff;font-weight:700;min-width:40px;text-align:right}
+.power-bar-track{height:14px;background:#101d29;border-radius:7px;position:relative;overflow:hidden}
+.power-bar-center{position:absolute;left:50%;top:0;bottom:0;width:1px;background:#555}
+.power-bar-fill{position:absolute;top:2px;bottom:2px;border-radius:5px;transition:left .05s,width .05s}
+#resizer{width:6px;background:#243746;cursor:col-resize;z-index:10;transition:background .2s}#resizer:hover,#resizer.active{background:var(--accent)}
+.gamepad-float-card{position:fixed;bottom:12px;right:12px;width:380px;min-width:240px;background:var(--panel);border:1px solid var(--border);border-radius:12px;z-index:1000;display:flex;flex-direction:column;box-shadow:0 6px 24px rgba(0,0,0,.5);overflow:hidden}
+.gamepad-titlebar{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#0d1721;border-bottom:1px solid var(--border);cursor:grab;user-select:none;flex-shrink:0}
+.gamepad-titlebar:active{cursor:grabbing}
+.gamepad-titlebar-label{font-weight:700;font-size:.9rem;color:#fff;display:flex;align-items:center;gap:6px}
+.gamepad-titlebar-label i{color:var(--accent)}
+.gp-collapse-btn{width:24px;height:24px;padding:0;border-radius:4px;background:#333;border:1px solid #555;color:#ccc;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.gp-collapse-btn:hover{background:#444}
+.gamepad-card-body{padding:10px;overflow:hidden;flex:1}
+.gamepad-resize-handle{position:absolute;bottom:0;right:0;width:16px;height:16px;cursor:nwse-resize;z-index:10}
+.gamepad-resize-handle::after{content:'';position:absolute;bottom:3px;right:3px;width:6px;height:6px;border-right:2px solid #666;border-bottom:2px solid #666}
+.controller-wrap{width:100%;position:relative;aspect-ratio:768/512;border-radius:14px;overflow:hidden;background:#0f0f0f;touch-action:none;user-select:none}
+.controller-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+.overlay{position:absolute;border-radius:50%;touch-action:none;user-select:none}
+.stick-zone-left{left:35.5%;top:65.5%;width:17%;height:24%;transform:translate(-50%,-50%);background:transparent}
+.stick-base-left{position:absolute;left:35.5%;top:65.5%;width:14%;height:21%;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;box-shadow:inset 0 0 0 2px rgba(255,255,255,.06)}
+.stick-knob-left{position:absolute;left:35.5%;top:65.5%;width:9%;height:13%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 35% 35%,#3a3a3a,#121212 70%);border:1px solid rgba(255,255,255,.1);pointer-events:none;opacity:.5}
+.stick-zone-right{left:64%;top:65.5%;width:17%;height:24%;transform:translate(-50%,-50%);background:transparent}
+.stick-base-right{position:absolute;left:64%;top:65.5%;width:14%;height:21%;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;box-shadow:inset 0 0 0 2px rgba(255,255,255,.06)}
+.stick-knob-right{position:absolute;left:64%;top:65.5%;width:9%;height:13%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 35% 35%,#3a3a3a,#121212 70%);border:1px solid rgba(255,255,255,.1);pointer-events:none;opacity:.5}
+.button-overlay{border:2px solid rgba(255,255,255,.08);background:rgba(255,255,255,.01);cursor:default;opacity:.4}
+.button-overlay.pressed{background:rgba(255,255,255,.18);box-shadow:0 0 0 2px rgba(255,255,255,.25);opacity:1}
+.a-btn{left:75.5%;top:49%;width:7%;height:10%;transform:translate(-10%,-10%)}
+.b-btn{left:83%;top:38%;width:7%;height:10%;transform:translate(-10%,-10%)}
+.x-btn{left:68%;top:38%;width:7%;height:10%;transform:translate(-10%,-10%)}
+.y-btn{left:75.5%;top:27%;width:7%;height:10%;transform:translate(-10%,-10%)}
+.small-button{width:5.2%;height:6.4%;border-radius:16px;border:2px solid rgba(255,255,255,.08);pointer-events:auto;opacity:.4}
+.back-btn{left:37.5%;top:28%;transform:translate(-10%,-10%)}.start-btn{left:58%;top:28%;transform:translate(-10%,-10%)}
+.bumper-btn{width:14%;height:6%;border-radius:8px;border:2px solid rgba(255,255,255,.08);background:rgba(255,255,255,.01);opacity:.4}
+.left-bumper-btn{left:20%;top:12%;transform:translate(-50%,-50%)}.right-bumper-btn{left:80%;top:12%;transform:translate(-50%,-50%)}
+.trigger-slider{position:absolute;width:10%;height:14%;background:rgba(0,0,0,.4);border-radius:6px;border:1px solid rgba(255,255,255,.15);cursor:pointer;overflow:hidden}
+.trigger-slider-fill{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,var(--accent-2),var(--accent));transition:height .05s}
+.left-trigger-slider{left:21%;top:0;transform:translate(-50%,0)}
+.right-trigger-slider{left:79%;top:0;transform:translate(-50%,0)}
+.trigger-label{position:absolute;font-size:.6rem;font-family:monospace;color:var(--accent);font-weight:700;white-space:nowrap}
+.lt-label{left:5%;top:15%;transform:translate(0,-50%)}
+.rt-label{right:5%;top:15%;transform:translate(0,-50%)}
+.dpad-container{position:absolute;left:21.5%;top:41%;width:16%;height:24%;transform:translate(-50%,-50%);pointer-events:none;opacity:.3}
+.dpad-btn{position:absolute;width:33%;height:33%;background:rgba(40,40,40,.8);border:1px solid rgba(255,255,255,.05)}
+.dpad-btn svg{width:50%;height:50%;fill:rgba(255,255,255,.3);display:block;margin:auto}
+.dpad-up{top:0;left:33%;border-radius:4px 4px 0 0}.dpad-down{bottom:0;left:33%;border-radius:0 0 4px 4px}
+.dpad-left{left:0;top:33%;border-radius:4px 0 0 4px}.dpad-right{right:0;top:33%;border-radius:0 4px 4px 0}
+.dpad-center{position:absolute;left:33%;top:33%;width:34%;height:34%;background:rgba(30,30,30,.9)}
+</style>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+<script src="./telemark-project.js"></script>
+<script src="telemark-project-checks.js"></script>
+<link rel="stylesheet" href="./telemark-project.css"/>
+  <script src="./gamepad-controls.js"></script>
+  <script src='./simulator_base.js' data-telemark-mode='legacy'></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+<div id="left-panel">
+  <div class="panel-header"><div class="panel-header-title">Telemark Unit 8.1 Simulator</div><div class="panel-header-sub">Intake Motor Control &middot; Map a motor &middot; Use triggers &middot; Control power</div></div>
+  <div class="challenge-card">
+    <div class="challenge-header open" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">
+      <span><i class="fa-solid fa-trophy" style="margin-right:4px"></i> 8.1: Intake Motor Control</span>
+      <i class="fa-solid fa-chevron-right"></i>
+    </div>
+    <div class="challenge-body open">
+      <div class="task">Map a motor named "intake" and run it at full power forward whenever the driver holds <code>gamepad1.right_trigger</code> past 50%, and stop it otherwise. Bonus: hold <code>left_trigger</code> to reverse and eject samples!</div>
+      <div class="req" id="req1"><span class="check fail"><i class="fa-solid fa-check"></i></span> Motor mapped as "intake" in init()</div>
+      <div class="req" id="req2"><span class="check fail"><i class="fa-solid fa-check"></i></span> right_trigger &gt; 0.5 runs motor at full power</div>
+      <div class="req" id="req3"><span class="check fail"><i class="fa-solid fa-check"></i></span> Otherwise motor is stopped</div>
+      <div class="req" id="req4"><span class="check fail"><i class="fa-solid fa-check"></i></span> Telemetry shows current intake state</div>
+      <div class="success-banner" id="success-banner"><i class="fa-solid fa-circle-check"></i> Challenge Complete! Your intake motor is working correctly.</div>
+    </div>
+  </div>
+  <div class="code-wrapper">
+    <textarea id="code-editor" spellcheck="false" oninput="onCodeChange()" onscroll="syncScroll(this)">@TeleOp(name="Intake_Control")
+public class IntakeControl extends OpMode {
+    DcMotor intake;
+
+    @Override
+    public void init() {
+        intake = hardwareMap.get(DcMotor.class, "intake");
+        intake.setPower(0.0);
+        telemetry.addData("Status", "Initialized");
+    }
+
+    @Override
+    public void loop() {
+        // TODO: Run intake at full power when right trigger is past 50%
+        // TODO: Otherwise stop the intake motor
+        // TODO: Show the current intake state with telemetry
+        telemetry.update();
+    }
+}</textarea>
+    <pre id="highlighting" aria-hidden="true"><code class="language-java" id="highlighting-content"></code></pre>
+  </div>
+  <div class="bottom-bar">
+    <div class="controls-row">
+      <button class="btn-run" id="btn-run" onclick="handleRun()"><i class="fa-solid fa-play"></i> Run</button>
+      <button class="btn-stop" onclick="handleStop()"><i class="fa-solid fa-stop"></i> Stop</button>
+      <button class="btn-reset" onclick="resetSamples()"><i class="fa-solid fa-rotate-left"></i> Reset Field</button>
+    </div>
+    <div class="ds-status">
+      <span class="ds-state" id="ds-state" style="color:var(--danger)">STOPPED</span>
+      <span class="ds-timer">Time: <span id="timer-val">0.00</span>s</span>
+    </div>
+    <div class="telemetry-panel" id="telemetry-log"><span style="color:#666">Press Run to start...</span></div>
+    <div id="hint-container"></div>
+  </div>
+</div>
+<div id="resizer"></div>
+<div id="right-panel">
+  <div class="badge-strip">
+    <div class="hw-badge active"><i class="fa-solid fa-gear"></i> DcMotor (intake)</div>
+    <div class="hw-badge tel"><i class="fa-solid fa-tower-broadcast"></i> Telemetry</div>
+    <div class="hw-badge samples"><i class="fa-solid fa-circle"></i> Samples: <span id="sample-count">0</span></div>
+    <div class="hw-badge inactive"><i class="fa-solid fa-compass"></i> IMU</div>
+  </div>
+  <div id="scene-container"><canvas id="robot-canvas"></canvas></div>
+  <div class="power-bar-panel">
+    <div class="power-bar-label"><span class="power-bar-name"><i class="fa-solid fa-gear"></i> INTAKE</span><span class="power-bar-val" id="power-val">0.00</span></div>
+    <div class="power-bar-track"><div class="power-bar-center"></div><div class="power-bar-fill" id="power-fill"></div></div>
+  </div>
+</div>
+
+<div class="gamepad-float-card" id="gamepad-float-card">
+  <div class="gamepad-titlebar" id="gamepad-titlebar">
+    <span class="gamepad-titlebar-label"><i class="fa-solid fa-gamepad"></i> Gamepad 1</span>
+    <button class="gp-collapse-btn" id="gp-collapse-btn">&#x2212;</button>
+  </div>
+  <div class="gamepad-card-body" id="gamepad-card-body">
+    <div class="controller-wrap" id="controller-wrap">
+      <img class="controller-img" alt="controller" src="https://resource.logitechg.com/w_776,h_437,ar_16:9,c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/gaming/en/products/f310/f310-feature-3.png">
+      <div class="trigger-slider left-trigger-slider" id="left-trigger-slider"><div class="trigger-slider-fill" id="left-trigger-fill"></div></div>
+      <div class="trigger-slider right-trigger-slider" id="right-trigger-slider"><div class="trigger-slider-fill" id="right-trigger-fill"></div></div>
+      <div class="trigger-label lt-label">left_trigger</div>
+      <div class="trigger-label rt-label">right_trigger</div>
+      <div class="overlay bumper-btn left-bumper-btn"></div><div class="overlay bumper-btn right-bumper-btn"></div>
+      <div class="overlay stick-zone-left" id="stick-zone-left"></div><div class="stick-base-left"></div><div class="stick-knob-left" id="stick-knob-left"></div>
+      <div class="overlay stick-zone-right" id="stick-zone-right"></div><div class="stick-base-right"></div><div class="stick-knob-right" id="stick-knob-right"></div>
+      <div class="overlay button-overlay y-btn"></div><div class="overlay button-overlay x-btn"></div>
+      <div class="overlay button-overlay a-btn"></div><div class="overlay button-overlay b-btn"></div>
+      <div class="overlay button-overlay small-button back-btn"></div>
+      <div class="overlay button-overlay small-button start-btn"></div>
+      <div class="dpad-container"><div class="dpad-center"></div>
+        <div class="dpad-btn dpad-up"><svg viewBox="0 0 24 24"><path d="M12 4l-8 8h16z"/></svg></div>
+        <div class="dpad-btn dpad-down"><svg viewBox="0 0 24 24"><path d="M12 20l8-8H4z"/></svg></div>
+        <div class="dpad-btn dpad-left"><svg viewBox="0 0 24 24"><path d="M4 12l8-8v16z"/></svg></div>
+        <div class="dpad-btn dpad-right"><svg viewBox="0 0 24 24"><path d="M20 12l-8 8V4z"/></svg></div>
+      </div>
+    </div>
+  </div>
+  <div class="gamepad-resize-handle" id="gamepad-resize-handle"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+var codeEditor=document.getElementById('code-editor');
+var running=false,loopInterval=null,timerInterval=null,runtimeStart=0;
+var intakePower=0;
+var gamepad={left_stick_x:0,left_stick_y:0,right_stick_x:0,right_stick_y:0,left_trigger:0,right_trigger:0,a:false,b:false,x:false,y:false,left_bumper:false,right_bumper:false,start:false,back:false,dpad_up:false,dpad_down:false,dpad_left:false,dpad_right:false};
+var GAMEPAD_PROPS=['left_stick_x','left_stick_y','right_stick_x','right_stick_y','left_trigger','right_trigger','left_bumper','right_bumper','dpad_up','dpad_down','dpad_left','dpad_right','start','back','a','b','x','y'];
+var activeHints=[];
+
+// ── Sample ball state ──
+var samples=[]; // {mesh, vx, vz, state:'idle'|'collecting'|'ejecting', scale}
+var sampleCount=0;
+var ROLLER_POS={x:0,y:0.22,z:-0.72};      // front of robot is -Z
+var ROBOT_BODY_Z=-0.6;                     // approximate front face of body
+var COLLECT_RADIUS=0.28;                   // distance to trigger collection
+var ATTRACT_RADIUS=1.6;                    // pull range for intake
+var BALL_RADIUS=0.11;
+
+function addHint(m,t){for(var i=0;i<activeHints.length;i++){if(activeHints[i].msg===m)return}activeHints.push({msg:m,type:t||'warn'})}
+function renderHints(){var c=document.getElementById('hint-container');c.innerHTML='';activeHints.forEach(function(h){var cls='hint';if(h.type==='error')cls+=' error';else if(h.type==='info')cls+=' info';c.innerHTML+='<div class="'+cls+'">'+h.msg+'</div>'})}
+
+// ── Editor ──
+function updateCode(t){var el=document.getElementById('highlighting-content');if(t&&t[t.length-1]==='\n')t+=' ';el.innerHTML=(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');Prism.highlightElement(el)}
+function syncScroll(el){document.getElementById('highlighting').scrollTop=el.scrollTop;document.getElementById('highlighting').scrollLeft=el.scrollLeft}
+function onCodeChange(){updateCode(codeEditor.value);syncScroll(codeEditor)}
+TelemarkEditor.attach(codeEditor, {onChange: onCodeChange});
+
+// ── Resizer ──
+var resizer=document.getElementById('resizer'),leftPanel=document.getElementById('left-panel'),isResizing=false;
+resizer.addEventListener('mousedown',function(){isResizing=true;resizer.classList.add('active')});
+document.addEventListener('mousemove',function(e){if(!isResizing)return;var pct=(e.clientX/window.innerWidth)*100;if(pct>25&&pct<75)leftPanel.style.width=pct+'%'});
+document.addEventListener('mouseup',function(){isResizing=false;resizer.classList.remove('active')});
+
+// ── Transpiler ──
+function getMethodBody(code,name){
+  var re=new RegExp('void\\s+'+name+'\\s*\\([^)]*\\)\\s*\\{');
+  var m=re.exec(code);if(!m)return null;
+  var idx=m.index+m[0].length,depth=1;
+  for(;idx<code.length;idx++){if(code[idx]==='{')depth++;else if(code[idx]==='}'){depth--;if(depth===0)return code.slice(m.index+m[0].length,idx)}}
+  return null;
+}
+function transpile(java){
+  var js=java;
+  js=js.replace(/(\w+)\.setPower\s*\(/g,'setIntakePower(');
+  js=js.replace(/getRuntime\s*\(\s*\)/g,'__runtime()');
+  return window.TelemarkJava
+    ? window.TelemarkJava.transpileBody(js,{
+        gamepad1Name:'gamepad',
+        addTelemetryName:'addTelemetry',
+        updateTelemetryName:'(()=>{})'
+      })
+    : js;
+}
+var projectRunner = null, projectTelemetry = [];
+function runLoop(){
+  var body=getMethodBody(codeEditor.__telemarkProject?codeEditor.__telemarkProject.source():codeEditor.value,'loop');
+  if(body===null)return failJavaExecution('Java compile error',new Error('Required loop() method is missing or has unmatched braces'));
+  var telLines=projectTelemetry=[];
+  function addTelemetry(k,v){if(typeof v==='number'&&v!==Math.floor(v))v=v.toFixed(2);projectTelemetry.push({key:String(k),val:String(v)})}
+  function setIntakePower(p){intakePower=Math.max(-1,Math.min(1,p))}
+  try{
+    if (!projectRunner) {
+      projectRunner = TelemarkProject.createRunner(codeEditor, {gamepad1: gamepad, onPower: setIntakePower, getRuntime: function(){return(Date.now()-runtimeStart)/1000}, onTelemetry: addTelemetry});
+      projectRunner.init();
+      validate();
+    }
+    projectRunner.runtime.addTelemetry = addTelemetry;
+    projectRunner.loop();
+  }catch(e){return failJavaExecution('loop() compile/runtime error',e)}
+  // Always append samples count
+  telLines.push({key:'Samples',val:String(sampleCount)});
+  if(telLines.length){
+    document.getElementById('telemetry-log').innerHTML=telLines.map(function(l){
+      return'<div class="telemetry-line"><span class="telemetry-key">'+esc(l.key)+'</span>: '+esc(l.val)+'</div>';
+    }).join('');
+  }
+  updatePowerBar();
+  return true;
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function failJavaExecution(context,error){
+  document.getElementById('telemetry-log').innerHTML='<span style="color:#ff6666">'+esc(context+': '+(error&&error.message?error.message:String(error)))+'</span>';
+  console.error('Unit 8.1 simulator '+context,error);
+  handleStop();
+  return false;
+}
+
+function validateFullJavaSource(code){
+  if(!window.TelemarkSimulatorBase){
+    return failJavaExecution('Java compile error',new Error('Telemark Java compiler is unavailable (line 1, column 1)'));
+  }
+  var result=window.TelemarkSimulatorBase.compileStudentSource(code);
+  if(result.ok)return true;
+  var diagnostic=result.diagnostics&&result.diagnostics[0]||{};
+  var line=diagnostic.line||1,column=diagnostic.column||1;
+  return failJavaExecution('Java compile error',new Error((diagnostic.message||'Invalid Java source')+' (line '+line+', column '+column+')'));
+}
+
+// ── Run/Stop ──
+function handleRun(){
+  if(running)return;
+  if(!validateFullJavaSource(codeEditor.value))return;
+  running=true;runtimeStart=Date.now();intakePower=0;
+  projectRunner=null;
+  document.getElementById('ds-state').textContent='RUNNING';
+  document.getElementById('ds-state').style.color='var(--good)';
+  document.getElementById('btn-run').disabled=true;
+  document.getElementById('telemetry-log').innerHTML='';
+  if(!runLoop())return;
+  timerInterval=setInterval(function(){document.getElementById('timer-val').textContent=((Date.now()-runtimeStart)/1000).toFixed(2)},50);
+  loopInterval=setInterval(function(){runLoop()},50);
+}
+function handleStop(){
+  if(projectRunner){var stopped=projectRunner;projectRunner=null;try{stopped.stop()}catch(e){console.error(e)}}
+  running=false;
+  clearInterval(loopInterval);clearInterval(timerInterval);
+  loopInterval=null;timerInterval=null;
+  intakePower=0;updatePowerBar();
+  document.getElementById('ds-state').textContent='STOPPED';
+  document.getElementById('ds-state').style.color='var(--danger)';
+  document.getElementById('btn-run').disabled=false;
+  document.getElementById('timer-val').textContent='0.00';
+}
+
+// ── Power Bar ──
+function updatePowerBar(){
+  var p=intakePower;
+  document.getElementById('power-val').textContent=p.toFixed(2);
+  var fill=document.getElementById('power-fill');
+  var pct=Math.abs(p)*50;
+  if(p>=0){fill.style.left='50%';fill.style.width=pct+'%';fill.style.background='var(--good)'}
+  else{fill.style.left=(50-pct)+'%';fill.style.width=pct+'%';fill.style.background='var(--danger)'}
+}
+
+// ── Validation ──
+function validate() {
+  TelemarkProjectChecks.render("8.1", codeEditor);
+}
+function setReq(id,pass){
+  var el=document.getElementById(id);
+  el.querySelector('.check').className='check '+(pass?'pass':'fail');
+}
+
+// ── Three.js Scene ──
+var scene,camera,renderer,intakeRoller,robotGroup;
+var orbit={theta:0,phi:0.85,radius:4.5,target:{x:0,y:0.2,z:0},dragging:false,panning:false,prevX:0,prevY:0};
+function updateCameraOrbit(){
+  if(!camera)return;
+  var o=orbit;
+  camera.position.x=o.target.x+o.radius*Math.sin(o.phi)*Math.sin(o.theta);
+  camera.position.y=o.target.y+o.radius*Math.cos(o.phi);
+  camera.position.z=o.target.z+o.radius*Math.sin(o.phi)*Math.cos(o.theta);
+  camera.lookAt(o.target.x,o.target.y,o.target.z);
+}
+
+// ── Sample ball creation ──
+function createSampleBall(x,z){
+  var geo=new THREE.SphereGeometry(BALL_RADIUS,18,14);
+  var mat=new THREE.MeshPhongMaterial({color:0xffcc00,emissive:0x442200,shininess:60,specular:0x999999});
+  var mesh=new THREE.Mesh(geo,mat);
+  mesh.position.set(x,BALL_RADIUS,z);
+  mesh.castShadow=true;
+  scene.add(mesh);
+  // Add a subtle inner glow ring for "FTC sample" feel
+  var ringGeo=new THREE.TorusGeometry(BALL_RADIUS*0.95,0.012,8,20);
+  var ringMat=new THREE.MeshBasicMaterial({color:0xff8800});
+  var ring=new THREE.Mesh(ringGeo,ringMat);
+  ring.rotation.x=Math.PI/2;
+  mesh.add(ring);
+  return {mesh:mesh,vx:0,vz:0,state:'idle',scale:1};
+}
+
+function spawnInitialSamples(){
+  // 3 balls in front of robot at varied positions
+  var positions=[[-0.6,-1.6],[0.0,-2.2],[0.7,-1.8]];
+  for(var i=0;i<positions.length;i++){
+    samples.push(createSampleBall(positions[i][0],positions[i][1]));
+  }
+}
+
+function resetSamples(){
+  // Remove existing
+  for(var i=0;i<samples.length;i++){
+    if(samples[i].mesh.parent)samples[i].mesh.parent.remove(samples[i].mesh);
+  }
+  samples=[];
+  sampleCount=0;
+  document.getElementById('sample-count').textContent='0';
+  spawnInitialSamples();
+}
+
+function ejectSampleBall(){
+  // Spawn ball at roller position, push forward (negative Z)
+  var ball=createSampleBall(ROLLER_POS.x,ROLLER_POS.z-0.05);
+  ball.mesh.position.y=ROLLER_POS.y;
+  ball.state='ejecting';
+  ball.scale=0.2;
+  ball.mesh.scale.set(0.2,0.2,0.2);
+  // Push it forward with some randomness
+  ball.vz=-0.06+(Math.random()-0.5)*0.01;
+  ball.vx=(Math.random()-0.5)*0.02;
+  samples.push(ball);
+}
+
+var lastEjectTime=0;
+function updateSamplePhysics(){
+  var now=Date.now();
+  // Reverse intake: eject balls periodically
+  if(intakePower<-0.5){
+    if(now-lastEjectTime>500&&sampleCount>0){
+      sampleCount--;
+      document.getElementById('sample-count').textContent=String(sampleCount);
+      ejectSampleBall();
+      lastEjectTime=now;
+    }
+  }
+  
+  for(var i=samples.length-1;i>=0;i--){
+    var s=samples[i];
+    var p=s.mesh.position;
+    
+    if(s.state==='collecting'){
+      // Shrink and disappear
+      s.scale*=0.82;
+      s.mesh.scale.set(s.scale,s.scale,s.scale);
+      // Continue moving toward roller
+      var dx=ROLLER_POS.x-p.x,dy=ROLLER_POS.y-p.y,dz=ROLLER_POS.z-p.z;
+      p.x+=dx*0.3;p.y+=dy*0.3;p.z+=dz*0.3;
+      if(s.scale<0.05){
+        scene.remove(s.mesh);
+        samples.splice(i,1);
+      }
+      continue;
+    }
+    
+    if(s.state==='ejecting'){
+      // Grow back to full size while flying out
+      s.scale=Math.min(1,s.scale+0.08);
+      s.mesh.scale.set(s.scale,s.scale,s.scale);
+      p.x+=s.vx;
+      p.z+=s.vz;
+      // Friction
+      s.vx*=0.96;s.vz*=0.96;
+      // Settle on ground
+      p.y=BALL_RADIUS;
+      // Stop ejecting once slow & far enough
+      if(Math.abs(s.vz)<0.005&&p.z<ROLLER_POS.z-0.6){
+        s.state='idle';
+        s.vx=0;s.vz=0;
+      }
+      // Field bounds
+      if(p.x<-3.8)p.x=-3.8;if(p.x>3.8)p.x=3.8;
+      if(p.z<-3.8)p.z=-3.8;if(p.z>3.8)p.z=3.8;
+      continue;
+    }
+    
+    // Idle ball — check intake suction
+    if(intakePower>0.5){
+      var dx=ROLLER_POS.x-p.x;
+      var dz=ROLLER_POS.z-p.z;
+      var dist=Math.sqrt(dx*dx+dz*dz);
+      // Only suck balls in FRONT of robot (z < front face) or near it
+      // Front of robot is at -Z. Ball must be on the front side (p.z <= ROLLER_POS.z + small) and within range
+      if(dist<ATTRACT_RADIUS && p.z<=ROLLER_POS.z+0.3){
+        // Apply velocity toward roller, stronger when closer
+        var strength=0.012*(1-dist/ATTRACT_RADIUS)+0.008;
+        s.vx+=(dx/dist)*strength;
+        s.vz+=(dz/dist)*strength;
+        // Check collection
+        if(dist<COLLECT_RADIUS){
+          s.state='collecting';
+          sampleCount++;
+          document.getElementById('sample-count').textContent=String(sampleCount);
+          continue;
+        }
+      }
+    }
+    
+    // Apply velocity + friction
+    p.x+=s.vx;
+    p.z+=s.vz;
+    s.vx*=0.92;s.vz*=0.92;
+    p.y=BALL_RADIUS;
+    
+    // Roll the ball visually based on its motion
+    var speed=Math.sqrt(s.vx*s.vx+s.vz*s.vz);
+    if(speed>0.001){
+      // Rotate around an axis perpendicular to motion direction (in XZ plane)
+      var axis=new THREE.Vector3(-s.vz,0,s.vx).normalize();
+      var angle=speed/BALL_RADIUS;
+      var q=new THREE.Quaternion().setFromAxisAngle(axis,angle);
+      s.mesh.quaternion.premultiply(q);
+    }
+    
+    // Field bounds
+    if(p.x<-3.8){p.x=-3.8;s.vx*=-0.5}
+    if(p.x>3.8){p.x=3.8;s.vx*=-0.5}
+    if(p.z<-3.8){p.z=-3.8;s.vz*=-0.5}
+    if(p.z>3.8){p.z=3.8;s.vz*=-0.5}
+  }
+}
+
+function initScene(){
+  var container=document.getElementById('scene-container');
+  var canvas=document.getElementById('robot-canvas');
+  var w=container.clientWidth,h=container.clientHeight;
+  scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x0a0a0a);
+  camera=new THREE.PerspectiveCamera(45,w/h,0.1,100);
+  updateCameraOrbit();
+  renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true});
+  renderer.setSize(w,h);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.shadowMap.enabled=true;
+  scene.add(new THREE.AmbientLight(0x404050,0.6));
+  var dl=new THREE.DirectionalLight(0xffffff,0.9);
+  dl.position.set(3,6,4);dl.castShadow=true;
+  scene.add(dl);
+  var fl=new THREE.PointLight(0x4488ff,0.3,10);
+  fl.position.set(-2,3,-2);scene.add(fl);
+  var floorGeo=new THREE.PlaneGeometry(8,8);
+  var floorMat=new THREE.MeshPhongMaterial({color:0x1a1a2e});
+  var floor=new THREE.Mesh(floorGeo,floorMat);
+  floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;
+  floor.userData.telemarkThemeRole='floor';
+  scene.add(floor);
+  var wallMat=new THREE.MeshPhongMaterial({color:0x151520});
+  var wallGeo=new THREE.BoxGeometry(8,0.6,0.1);
+  [-1,1].forEach(function(s){
+    var w1=new THREE.Mesh(wallGeo,wallMat);w1.position.set(0,0.3,s*4);scene.add(w1);
+    var w2=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.6,8),wallMat);w2.position.set(s*4,0.3,0);scene.add(w2);
+  });
+  var bodyGeo=new THREE.BoxGeometry(1.4,0.35,1.2);
+  var bodyMat=new THREE.MeshPhongMaterial({color:0x2a2a2a});
+  var body=new THREE.Mesh(bodyGeo,bodyMat);body.position.y=0.4;body.castShadow=true;
+  scene.add(body);
+  var wheelGeo=new THREE.CylinderGeometry(0.16,0.16,0.1,16);
+  var wheelMat=new THREE.MeshPhongMaterial({color:0x222222});
+  [[-0.75,0.16,-0.5],[0.75,0.16,-0.5],[-0.75,0.16,0.5],[0.75,0.16,0.5]].forEach(function(p){
+    var w=new THREE.Mesh(wheelGeo,wheelMat);w.rotation.z=Math.PI/2;
+    w.position.set(p[0],p[1],p[2]);w.castShadow=true;scene.add(w);
+  });
+  var rollerGeo=new THREE.CylinderGeometry(0.12,0.12,1.6,20);
+  var rollerMat=new THREE.MeshPhongMaterial({color:0xff6600,emissive:0x331100});
+  intakeRoller=new THREE.Mesh(rollerGeo,rollerMat);
+  intakeRoller.rotation.z=Math.PI/2;
+  intakeRoller.position.set(ROLLER_POS.x,ROLLER_POS.y,ROLLER_POS.z);
+  intakeRoller.castShadow=true;
+  scene.add(intakeRoller);
+  for(var i=0;i<8;i++){
+    var gripGeo=new THREE.BoxGeometry(0.05,1.58,0.02);
+    var gripMat=new THREE.MeshPhongMaterial({color:0xcc4400});
+    var grip=new THREE.Mesh(gripGeo,gripMat);
+    var angle=(i/8)*Math.PI*2;
+    grip.position.set(Math.cos(angle)*0.12,0,Math.sin(angle)*0.12);
+    intakeRoller.add(grip);
+  }
+  var mountGeo=new THREE.BoxGeometry(0.08,0.2,0.15);
+  var mountMat=new THREE.MeshPhongMaterial({color:0x333333});
+  [-0.82,0.82].forEach(function(x){
+    var m=new THREE.Mesh(mountGeo,mountMat);m.position.set(x,0.3,-0.72);scene.add(m);
+  });
+  
+  // Spawn the sample balls
+  spawnInitialSamples();
+  
+  // Orbit controls
+  canvas.addEventListener('pointerdown',function(e){
+    if(e.button===0){orbit.dragging=true;orbit.panning=false}
+    else if(e.button===1||e.button===2){orbit.dragging=false;orbit.panning=true}
+    orbit.prevX=e.clientX;orbit.prevY=e.clientY;
+    canvas.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  canvas.addEventListener('pointermove',function(e){
+    if(!orbit.dragging&&!orbit.panning)return;
+    var dx=e.clientX-orbit.prevX,dy=e.clientY-orbit.prevY;
+    orbit.prevX=e.clientX;orbit.prevY=e.clientY;
+    if(orbit.dragging){
+      orbit.theta-=dx*0.008;
+      orbit.phi=Math.max(0.1,Math.min(Math.PI-0.1,orbit.phi-dy*0.008));
+    }
+    if(orbit.panning){
+      var panSpeed=0.005*orbit.radius;
+      var right=new THREE.Vector3();
+      var up=new THREE.Vector3();
+      right.setFromMatrixColumn(camera.matrixWorld,0);
+      up.setFromMatrixColumn(camera.matrixWorld,1);
+      orbit.target.x-=right.x*dx*panSpeed-up.x*dy*panSpeed;
+      orbit.target.y-=right.y*dx*panSpeed-up.y*dy*panSpeed;
+      orbit.target.z-=right.z*dx*panSpeed-up.z*dy*panSpeed;
+      orbit.target.y=Math.max(-0.5,orbit.target.y);
+    }
+    updateCameraOrbit();
+  });
+  canvas.addEventListener('pointerup',function(){orbit.dragging=false;orbit.panning=false});
+  canvas.addEventListener('pointercancel',function(){orbit.dragging=false;orbit.panning=false});
+  canvas.addEventListener('wheel',function(e){
+    e.preventDefault();
+    orbit.radius=Math.max(1.5,Math.min(15,orbit.radius+e.deltaY*0.008));
+    updateCameraOrbit();
+  },{passive:false});
+  canvas.addEventListener('contextmenu',function(e){e.preventDefault()});
+  if(window.TelemarkSimulatorBase)window.TelemarkSimulatorBase.themeThreeScene(scene);
+}
+function animateScene(){
+  requestAnimationFrame(animateScene);
+  if(intakeRoller){
+    intakeRoller.rotation.x-=intakePower*0.15;
+  }
+  updateSamplePhysics();
+  if(renderer)renderer.render(scene,camera);
+}
+window.addEventListener('resize',function(){
+  var container=document.getElementById('scene-container');
+  if(!container||!camera||!renderer)return;
+  var w=container.clientWidth,h=container.clientHeight;
+  camera.aspect=w/h;camera.updateProjectionMatrix();
+  renderer.setSize(w,h);
+});
+
+// Fallback only: simulator_base owns gamepad input and card interactions.
+if (!window.TelemarkSimulatorBase) {
+// ── Trigger Sliders (both left and right) ──
+function setupTrigger(sliderId,fillId,prop){
+  var slider=document.getElementById(sliderId);
+  var fill=document.getElementById(fillId);
+  var dragging=false;
+  function update(e){
+    var r=slider.getBoundingClientRect();
+    var pct=1-Math.max(0,Math.min(1,(e.clientY-r.top)/r.height));
+    gamepad[prop]=pct;
+    fill.style.height=(pct*100)+'%';
+  }
+  slider.addEventListener('pointerdown',function(e){dragging=true;slider.setPointerCapture(e.pointerId);update(e)});
+  slider.addEventListener('pointermove',function(e){if(dragging)update(e)});
+  slider.addEventListener('pointerup',function(){dragging=false;gamepad[prop]=0;fill.style.height='0%'});
+  slider.addEventListener('pointercancel',function(){dragging=false;gamepad[prop]=0;fill.style.height='0%'});
+}
+setupTrigger('right-trigger-slider','right-trigger-fill','right_trigger');
+setupTrigger('left-trigger-slider','left-trigger-fill','left_trigger');
+
+// ── Joystick Sticks (fix for boundary issue) ──
+var sticks={};
+function setupJoysticks(){
+  var controllerWrap=document.getElementById('controller-wrap');
+  function toPct(rect,x,y){return{left:(x-rect.left)/rect.width*100+'%',top:(y-rect.top)/rect.height*100+'%'};}
+  ['left','right'].forEach(function(side){
+    var zone=document.getElementById('stick-zone-'+side);
+    var knob=document.getElementById('stick-knob-'+side);
+    var centerLeft=side==='left'?35.5:64;
+    var centerTop=65.5;
+    sticks[side]={zone:zone,knob:knob,dragging:false,pointerId:null,centerLeft:centerLeft,centerTop:centerTop};
+    zone.style.cursor='grab';
+    zone.addEventListener('pointerdown',function(e){
+      e.preventDefault();
+      var s=sticks[side];
+      s.dragging=true;
+      s.pointerId=e.pointerId;
+      s.zone.setPointerCapture(e.pointerId);
+      updateStickFromPointer(side,e.clientX,e.clientY);
+    });
+  });
+  function updateStickFromPointer(side,cx,cy){
+    var s=sticks[side];
+    var rect=s.zone.getBoundingClientRect();
+    var wr=controllerWrap.getBoundingClientRect();
+    var cxCenter=rect.left+rect.width/2,cyCenter=rect.top+rect.height/2;
+    var maxR=Math.min(rect.width,rect.height)*0.36;
+    var dx=cx-cxCenter,dy=cy-cyCenter;
+    var len=Math.sqrt(dx*dx+dy*dy);
+    if(len>maxR){dx=dx/len*maxR;dy=dy/len*maxR}
+    // Screen-space Y already matches FTC's axis sign: dragging up makes dy negative.
+    var nx=dx/maxR,ny=dy/maxR;
+    nx=Math.max(-1,Math.min(1,nx));
+    ny=Math.max(-1,Math.min(1,ny));
+    gamepad[side+'_stick_x']=nx;
+    gamepad[side+'_stick_y']=ny;
+    s.knob.style.left=((rect.left-wr.left+rect.width/2+dx)/wr.width*100)+'%';
+    s.knob.style.top=((rect.top-wr.top+rect.height/2+dy)/wr.height*100)+'%';
+    s.knob.style.transform='translate(-50%,-50%)';
+  }
+  window.addEventListener('pointermove',function(e){
+    Object.keys(sticks).forEach(function(side){
+      var s=sticks[side];
+      if(s.dragging&&s.pointerId===e.pointerId)updateStickFromPointer(side,e.clientX,e.clientY);
+    });
+  });
+  function handlePointerEnd(e){
+    Object.keys(sticks).forEach(function(side){
+      var s=sticks[side];
+      if(s.dragging&&s.pointerId===e.pointerId){
+        s.dragging=false;
+        s.pointerId=null;
+        gamepad[side+'_stick_x']=0;
+        gamepad[side+'_stick_y']=0;
+        s.knob.style.left=s.centerLeft+'%';
+        s.knob.style.top=s.centerTop+'%';
+        s.knob.style.transform='translate(-50%,-50%)';
+      }
+    });
+  }
+  window.addEventListener('pointerup',handlePointerEnd);
+  window.addEventListener('pointercancel',handlePointerEnd);
+  window.addEventListener('blur',function(){Object.keys(sticks).forEach(function(side){var s=sticks[side];if(s.dragging){s.dragging=false;s.pointerId=null;gamepad[side+'_stick_x']=0;gamepad[side+'_stick_y']=0;s.knob.style.left=s.centerLeft+'%';s.knob.style.top=s.centerTop+'%';s.knob.style.transform='translate(-50%,-50%)';}})});
+}
+setupJoysticks();
+
+// ── Gamepad Float Card ──
+(function(){
+  var card=document.getElementById('gamepad-float-card'),tb=document.getElementById('gamepad-titlebar'),cb=document.getElementById('gp-collapse-btn'),bd=document.getElementById('gamepad-card-body'),rh=document.getElementById('gamepad-resize-handle');
+  var collapsed=false,sw=null,sh=null;
+  cb.addEventListener('click',function(e){e.stopPropagation();collapsed=!collapsed;if(collapsed){sw=card.style.width||null;sh=card.style.height||null;bd.style.display='none';rh.style.display='none';card.style.height='auto';cb.textContent='+'}else{bd.style.display='';rh.style.display='';if(sw)card.style.width=sw;if(sh)card.style.height=sh;cb.textContent='\u2212'}});
+  var dr=false,dox=0,doy=0;
+  tb.addEventListener('pointerdown',function(e){if(e.target===cb)return;dr=true;var r=card.getBoundingClientRect();dox=e.clientX-r.left;doy=e.clientY-r.top;tb.setPointerCapture(e.pointerId);e.preventDefault()});
+  tb.addEventListener('pointermove',function(e){if(!dr)return;card.style.left=Math.max(0,Math.min(window.innerWidth-card.offsetWidth,e.clientX-dox))+'px';card.style.top=Math.max(0,Math.min(window.innerHeight-40,e.clientY-doy))+'px';card.style.right='auto';card.style.bottom='auto'});
+  tb.addEventListener('pointerup',function(){dr=false});tb.addEventListener('pointercancel',function(){dr=false});
+  var cr=false,crx=0,cry=0,crw=0,crh=0;
+  rh.addEventListener('pointerdown',function(e){cr=true;crx=e.clientX;cry=e.clientY;crw=card.offsetWidth;crh=card.offsetHeight;rh.setPointerCapture(e.pointerId);e.preventDefault();e.stopPropagation()});
+  rh.addEventListener('pointermove',function(e){if(!cr)return;card.style.width=Math.max(240,crw+(e.clientX-crx))+'px';card.style.height=Math.max(80,crh+(e.clientY-cry))+'px'});
+  rh.addEventListener('pointerup',function(){cr=false});rh.addEventListener('pointercancel',function(){cr=false});
+})();
+}
+
+window.addEventListener('load',function(){
+  updateCode(codeEditor.value);
+  initScene();
+  animateScene();
+  updatePowerBar();
+});
+if (window.TelemarkSimulatorBase) window.TelemarkSimulatorBase.installLegacy({
+  state: gamepad,
+  onThemeChange: function(theme) {
+    if (scene) window.TelemarkSimulatorBase.themeThreeScene(scene, theme);
+  }
+});
+</script>
+</body>
+</html>

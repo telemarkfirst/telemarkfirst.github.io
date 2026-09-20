@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Telemark Unit 14.2 Simulator</title>
+<style>
+  #sim-right-panel #sim-scene-container {
+    flex: 1 0 clamp(360px, 55vh, 620px);
+    min-height: 360px;
+    background: #020204;
+  }
+
+  #sim-right-panel .u142-panel {
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: clamp(270px, 38vh, 470px);
+    overflow-y: auto;
+    margin: 10px;
+    padding: 12px;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #0b0b0f;
+    color: #e5e7eb;
+    font-family: var(--font-ui, Arial, sans-serif);
+  }
+
+  #sim-scene-container .u142-stream-badge,
+  #sim-scene-container .u142-result-badge {
+    position: absolute;
+    z-index: 5;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: rgba(4, 4, 7, 0.9);
+    color: #f4f4f5;
+    pointer-events: none;
+    font-weight: 800;
+  }
+
+  #sim-scene-container .u142-stream-badge {
+    top: 12px;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 11px;
+    color: #bbf7d0;
+  }
+
+  #sim-scene-container .u142-result-badge {
+    right: 12px;
+    bottom: 12px;
+    display: none;
+    padding: 10px 13px;
+  }
+
+  #sim-right-panel .u142-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0 8px;
+    font-weight: 800;
+  }
+
+  #sim-right-panel .u142-title:first-child {
+    margin-top: 0;
+  }
+
+  #sim-right-panel .u142-controls,
+  #sim-right-panel .u142-presets,
+  #sim-right-panel .u142-flow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  #sim-right-panel .u142-tag-card,
+  #sim-right-panel .u142-status-card,
+  #sim-right-panel .u142-step {
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #08080c;
+    color: #9ca3af;
+  }
+
+  #sim-right-panel .u142-tag-card {
+    min-width: 116px;
+    padding: 8px;
+  }
+
+  #sim-right-panel .u142-tag-card.active {
+    border-color: #22cc66;
+    color: #bbf7d0;
+  }
+
+  #sim-right-panel .u142-tag-card.target {
+    border-color: #22d3ee;
+    box-shadow: 0 0 12px rgba(34, 211, 238, 0.18);
+  }
+
+  #sim-right-panel .u142-tag-card.null-meta {
+    border-color: #b91c1c;
+  }
+
+  #sim-right-panel .u142-tag-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 7px;
+    font-weight: 800;
+  }
+
+  #sim-right-panel .u142-button,
+  #sim-right-panel .u142-toggle,
+  #sim-right-panel .u142-input {
+    border: 1px solid #374151;
+    border-radius: 8px;
+    background: #101018;
+    color: #e5e7eb;
+    padding: 7px 9px;
+    font: inherit;
+  }
+
+  #sim-right-panel .u142-button,
+  #sim-right-panel .u142-toggle {
+    cursor: pointer;
+    font-weight: 700;
+  }
+
+  #sim-right-panel .u142-button {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.12);
+    color: #bfdbfe;
+  }
+
+  #sim-right-panel .u142-toggle.active {
+    border-color: #22cc66;
+    color: #bbf7d0;
+  }
+
+  #sim-right-panel .u142-toggle.danger {
+    border-color: #b91c1c;
+    color: #fecaca;
+  }
+
+  #sim-right-panel .u142-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  #sim-right-panel .u142-status-card {
+    padding: 9px;
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  #sim-right-panel .u142-status-card.good {
+    border-color: #22cc66;
+    color: #bbf7d0;
+  }
+
+  #sim-right-panel .u142-status-card.bad {
+    border-color: #b91c1c;
+    color: #fecaca;
+  }
+
+  #sim-right-panel .u142-status-card.warn {
+    border-color: #8a6a20;
+    color: #fde68a;
+  }
+
+  #sim-right-panel .u142-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+  }
+
+  #sim-right-panel .u142-table th,
+  #sim-right-panel .u142-table td {
+    border-bottom: 1px solid #20202b;
+    padding: 6px;
+    text-align: left;
+  }
+
+  #sim-right-panel .u142-table tr.target {
+    color: #a5f3fc;
+    background: rgba(34, 211, 238, 0.08);
+  }
+
+  #sim-right-panel .u142-table .good {
+    color: #bbf7d0;
+  }
+
+  #sim-right-panel .u142-table .bad {
+    color: #fecaca;
+  }
+
+  #sim-right-panel .u142-step {
+    padding: 8px;
+    font-size: 0.8rem;
+  }
+
+  #sim-right-panel .u142-step.active {
+    border-color: #22d3ee;
+    color: #a5f3fc;
+    box-shadow: 0 0 12px rgba(34, 211, 238, 0.16);
+  }
+
+  #sim-right-panel .u142-step.good {
+    border-color: #22cc66;
+    color: #bbf7d0;
+  }
+
+  #sim-right-panel .u142-callout,
+  #sim-right-panel .u142-warning,
+  #sim-right-panel .u142-success {
+    margin-top: 10px;
+    border-radius: 8px;
+    padding: 9px;
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  #sim-right-panel .u142-callout {
+    border: 1px solid #374151;
+    background: rgba(244, 244, 245, 0.05);
+    color: #e5e7eb;
+  }
+
+  #sim-right-panel .u142-warning {
+    display: none;
+    border: 1px solid #8a6a20;
+    background: rgba(255, 204, 102, 0.08);
+    color: #fde68a;
+  }
+
+  #sim-right-panel .u142-warning.error {
+    border-color: #7f1d1d;
+    background: rgba(239, 68, 68, 0.1);
+    color: #fecaca;
+  }
+
+  #sim-right-panel .u142-success {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #22cc66;
+    background: rgba(34, 204, 102, 0.1);
+    color: #22cc66;
+    font-weight: 800;
+  }
+</style>
+<script src="./simulator_base.js"></script>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+<script>
+window.onSimulatorReady = function () {
+  "use strict";
+
+  const starterCode = `import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+
+@TeleOp(name="Scan_For_Tag")
+public class ScanForTag extends OpMode {
+
+    AprilTagProcessor aprilTagProcessor;
+    VisionPortal      visionPortal;
+
+    @Override
+    public void init() {
+        aprilTagProcessor = AprilTagProcessor.easyCreateWithDefaults();
+
+        visionPortal = new VisionPortal.Builder()
+            .setCamera(hardwareMap.get(WebcamName.class, "front_cam"))
+            .addProcessor(aprilTagProcessor)
+            .build();
+
+        telemetry.addData("Status", "Camera Ready");
+    }
+
+    boolean scanForTag(int targetId) {
+        // TODO: Loop through the current detection list
+        // TODO: Return true only when id matches targetId AND metadata is not null
+        return false;
+    }
+
+    @Override
+    public void loop() {
+        boolean found = scanForTag(22);
+
+        telemetry.addData("Tag 22 Found", found);
+        telemetry.addData("Detections",   aprilTagProcessor.getDetections().size());
+        telemetry.update();
+    }
+}`;
+
+  const requirements = [
+    "Call aprilTagProcessor.getDetections()",
+    "Use a for loop to iterate over detections",
+    "Check detection.id against targetId",
+    "Check detection.metadata != null",
+    "Return true when both conditions are met",
+    "Return false after the loop when not found",
+    "Make scanForTag return boolean",
+    "Show the scan result with telemetry.addData()"
+  ];
+
+  const tagIds = [20, 21, 22, 23, 24, 25, 26, 27, 28, 29];
+  const tags = tagIds.map(function (id, index) {
+    return {
+      id: id,
+      index: index,
+      active: id === 20 || id === 22,
+      metadataValid: true,
+      x: -2.05 + (index % 5) * 1.02,
+      y: index < 5 ? 0.62 : -0.72,
+      mesh: null,
+      overlay: null,
+      label: null,
+      metaLabel: null,
+      foundBadge: null
+    };
+  });
+
+  const state = {
+    running: false,
+    targetId: 22,
+    result: false,
+    checked: 0,
+    currentTagId: null,
+    path: [],
+    foundIndex: -1,
+    lastSignature: "",
+    scanStart: 0,
+    lastEval: null,
+    processor: null,
+    warning: "",
+    randomRun: 0
+  };
+  let staleSnapshot = null;
+
+  let sceneRoot;
+  let feedGroup;
+  let animationRegistered = false;
+  const aprilTagCallbacks = [];
+
+  function el(id) {
+    return document.getElementById(id);
+  }
+
+  function safeCall(fn) {
+    if (typeof fn !== "function") return undefined;
+    const args = Array.prototype.slice.call(arguments, 1);
+    return fn.apply(null, args);
+  }
+
+  ensureAprilTagHardware();
+
+  setCode(starterCode);
+  setChallenge({
+    title: "Telemark Unit 14.2 Simulator",
+    scenario: "Search the current AprilTag detection list for a requested ID with valid metadata.",
+    successMessage: "scanForTag correctly searches the detection list.",
+    faultModes: [
+      {
+        id: "stale-detections",
+        label: "Stale camera results",
+        description: "The camera keeps returning an older detection list after the field view changes."
+      }
+    ],
+    requirements: requirements
+  });
+  setBadges([
+    { icon: "fa-camera", iconClass: "fa-solid fa-camera", label: "AprilTag", active: true },
+    { icon: "fa-list-check", iconClass: "fa-solid fa-list-check", label: "Detection", active: true },
+    { icon: "fa-display", iconClass: "fa-solid fa-display", label: "Telemetry", active: true }
+  ]);
+  setActiveInputs([]);
+
+  const banner = el("sim-success-banner");
+  if (banner) {
+    banner.innerHTML = '<i class="fa-solid fa-circle-check"></i> Challenge Complete! scanForTag correctly searches the detection list.';
+  }
+
+  state.processor = hardwareMap.registerAprilTagProcessor("aprilTagProcessor");
+  hardwareMap.onAprilTagDetection(function (detections) {
+    updateDetectionVisual(detections);
+  });
+
+  createPanel();
+  setupScene();
+  emitDetections();
+  validateCode();
+  updatePanel();
+
+  window.onRun = function () {
+    state.running = true;
+    state.lastSignature = "";
+    validateCode();
+    runTeleOp();
+  };
+
+  window.onStop = function () {
+    state.running = false;
+    if (typeof stopExecution === "function") {
+      state.running = false;
+    }
+    updatePanel();
+  };
+
+  window.onReset = function () {
+    state.running = false;
+    state.targetId = 22;
+    state.result = false;
+    state.checked = 0;
+    state.currentTagId = null;
+    state.path = [];
+    state.foundIndex = -1;
+    state.lastSignature = "";
+    state.lastEval = null;
+    state.randomRun = 0;
+    staleSnapshot = null;
+    tags.forEach(function (tag) {
+      tag.active = tag.id === 20 || tag.id === 22;
+      tag.metadataValid = true;
+    });
+    const targetInput = el("u142-target");
+    if (targetInput) targetInput.value = "22";
+    safeCall(clearTelemetry);
+    emitDetections();
+    validateCode();
+    updatePanel();
+  };
+
+  if (!animationRegistered && typeof addAnimationCallback === "function") {
+    addAnimationCallback(tick);
+    animationRegistered = true;
+  }
+
+  function ensureAprilTagHardware() {
+    if (typeof hardwareMap.registerAprilTagProcessor !== "function") {
+      hardwareMap.registerAprilTagProcessor = function (name) {
+        const processor = {
+          _name: name,
+          getDetections: function () {
+            return getAprilTagDetections();
+          }
+        };
+        hardwareMap._devices[name] = processor;
+        return processor;
+      };
+    }
+
+    if (typeof hardwareMap.onAprilTagDetection !== "function") {
+      hardwareMap.onAprilTagDetection = function (cb) {
+        aprilTagCallbacks.push(cb);
+      };
+    } else {
+      const original = hardwareMap.onAprilTagDetection.bind(hardwareMap);
+      hardwareMap.onAprilTagDetection = function (cb) {
+        aprilTagCallbacks.push(cb);
+        original(cb);
+      };
+    }
+  }
+
+  function createPanel() {
+    const rightPanel = el("sim-right-panel");
+    const sceneContainer = el("sim-scene-container");
+    if (!rightPanel || !sceneContainer) return;
+
+    ["u142-panel", "u142-stream-badge", "u142-result-badge"].forEach(function (id) {
+      const old = el(id);
+      if (old) old.remove();
+    });
+
+    const streamBadge = document.createElement("div");
+    streamBadge.id = "u142-stream-badge";
+    streamBadge.className = "u142-stream-badge";
+    streamBadge.innerHTML = '<i class="fa-solid fa-circle-play"></i> STREAMING';
+    sceneContainer.appendChild(streamBadge);
+
+    const resultBadge = document.createElement("div");
+    resultBadge.id = "u142-result-badge";
+    resultBadge.className = "u142-result-badge";
+    sceneContainer.appendChild(resultBadge);
+
+    const panel = document.createElement("div");
+    panel.id = "u142-panel";
+    panel.className = "u142-panel";
+    panel.innerHTML = `
+      <div class="u142-title"><i class="fa-solid fa-sliders"></i> Detection Controls</div>
+      <div class="u142-controls">
+        <label for="u142-target"><i class="fa-solid fa-bullseye"></i> Target ID</label>
+        <input class="u142-input" id="u142-target" type="number" min="20" max="29" value="22" />
+      </div>
+      <div class="u142-controls" id="u142-tag-controls"></div>
+
+      <div class="u142-title"><i class="fa-solid fa-vial"></i> Test Scenarios</div>
+      <div class="u142-presets">
+        <button class="u142-button" type="button" data-preset="valid"><i class="fa-solid fa-circle-check"></i> Target in list, valid metadata</button>
+        <button class="u142-button" type="button" data-preset="null"><i class="fa-solid fa-ban"></i> Target in list, null metadata</button>
+        <button class="u142-button" type="button" data-preset="missing"><i class="fa-solid fa-magnifying-glass"></i> Target not in list</button>
+        <button class="u142-button" type="button" data-preset="empty"><i class="fa-solid fa-box-open"></i> Empty detection list</button>
+        <button class="u142-button" type="button" data-preset="random"><i class="fa-solid fa-shuffle"></i> Random detection mix</button>
+        <button class="u142-button" type="button" data-preset="late"><i class="fa-solid fa-hourglass-half"></i> Target late in list</button>
+      </div>
+
+      <div class="u142-title"><i class="fa-solid fa-table-list"></i> Detection List</div>
+      <table class="u142-table">
+        <thead><tr><th>Tag ID</th><th>Metadata</th><th>In List</th><th>Match Target</th></tr></thead>
+        <tbody id="u142-detection-table"></tbody>
+      </table>
+
+      <div class="u142-title"><i class="fa-solid fa-magnifying-glass"></i> scanForTag Result</div>
+      <div class="u142-summary">
+        <div class="u142-status-card" id="u142-target-card"></div>
+        <div class="u142-status-card" id="u142-result-card"></div>
+        <div class="u142-status-card" id="u142-counter-card"></div>
+        <div class="u142-status-card" id="u142-condition-card"></div>
+      </div>
+
+      <div class="u142-title"><i class="fa-solid fa-route"></i> Search Path</div>
+      <div class="u142-flow" id="u142-flow"></div>
+      <div class="u142-callout" id="u142-return-note"><i class="fa-solid fa-code-branch"></i> Waiting for scanForTag()</div>
+      <div class="u142-success" id="u142-success"><i class="fa-solid fa-circle-check"></i> Challenge Complete! scanForTag correctly searches the detection list.</div>
+      <div class="u142-warning" id="u142-warning"></div>
+    `;
+    rightPanel.appendChild(panel);
+
+    renderTagControls();
+
+    const targetInput = el("u142-target");
+    if (targetInput) {
+      targetInput.addEventListener("input", function () {
+        state.targetId = Number(targetInput.value) || 0;
+        state.lastSignature = "";
+        emitDetections();
+        updatePanel();
+      });
+    }
+
+    document.querySelectorAll("[data-preset]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        applyPreset(button.getAttribute("data-preset"));
+      });
+    });
+  }
+
+  function renderTagControls() {
+    const wrap = el("u142-tag-controls");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    tags.forEach(function (tag) {
+      const card = document.createElement("div");
+      card.className = "u142-tag-card";
+      card.id = "u142-tag-card-" + tag.id;
+      card.innerHTML = `
+        <div class="u142-tag-row"><span>ID ${tag.id}</span><i class="fa-solid fa-tag"></i></div>
+        <button class="u142-toggle" type="button" data-toggle-active="${tag.id}"><i class="fa-solid fa-list"></i> In List</button>
+        <button class="u142-toggle" type="button" data-toggle-meta="${tag.id}"><i class="fa-solid fa-database"></i> Set Metadata Null</button>
+      `;
+      wrap.appendChild(card);
+    });
+
+    wrap.querySelectorAll("[data-toggle-active]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        const tag = findTag(Number(button.getAttribute("data-toggle-active")));
+        if (!tag) return;
+        tag.active = !tag.active;
+        state.lastSignature = "";
+        emitDetections();
+        updatePanel();
+      });
+    });
+
+    wrap.querySelectorAll("[data-toggle-meta]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        const tag = findTag(Number(button.getAttribute("data-toggle-meta")));
+        if (!tag) return;
+        tag.metadataValid = !tag.metadataValid;
+        state.lastSignature = "";
+        emitDetections();
+        updatePanel();
+      });
+    });
+  }
+
+  function setupScene() {
+    if (!window.THREE || !window.scene) return;
+    if (sceneRoot) window.scene.remove(sceneRoot);
+
+    sceneRoot = new THREE.Group();
+    sceneRoot.name = "unit14_2_scene";
+    window.scene.add(sceneRoot);
+    window.scene.background = new THREE.Color(0x000000);
+    safeCall(setFieldVisible, false);
+    safeCall(setCameraOrbit, {
+      theta: -0.25,
+      phi: 0.92,
+      radius: 7.0,
+      target: { x: 0, y: 0.85, z: 0 }
+    });
+
+    const ambient = new THREE.AmbientLight(0xffffff, 0.82);
+    sceneRoot.add(ambient);
+    const key = new THREE.DirectionalLight(0xffffff, 1.05);
+    key.position.set(3, 4, 5);
+    sceneRoot.add(key);
+
+    feedGroup = new THREE.Group();
+    feedGroup.position.set(0, 1.0, 0);
+    sceneRoot.add(feedGroup);
+
+    const frame = new THREE.Mesh(
+      new THREE.BoxGeometry(5.7, 3.45, 0.08),
+      new THREE.MeshStandardMaterial({ color: 0x09090d, roughness: 0.78, metalness: 0.08 })
+    );
+    frame.position.z = -0.08;
+    feedGroup.add(frame);
+
+    const wall = new THREE.Mesh(
+      new THREE.PlaneGeometry(5.35, 3.05),
+      new THREE.MeshBasicMaterial({ color: 0xbab4aa })
+    );
+    wall.position.z = 0.01;
+    feedGroup.add(wall);
+
+    const rail = new THREE.Mesh(
+      new THREE.BoxGeometry(5.35, 0.08, 0.04),
+      new THREE.MeshBasicMaterial({ color: 0x4b5563 })
+    );
+    rail.position.set(0, 0.03, 0.05);
+    feedGroup.add(rail);
+
+    tags.forEach(function (tag) {
+      tag.mesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.58, 0.58),
+        new THREE.MeshBasicMaterial({ map: makeTagTexture(tag.id), transparent: true, opacity: 1, side: THREE.DoubleSide })
+      );
+      tag.mesh.position.set(tag.x, tag.y, 0.08);
+      feedGroup.add(tag.mesh);
+
+      tag.overlay = makeBoxOutline(0.78, 0.78, 0x22cc66);
+      tag.overlay.position.set(tag.x, tag.y, 0.11);
+      feedGroup.add(tag.overlay);
+
+      tag.label = makeTextPlane("ID: " + tag.id, 0.8, 0.2, "#bbf7d0", "rgba(0,0,0,0.72)");
+      tag.label.position.set(tag.x, tag.y + 0.52, 0.12);
+      feedGroup.add(tag.label);
+
+      tag.metaLabel = makeTextPlane("META: VALID", 1.05, 0.2, "#bbf7d0", "rgba(0,0,0,0.72)");
+      tag.metaLabel.position.set(tag.x, tag.y - 0.52, 0.12);
+      feedGroup.add(tag.metaLabel);
+
+      tag.foundBadge = makeTextPlane("FOUND", 0.82, 0.24, "#bbf7d0", "rgba(0,0,0,0.80)");
+      tag.foundBadge.position.set(tag.x + 0.72, tag.y + 0.22, 0.13);
+      feedGroup.add(tag.foundBadge);
+    });
+  }
+
+  function makeTagTexture(id) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, 128, 128);
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(8, 8, 112, 112);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(22, 22, 84, 84);
+    ctx.fillStyle = "#000000";
+    for (let r = 0; r < 4; r++) {
+      for (let c = 0; c < 4; c++) {
+        if (((id * 5 + r * 3 + c * 7) % 2) === 0) ctx.fillRect(34 + c * 15, 34 + r * 15, 12, 12);
+      }
+    }
+    ctx.fillStyle = "#111111";
+    ctx.font = "bold 20px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(String(id), 64, 116);
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  function makeTextPlane(text, width, height, color, background) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 512;
+    canvas.height = 128;
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (background) {
+      ctx.fillStyle = background;
+      roundRect(ctx, 12, 14, 488, 96, 18);
+      ctx.fill();
+    }
+    ctx.fillStyle = color || "#ffffff";
+    ctx.font = "bold 42px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, 256, 64);
+    const texture = new THREE.CanvasTexture(canvas);
+    const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false });
+    return new THREE.Mesh(new THREE.PlaneGeometry(width, height), material);
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function makeBoxOutline(width, height, color) {
+    const points = [
+      new THREE.Vector3(-width / 2, -height / 2, 0),
+      new THREE.Vector3(width / 2, -height / 2, 0),
+      new THREE.Vector3(width / 2, height / 2, 0),
+      new THREE.Vector3(-width / 2, height / 2, 0),
+      new THREE.Vector3(-width / 2, -height / 2, 0)
+    ];
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    return new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: color }));
+  }
+
+  function tick() {
+    const now = performance.now();
+    const elapsed = state.scanStart ? now - state.scanStart : 0;
+    const activePath = state.path || [];
+    if (activePath.length) {
+      const step = Math.min(activePath.length - 1, Math.floor(elapsed / 320));
+      state.currentTagId = activePath[step] ? activePath[step].id : null;
+      const maxChecked = state.result && state.foundIndex >= 0 ? state.foundIndex + 1 : activePath.length;
+      state.checked = Math.min(maxChecked, Math.max(1, step + 1));
+    } else {
+      state.currentTagId = null;
+      state.checked = 0;
+    }
+    updateDetectionVisual(getAprilTagDetections());
+    updatePanel();
+  }
+
+  function getAprilTagDetections() {
+    const detections = tags.filter(function (tag) {
+      return tag.active;
+    }).map(function (tag) {
+      return {
+        id: tag.id,
+        metadata: tag.metadataValid ? { name: "Tag " + tag.id } : null,
+        ftcPose: {
+          x: (tag.index - 2.5) * 6,
+          y: 24,
+          z: 0,
+          range: 18 + tag.index * 2,
+          bearing: -12 + tag.index * 5,
+          yaw: 0
+        }
+      };
+    });
+    if (window.isFaultActive && isFaultActive("stale-detections")) {
+      if (!staleSnapshot) {
+        staleSnapshot = detections.map(function (detection) {
+          return {
+            id: detection.id,
+            metadata: detection.metadata,
+            ftcPose: Object.assign({}, detection.ftcPose)
+          };
+        });
+      }
+      const stale = staleSnapshot.map(function (detection) {
+        return {
+          id: detection.id,
+          metadata: detection.metadata,
+          ftcPose: Object.assign({}, detection.ftcPose)
+        };
+      });
+      stale.size = function () {
+        return stale.length;
+      };
+      return stale;
+    }
+
+    staleSnapshot = null;
+    detections.size = function () {
+      return detections.length;
+    };
+    return detections;
+  }
+
+  window.onFaultModeChange = function() {
+    staleSnapshot = null;
+    state.lastSignature = "";
+    emitDetections();
+    updatePanel();
+  };
+
+  function emitDetections() {
+    const detections = getAprilTagDetections();
+    aprilTagCallbacks.forEach(function (cb) {
+      try {
+        cb(detections);
+      } catch (err) {
+        console.error("[AprilTag callback error]", err);
+      }
+    });
+  }
+
+  function updateDetectionVisual() {
+    const foundTag = state.result && state.foundIndex >= 0 ? state.path[state.foundIndex] : null;
+    tags.forEach(function (tag) {
+      const active = tag.active;
+      const isTarget = tag.id === state.targetId;
+      const isCurrent = tag.id === state.currentTagId;
+      const isFound = foundTag && foundTag.id === tag.id;
+      if (tag.mesh) tag.mesh.material.opacity = active ? 1 : 0.22;
+      if (tag.overlay) {
+        tag.overlay.visible = active || isTarget;
+        const color = isTarget && active ? 0x22d3ee : active ? 0x22cc66 : 0x555555;
+        tag.overlay.material.color.setHex(isCurrent ? 0xfacc15 : isFound ? 0x22cc66 : color);
+        const pulse = isFound ? 1 + Math.sin(performance.now() * 0.012) * 0.08 : isCurrent ? 1.08 : 1;
+        tag.overlay.scale.set(pulse, pulse, pulse);
+      }
+      if (tag.label) tag.label.visible = active;
+      if (tag.metaLabel) {
+        tag.metaLabel.visible = active;
+        updateTextPlane(tag.metaLabel, tag.metadataValid ? "META: VALID" : "META: NULL", tag.metadataValid ? "#bbf7d0" : "#fecaca");
+      }
+      if (tag.foundBadge) {
+        tag.foundBadge.visible = !!isFound;
+        if (isFound) tag.foundBadge.scale.setScalar(1 + Math.sin(performance.now() * 0.012) * 0.06);
+      }
+    });
+
+    const resultBadge = el("u142-result-badge");
+    if (resultBadge) {
+      resultBadge.style.display = state.lastEval ? "block" : "none";
+      resultBadge.style.color = state.result ? "#bbf7d0" : "#fecaca";
+      resultBadge.style.borderColor = state.result ? "#22cc66" : "#b91c1c";
+      resultBadge.innerHTML = state.result
+        ? '<i class="fa-solid fa-circle-check"></i> FOUND'
+        : '<i class="fa-solid fa-circle-xmark"></i> NOT FOUND';
+    }
+  }
+
+  function updateTextPlane(mesh, text, color) {
+    if (!mesh || !mesh.material || !mesh.material.map) return;
+    const canvas = mesh.material.map.image;
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "rgba(0,0,0,0.72)";
+    roundRect(ctx, 12, 14, 488, 96, 18);
+    ctx.fill();
+    ctx.fillStyle = color || "#ffffff";
+    ctx.font = "bold 42px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, 256, 64);
+    mesh.material.map.needsUpdate = true;
+  }
+
+  function callScanForTag(requestedTargetId) {
+    const requested = Number(requestedTargetId);
+    const targetId = Number.isFinite(requested) ? requested : Number(state.targetId);
+    state.targetId = targetId;
+    const targetInput = el("u142-target");
+    if (targetInput && String(targetInput.value) !== String(targetId)) {
+      targetInput.value = String(targetId);
+    }
+    const scanBody = extractMethodBody(getCodeSafe(), "scanForTag");
+    const codeShape = analyzeScanCode(scanBody);
+    const detections = getAprilTagDetections();
+    const signature = JSON.stringify({
+      targetId: targetId,
+      detections: detections.map(function (d) { return [d.id, d.metadata !== null]; }),
+      shape: codeShape.signature
+    });
+
+    const evaluation = evaluateScan(detections, targetId, codeShape);
+    state.result = evaluation.result;
+    state.path = evaluation.path;
+    state.foundIndex = evaluation.foundIndex;
+    state.lastEval = evaluation;
+    if (state.lastSignature !== signature) {
+      state.lastSignature = signature;
+      state.scanStart = performance.now();
+      state.checked = 0;
+      state.currentTagId = null;
+    }
+    return evaluation.result;
+  }
+
+  function evaluateScan(detections, targetId, shape) {
+    const path = [];
+    let foundIndex = -1;
+    let result = false;
+    if (!shape.returnsBoolean || !shape.hasLoop || !shape.hasReturnTrue) {
+      return { result: false, path: detections, foundIndex: -1, shape: shape };
+    }
+
+    for (let i = 0; i < detections.length; i++) {
+      const detection = detections[i];
+      const idMatches = detection.id === targetId;
+      const metaValid = detection.metadata !== null;
+      let condition = false;
+      if (shape.usesOr) condition = (shape.hasIdCheck && idMatches) || (shape.hasMetadataCheck && metaValid);
+      else if (shape.hasIdCheck && shape.hasMetadataCheck) condition = idMatches && metaValid;
+      else if (shape.hasIdCheck) condition = idMatches;
+      else if (shape.hasMetadataCheck) condition = metaValid;
+      else condition = true;
+
+      path.push({ id: detection.id, idMatches: idMatches, metaValid: metaValid, both: idMatches && metaValid });
+      if (condition) {
+        result = true;
+        foundIndex = i;
+        break;
+      }
+    }
+
+    if (!shape.hasReturnFalse && !result) result = false;
+    return { result: result, path: path, foundIndex: foundIndex, shape: shape };
+  }
+
+  function runTeleOp() {
+    const code = getCodeSafe();
+    const opBody = extractOpModeBody(code);
+    const initBody = extractMethodBody(opBody, "init");
+    const loopBody = extractMethodBody(opBody, "loop");
+    if (!loopBody) {
+      failStudentExecution("loop() was not found.");
+      return;
+    }
+
+    let initFn;
+    let loopFn;
+    try {
+      initFn = new Function(
+        "hardwareMap",
+        "createAprilTagProcessor",
+        "createVisionPortalBuilder",
+        "callScanForTag",
+        "getAprilTagDetections",
+        "addTelemetry",
+        "updateTelemetry",
+        '"use strict"; let aprilTagProcessor; let visionPortal;\n' + transpileStudentBody(initBody || "")
+      );
+      loopFn = new Function(
+        "hardwareMap",
+        "createAprilTagProcessor",
+        "createVisionPortalBuilder",
+        "callScanForTag",
+        "getAprilTagDetections",
+        "addTelemetry",
+        "updateTelemetry",
+        '"use strict"; let aprilTagProcessor; let visionPortal;\n' + transpileStudentBody(loopBody)
+      );
+    } catch (err) {
+      failStudentExecution("compile error: " + err.message);
+      return;
+    }
+
+    try {
+      clearTelemetry();
+      initFn(hardwareMap, createAprilTagProcessor, createVisionPortalBuilder, callScanForTag, getAprilTagDetections, addTelemetry, updateTelemetry);
+      updateTelemetry();
+    } catch (err) {
+      failStudentExecution("init() runtime error: " + err.message);
+      return;
+    }
+
+    const runFrame = function () {
+      try {
+        clearTelemetry();
+        loopFn(hardwareMap, createAprilTagProcessor, createVisionPortalBuilder, callScanForTag, getAprilTagDetections, addTelemetry, updateTelemetry);
+        validateCode();
+      } catch (err) {
+        failStudentExecution("loop() runtime error: " + err.message);
+      }
+    };
+
+    if (typeof _simStartLoop === "function") _simStartLoop(runFrame);
+    else window.setInterval(runFrame, 50);
+  }
+
+  function createAprilTagProcessor() {
+    state.processor = hardwareMap.registerAprilTagProcessor("aprilTagProcessor");
+    return state.processor;
+  }
+
+  function createVisionPortalBuilder() {
+    return {
+      setCamera: function () { return this; },
+      addProcessor: function () { return this; },
+      build: function () { return { stopStreaming: function () {}, resumeStreaming: function () {} }; }
+    };
+  }
+
+  function transpileStudentBody(body) {
+    let js = body || "";
+    js = js
+      .replace(/\bAprilTagProcessor\s*\.\s*easyCreateWithDefaults\s*\(\s*\)/g, "createAprilTagProcessor()")
+      .replace(/\bnew\s+VisionPortal\s*\.\s*Builder\s*\(\s*\)/g, "createVisionPortalBuilder()")
+      .replace(/\.setCamera\s*\(\s*hardwareMap\s*\.\s*get\s*\(\s*WebcamName\.class\s*,\s*"front_cam"\s*\)\s*\)/g, '.setCamera("front_cam")')
+      .replace(/\.addProcessor\s*\(\s*aprilTagProcessor\s*\)/g, ".addProcessor()")
+      .replace(/\baprilTagProcessor\s*\.\s*getDetections\s*\(\s*\)\s*\.\s*size\s*\(\s*\)/g, "getAprilTagDetections().length")
+      .replace(/\baprilTagProcessor\s*\.\s*getDetections\s*\(\s*\)/g, "getAprilTagDetections()")
+      .replace(/\bscanForTag\s*\(/g, "callScanForTag(")
+      .replace(/\btelemetry\s*\.\s*addData\s*\(/g, "addTelemetry(")
+      .replace(/\btelemetry\s*\.\s*update\s*\(\s*\)/g, "updateTelemetry()")
+      .replace(/\bhardwareMap\s*\.\s*get\s*\(\s*(\w+)\.class\s*,/g, 'hardwareMap.get("$1",')
+      .replace(/\b(?:final\s+)?(?:double|int|boolean|String|float|long|byte|short|char|AprilTagProcessor|VisionPortal|AprilTagDetection|WebcamName)\s+(?=[A-Za-z_$])/g, "let ");
+    if (typeof _simTranspile === "function") js = _simTranspile(js);
+    return js;
+  }
+
+  function updatePanel() {
+    renderTagControlState();
+    renderDetectionTable();
+    renderSummary();
+    renderFlow();
+  }
+
+  function renderTagControlState() {
+    tags.forEach(function (tag) {
+      const card = el("u142-tag-card-" + tag.id);
+      if (!card) return;
+      card.classList.toggle("active", tag.active);
+      card.classList.toggle("target", tag.id === state.targetId);
+      card.classList.toggle("null-meta", !tag.metadataValid);
+      const activeButton = card.querySelector("[data-toggle-active]");
+      const metaButton = card.querySelector("[data-toggle-meta]");
+      if (activeButton) activeButton.classList.toggle("active", tag.active);
+      if (metaButton) metaButton.classList.toggle("danger", !tag.metadataValid);
+    });
+  }
+
+  function renderDetectionTable() {
+    const body = el("u142-detection-table");
+    if (!body) return;
+    const detections = getAprilTagDetections();
+    if (!detections.length) {
+      body.innerHTML = '<tr><td colspan="4">No active detections</td></tr>';
+      return;
+    }
+    body.innerHTML = detections.map(function (d) {
+      const isTarget = d.id === state.targetId;
+      const metaValid = d.metadata !== null;
+      return '<tr class="' + (isTarget ? "target" : "") + '">' +
+        "<td>" + d.id + "</td>" +
+        '<td class="' + (metaValid ? "good" : "bad") + '">' + (metaValid ? "VALID" : "NULL") + "</td>" +
+        '<td class="good">YES</td>' +
+        '<td class="' + (isTarget ? "good" : "") + '">' + (isTarget ? "YES" : "NO") + "</td>" +
+        "</tr>";
+    }).join("");
+  }
+
+  function renderSummary() {
+    setCard("u142-target-card", '<i class="fa-solid fa-bullseye"></i> Searching for ID<br><strong>' + state.targetId + "</strong>", "warn");
+    setCard("u142-result-card", '<i class="fa-solid ' + (state.result ? "fa-circle-check" : "fa-circle-xmark") + '"></i> FOUND<br><strong>' + String(!!state.result) + "</strong>", state.result ? "good" : "bad");
+    setCard("u142-counter-card", '<i class="fa-solid fa-list-ol"></i> Iteration Counter<br><strong>Checked ' + state.checked + " of " + getAprilTagDetections().length + " detections</strong>", "");
+
+    const current = state.path.find(function (item) { return item.id === state.currentTagId; }) || state.path[state.checked - 1];
+    const condition = current
+      ? "detection.id == targetId: " + current.idMatches + "<br>metadata != null: " + current.metaValid + "<br>both true: " + current.both
+      : "Waiting for first detection";
+    setCard("u142-condition-card", '<i class="fa-solid fa-code"></i> Current Conditions<br><strong>' + condition + "</strong>", current && current.both ? "good" : "");
+
+    const note = el("u142-return-note");
+    if (note) {
+      const total = getAprilTagDetections().length;
+      if (!state.lastEval) {
+        note.innerHTML = '<i class="fa-solid fa-code-branch"></i> Waiting for scanForTag()';
+      } else if (state.result && state.foundIndex >= 0) {
+        note.innerHTML = '<i class="fa-solid fa-forward"></i> Early return at position ' + (state.foundIndex + 1) + " of " + total;
+      } else {
+        note.innerHTML = '<i class="fa-solid fa-list-check"></i> Checked all ' + total + " detections, not found";
+      }
+    }
+  }
+
+  function renderFlow() {
+    const flow = el("u142-flow");
+    if (!flow) return;
+    const detections = getAprilTagDetections();
+    if (!detections.length) {
+      flow.innerHTML = '<div class="u142-step">Detection list empty</div>';
+      return;
+    }
+    flow.innerHTML = detections.map(function (d, index) {
+      const checked = state.path.some(function (p) { return p.id === d.id; }) && state.checked > index;
+      const current = state.currentTagId === d.id;
+      const good = state.result && state.foundIndex === index;
+      return '<div class="u142-step ' + (current ? "active " : "") + (good || checked ? "good" : "") + '">ID ' + d.id + "</div>";
+    }).join('<i class="fa-solid fa-arrow-right"></i>');
+  }
+
+  function setCard(id, html, status) {
+    const card = el(id);
+    if (!card) return;
+    card.classList.toggle("good", status === "good");
+    card.classList.toggle("bad", status === "bad");
+    card.classList.toggle("warn", status === "warn");
+    card.innerHTML = html;
+  }
+
+  function applyPreset(name) {
+    tags.forEach(function (tag) {
+      tag.active = false;
+      tag.metadataValid = true;
+    });
+    const configuredTarget = getConfiguredTargetId();
+    const currentTarget = findTag(configuredTarget) ? configuredTarget : 22;
+    state.targetId = currentTarget;
+
+    if (name === "valid") {
+      setTag(20, true, true);
+      setTag(state.targetId, true, true);
+    } else if (name === "null") {
+      setTag(20, true, true);
+      setTag(state.targetId, true, false);
+    } else if (name === "missing") {
+      setTag(20, true, true);
+      setTag(24, true, true);
+      if (state.targetId === 20 || state.targetId === 24) {
+        state.targetId = 26;
+      }
+    } else if (name === "random") {
+      state.randomRun++;
+      const random = typeof createSeededRandom === "function"
+        ? createSeededRandom(14200 + state.randomRun)
+        : Math.random;
+      let anyActive = false;
+      tags.forEach(function (tag) {
+        tag.active = random() > 0.48;
+        tag.metadataValid = random() > 0.28;
+        anyActive = anyActive || tag.active;
+      });
+      if (!anyActive) {
+        setTag(tags[Math.floor(random() * tags.length)].id, true, true);
+      }
+      state.targetId = tags[Math.floor(random() * tags.length)].id;
+    } else if (name === "late") {
+      state.targetId = 29;
+      setTag(20, true, true);
+      setTag(22, true, true);
+      setTag(25, true, false);
+      setTag(27, true, true);
+      setTag(29, true, true);
+    }
+
+    const targetInput = el("u142-target");
+    if (targetInput) targetInput.value = String(state.targetId);
+    state.lastSignature = "";
+    emitDetections();
+    updatePanel();
+  }
+
+  function setTag(id, active, metadataValid) {
+    const tag = findTag(id);
+    if (!tag) return;
+    tag.active = active;
+    tag.metadataValid = metadataValid;
+  }
+
+  function findTag(id) {
+    return tags.find(function (tag) {
+      return tag.id === id;
+    });
+  }
+
+  function getConfiguredTargetId() {
+    const loopBody = extractMethodBody(extractOpModeBody(getCodeSafe()), "loop");
+    const match = /scanForTag\s*\(\s*(-?\d+)\s*\)/.exec(loopBody);
+    if (match) return Number(match[1]);
+    return Number(state.targetId) || 22;
+  }
+
+  function validateCode() {
+    const code = stripComments(getCodeSafe());
+    const scanBody = extractMethodBody(code, "scanForTag");
+    const loopBody = extractMethodBody(extractOpModeBody(code), "loop");
+    const shape = analyzeScanCode(scanBody);
+    const checks = [
+      /aprilTagProcessor\s*\.\s*getDetections\s*\(\s*\)/.test(scanBody),
+      /for\s*\([\s\S]*?AprilTagDetection\s+\w+\s*:[\s\S]*?getDetections\s*\(\s*\)/.test(scanBody) ||
+        /for\s*\([\s\S]*?;\s*[\s\S]*?;\s*[\s\S]*?\)/.test(scanBody),
+      shape.hasIdCheck,
+      shape.hasMetadataCheck,
+      shape.hasReturnTrue && shape.hasIdCheck && shape.hasMetadataCheck && !shape.usesOr,
+      shape.hasReturnFalse,
+      shape.returnsBoolean,
+      /telemetry\s*\.\s*addData\s*\([^;]*(found|scanForTag|Found)/i.test(loopBody)
+    ];
+
+    checks.forEach(function (passed, index) {
+      safeCall(setRequirement, index, !!passed);
+    });
+
+    const success = el("u142-success");
+    if (success) success.style.display = checks.every(Boolean) ? "flex" : "none";
+    updateWarning(code, scanBody, loopBody, shape);
+    return checks;
+  }
+
+  function analyzeScanCode(scanBody) {
+    const methodHeader = /\bboolean\s+scanForTag\s*\(\s*int\s+targetId\s*\)/.test(getCodeSafe());
+    const hasIdCheck = /detection\s*\.\s*id\s*(?:==|\.equals\s*\()\s*targetId/.test(scanBody) ||
+      /targetId\s*(?:==|\.equals\s*\()\s*detection\s*\.\s*id/.test(scanBody);
+    const hasMetadataCheck = /detection\s*\.\s*metadata\s*!=\s*null/.test(scanBody) ||
+      /null\s*!=\s*detection\s*\.\s*metadata/.test(scanBody);
+    const hasLoop = /for\s*\(/.test(scanBody);
+    const hasReturnTrue = /return\s+true\s*;/.test(scanBody);
+    const hasReturnFalse = /return\s+false\s*;/.test(scanBody);
+    const usesOr = /\|\|/.test(scanBody);
+    return {
+      returnsBoolean: methodHeader,
+      hasIdCheck: hasIdCheck,
+      hasMetadataCheck: hasMetadataCheck,
+      hasLoop: hasLoop,
+      hasReturnTrue: hasReturnTrue,
+      hasReturnFalse: hasReturnFalse,
+      usesOr: usesOr,
+      signature: [methodHeader, hasIdCheck, hasMetadataCheck, hasLoop, hasReturnTrue, hasReturnFalse, usesOr].join(":")
+    };
+  }
+
+  function updateWarning(code, scanBody, loopBody, shape) {
+    const warning = el("u142-warning");
+    if (!warning) return;
+    let message = "";
+    let type = "warn";
+
+    if (!shape.returnsBoolean) {
+      message = "scanForTag() must return boolean - add return type and return statements";
+      type = "error";
+    } else if (!shape.hasMetadataCheck) {
+      message = "Always check metadata != null before using it - tags can be detected without valid metadata and will cause a NullPointerException";
+      type = "error";
+    } else if (!shape.hasReturnFalse) {
+      message = "Add return false after the loop - if the loop finishes without finding the tag the method must return false";
+      type = "error";
+    } else if (shape.hasReturnTrue && !shape.hasIdCheck) {
+      message = "Only return true when detection.id matches targetId - check the ID before returning";
+      type = "error";
+    } else if (shape.usesOr) {
+      message = "Use && not || - both the ID must match AND metadata must be non-null";
+      type = "error";
+    } else if (/for\s*\(\s*int\s+\w+\s*=/.test(scanBody)) {
+      message = "Use an enhanced for loop: for (AprilTagDetection detection : aprilTagProcessor.getDetections())";
+    } else if (!/telemetry\s*\.\s*update\s*\(\s*\)/.test(code)) {
+      message = "Call telemetry.update() to send data to the Driver Station";
+    }
+
+    warning.classList.toggle("error", type === "error");
+    warning.style.display = message ? "block" : "none";
+    warning.innerHTML = message ? '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(message) : "";
+    safeCall(clearHints);
+    if (message) safeCall(addHint, '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(message), type === "error" ? "error" : "warn");
+  }
+
+  function showStudentError(message) {
+    const warning = el("u142-warning");
+    if (warning) {
+      warning.classList.add("error");
+      warning.style.display = "block";
+      warning.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(message);
+    }
+    safeCall(addHint, '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(message), "error");
+    if (typeof _simShowTelemetryError === "function") _simShowTelemetryError(message);
+    else {
+      safeCall(addTelemetry, "ERROR", message);
+      safeCall(updateTelemetry);
+    }
+  }
+
+  function failStudentExecution(message) {
+    if (typeof stopExecution === "function") stopExecution();
+    showStudentError(message);
+  }
+
+  function getCodeSafe() {
+    if (typeof getCode !== "function") return starterCode;
+    try {
+      return getCode();
+    } catch (err) {
+      return starterCode;
+    }
+  }
+
+  function extractOpModeBody(code) {
+    const match = /\bclass\s+([A-Za-z_$][\w$]*)\s+extends\s+OpMode\b/.exec(code);
+    return match ? extractClassBody(code, match[1]) : extractClassBody(code, "ScanForTag");
+  }
+
+  function extractClassBody(code, name) {
+    const match = new RegExp("\\bclass\\s+" + name + "\\b[^\\{]*\\{").exec(code);
+    if (!match) return "";
+    let index = match.index + match[0].length;
+    let depth = 1;
+    for (; index < code.length; index++) {
+      if (code[index] === "{") depth++;
+      else if (code[index] === "}") {
+        depth--;
+        if (depth === 0) return code.slice(match.index + match[0].length, index);
+      }
+    }
+    return "";
+  }
+
+  function extractMethodBody(scope, name) {
+    if (!scope) return "";
+    const re = new RegExp("\\b(?:public\\s+|private\\s+|protected\\s+)?(?:boolean|void|double|int|String)\\s+" + name + "\\s*\\([^)]*\\)\\s*\\{");
+    const match = re.exec(scope);
+    if (!match) return "";
+    let index = match.index + match[0].length;
+    let depth = 1;
+    for (; index < scope.length; index++) {
+      if (scope[index] === "{") depth++;
+      else if (scope[index] === "}") {
+        depth--;
+        if (depth === 0) return scope.slice(match.index + match[0].length, index);
+      }
+    }
+    return "";
+  }
+
+  function stripComments(code) {
+    return String(code || "")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\/\/.*$/gm, "");
+  }
+
+  function escapeHTML(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+};
+</script>
+</body>
+</html>

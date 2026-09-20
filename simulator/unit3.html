@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Telemark Unit 3 Simulator</title>
+  
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg: #05080d;
+      --panel: #0b1118;
+      --panel-2: #071019;
+      --text: #eaf8ff;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-2: #22d3ee;
+      --danger: #cc0000;
+      --good: #00cc00;
+      --warn: #ffcc00;
+      --border: #243746;
+      
+      /* Type Colors for Inspector */
+      --type-string: #38bdf8;
+      --type-double: #00cc00;
+      --type-int: #ff8c00;
+      --type-boolean: #d7ba7d;
+    }
+
+    /* ── Change 3: Custom Scrollbars ─────────────────────────────────────── */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: #22d3ee #05080d;
+    }
+    *::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    *::-webkit-scrollbar-track {
+      background: #05080d;
+    }
+    *::-webkit-scrollbar-thumb {
+      background: #22d3ee;
+      border-radius: 3px;
+    }
+    *::-webkit-scrollbar-thumb:hover {
+      background: #22d3ee;
+    }
+    *::-webkit-scrollbar-corner {
+      background: #05080d;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; display: flex; height: 100vh; overflow: hidden;
+      background: var(--bg); color: var(--text);
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Editor Side */
+    #editor-container {
+      width: 55%; min-width: 320px; height: 100%;
+      display: flex; flex-direction: column; background: #080d13;
+    }
+    .editor-header {
+      padding: 12px 14px; background: #05080d; border-bottom: 1px solid #243746;
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    }
+    .editor-title { font-weight: 700; color: white; }
+    .editor-subtitle { color: #9aa0a6; font-size: 0.9rem; }
+
+    /* Code Overlay */
+    .code-wrapper { position: relative; flex: 1; overflow: hidden; background: var(--bg); }
+    #code-editor, #highlighting {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0; margin: 0; padding: 16px;
+      font-family: "Consolas", "Courier New", monospace; font-size: 14px; line-height: 1.5;
+      tab-size: 4; white-space: pre; border: 0; outline: none;
+    }
+    #code-editor { color: transparent; background: transparent; caret-color: white; z-index: 2; resize: none; overflow: auto; }
+    #highlighting { z-index: 1; overflow: hidden; }
+    #highlighting code { font-family: inherit; font-size: inherit; line-height: inherit; text-shadow: none; }
+    
+    #resizer { width: 6px; background: #243746; cursor: col-resize; z-index: 10; transition: background 0.2s; }
+    #resizer:hover, #resizer.active { background: var(--accent); }
+
+    /* Driver Station Side */
+    #ds-container {
+      flex: 1; display: flex; flex-direction: column; background: var(--panel-2);
+      padding: 15px; overflow-y: auto; min-width: 360px; gap: 12px;
+    }
+    .ds-header { background: var(--panel); padding: 15px; border-radius: 10px; border: 1px solid var(--border); }
+    .ds-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .ds-row:last-child { margin-bottom: 0; }
+    .ds-title { font-size: 1.15rem; font-weight: 700; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ds-state { font-family: monospace; font-weight: 700; font-size: 1.05rem; color: var(--danger); }
+    .ds-timer { font-family: monospace; font-size: 1.05rem; color: #569cd6; }
+
+    /* Controls */
+    .controls { display: flex; gap: 10px; }
+    button { flex: 1; padding: 12px; border-radius: 8px; border: none; font-size: 1rem; font-weight: 700; cursor: pointer; transition: 0.1s ease; user-select: none; }
+    button:active { transform: translateY(1px); }
+    #btn-main { background: var(--accent); color: white; }
+    #btn-main:hover { background: var(--accent-2); }
+    #btn-main:disabled { background: #444; color: #888; cursor: not-allowed; transform: none; }
+    #btn-stop { background: var(--danger); color: white; }
+    #btn-stop:hover { filter: brightness(1.1); }
+
+    /* Variable Inspector */
+    .inspector-panel { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+    .inspector-title { font-weight: bold; margin-bottom: 8px; color: #fff; font-size: 1.05rem; display: flex; justify-content: space-between; align-items: center; }
+    .var-row { display: flex; align-items: center; background: #0d1721; padding: 8px; border-radius: 6px; margin-bottom: 6px; font-family: monospace; font-size: 0.95rem; }
+    .var-row:last-child { margin-bottom: 0; }
+    .var-badge { padding: 3px 6px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; margin-right: 10px; color: #000; width: 65px; text-align: center; }
+    .badge-String { background: var(--type-string); color: #fff; }
+    .badge-double { background: var(--type-double); }
+    .badge-int { background: var(--type-int); color: #fff; }
+    .badge-boolean { background: var(--type-boolean); }
+    .var-name { color: #9cdcfe; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .var-val { color: #d4d4d4; margin-right: 15px; width: 60px; text-align: right; }
+    .var-visual { width: 80px; display: flex; align-items: center; justify-content: flex-end; }
+    
+    /* Variable Visualizer Assets */
+    .vis-toggle { width: 40px; height: 20px; border-radius: 10px; background: var(--danger); position: relative; transition: 0.2s; }
+    .vis-toggle.on { background: var(--good); }
+    .vis-toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: 0.2s; }
+    .vis-toggle.on::after { left: 22px; }
+    .vis-bar-bg { width: 100%; height: 12px; background: #101d29; border-radius: 6px; overflow: hidden; position: relative; }
+    .vis-bar-fill { height: 100%; background: var(--accent-2); width: 0%; transition: width 0.1s; position: absolute; left: 50%; transform: translateX(-50%); }
+    .vis-bar-fill.positive { left: 50%; transform: none; }
+    .vis-bar-fill.negative { right: 50%; left: auto; background: var(--warn); transform: none;}
+
+    /* ── Change 1: Spinning Motor Indicator ──────────────────────────────── */
+    .motor-visual {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-top: 15px;
+      font-family: monospace;
+      font-size: 0.9rem;
+      background: #000;
+      padding: 14px 10px 10px;
+      border-radius: 6px;
+    }
+
+    .motor-spinning-container {
+      position: relative;
+      width: 90px;
+      height: 90px;
+    }
+
+    /* Outer motor housing */
+    .motor-housing {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%, #555, #2a2a2a 50%, #1a1a1a 100%);
+      border: 3px solid #3a3a3a;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.6), 0 2px 10px rgba(0,0,0,0.5);
+    }
+
+    /* Inner ring / stator */
+    .motor-stator {
+      position: absolute;
+      top: 12%;
+      left: 12%;
+      width: 76%;
+      height: 76%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%, #444, #222 70%);
+      border: 2px solid #3d3d3d;
+    }
+
+    /* Rotor that spins */
+    .motor-rotor {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 60%;
+      height: 60%;
+      transform: translate(-50%, -50%);
+      animation: none;
+    }
+
+    .motor-rotor.spinning-cw {
+      animation: spin-cw var(--spin-duration, 2s) linear infinite;
+    }
+    .motor-rotor.spinning-ccw {
+      animation: spin-ccw var(--spin-duration, 2s) linear infinite;
+    }
+
+    @keyframes spin-cw {
+      from { transform: translate(-50%, -50%) rotate(0deg); }
+      to   { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    @keyframes spin-ccw {
+      from { transform: translate(-50%, -50%) rotate(0deg); }
+      to   { transform: translate(-50%, -50%) rotate(-360deg); }
+    }
+
+    /* Rotor arms - cross shape */
+    .rotor-arm {
+      position: absolute;
+      background: #777;
+      border-radius: 2px;
+    }
+    .rotor-arm-h {
+      width: 100%;
+      height: 16%;
+      top: 42%;
+      left: 0;
+      background: linear-gradient(to bottom, #888, #555);
+    }
+    .rotor-arm-v {
+      width: 16%;
+      height: 100%;
+      left: 42%;
+      top: 0;
+      background: linear-gradient(to right, #888, #555);
+    }
+
+    /* Center hub dot */
+    .motor-hub {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 18px;
+      height: 18px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%, #aaa, #555 70%);
+      border: 2px solid #666;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+      z-index: 2;
+    }
+
+    /* Directional indicator notch on the rotor */
+    .rotor-notch {
+      position: absolute;
+      top: -2px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 8px;
+      height: 8px;
+      background: #00cc00;
+      border-radius: 50%;
+      box-shadow: 0 0 6px #00cc0088;
+    }
+
+    .motor-power-label {
+      margin-top: 8px;
+      font-family: monospace;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .motor-power-label .label-text {
+      color: #aaa;
+    }
+    .motor-power-label .power-value {
+      color: #00ff00;
+      font-weight: bold;
+      min-width: 45px;
+      text-align: center;
+    }
+
+    /* ── Change 2: Floating Resizable Gamepad Card ───────────────────────── */
+    .gamepad-float-card {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 420px;
+      min-width: 260px;
+      min-height: 48px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      overflow: hidden;
+    }
+
+    .gamepad-titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 14px;
+      background: #1a1a1a;
+      border-bottom: 1px solid var(--border);
+      cursor: grab;
+      user-select: none;
+      flex-shrink: 0;
+    }
+    .gamepad-titlebar:active {
+      cursor: grabbing;
+    }
+    .gamepad-titlebar-label {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .gamepad-titlebar-label::before {
+      content: '🎮';
+    }
+    .gamepad-collapse-btn {
+      flex: none;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border-radius: 6px;
+      background: #333;
+      border: 1px solid #555;
+      color: #ccc;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      transition: background 0.15s;
+    }
+    .gamepad-collapse-btn:hover {
+      background: #444;
+    }
+
+    .gamepad-card-body {
+      padding: 14px;
+      overflow: hidden;
+      flex: 1;
+    }
+
+    .gamepad-card-body.collapsed {
+      display: none;
+    }
+
+    .gamepad-resize-handle {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 18px;
+      height: 18px;
+      cursor: nwse-resize;
+      z-index: 10;
+      background: transparent;
+    }
+    .gamepad-resize-handle::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      width: 8px;
+      height: 8px;
+      border-right: 2px solid #666;
+      border-bottom: 2px solid #666;
+    }
+
+    .controller-wrap {
+      width: 100%;
+      position: relative;
+      aspect-ratio: 768 / 512;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #0f0f0f;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+      touch-action: none;
+      user-select: none;
+    }
+
+    .controller-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+    }
+
+    .overlay {
+      position: absolute;
+      border-radius: 50%;
+      touch-action: none;
+      user-select: none;
+    }
+
+    /* Left stick */
+    .stick-zone-left {
+      left: 36%; top: 65%;
+      width: 17%; height: 24%;
+      transform: translate(-50%, -50%);
+      background: transparent;
+    }
+
+    .stick-base-left {
+      position: absolute;
+      left: 36%; top: 65%;
+      width: 14%; height: 21%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      pointer-events: none;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.12);
+    }
+
+    .stick-knob-left {
+      position: absolute;
+      left: 36%; top: 65%;
+      width: 9%; height: 13%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #444, #121212 70%);
+      border: 1px solid rgba(255,255,255,0.18);
+      pointer-events: none;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.45);
+    }
+
+    /* Right stick */
+    .stick-zone-right {
+      left: 64%; top: 65%;
+      width: 17%; height: 24%;
+      transform: translate(-50%, -50%);
+      background: transparent;
+    }
+
+    .stick-base-right {
+      position: absolute;
+      left: 64%; top: 65%;
+      width: 14%; height: 21%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      pointer-events: none;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.12);
+    }
+
+    .stick-knob-right {
+      position: absolute;
+      left: 64%; top: 65%;
+      width: 9%; height: 13%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #444, #121212 70%);
+      border: 1px solid rgba(255,255,255,0.18);
+      pointer-events: none;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.45);
+    }
+
+    .button-overlay {
+      border: 2px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.02);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15);
+      transition: transform 0.05s ease, background 0.05s ease, box-shadow 0.05s ease;
+      cursor: pointer;
+    }
+
+    .button-overlay.pressed {
+      transform: scale(0.95);
+      background: rgba(255,255,255,0.18);
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.25), inset 0 0 20px rgba(255,255,255,0.22);
+    }
+
+    .a-btn { left: 75.5%; top: 49%; width: 7%; height: 10%; transform: translate(-10%, -10%); }
+    .b-btn  { left: 83%;   top: 38%; width: 7%; height: 10%; transform: translate(-10%, -10%); }
+    .x-btn  { left: 68%;   top: 38%; width: 7%; height: 10%; transform: translate(-10%, -10%); }
+    .y-btn  { left: 75.5%; top: 27%; width: 7%; height: 10%; transform: translate(-10%, -10%); }
+
+    .small-button {
+      width: 5.2%; height: 6.4%;
+      border-radius: 16px;
+      border: 2px solid rgba(255,255,255,0.14);
+      pointer-events: auto;
+    }
+    .back-btn  { left: 37.5%; top: 28%; transform: translate(-10%, -10%); }
+    .mode-btn  { left: 39%;   top: 41%; transform: translate(-10%, -10%); }
+    .start-btn { left: 58%;   top: 28%; transform: translate(-10%, -10%); }
+
+    .telemetry-panel { background: #000; border: 2px solid #444; border-radius: 10px; min-height: 120px; padding: 15px; font-family: monospace; font-size: 0.95rem; overflow-y: auto; color: #00ff00;}
+    .telemetry-line { margin: 2px 0; }
+    .telemetry-key { color: #4ec9b0; }
+
+    /* Hints */
+    #hint-container { display: flex; flex-direction: column; gap: 8px; }
+    .hint { display: block; background: rgba(255, 204, 0, 0.12); border-left: 4px solid var(--warn); padding: 10px 12px; color: var(--warn); border-radius: 6px; font-size: 0.92rem; }
+    .hint.error { background: rgba(204, 0, 0, 0.12); border-left-color: var(--danger); color: #ff6666; }
+  </style>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+<script src="./telemark-project.js"></script>
+<link rel="stylesheet" href="./telemark-project.css"/>
+  <script src="./gamepad-controls.js"></script>
+  <script src='./simulator_base.js' data-telemark-mode='legacy'></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+
+<div id="editor-container">
+  <div class="editor-header">
+    <div>
+      <div class="editor-title">Telemark Unit 3 Simulator</div>
+      <div class="editor-subtitle">Java Variables · Variable Tracking · Expressions · Real-time Inspector</div>
+    </div>
+  </div>
+
+  <div class="code-wrapper">
+    <textarea id="code-editor" spellcheck="false"
+      onscroll="syncScroll(this);">@TeleOp(name="TeleOpTest", group="Practice")
+public class TeleOpTest extends OpMode {
+    @Override
+    public void init() {
+        telemetry.addData("Status", "Initialized");
+    }
+
+    @Override
+    public void loop() {
+        telemetry.addData("Status", "Running");
+    }
+
+    @Override
+    public void stop() {
+        telemetry.addData("Status", "Stopped");
+    }
+}</textarea>
+    <pre id="highlighting" aria-hidden="true"><code class="language-java" id="highlighting-content"></code></pre>
+  </div>
+</div>
+
+<div id="resizer"></div>
+
+<div id="ds-container">
+  <div class="ds-header">
+    <div class="ds-row">
+      <div class="ds-title" id="opmode-name">Select OpMode...</div>
+      <div class="ds-state" id="state-indicator">STOPPED</div>
+    </div>
+    <div class="ds-row" style="margin-bottom:0;">
+      <div style="font-size:0.9rem; color:#aaa;" id="warning-label"></div>
+      <div class="ds-timer">Time: <span id="timer-val">0.00</span>s</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="btn-main" onclick="handleMainButton()">INIT</button>
+    <button id="btn-stop" onclick="handleStopButton()">STOP</button>
+  </div>
+
+  <div class="inspector-panel">
+    <div class="inspector-title">Variable Inspector <span>🔍</span></div>
+    <div id="var-list">
+      <div style="color: #666; font-style: italic; font-size: 0.9rem;">Variables will appear here when parsed...</div>
+    </div>
+  </div>
+
+  <!-- Change 1: Spinning Motor Indicator -->
+  <div class="motor-visual" id="motor-visual">
+    <div class="motor-spinning-container">
+      <div class="motor-housing"></div>
+      <div class="motor-stator"></div>
+      <div class="motor-rotor" id="motor-rotor">
+        <div class="rotor-arm rotor-arm-h"></div>
+        <div class="rotor-arm rotor-arm-v"></div>
+        <div class="rotor-notch"></div>
+      </div>
+      <div class="motor-hub"></div>
+    </div>
+    <div class="motor-power-label">
+      <span class="label-text">drive.setPower(</span>
+      <span class="power-value" id="motor-power-text">0.00</span>
+      <span class="label-text">)</span>
+    </div>
+  </div>
+
+  <div class="telemetry-panel" id="telemetry-log">
+    <div style="color:#666; font-style:italic;">Telemetry will appear here...</div>
+  </div>
+
+  <div id="hint-container"></div>
+</div>
+
+<!-- Change 2: Floating Resizable Gamepad Card -->
+<div class="gamepad-float-card" id="gamepad-float-card">
+  <div class="gamepad-titlebar" id="gamepad-titlebar">
+    <span class="gamepad-titlebar-label">Gamepad 1</span>
+    <button class="gamepad-collapse-btn" id="gamepad-collapse-btn" title="Collapse/Expand">−</button>
+  </div>
+  <div class="gamepad-card-body" id="gamepad-card-body">
+    <div class="controller-wrap" id="controller-wrap">
+      <img class="controller-img" alt="FTC controller"
+        src="https://resource.logitechg.com/w_776,h_437,ar_16:9,c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/gaming/en/products/f310/f310-feature-3.png">
+
+      <div class="overlay stick-zone-left" id="stick-zone-left"></div>
+      <div class="stick-base-left"></div>
+      <div class="stick-knob-left" id="stick-knob-left"></div>
+
+      <div class="overlay stick-zone-right" id="stick-zone-right"></div>
+      <div class="stick-base-right"></div>
+      <div class="stick-knob-right" id="stick-knob-right"></div>
+
+      <div class="overlay button-overlay y-btn"  id="btn-y"        title="Y"></div>
+      <div class="overlay button-overlay x-btn"  id="btn-x"        title="X"></div>
+      <div class="overlay button-overlay a-btn"  id="btn-a-visual" title="A"></div>
+      <div class="overlay button-overlay b-btn"  id="btn-b"        title="B"></div>
+
+      <div class="overlay button-overlay small-button back-btn"  id="btn-back"  title="Back"></div>
+      <div class="overlay button-overlay small-button mode-btn"  id="btn-mode"  title="Mode"></div>
+      <div class="overlay button-overlay small-button start-btn" id="btn-start" title="Start"></div>
+
+      <!-- Shared base injects symmetric bumper and aligned four-way D-pad hit targets. -->
+    </div>
+  </div>
+  <div class="gamepad-resize-handle" id="gamepad-resize-handle"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+
+<script>
+// ─── Resizer ────────────────────────────────────────────────────────────────
+const resizer   = document.getElementById('resizer');
+const leftPanel = document.getElementById('editor-container');
+let isResizing  = false;
+
+resizer.addEventListener('mousedown', () => { isResizing = true; resizer.classList.add('active'); });
+document.addEventListener('mousemove', (e) => {
+  if (!isResizing) return;
+  const pct = (e.clientX / window.innerWidth) * 100;
+  if (pct > 20 && pct < 80) leftPanel.style.width = pct + '%';
+});
+document.addEventListener('mouseup', () => { isResizing = false; resizer.classList.remove('active'); });
+
+// ─── Syntax Highlighting ─────────────────────────────────────────────────────
+function updateCode(text) {
+  const el = document.getElementById('highlighting-content');
+  if (text[text.length - 1] === '\n') text += ' ';
+  el.innerHTML = text.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  Prism.highlightElement(el);
+}
+
+function syncScroll(el) {
+  const h = document.getElementById('highlighting');
+  h.scrollTop  = el.scrollTop; h.scrollLeft = el.scrollLeft;
+}
+
+// ─── Smart Editor ────────────────────────────────────────────────────────────
+const codeEditor = document.getElementById('code-editor');
+function getProjectSource(){return codeEditor.__telemarkProject ? codeEditor.__telemarkProject.source() : codeEditor.value;}
+
+function loadInitialConfig() {
+  const params = new URLSearchParams(window.location.search);
+  const starterCode = params.get('code');
+  if (starterCode) {
+    codeEditor.value = starterCode;
+  }
+
+  const showMotorVisual = params.get('showMotorVisual');
+  if (showMotorVisual !== null) {
+    const motorVisual = document.getElementById('motor-visual');
+    const normalized = showMotorVisual.trim().toLowerCase();
+    const shouldShow = !['0', 'false', 'no', 'off'].includes(normalized);
+    if (motorVisual) {
+      motorVisual.style.display = shouldShow ? '' : 'none';
+    }
+  }
+}
+
+TelemarkEditor.attach(codeEditor, {
+  onChange(editor) {
+    updateCode(editor.value);
+    syncScroll(editor);
+  },
+});
+codeEditor.addEventListener('input', () => {
+  updateCode(codeEditor.value);
+  syncScroll(codeEditor);
+});
+
+// ─── Simulator State & Inspector ─────────────────────────────────────────────
+let currentState  = 'STOPPED';
+let intervalId    = null;
+let timerId       = null;
+let runtimeOffset = 0;
+
+let declaredVars = {};
+let activeHints = new Set();
+
+const gamepad = {
+  leftStickX: 0, leftStickY: 0,
+  rightStickX: 0, rightStickY: 0,
+  a: false, b: false, x: false, y: false,
+  back: false, start: false, mode: false,
+  left_bumper: false, right_bumper: false
+};
+
+function getRuntime() { return runtimeOffset === 0 ? 0 : (Date.now() - runtimeOffset) / 1000; }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+function renderHints() {
+    const c = document.getElementById('hint-container');
+    c.innerHTML = '';
+    activeHints.forEach(h => {
+        let cl = (h.includes("cannot hold decimals") || h.includes("outside")) ? "hint error" : "hint";
+        c.innerHTML += `<div class="${cl}">${h}</div>`;
+    });
+}
+function addHint(msg) { activeHints.add(msg); }
+
+function parseValue(valStr, type) {
+    if (type === 'int') {
+        let val = parseFloat(valStr);
+        return isNaN(val) ? 0 : Math.trunc(val); 
+    }
+    if (type === 'double') {
+        let val = parseFloat(valStr);
+        return isNaN(val) ? 0.0 : val;
+    }
+    if (type === 'boolean') return (valStr === 'true' || valStr === '1' || valStr === true);
+    if (type === 'String') return String(valStr).replace(/^"(.*)"$/, '$1'); 
+    return valStr;
+}
+
+function formatValue(val, type) {
+    if (type === 'String') return `"${val}"`;
+    if (type === 'double') return Number(val).toFixed(2);
+    if (type === 'boolean') return val ? 'true' : 'false';
+    return val;
+}
+
+// Bug 1 Fix: Only show value once - in var-val span, visual column shows type-specific visualization only
+function renderVariableInspector() {
+    const list = document.getElementById('var-list');
+    if (Object.keys(declaredVars).length === 0) {
+        list.innerHTML = '<div style="color: #666; font-style: italic; font-size: 0.9rem;">No variables declared...</div>';
+        return;
+    }
+    let html = '';
+    for (const [name, v] of Object.entries(declaredVars)) {
+        let visual = '';
+        if (v.type === 'boolean') {
+            visual = `<div class="vis-toggle ${v.value ? 'on' : ''}"></div>`;
+        } else if (v.type === 'double') {
+            let p = Math.max(-1, Math.min(1, v.value || 0));
+            let width = Math.abs(p) * 50; 
+            let cls = p >= 0 ? 'positive' : 'negative';
+            visual = `<div class="vis-bar-bg"><div class="vis-bar-fill ${cls}" style="width: ${width}%"></div></div>`;
+        }
+        // For int and String, visual column is empty - value is shown only in var-val
+        html += `<div class="var-row"><span class="var-badge badge-${v.type}">${v.type}</span><span class="var-name">${name}</span><span class="var-val">${formatValue(v.value, v.type)}</span><div class="var-visual">${visual}</div></div>`;
+    }
+    list.innerHTML = html;
+}
+
+// ── Change 1: Spinning Motor Visual ─────────────────────────────────────────
+function updateMotorVisual(power) {
+    let p = parseFloat(power);
+    if (isNaN(p)) p = 0;
+    if (p > 1.0 || p < -1.0) addHint("SDK will clamp this to ±1.0");
+    p = Math.max(-1.0, Math.min(1.0, p));
+
+    const rotor = document.getElementById('motor-rotor');
+    const powerText = document.getElementById('motor-power-text');
+    powerText.innerText = p.toFixed(2);
+
+    // Update power text color
+    if (p === 0) {
+      powerText.style.color = '#888';
+    } else if (p > 0) {
+      powerText.style.color = '#00ff00';
+    } else {
+      powerText.style.color = '#ffcc00';
+    }
+
+    if (Math.abs(p) < 0.001) {
+      // Stopped
+      rotor.className = 'motor-rotor';
+      rotor.style.removeProperty('--spin-duration');
+    } else {
+      // Map power to spin duration: higher power = faster spin = shorter duration
+      // At |power| = 1.0, duration = 0.3s (very fast)
+      // At |power| = 0.01, duration = 4s (very slow)
+      const duration = Math.max(0.15, 0.3 / Math.abs(p));
+      rotor.style.setProperty('--spin-duration', duration + 's');
+
+      if (p > 0) {
+        rotor.className = 'motor-rotor spinning-cw';
+      } else {
+        rotor.className = 'motor-rotor spinning-ccw';
+      }
+    }
+}
+
+function evaluateExpression(expr) {
+    let safeExpr = expr.trim();
+    safeExpr = safeExpr.replace(/gamepad1\.left_stick_x/g, String(gamepad.leftStickX));
+    safeExpr = safeExpr.replace(/gamepad1\.left_stick_y/g, String(gamepad.leftStickY));
+    safeExpr = safeExpr.replace(/gamepad1\.right_stick_x/g, String(gamepad.rightStickX));
+    safeExpr = safeExpr.replace(/gamepad1\.right_stick_y/g, String(gamepad.rightStickY));
+    safeExpr = safeExpr.replace(/gamepad1\.a/g, String(gamepad.a));
+    safeExpr = safeExpr.replace(/gamepad1\.b/g, String(gamepad.b));
+    safeExpr = safeExpr.replace(/gamepad1\.x/g, String(gamepad.x));
+    safeExpr = safeExpr.replace(/gamepad1\.y/g, String(gamepad.y));
+    safeExpr = safeExpr.replace(/gamepad1\.left_bumper/g, String(gamepad.left_bumper));
+    safeExpr = safeExpr.replace(/gamepad1\.right_bumper/g, String(gamepad.right_bumper));
+    safeExpr = safeExpr.replace(/getRuntime\(\)/g, String(getRuntime().toFixed(2)));
+
+    // Sort variable names by length to avoid partial replacement bugs (e.g. speed vs targetSpeed)
+    const varNames = Object.keys(declaredVars).sort((a,b) => b.length - a.length);
+    varNames.forEach(vName => {
+        const val = declaredVars[vName].value;
+        const rep = typeof val === 'string' ? `"${val}"` : val;
+        const regex = new RegExp(`\\b${vName}\\b`, 'g');
+        safeExpr = safeExpr.replace(regex, rep);
+    });
+
+    if (/^".*"$/.test(safeExpr)) return safeExpr.slice(1, -1);
+    try { return Function(`"use strict"; return (${safeExpr});`)(); } catch { return safeExpr; }
+}
+
+function runStaticAnalysis() {
+    const code = getProjectSource();
+    activeHints.clear();
+    declaredVars = {};
+
+    // Base hints
+    if(!/@TeleOp|@Autonomous/.test(code)) addHint("Your class won't appear on the Driver Station without an annotation.");
+    if(!/telemetry\.addData/.test(code)) addHint("Use telemetry.addData() to send data to the Driver Station");
+    const nameMatch = /@(?:TeleOp|Autonomous)\s*\(\s*name\s*=\s*"([^"]+)"/.exec(code);
+    document.getElementById('opmode-name').textContent = nameMatch ? nameMatch[1] : 'Unnamed OpMode';
+    document.getElementById('warning-label').textContent = /@Disabled/.test(code) ? '⚠ @Disabled' : '';
+
+    // Find Variable Declarations globally
+    const declRegex = /(String|double|boolean|int)\s+([a-zA-Z_]\w*)\s*(?:=\s*([^;]+))?;/g;
+    let match;
+    while ((match = declRegex.exec(code)) !== null) {
+        let type = match[1];
+        let name = match[2];
+        let rawVal = match[3] || (type === 'String' ? '""' : '0');
+        
+        if (type === 'int' && rawVal.includes('.')) addHint("int cannot hold decimals — this will be truncated to 0. Use double instead.");
+        let val = evaluateExpression(rawVal);
+        declaredVars[name] = { type: type, value: parseValue(val, type) };
+    }
+    renderHints();
+    renderVariableInspector();
+}
+
+function getMethodBody(code, methodName) {
+  const headerRe = new RegExp(`\\bvoid\\s+${methodName}\\s*\\([^)]*\\)\\s*\\{`, 'm');
+  const headerMatch = headerRe.exec(code);
+  if (!headerMatch) return null;
+  let idx = headerMatch.index + headerMatch[0].length;
+  let depth = 1, inStr = false, strCh = null, escaped = false;
+  for (; idx < code.length; idx++) {
+    const ch = code[idx];
+    if (inStr) {
+      if (escaped) { escaped = false; continue; }
+      if (ch === '\\') { escaped = true; continue; }
+      if (ch === strCh) { inStr = false; continue; }
+      continue;
+    }
+    if (ch === '"' || ch === "'") { inStr = true; strCh = ch; continue; }
+    if (ch === '{') depth++;
+    else if (ch === '}') { if (--depth === 0) return code.slice(headerMatch.index + headerMatch[0].length, idx); }
+  }
+  return null;
+}
+
+let telemarkCompiledSource = '';
+let telemarkCompiledProgram = null;
+let telemarkRuntime = null;
+
+function executeMethod(methodName) {
+  const code = getProjectSource();
+  if (methodName === 'init') telemarkCompiledSource = '';
+  if (code !== telemarkCompiledSource) {
+    const telemetryLines = [];
+    const runtime = TelemarkSimulatorBase.createRuntime({
+      gamepad,
+      getRuntime,
+      resetRuntime() {
+        runtimeOffset = Date.now();
+      },
+      onPower(power) {
+        updateMotorVisual(power);
+      },
+      onTelemetry(key, value) {
+        telemetryLines.push(
+          `<div class="telemetry-line"><span class="telemetry-key">${key}</span>: ${String(value)}</div>`
+        );
+      },
+      onTelemetryClear(event) {
+        telemetryLines.length = 0;
+        if (!event?.automatic) document.getElementById('telemetry-log').innerHTML = '';
+      },
+      onTelemetryUpdate() {
+        if (telemetryLines.length) {
+          document.getElementById('telemetry-log').innerHTML = telemetryLines.join('');
+        }
+      },
+    });
+    telemarkRuntime = runtime;
+    telemarkCompiledProgram = TelemarkSimulatorBase.compileStudentSource(code, runtime, {
+      trackVariables: true,
+    });
+    telemarkCompiledSource = code;
+    if (!telemarkCompiledProgram.ok) {
+      const error = telemarkCompiledProgram.diagnostics[0];
+      return failJavaExecution(
+        'Java compile error',
+        new Error(`${error.message} (line ${error.line}, column ${error.column})`),
+      );
+    }
+  }
+
+  if (methodName === 'start' && /resetRuntime\(\)/.test(getMethodBody(code, methodName) || '')) {
+    runtimeOffset = Date.now();
+  }
+  const method = telemarkCompiledProgram?.methods?.[methodName];
+  try {
+    if (method) {
+      if (methodName === 'loop' || methodName === 'init_loop') telemarkRuntime?.clearTelemetry();
+      method();
+      telemarkRuntime?.updateTelemetry();
+    }
+  } catch (error) {
+    return failJavaExecution(`${methodName}() runtime error`, error);
+  }
+  Object.entries(telemarkCompiledProgram?.scope || {}).forEach(([name, value]) => {
+    if (declaredVars[name]) declaredVars[name].value = value;
+  });
+  Object.entries(telemarkCompiledProgram?.locals || {}).forEach(([name, value]) => {
+    if (declaredVars[name]) declaredVars[name].value = value;
+  });
+  renderVariableInspector();
+  renderHints();
+  return true;
+}
+
+// ─── Lifecycle ───────────────────────────────────────────────────────────────
+function setLifecycle(s, color, btnLabel) {
+  currentState = s;
+  document.getElementById('state-indicator').textContent = s;
+  document.getElementById('state-indicator').style.color = color;
+  const btn = document.getElementById('btn-main');
+  btn.textContent = btnLabel;
+  btn.disabled = (s === 'RUNNING');
+  if (s === 'RUNNING') {
+    timerId = setInterval(() => { document.getElementById('timer-val').textContent = getRuntime().toFixed(2); }, 50);
+  }
+}
+
+function stopAllIntervals() { clearInterval(intervalId); clearInterval(timerId); intervalId = timerId = null; }
+
+function failJavaExecution(context, error) {
+  stopAllIntervals();
+  runtimeOffset = 0;
+  document.getElementById('timer-val').textContent = '0.00';
+  updateMotorVisual(0);
+  document.getElementById('telemetry-log').textContent =
+    `${context}: ${error?.message || String(error)}`;
+  setLifecycle('STOPPED', '#cc0000', 'INIT');
+  return false;
+}
+
+function handleMainButton() {
+  if (currentState === 'STOPPED') {
+    runStaticAnalysis();
+    document.getElementById('telemetry-log').innerHTML = '';
+    document.getElementById('timer-val').textContent = '0.00';
+    runtimeOffset = 0; updateMotorVisual(0);
+    if (!executeMethod('init')) return;
+    setLifecycle('INIT_LOOP', '#ffcc00', 'START');
+    intervalId = setInterval(() => { executeMethod('init_loop'); }, 100);
+  } else if (currentState === 'INIT_LOOP') {
+    stopAllIntervals();
+    if (!executeMethod('start')) return;
+    if (runtimeOffset === 0) runtimeOffset = Date.now();
+    setLifecycle('RUNNING', '#00ff00', 'RUNNING');
+    intervalId = setInterval(() => executeMethod('loop'), 100);
+  }
+}
+
+function handleStopButton() {
+  if (currentState === 'STOPPED') return;
+  stopAllIntervals(); executeMethod('stop'); runtimeOffset = 0;
+  document.getElementById('timer-val').textContent = '0.00'; updateMotorVisual(0);
+  setLifecycle('STOPPED', '#cc0000', 'INIT');
+}
+
+// ─── Boot ────────────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  loadInitialConfig();
+  updateCode(codeEditor.value);
+});
+if (window.TelemarkSimulatorBase) window.TelemarkSimulatorBase.installLegacy({state: gamepad});
+</script>
+</body>
+</html>

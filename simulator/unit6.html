@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Telemark Unit 6 Simulator</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
+<style>
+:root{--bg:#05080d;--panel:#0b1118;--panel-2:#071019;--text:#eaf8ff;--accent:#38bdf8;--accent-2:#22d3ee;--danger:#cc0000;--good:#00cc00;--warn:#ffcc00;--border:#243746}
+*{scrollbar-width:thin;scrollbar-color:#22d3ee #05080d;box-sizing:border-box}
+*::-webkit-scrollbar{width:6px;height:6px}*::-webkit-scrollbar-track{background:#05080d}*::-webkit-scrollbar-thumb{background:#22d3ee;border-radius:3px}*::-webkit-scrollbar-thumb:hover{background:#22d3ee}
+html,body{height:100%;margin:0}
+body{display:flex;height:100vh;overflow:hidden;background:var(--bg);color:var(--text);font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif}
+
+#editor-container{width:50%;min-width:300px;height:100%;display:flex;flex-direction:column;background:#080d13}
+.editor-header{padding:10px 14px;background:#05080d;border-bottom:1px solid #243746}
+.editor-title{font-weight:700;color:#fff}.editor-subtitle{color:#9aa0a6;font-size:.85rem}
+.code-wrapper{position:relative;flex:1;overflow:hidden;background:var(--bg)}
+#code-editor,#highlighting{position:absolute;inset:0;margin:0;padding:16px;font-family:"Consolas","Courier New",monospace;font-size:13px;line-height:1.6;tab-size:4;white-space:pre;border:0;outline:none}
+#code-editor{color:transparent;background:transparent;caret-color:#fff;z-index:2;resize:none;overflow:auto}
+#highlighting{z-index:1;overflow:hidden}#highlighting code{font-family:inherit;font-size:inherit;line-height:inherit;text-shadow:none}
+
+#resizer{width:6px;background:#243746;cursor:col-resize;z-index:10;transition:background .2s}#resizer:hover,#resizer.active{background:var(--accent)}
+
+#ds-container{flex:1;display:flex;flex-direction:column;background:var(--panel-2);min-width:380px;overflow:hidden}
+#ds-scroll{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:10px}
+
+.badge-strip{display:flex;gap:6px;flex-wrap:wrap}
+.hw-badge{padding:4px 10px;border-radius:6px;font-size:.78rem;font-weight:600;display:flex;align-items:center;gap:5px;border:1px solid var(--border)}
+.hw-badge.active{background:rgba(0,122,204,.15);border-color:var(--accent);color:#fff}
+.hw-badge.inactive{background:#0d1721;color:#64748b}
+
+/* OpMode Toggle */
+.toggle-container{display:flex;background:#0d1721;border-radius:8px;border:1px solid var(--border);overflow:hidden}
+.toggle-btn{flex:1;padding:10px 14px;text-align:center;font-weight:700;font-size:.9rem;cursor:pointer;border:none;background:none;color:#888;transition:.15s}
+.toggle-btn.active{background:var(--accent);color:#fff}
+.toggle-btn:hover:not(.active){color:#dbeafe;background:#101d29}
+.explain-card{background:#0d1721;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:.82rem;color:#94a3b8;line-height:1.5}
+.explain-card code{color:#7dd3fc;background:#05080d;padding:1px 4px;border-radius:3px;font-size:.8rem}
+
+.panel-section{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px}
+.panel-title{font-weight:700;color:#fff;font-size:.93rem;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.panel-title i{color:var(--accent)}
+
+/* DS Header */
+.ds-header{background:var(--panel);padding:12px;border-radius:8px;border:1px solid var(--border)}
+.ds-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.ds-row:last-child{margin-bottom:0}
+.ds-title{font-size:1rem;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ds-state{font-family:monospace;font-weight:700;font-size:.95rem}
+.ds-timer{font-family:monospace;font-size:.9rem;color:#569cd6}
+.loop-counter{font-family:monospace;font-size:1.2rem;font-weight:700;color:var(--accent);background:#05080d;padding:6px 14px;border-radius:6px;text-align:center}
+
+.controls{display:flex;gap:8px}
+.controls button{flex:1;padding:10px;border-radius:6px;border:none;font-size:.9rem;font-weight:700;cursor:pointer;color:#fff;transition:.1s}
+.controls button:active{transform:translateY(1px)}
+.btn-init{background:var(--accent)}.btn-init:hover{background:var(--accent-2)}
+.btn-init:disabled{background:#444;color:#888;cursor:not-allowed;transform:none}
+.btn-stop{background:var(--danger)}.btn-stop:hover{filter:brightness(1.1)}
+.btn-start{background:var(--good)}.btn-start:hover{filter:brightness(1.1)}
+.btn-start:disabled{background:#444;color:#888;cursor:not-allowed;transform:none}
+
+/* Speed slider */
+.speed-row{display:flex;align-items:center;gap:6px;font-size:.8rem;color:#aaa}
+.speed-row input{flex:1;accent-color:var(--accent)}
+
+/* Loop Step Visualizer */
+.loop-var-display{background:#0d1721;border-radius:6px;padding:8px 10px;display:flex;gap:14px;flex-wrap:wrap;font-family:monospace;font-size:.95rem;margin-bottom:8px}
+.loop-var{display:flex;align-items:center;gap:5px}
+.loop-var .vn{color:#9cdcfe}.loop-var .vv{color:var(--good);font-weight:700}
+.progress-bar-wrap{height:6px;background:#101d29;border-radius:3px;margin-bottom:8px;overflow:hidden}
+.progress-bar-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .1s}
+.step-controls{display:flex;gap:6px;margin-bottom:8px}
+.step-controls button{padding:6px 12px;border-radius:5px;border:none;font-size:.82rem;font-weight:700;cursor:pointer;color:#fff}
+.step-controls button:active{transform:translateY(1px)}
+.btn-step{background:#0e639c}.btn-step:hover{background:#1177bb}
+.btn-play{background:var(--good)}.btn-play:hover{filter:brightness(1.1)}.btn-play.running{background:var(--warn)}
+.btn-reset{background:#555}.btn-reset:hover{background:#666}
+.iter-log{max-height:180px;overflow-y:auto;background:#05080d;border-radius:6px;font-family:monospace;font-size:.8rem}
+.iter-row{display:flex;gap:8px;padding:5px 10px;border-bottom:1px solid #0d1721}
+.iter-row.even{background:#151515}
+.iter-row.active-row{background:rgba(0,122,204,.2);border-left:3px solid var(--accent)}
+.iter-num{color:#666;width:22px;text-align:right;flex-shrink:0}
+.iter-vars{color:#9cdcfe;min-width:50px;flex-shrink:0}
+.iter-out{color:var(--good);flex:1}
+
+/* Blocking warning */
+.blocking-warn{background:rgba(204,0,0,.15);border:2px solid var(--danger);border-radius:8px;padding:12px;color:#ff6666;font-weight:700;display:none;align-items:center;gap:10px;animation:pulse-bdr 1.5s infinite}
+.blocking-warn.visible{display:flex}
+@keyframes pulse-bdr{0%,100%{border-color:var(--danger)}50%{border-color:#ff4444}}
+
+/* Patterns */
+.pattern-card{background:#0d1721;border:1px solid var(--border);border-radius:6px;margin-bottom:6px;overflow:hidden}
+.pattern-hdr{padding:7px 10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:.85rem;color:#ccc}
+.pattern-hdr:hover{background:#101d29}
+.pattern-hdr i{transition:transform .2s;color:#888;font-size:.75rem}
+.pattern-hdr.open i{transform:rotate(90deg)}
+.pattern-body{padding:0 10px 8px;display:none;font-size:.82rem;color:#aaa;line-height:1.5}
+.pattern-body.open{display:block}
+.pattern-body pre{background:#05080d;padding:6px;border-radius:4px;font-size:.78rem;color:#e2e8f0;overflow-x:auto;margin:4px 0}
+
+/* Waiting indicator */
+.waiting-indicator{display:none;align-items:center;gap:8px;padding:10px;background:#0d1721;border:1px dashed var(--warn);border-radius:6px;color:var(--warn);font-weight:600;font-size:.9rem}
+.waiting-indicator.visible{display:flex}
+.waiting-dot{width:10px;height:10px;border-radius:50%;background:var(--warn);animation:blink-dot 1s infinite}
+@keyframes blink-dot{0%,100%{opacity:1}50%{opacity:.2}}
+
+.telemetry-panel{background:#000;border:2px solid #444;border-radius:8px;min-height:60px;max-height:140px;padding:10px;font-family:monospace;font-size:.88rem;overflow-y:auto;color:#00ff00}
+.telemetry-line{margin:2px 0}.telemetry-key{color:#4ec9b0}
+
+#hint-container{display:flex;flex-direction:column;gap:6px}
+.hint{background:rgba(255,204,0,.12);border-left:4px solid var(--warn);padding:8px 10px;color:var(--warn);border-radius:4px;font-size:.85rem}
+.hint.error{background:rgba(204,0,0,.12);border-left-color:var(--danger);color:#ff6666}
+.hint.info{background:rgba(0,122,204,.12);border-left-color:var(--accent);color:#6db3f2}
+
+/* Gamepad */
+.gamepad-float-card{position:fixed;bottom:12px;right:12px;width:400px;min-width:260px;min-height:40px;background:var(--panel);border:1px solid var(--border);border-radius:12px;z-index:1000;display:flex;flex-direction:column;box-shadow:0 6px 24px rgba(0,0,0,.5);overflow:hidden}
+.gamepad-titlebar{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#0d1721;border-bottom:1px solid var(--border);cursor:grab;user-select:none;flex-shrink:0}
+.gamepad-titlebar:active{cursor:grabbing}
+.gamepad-titlebar-label{font-weight:700;font-size:.9rem;color:#fff;display:flex;align-items:center;gap:6px}
+.gamepad-titlebar-label i{color:var(--accent)}
+.gp-collapse-btn{width:24px;height:24px;padding:0;border-radius:4px;background:#333;border:1px solid #555;color:#ccc;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.gp-collapse-btn:hover{background:#444}
+.gamepad-card-body{padding:10px;overflow:hidden;flex:1}
+.gamepad-resize-handle{position:absolute;bottom:0;right:0;width:16px;height:16px;cursor:nwse-resize;z-index:10}
+.gamepad-resize-handle::after{content:'';position:absolute;bottom:3px;right:3px;width:6px;height:6px;border-right:2px solid #666;border-bottom:2px solid #666}
+.controller-wrap{width:100%;position:relative;aspect-ratio:768/512;border-radius:14px;overflow:hidden;background:#0f0f0f;touch-action:none;user-select:none}
+.controller-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+.overlay{position:absolute;border-radius:50%;touch-action:none;user-select:none}
+.stick-zone-left{left:35.5%;top:65.5%;width:17%;height:24%;transform:translate(-50%,-50%);background:transparent}
+.stick-base-left{position:absolute;left:35.5%;top:65.5%;width:14%;height:21%;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;box-shadow:inset 0 0 0 2px rgba(255,255,255,.12)}
+.stick-knob-left{position:absolute;left:35.5%;top:65.5%;width:9%;height:13%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 35% 35%,#444,#121212 70%);border:1px solid rgba(255,255,255,.18);pointer-events:none;box-shadow:0 4px 10px rgba(0,0,0,.45)}
+.stick-zone-right{left:64%;top:65.5%;width:17%;height:24%;transform:translate(-50%,-50%);background:transparent}
+.stick-base-right{position:absolute;left:64%;top:65.5%;width:14%;height:21%;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;box-shadow:inset 0 0 0 2px rgba(255,255,255,.12)}
+.stick-knob-right{position:absolute;left:64%;top:65.5%;width:9%;height:13%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 35% 35%,#444,#121212 70%);border:1px solid rgba(255,255,255,.18);pointer-events:none;box-shadow:0 4px 10px rgba(0,0,0,.45)}
+.button-overlay{border:2px solid rgba(255,255,255,.15);background:rgba(255,255,255,.02);cursor:pointer;transition:.05s}
+.button-overlay.pressed{background:rgba(255,255,255,.18);box-shadow:0 0 0 2px rgba(255,255,255,.25),inset 0 0 20px rgba(255,255,255,.22)}
+.a-btn{left:75.5%;top:49%;width:7%;height:10%;transform:translate(-10%,-10%)}
+.b-btn{left:83%;top:38%;width:7%;height:10%;transform:translate(-10%,-10%)}
+.x-btn{left:68%;top:38%;width:7%;height:10%;transform:translate(-10%,-10%)}
+.y-btn{left:75.5%;top:27%;width:7%;height:10%;transform:translate(-10%,-10%)}
+.small-button{width:5.2%;height:6.4%;border-radius:16px;border:2px solid rgba(255,255,255,.14);pointer-events:auto}
+.back-btn{left:37.5%;top:28%;transform:translate(-10%,-10%)}.start-btn{left:58%;top:28%;transform:translate(-10%,-10%)}
+.bumper-btn{width:14%;height:6%;border-radius:8px;border:2px solid rgba(255,255,255,.15);background:rgba(255,255,255,.02);cursor:pointer}
+.bumper-btn.pressed{background:rgba(255,255,255,.18);box-shadow:0 0 0 2px rgba(255,255,255,.25)}
+.left-bumper-btn{left:20%;top:12%;transform:translate(-50%,-50%)}.right-bumper-btn{left:80%;top:12%;transform:translate(-50%,-50%)}
+.trigger-slider{position:absolute;width:10%;height:14%;background:rgba(0,0,0,.4);border-radius:6px;border:1px solid rgba(255,255,255,.15);cursor:pointer;overflow:hidden}
+.trigger-slider-fill{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,var(--accent-2),var(--accent));transition:height .05s}
+.left-trigger-slider{left:21%;top:0;transform:translate(-50%,0)}.right-trigger-slider{left:79%;top:0;transform:translate(-50%,0)}
+.dpad-container{position:absolute;left:21.5%;top:41%;width:16%;height:24%;transform:translate(-50%,-50%);pointer-events:none}
+.dpad-btn{position:absolute;width:33%;height:33%;background:rgba(40,40,40,.8);border:1px solid rgba(255,255,255,.1);cursor:pointer;pointer-events:auto;display:flex;align-items:center;justify-content:center}
+.dpad-btn:hover{background:rgba(60,60,60,.9)}.dpad-btn.pressed{background:rgba(255,255,255,.2)}
+.dpad-btn svg{width:50%;height:50%;fill:rgba(255,255,255,.5)}.dpad-btn.pressed svg{fill:rgba(255,255,255,.9)}
+.dpad-up{top:0;left:33%;border-radius:4px 4px 0 0}.dpad-down{bottom:0;left:33%;border-radius:0 0 4px 4px}
+.dpad-left{left:0;top:33%;border-radius:4px 0 0 4px}.dpad-right{right:0;top:33%;border-radius:0 4px 4px 0}
+.dpad-center{position:absolute;left:33%;top:33%;width:34%;height:34%;background:rgba(30,30,30,.9);pointer-events:none}
+</style>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+<script src="./telemark-project.js"></script>
+<link rel="stylesheet" href="./telemark-project.css"/>
+  <script src="./gamepad-controls.js"></script>
+  <script src='./simulator_base.js' data-telemark-mode='legacy'></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+<div id="editor-container">
+  <div class="editor-header"><div><div class="editor-title">Telemark Unit 6 Simulator</div><div class="editor-subtitle">Loops &amp; OpMode Types &middot; OpMode vs LinearOpMode &middot; Lifecycle</div></div></div>
+  <div class="code-wrapper">
+    <textarea id="code-editor" spellcheck="false" oninput="onCodeChange()" onscroll="syncScroll(this)"></textarea>
+    <pre id="highlighting" aria-hidden="true"><code class="language-java" id="highlighting-content"></code></pre>
+  </div>
+</div>
+<div id="resizer"></div>
+<div id="ds-container">
+  <div id="ds-scroll">
+    <div class="badge-strip" id="badge-strip"></div>
+
+    <!-- OpMode Toggle -->
+    <div class="toggle-container">
+      <button class="toggle-btn active" id="tog-opmode" onclick="switchMode('opmode')"><i class="fa-solid fa-rotate"></i> OpMode</button>
+      <button class="toggle-btn" id="tog-linear" onclick="switchMode('linear')"><i class="fa-solid fa-arrow-down-long"></i> LinearOpMode</button>
+    </div>
+    <div class="explain-card" id="explain-card"></div>
+
+    <!-- Blocking warning -->
+    <div class="blocking-warn" id="blocking-warn"><i class="fa-solid fa-triangle-exclamation" style="font-size:1.3rem"></i><div>Blocking loop inside <code>loop()</code> &mdash; this will cause a Driver Station timeout. Use the OpMode <code>loop()</code> method as your main loop, or switch to LinearOpMode.</div></div>
+
+    <!-- DS Header -->
+    <div class="ds-header">
+      <div class="ds-row">
+        <div class="ds-title" id="opmode-name">Loop_Demo</div>
+        <div class="ds-state" id="state-indicator" style="color:var(--danger)">STOPPED</div>
+      </div>
+      <div class="ds-row">
+        <div class="loop-counter" id="loop-counter">Loops: 0</div>
+        <div class="ds-timer">Time: <span id="timer-val">0.00</span>s</div>
+      </div>
+    </div>
+
+    <!-- Waiting indicator (LinearOpMode) -->
+    <div class="waiting-indicator" id="waiting-indicator"><div class="waiting-dot"></div> Waiting for Start&hellip; press START to continue</div>
+
+    <!-- Controls -->
+    <div class="controls" id="controls-opmode">
+      <button class="btn-init" id="btn-init" onclick="handleInit()">INIT</button>
+      <button class="btn-start" id="btn-start-op" onclick="handleStart()" disabled>START</button>
+      <button class="btn-stop" onclick="handleStop()">STOP</button>
+    </div>
+    <div class="controls" id="controls-linear" style="display:none">
+      <button class="btn-init" id="btn-run" onclick="handleLinearRun()">RUN</button>
+      <button class="btn-start" id="btn-linear-start" onclick="handleLinearStart()" disabled>START</button>
+      <button class="btn-stop" onclick="handleStop()">STOP</button>
+    </div>
+
+    <div class="speed-row"><span>Slow</span><input type="range" id="speed-slider" min="1" max="20" value="5"><span>Fast</span><span id="speed-label" style="min-width:50px;text-align:right">5 /sec</span></div>
+
+    <!-- Loop Step Visualizer -->
+    <div class="panel-section" id="loop-step-panel">
+      <div class="panel-title"><i class="fa-solid fa-shoe-prints"></i> Loop Step Visualizer</div>
+      <div class="loop-var-display" id="loop-var-display"><span style="color:#666;font-style:italic">No loop detected&hellip;</span></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="loop-progress"></div></div>
+      <div class="step-controls">
+        <button class="btn-step" onclick="manualStep()"><i class="fa-solid fa-forward-step"></i> Step</button>
+        <button class="btn-play" id="btn-play" onclick="toggleStepPlay()"><i class="fa-solid fa-play"></i> Play</button>
+        <button class="btn-reset" onclick="resetStepVisualizer()"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+      </div>
+      <div class="iter-log" id="iter-log"><div style="color:#666;font-style:italic;padding:8px">Press Step or Play&hellip;</div></div>
+    </div>
+
+    <!-- Telemetry -->
+    <div class="telemetry-panel" id="telemetry-log"><span style="color:#666">Press INIT to start&hellip;</span></div>
+
+    <!-- Patterns -->
+    <div class="panel-section">
+      <div class="panel-title"><i class="fa-solid fa-puzzle-piece"></i> Common Patterns</div>
+      <div class="pattern-card"><div class="pattern-hdr" onclick="togglePat(this)"><span><i class="fa-solid fa-rotate"></i> for loop</span><i class="fa-solid fa-chevron-right"></i></div><div class="pattern-body"><p>Use for counting a fixed number of iterations.</p><pre>for (int i = 0; i &lt; 4; i++) {
+    motors[i].setPower(0);
+}</pre></div></div>
+      <div class="pattern-card"><div class="pattern-hdr" onclick="togglePat(this)"><span><i class="fa-solid fa-arrow-down-long"></i> while (!isStopRequested())</span><i class="fa-solid fa-chevron-right"></i></div><div class="pattern-body"><p>The correct LinearOpMode main loop pattern.</p><pre>while (!isStopRequested()) {
+    // your code here
+    telemetry.update();
+}</pre></div></div>
+      <div class="pattern-card"><div class="pattern-hdr" onclick="togglePat(this)"><span><i class="fa-solid fa-code"></i> loop() method</span><i class="fa-solid fa-chevron-right"></i></div><div class="pattern-body"><p>The correct TeleOp main loop &mdash; SDK calls this for you.</p><pre>@Override
+public void loop() {
+    // runs repeatedly
+}</pre></div></div>
+    </div>
+
+    <div id="hint-container"></div>
+  </div>
+</div>
+
+<!-- Gamepad -->
+<div class="gamepad-float-card" id="gamepad-float-card">
+  <div class="gamepad-titlebar" id="gamepad-titlebar">
+    <span class="gamepad-titlebar-label"><i class="fa-solid fa-gamepad"></i> Gamepad 1</span>
+    <button class="gp-collapse-btn" id="gp-collapse-btn">&#x2212;</button>
+  </div>
+  <div class="gamepad-card-body" id="gamepad-card-body">
+    <div class="controller-wrap" id="controller-wrap">
+      <img class="controller-img" alt="controller" src="https://resource.logitechg.com/w_776,h_437,ar_16:9,c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/gaming/en/products/f310/f310-feature-3.png">
+      <div class="trigger-slider left-trigger-slider" id="left-trigger-slider"><div class="trigger-slider-fill" id="left-trigger-fill"></div></div>
+      <div class="trigger-slider right-trigger-slider" id="right-trigger-slider"><div class="trigger-slider-fill" id="right-trigger-fill"></div></div>
+      <div class="overlay bumper-btn left-bumper-btn" id="btn-lb"></div><div class="overlay bumper-btn right-bumper-btn" id="btn-rb"></div>
+      <div class="overlay stick-zone-left" id="stick-zone-left"></div><div class="stick-base-left"></div><div class="stick-knob-left" id="stick-knob-left"></div>
+      <div class="overlay stick-zone-right" id="stick-zone-right"></div><div class="stick-base-right"></div><div class="stick-knob-right" id="stick-knob-right"></div>
+      <div class="overlay button-overlay y-btn" id="btn-y"></div><div class="overlay button-overlay x-btn" id="btn-x"></div>
+      <div class="overlay button-overlay a-btn" id="btn-a-visual"></div><div class="overlay button-overlay b-btn" id="btn-b"></div>
+      <div class="overlay button-overlay small-button back-btn" id="btn-back"></div>
+      <div class="overlay button-overlay small-button start-btn" id="btn-start"></div>
+      <div class="dpad-container"><div class="dpad-center"></div>
+        <div class="dpad-btn dpad-up" id="dpad-up"><svg viewBox="0 0 24 24"><path d="M12 4l-8 8h16z"/></svg></div>
+        <div class="dpad-btn dpad-down" id="dpad-down"><svg viewBox="0 0 24 24"><path d="M12 20l8-8H4z"/></svg></div>
+        <div class="dpad-btn dpad-left" id="dpad-left"><svg viewBox="0 0 24 24"><path d="M4 12l8-8v16z"/></svg></div>
+        <div class="dpad-btn dpad-right" id="dpad-right"><svg viewBox="0 0 24 24"><path d="M20 12l-8 8V4z"/></svg></div>
+      </div>
+    </div>
+  </div>
+  <div class="gamepad-resize-handle" id="gamepad-resize-handle"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+<script>
+// ── Starter Code ──
+var OPMODE_CODE = '@TeleOp(name="Loop_Demo")\npublic class LoopDemo extends OpMode {\n\n    int loopCount = 0;\n\n    @Override\n    public void init() {\n        loopCount = 0;\n        telemetry.addData("Status", "Initialized");\n    }\n\n    @Override\n    public void loop() {\n        loopCount++;\n\n        for (int i = 0; i < 4; i++) {\n            telemetry.addData("Motor " + i, i * 0.25);\n        }\n\n        telemetry.addData("Loop Count", loopCount);\n        telemetry.addData("Runtime", getRuntime());\n    }\n}';
+var LINEAR_CODE = '@Autonomous(name="Linear_Demo")\npublic class LinearDemo extends LinearOpMode {\n\n    @Override\n    public void runOpMode() {\n        telemetry.addData("Status", "Initialized");\n        telemetry.update();\n\n        waitForStart();\n\n        int count = 0;\n        while (!isStopRequested()) {\n            count++;\n            telemetry.addData("Status", "Running");\n            telemetry.addData("Count", count);\n            telemetry.addData("Runtime", getRuntime());\n            telemetry.update();\n        }\n\n        telemetry.addData("Status", "Stopped");\n        telemetry.update();\n    }\n}';
+
+// ── Globals ──
+var codeEditor = document.getElementById('code-editor');
+function getProjectSource(){return codeEditor.__telemarkProject ? codeEditor.__telemarkProject.source() : codeEditor.value;}
+var currentMode = 'opmode'; // 'opmode' | 'linear'
+var simState = 'STOPPED'; // STOPPED, INIT, RUNNING, WAITING
+var loopCount = 0;
+var runtimeOffset = 0;
+var loopIntervalId = null, timerIntervalId = null;
+var stopRequested = false;
+var linearResolve = null; // for waitForStart promise
+var linearReject = null;
+var linearRunning = false;
+var linearRunToken = 0;
+var LINEAR_STOP_SIGNAL = {name:'LinearOpModeStopped'};
+var activeHints = [];
+var fieldVars = {}; // persistent field variables across loop calls
+var compiledSource = '';
+var compiledProgram = null;
+var compiledRuntime = null;
+var telemetryPending = false;
+var telemetryUpdateVersion = 0;
+
+// Step visualizer state
+var stepForLoop = null; // {varName, init, limit, op, step, body, totalIters}
+var stepIter = 0, stepHistory = [], stepPlaying = false, stepTimerId = null;
+
+var gamepad = {left_stick_x:0,left_stick_y:0,right_stick_x:0,right_stick_y:0,left_trigger:0,right_trigger:0,a:false,b:false,x:false,y:false,left_bumper:false,right_bumper:false,start:false,back:false,dpad_up:false,dpad_down:false,dpad_left:false,dpad_right:false};
+var GAMEPAD_PROPS = ['left_stick_x','left_stick_y','right_stick_x','right_stick_y','left_trigger','right_trigger','left_bumper','right_bumper','dpad_up','dpad_down','dpad_left','dpad_right','start','back','a','b','x','y'];
+var urlParams = new URLSearchParams(window.location.search);
+var customCode = urlParams.get('code');
+var initialMode = urlParams.get('mode') === 'linear' ? 'linear' : 'opmode';
+
+// ── Editor ──
+function updateCode(t){var el=document.getElementById('highlighting-content');if(t&&t[t.length-1]==='\n')t+=' ';el.innerHTML=(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');Prism.highlightElement(el)}
+function syncScroll(el){document.getElementById('highlighting').scrollTop=el.scrollTop;document.getElementById('highlighting').scrollLeft=el.scrollLeft}
+function onCodeChange(){updateCode(codeEditor.value);syncScroll(codeEditor)}
+TelemarkEditor.attach(codeEditor, {onChange: onCodeChange});
+
+// ── Resizer ──
+var resizer=document.getElementById('resizer'),leftPanel=document.getElementById('editor-container'),isResizing=false;
+resizer.addEventListener('mousedown',function(){isResizing=true;resizer.classList.add('active')});
+document.addEventListener('mousemove',function(e){if(!isResizing)return;var pct=(e.clientX/window.innerWidth)*100;if(pct>15&&pct<80)leftPanel.style.width=pct+'%'});
+document.addEventListener('mouseup',function(){isResizing=false;resizer.classList.remove('active')});
+
+// ── Speed ──
+document.getElementById('speed-slider').addEventListener('input',function(){document.getElementById('speed-label').textContent=this.value+' /sec'});
+function getSpeed(){return parseInt(document.getElementById('speed-slider').value)||5}
+
+// ── Helpers ──
+function getRuntime(){return runtimeOffset===0?0:(Date.now()-runtimeOffset)/1000}
+function addHint(m,t){for(var i=0;i<activeHints.length;i++){if(activeHints[i].msg===m)return}activeHints.push({msg:m,type:t||'warn'})}
+function renderHints(){var c=document.getElementById('hint-container');c.innerHTML='';activeHints.forEach(function(h){var cls='hint';if(h.type==='error')cls+=' error';else if(h.type==='info')cls+=' info';c.innerHTML+='<div class="'+cls+'">'+h.msg+'</div>'})}
+function togglePat(el){el.classList.toggle('open');el.nextElementSibling.classList.toggle('open')}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+// ── Mode Toggle ──
+function switchMode(mode){
+  if(simState!=='STOPPED')handleStop();
+  currentMode=mode;
+  document.getElementById('tog-opmode').classList.toggle('active',mode==='opmode');
+  document.getElementById('tog-linear').classList.toggle('active',mode==='linear');
+  document.getElementById('controls-opmode').style.display=mode==='opmode'?'flex':'none';
+  document.getElementById('controls-linear').style.display=mode==='linear'?'flex':'none';
+  var starter=mode==='opmode'?OPMODE_CODE:LINEAR_CODE;
+  if(codeEditor.__telemarkProject)codeEditor.__telemarkProject.reset(starter);
+  else codeEditor.value=starter;
+  var ec=document.getElementById('explain-card');
+  ec.innerHTML=mode==='opmode'
+    ?'<i class="fa-solid fa-info-circle" style="color:var(--accent)"></i> <code>init()</code> runs once, <code>loop()</code> is called repeatedly by the SDK. You never write your own loop.'
+    :'<i class="fa-solid fa-info-circle" style="color:var(--accent)"></i> <code>runOpMode()</code> runs once. You control flow with <code>waitForStart()</code> and <code>while(!isStopRequested())</code>. More like a script.';
+  onCodeChange();
+  resetStepVisualizer();
+}
+
+// ── Badge Strip ──
+function renderBadges(){
+  var code=getProjectSource();
+  var items=[
+    {name:'Telemetry',icon:'fa-tower-broadcast',on:code.indexOf('telemetry')!==-1},
+    {name:'Loop',icon:'fa-rotate',on:/\bfor\b|\bwhile\b|\bloop\b/.test(code)},
+    {name:'DcMotor',icon:'fa-gear',on:/DcMotor/.test(code)},
+    {name:'Servo',icon:'fa-gears',on:/Servo/.test(code)},
+    {name:'IMU',icon:'fa-compass',on:/IMU/.test(code)}
+  ];
+  document.getElementById('badge-strip').innerHTML=items.map(function(b){return'<div class="hw-badge '+(b.on?'active':'inactive')+'"><i class="fa-solid '+b.icon+'"></i> '+b.name+'</div>'}).join('');
+}
+
+// ── Transpiler ──
+function getMethodBody(code,name){
+  if(window.TelemarkJava){
+    try{var method=window.TelemarkJava.findMethod(code,name);return method?method.body:null}catch(e){return null}
+  }
+  var re=new RegExp('void\\s+'+name+'\\s*\\([^)]*\\)\\s*\\{');
+  var m=re.exec(code);if(!m)return null;
+  var idx=m.index+m[0].length,depth=1;
+  for(;idx<code.length;idx++){if(code[idx]==='{')depth++;else if(code[idx]==='}'){depth--;if(depth===0)return code.slice(m.index+m[0].length,idx)}}
+  return null;
+}
+
+function transpile(javaBody){
+  if(window.TelemarkJava){
+    return window.TelemarkJava.transpileBody(javaBody,{
+      gamepad1Name:'gamepad',
+      addTelemetryName:'__tel',
+      updateTelemetryName:'(()=>{})'
+    });
+  }
+  var js=javaBody;
+  // Strip Java types
+  js=js.replace(/\b(int|double|float|long|boolean|String|byte|short|char)\s+/g,'let ');
+  js=js.replace(/\blet\s*\[\s*\]/g,'let ');
+  // Gamepad
+  GAMEPAD_PROPS.forEach(function(p){
+    js=js.replace(new RegExp('gamepad1\\.'+p,'g'),'gamepad.'+p);
+  });
+  // telemetry
+  js=js.replace(/telemetry\.addData\s*\(/g,'__tel(');
+  js=js.replace(/telemetry\.update\s*\(\s*\)/g,'');
+  // getRuntime
+  js=js.replace(/getRuntime\s*\(\s*\)/g,'__runtime()');
+  // new int[N] etc
+  js=js.replace(/new\s+\w+\s*\[\s*(\d+)\s*\]/g,'new Array($1).fill(0)');
+  return js;
+}
+
+function buildTelemetryCollector(){
+  var lines=[];
+  function tel(key,val){
+    if(typeof val==='number'&&val!==Math.floor(val))val=val.toFixed(2);
+    lines.push({key:String(key),val:String(val)});
+  }
+  return{fn:tel,lines:lines};
+}
+
+function renderTelemetry(lines){
+  document.getElementById('telemetry-log').innerHTML=lines.length?lines.map(function(l){
+    return'<div class="telemetry-line"><span class="telemetry-key">'+esc(l.key)+'</span>: '+esc(l.val)+'</div>';
+  }).join(''):'<span style="color:#666">No telemetry data</span>';
+}
+
+// ── OpMode Lifecycle ──
+function setState(s,color){
+  simState=s;
+  document.getElementById('state-indicator').textContent=s;
+  document.getElementById('state-indicator').style.color=color;
+}
+function updateTimer(){document.getElementById('timer-val').textContent=getRuntime().toFixed(2)}
+function updateLoopCounter(){document.getElementById('loop-counter').textContent='Loops: '+loopCount}
+
+function resetControlState(){
+  document.getElementById('btn-init').disabled=false;
+  document.getElementById('btn-start-op').disabled=true;
+  document.getElementById('btn-run').disabled=false;
+  document.getElementById('btn-linear-start').disabled=true;
+  document.getElementById('waiting-indicator').classList.remove('visible');
+}
+
+function clearExecutionTimers(){
+  clearInterval(loopIntervalId);
+  clearInterval(timerIntervalId);
+  loopIntervalId=null;
+  timerIntervalId=null;
+}
+
+function showExecutionError(context,error){
+  var message=error&&error.message?error.message:String(error||'Unknown error');
+  document.getElementById('telemetry-log').innerHTML='<div class="telemetry-line" style="color:var(--danger)"><strong>'+esc(context)+':</strong> '+esc(message)+'</div>';
+}
+
+function failExecution(context,error){
+  clearExecutionTimers();
+  stopRequested=true;
+  linearRunning=false;
+  if(linearReject){linearReject(LINEAR_STOP_SIGNAL)}
+  linearResolve=null;
+  linearReject=null;
+  runtimeOffset=0;
+  document.getElementById('timer-val').textContent='0.00';
+  showExecutionError(context,error);
+  setState('STOPPED','var(--danger)');
+  resetControlState();
+  return false;
+}
+
+function flushCompiledTelemetry(force){
+  if(!compiledRuntime)return;
+  if(force||telemetryPending)compiledRuntime.updateTelemetry();
+}
+
+function createCompiledRuntime(){
+  telemetryPending=false;
+  telemetryUpdateVersion=0;
+  var isLinearRuntime=currentMode==='linear';
+  var runtimeToken=linearRunToken;
+  function ensureLinearExecutionCurrent(){
+    if(isLinearRuntime&&(stopRequested||runtimeToken!==linearRunToken))throw LINEAR_STOP_SIGNAL;
+  }
+  var runtime=TelemarkSimulatorBase.createRuntime({
+    gamepad:gamepad,
+    getRuntime:getRuntime,
+    isStopRequested:function(){return stopRequested},
+    opModeIsActive:function(){return simState==='RUNNING'&&!stopRequested},
+    waitForStart:function(){
+      flushCompiledTelemetry(false);
+      if(stopRequested)return Promise.reject(LINEAR_STOP_SIGNAL);
+      if(simState==='RUNNING')return Promise.resolve();
+      setState('WAITING','var(--warn)');
+      document.getElementById('waiting-indicator').classList.add('visible');
+      document.getElementById('btn-linear-start').disabled=false;
+      return new Promise(function(resolve,reject){linearResolve=resolve;linearReject=reject});
+    },
+    sleep:function(ms){
+      return new Promise(function(resolve,reject){
+        setTimeout(function(){
+          try{
+            ensureLinearExecutionCurrent();
+            resolve();
+          }catch(error){
+            reject(error);
+          }
+        },Math.max(0,Number(ms)||0));
+      });
+    },
+    onTelemetry:function(){telemetryPending=true},
+    onTelemetryUpdate:function(items){
+      renderTelemetry(items.map(function(item){return{key:item.key,val:item.value}}));
+    }
+  });
+  var rawClear=runtime.clearTelemetry.bind(runtime);
+  var rawUpdate=runtime.updateTelemetry.bind(runtime);
+  runtime.clearTelemetry=function(){rawClear();telemetryPending=false};
+  runtime.updateTelemetry=function(){
+    rawUpdate();
+    // Keep this page correct with both auto-clearing and older runtimes.
+    rawClear();
+    telemetryPending=false;
+    telemetryUpdateVersion++;
+  };
+  runtime.linearTick=function(){
+    if(telemetryPending)runtime.updateTelemetry();
+    loopCount++;
+    updateLoopCounter();
+    return runtime.sleep(Math.max(50,1000/getSpeed()));
+  };
+  return runtime;
+}
+
+function compileStudentProgram(expectedKind){
+  if(!window.TelemarkSimulatorBase)return failExecution('Compiler unavailable',new Error('Telemark simulator base did not load'));
+  compiledRuntime=createCompiledRuntime();
+  compiledProgram=TelemarkSimulatorBase.compileStudentSource(getProjectSource(),compiledRuntime);
+  compiledSource=getProjectSource();
+  if(!compiledProgram.ok){
+    var diagnostic=compiledProgram.diagnostics&&compiledProgram.diagnostics[0]||{};
+    var location=diagnostic.line?' (line '+diagnostic.line+', column '+diagnostic.column+')':'';
+    return failExecution('Java compile error',new Error((diagnostic.message||'Unable to compile Java')+location));
+  }
+  if(expectedKind&&compiledProgram.kind!==expectedKind){
+    return failExecution('OpMode type mismatch',new Error(expectedKind==='linear'?'Switch the editor to LinearOpMode or extend LinearOpMode':'Switch the editor to OpMode or extend OpMode'));
+  }
+  return true;
+}
+
+function invokeCompiledMethod(name,replaceFrame){
+  var method=compiledProgram&&compiledProgram.methods&&compiledProgram.methods[name];
+  if(!method)return true;
+  if(replaceFrame!==false)compiledRuntime.clearTelemetry();
+  var updateBefore=telemetryUpdateVersion;
+  try{
+    method();
+    if(telemetryPending||telemetryUpdateVersion===updateBefore)compiledRuntime.updateTelemetry();
+    return true;
+  }catch(error){
+    return failExecution(name+'() runtime error',error);
+  }
+}
+
+function handleInit(){
+  if(simState!=='STOPPED')return;
+  clearExecutionTimers();
+  stopRequested=false;
+  linearRunning=false;
+  loopCount=0;updateLoopCounter();
+  runtimeOffset=0;
+  document.getElementById('timer-val').textContent='0.00';
+  document.getElementById('telemetry-log').innerHTML='';
+  runAnalysis();
+  if(!compileStudentProgram('iterative'))return;
+  setState('INIT','var(--warn)');
+  if(!invokeCompiledMethod('init',true))return;
+  document.getElementById('btn-start-op').disabled=false;
+  document.getElementById('btn-init').disabled=true;
+  if(compiledProgram.methods.init_loop){
+    loopIntervalId=setInterval(function(){invokeCompiledMethod('init_loop',true)},Math.max(50,1000/getSpeed()));
+  }
+}
+
+function handleStart(){
+  if(simState!=='INIT')return;
+  clearInterval(loopIntervalId);loopIntervalId=null;
+  if(checkBlocking()){
+    showExecutionError('loop() blocked',new Error('Blocking while loops are not allowed inside iterative loop()'));
+    return;
+  }
+  stopRequested=false;
+  runtimeOffset=Date.now();
+  setState('RUNNING','var(--good)');
+  if(!invokeCompiledMethod('start',true))return;
+  document.getElementById('btn-start-op').disabled=true;
+  timerIntervalId=setInterval(updateTimer,50);
+  var delay=Math.max(50,1000/getSpeed());
+  if(compiledProgram.methods.loop){
+    loopIntervalId=setInterval(function(){
+      loopCount++;updateLoopCounter();
+      invokeCompiledMethod('loop',true);
+    },delay);
+  }
+}
+
+function handleStop(){
+  var previousState=simState;
+  clearExecutionTimers();
+  stopRequested=true;
+  linearRunning=false;
+  if(currentMode==='linear'&&previousState!=='STOPPED')linearRunToken++;
+  if(linearReject){linearReject(LINEAR_STOP_SIGNAL)}
+  linearResolve=null;
+  linearReject=null;
+  if(currentMode==='opmode'&&previousState!=='STOPPED'&&compiledProgram&&compiledProgram.kind==='iterative'){
+    invokeCompiledMethod('stop',true);
+  }
+  runtimeOffset=0;
+  document.getElementById('timer-val').textContent='0.00';
+  setState('STOPPED','var(--danger)');
+  resetControlState();
+}
+
+// ── LinearOpMode Lifecycle ──
+function handleLinearRun(){
+  if(simState!=='STOPPED')return;
+  clearExecutionTimers();
+  linearRunToken++;
+  var token=linearRunToken;
+  loopCount=0;updateLoopCounter();
+  runtimeOffset=0;
+  document.getElementById('timer-val').textContent='0.00';
+  document.getElementById('telemetry-log').innerHTML='';
+  stopRequested=false;
+  linearRunning=true;
+  runAnalysis();
+  if(!compileStudentProgram('linear'))return;
+  if(!compiledProgram.methods.runOpMode)return failExecution('Java compile error',new Error('No runOpMode() method was found'));
+  document.getElementById('btn-run').disabled=true;
+  var body=getMethodBody(getProjectSource(),'runOpMode');
+  if(!/\bwaitForStart\s*\(/.test(body||'')){
+    runtimeOffset=Date.now();
+    setState('RUNNING','var(--good)');
+    timerIntervalId=setInterval(updateTimer,50);
+  }else{
+    setState('INIT','var(--warn)');
+  }
+  Promise.resolve(compiledProgram.methods.runOpMode()).then(function(){
+    if(token!==linearRunToken)return;
+    flushCompiledTelemetry(false);
+    clearExecutionTimers();
+    linearRunning=false;
+    runtimeOffset=0;
+    document.getElementById('timer-val').textContent='0.00';
+    setState('STOPPED','var(--danger)');
+    resetControlState();
+  }).catch(function(error){
+    if(error===LINEAR_STOP_SIGNAL)return;
+    if(token===linearRunToken)failExecution('runOpMode() runtime error',error);
+  });
+}
+
+function handleLinearStart(){
+  if(!linearResolve||stopRequested)return;
+  runtimeOffset=Date.now();
+  setState('RUNNING','var(--good)');
+  document.getElementById('waiting-indicator').classList.remove('visible');
+  document.getElementById('btn-linear-start').disabled=true;
+  timerIntervalId=setInterval(updateTimer,50);
+  var resolve=linearResolve;
+  linearResolve=null;
+  linearReject=null;
+  resolve();
+}
+
+// ── Field Var Parser ──
+function parseFieldVars(){
+  fieldVars={};
+  var code=getProjectSource();
+  var types=['int','double','float','boolean','String','long'];
+  types.forEach(function(t){
+    var re=new RegExp('\\b'+t+'\\s+([\\w\\s,=.\\-]+);','g');
+    var m;
+    while((m=re.exec(code))!==null){
+      // Check it's a field (not inside a method — rough heuristic: before any void)
+      var beforeMatch=code.substring(0,m.index);
+      var lastBrace=beforeMatch.lastIndexOf('{');
+      var lastClassBrace=beforeMatch.lastIndexOf('class ');
+      // If inside class body but not inside a method
+      var braceCount=0;
+      for(var i=0;i<m.index;i++){if(code[i]==='{')braceCount++;else if(code[i]==='}')braceCount--}
+      if(braceCount===1){ // class-level
+        var parts=m[1].split(',');
+        parts.forEach(function(p){
+          p=p.trim();
+          var assign=p.match(/(\w+)\s*=\s*(.+)/);
+          if(assign){
+            var val=assign[2].trim();
+            if(t==='int'||t==='long')fieldVars[assign[1]]=parseInt(val)||0;
+            else if(t==='double'||t==='float')fieldVars[assign[1]]=parseFloat(val)||0;
+            else if(t==='boolean')fieldVars[assign[1]]=val==='true';
+            else fieldVars[assign[1]]=val.replace(/"/g,'');
+          } else if(/^\w+$/.test(p)){
+            if(t==='int'||t==='long')fieldVars[p]=0;
+            else if(t==='double'||t==='float')fieldVars[p]=0.0;
+            else if(t==='boolean')fieldVars[p]=false;
+            else fieldVars[p]='';
+          }
+        });
+      }
+    }
+  });
+}
+
+// ── Blocking Detector ──
+function checkBlocking(){
+  var body=getMethodBody(getProjectSource(),'loop')||'';
+  if(/while\s*\(\s*(?:gamepad1\.\w+|true)\s*\)/.test(body)){
+    document.getElementById('blocking-warn').classList.add('visible');
+    return true;
+  }
+  document.getElementById('blocking-warn').classList.remove('visible');
+  return false;
+}
+
+// ── For Loop Step Visualizer ──
+function parseForLoop(){
+  var code=getProjectSource();
+  stepForLoop=null;
+  var forIdx=code.search(/\bfor\s*\(/);
+  if(forIdx===-1)return;
+  var pOpen=code.indexOf('(',forIdx);
+  var depth=1,pi=pOpen+1;
+  for(;pi<code.length;pi++){if(code[pi]==='(')depth++;else if(code[pi]===')'){depth--;if(depth===0)break}}
+  if(depth!==0)return;
+  var inner=code.substring(pOpen+1,pi);
+  var parts=inner.split(';');
+  if(parts.length!==3)return;
+  var initM=parts[0].trim().match(/(?:int|double|float|long)\s+(\w+)\s*=\s*(-?\d+)/);
+  var condM=parts[1].trim().match(/(\w+)\s*([<>]=?)\s*(.+)/);
+  var stepPart=parts[2].trim();
+  if(!initM||!condM)return;
+  var varName=initM[1],init=parseInt(initM[2]),op=condM[2],limit=parseInt(condM[3]);
+  if(isNaN(limit))return;
+  var step=1;
+  if(/\+\+/.test(stepPart))step=1;else if(/--/.test(stepPart))step=-1;
+  else{var sm=stepPart.match(/[+-]=\s*(\d+)/);if(sm)step=stepPart.indexOf('-=')!==-1?-parseInt(sm[1]):parseInt(sm[1])}
+  var total=0,v=init;
+  for(var it=0;it<2000;it++){var c=false;if(op==='<')c=v<limit;else if(op==='<=')c=v<=limit;else if(op==='>')c=v>limit;else if(op==='>=')c=v>=limit;if(!c)break;total++;v+=step}
+  // Extract body
+  var braceOpen=code.indexOf('{',pi+1);
+  if(braceOpen===-1)return;
+  depth=1;var bi=braceOpen+1;
+  for(;bi<code.length;bi++){if(code[bi]==='{')depth++;else if(code[bi]==='}'){depth--;if(depth===0)break}}
+  var bodyStr=code.substring(braceOpen+1,bi);
+  stepForLoop={varName:varName,init:init,limit:limit,op:op,step:step,body:bodyStr,totalIters:Math.min(total,500)};
+}
+
+function stepOnce(){
+  if(!stepForLoop||stepIter>=stepForLoop.totalIters)return false;
+  var iterVal=stepForLoop.init+stepIter*stepForLoop.step;
+  var tc=buildTelemetryCollector();
+  var js=transpile(stepForLoop.body);
+  js=js.replace(new RegExp('\\b'+stepForLoop.varName+'\\b','g'),String(iterVal));
+  try{
+    var fn=new Function('gamepad','__tel','__runtime','"use strict";\n'+js);
+    fn(gamepad,tc.fn,getRuntime);
+  }catch(e){
+    showExecutionError('Loop visualizer error',e);
+    return false;
+  }
+  stepHistory.push({iter:stepIter,varVal:iterVal,tel:tc.lines});
+  stepIter++;
+  renderStepUI();
+  return stepIter<stepForLoop.totalIters;
+}
+
+function manualStep(){if(!stepForLoop)return;stepOnce()}
+function toggleStepPlay(){
+  if(stepPlaying){clearInterval(stepTimerId);stepPlaying=false;document.getElementById('btn-play').innerHTML='<i class="fa-solid fa-play"></i> Play';document.getElementById('btn-play').classList.remove('running');return}
+  stepPlaying=true;document.getElementById('btn-play').innerHTML='<i class="fa-solid fa-pause"></i> Pause';document.getElementById('btn-play').classList.add('running');
+  stepTimerId=setInterval(function(){if(!stepOnce()){clearInterval(stepTimerId);stepPlaying=false;document.getElementById('btn-play').innerHTML='<i class="fa-solid fa-play"></i> Play';document.getElementById('btn-play').classList.remove('running')}},Math.max(80,500/getSpeed()));
+}
+function resetStepVisualizer(){
+  clearInterval(stepTimerId);stepPlaying=false;stepIter=0;stepHistory=[];
+  document.getElementById('btn-play').innerHTML='<i class="fa-solid fa-play"></i> Play';
+  document.getElementById('btn-play').classList.remove('running');
+  renderStepUI();
+}
+
+function renderStepUI(){
+  var vd=document.getElementById('loop-var-display');
+  var prog=document.getElementById('loop-progress');
+  var log=document.getElementById('iter-log');
+  if(!stepForLoop){vd.innerHTML='<span style="color:#666;font-style:italic">No for loop detected</span>';prog.style.width='0';log.innerHTML='<div style="color:#666;font-style:italic;padding:8px">Write a for loop to use the step visualizer</div>';return}
+  var curVal=stepIter>0?stepForLoop.init+(stepIter-1)*stepForLoop.step:stepForLoop.init;
+  vd.innerHTML='<div class="loop-var"><span class="vn">'+stepForLoop.varName+' =</span> <span class="vv">'+curVal+'</span></div>'
+    +'<div class="loop-var"><span class="vn">iteration</span> <span class="vv">'+stepIter+' / '+stepForLoop.totalIters+'</span></div>';
+  prog.style.width=stepForLoop.totalIters>0?(stepIter/stepForLoop.totalIters*100)+'%':'0';
+  if(!stepHistory.length){log.innerHTML='<div style="color:#666;font-style:italic;padding:8px">Press Step or Play</div>';return}
+  log.innerHTML=stepHistory.map(function(h,idx){
+    var cls='iter-row'+(idx%2===0?' even':'')+(idx===stepHistory.length-1?' active-row':'');
+    var telStr=h.tel.map(function(t){return'<span style="color:#4ec9b0">'+esc(t.key)+'</span>: '+esc(t.val)}).join(' | ')||'<span style="color:#555">\u2014</span>';
+    return'<div class="'+cls+'"><span class="iter-num">'+h.iter+'</span><span class="iter-vars">'+stepForLoop.varName+'='+h.varVal+'</span><span class="iter-out">'+telStr+'</span></div>';
+  }).join('');
+  log.scrollTop=log.scrollHeight;
+}
+
+// ── Analysis ──
+function runAnalysis(){
+  activeHints=[];
+  var code=getProjectSource();
+  var nameMatch=/@(?:TeleOp|Autonomous)\s*\(\s*name\s*=\s*"([^"]+)"/.exec(code);
+  document.getElementById('opmode-name').textContent=nameMatch?nameMatch[1]:'Unnamed';
+  renderBadges();
+  parseForLoop();
+  renderStepUI();
+  // Hints
+  if(/for\s*\(\s*(?:int|let)\s+\w+\s*=\s*\d+\s*;\s*\w+\s*<=/.test(code))addHint('Off by one? <code>&lt;=</code> runs n+1 times, <code>&lt;</code> runs exactly n times');
+  if(/while\s*\(\s*true\s*\)/.test(code)&&currentMode==='opmode')addHint('Infinite blocking loop &mdash; Driver Station will timeout','error');
+  if(/while\s*\(\s*gamepad/.test(code)&&currentMode==='opmode')addHint('Blocking gamepad loop inside loop() will timeout','error');
+  if(/while\s*\(\s*!isStopRequested/.test(code)&&currentMode==='opmode')addHint('while(!isStopRequested()) belongs in LinearOpMode, not OpMode');
+  if(/waitForStart/.test(code)&&currentMode==='opmode')addHint('waitForStart() is only available in LinearOpMode','error');
+  if(stepForLoop&&stepForLoop.totalIters>1000)addHint('Loop runs '+stepForLoop.totalIters+' iterations &mdash; may cause timing issues');
+  if(/\bbreak\b/.test(code)&&/\bfor\b/.test(code))addHint('<code>break</code> exits the loop immediately, skipping remaining iterations','info');
+  if(/\bcontinue\b/.test(code))addHint('<code>continue</code> skips to the next iteration without executing the rest of the body','info');
+  document.getElementById('blocking-warn').classList.remove('visible');
+  renderHints();
+}
+
+// Fallback only: simulator_base owns gamepad input and card interactions.
+if (!window.TelemarkSimulatorBase) {
+// ── Gamepad ──
+function setButtonState(prop,pressed,id){gamepad[prop]=pressed;var el=document.getElementById(id);if(el)el.classList.toggle('pressed',pressed)}
+[['btn-a-visual','a'],['btn-b','b'],['btn-x','x'],['btn-y','y'],['btn-lb','left_bumper'],['btn-rb','right_bumper'],['btn-back','back'],['btn-start','start'],['dpad-up','dpad_up'],['dpad-down','dpad_down'],['dpad-left','dpad_left'],['dpad-right','dpad_right']].forEach(function(p){var el=document.getElementById(p[0]);if(!el)return;el.addEventListener('pointerdown',function(e){e.preventDefault();setButtonState(p[1],true,p[0])});el.addEventListener('pointerup',function(){setButtonState(p[1],false,p[0])});el.addEventListener('pointerleave',function(){setButtonState(p[1],false,p[0])});el.addEventListener('pointercancel',function(){setButtonState(p[1],false,p[0])})});
+function setupTriggerSlider(sid,fid,prop){var s=document.getElementById(sid),f=document.getElementById(fid),d=false;function u(e){var r=s.getBoundingClientRect(),pct=1-Math.max(0,Math.min(1,(e.clientY-r.top)/r.height));gamepad[prop]=pct;f.style.height=pct*100+'%'}s.addEventListener('pointerdown',function(e){d=true;s.setPointerCapture(e.pointerId);u(e)});s.addEventListener('pointermove',function(e){if(d)u(e)});s.addEventListener('pointerup',function(){d=false;gamepad[prop]=0;f.style.height='0%'});s.addEventListener('pointercancel',function(){d=false;gamepad[prop]=0;f.style.height='0%'})}
+setupTriggerSlider('left-trigger-slider','left-trigger-fill','left_trigger');
+setupTriggerSlider('right-trigger-slider','right-trigger-fill','right_trigger');
+var controllerWrap=document.getElementById('controller-wrap');
+function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v))}
+var sticks={left:{zone:document.getElementById('stick-zone-left'),knob:document.getElementById('stick-knob-left'),defaultL:'35.5%',defaultT:'65.5%',dragging:false,pointerId:null,setValues:function(sx,sy){gamepad.left_stick_x=sx;gamepad.left_stick_y=sy}},right:{zone:document.getElementById('stick-zone-right'),knob:document.getElementById('stick-knob-right'),defaultL:'64%',defaultT:'65.5%',dragging:false,pointerId:null,setValues:function(sx,sy){gamepad.right_stick_x=sx;gamepad.right_stick_y=sy}}};
+function resetStick(s){s.dragging=false;s.pointerId=null;s.setValues(0,0);s.knob.style.left=s.defaultL;s.knob.style.top=s.defaultT;s.knob.style.transform='translate(-50%,-50%)'}
+function updateStickFromPointer(s,cx,cy){var wr=controllerWrap.getBoundingClientRect(),zr=s.zone.getBoundingClientRect(),centerX=zr.left+zr.width/2,centerY=zr.top+zr.height/2,dx=cx-centerX,dy=cy-centerY,maxR=Math.min(zr.width,zr.height)*.36,dist=Math.hypot(dx,dy),sc=dist>maxR?maxR/dist:1,cdx=dx*sc,cdy=dy*sc;s.setValues(clamp(cdx/maxR,-1,1),clamp(cdy/maxR,-1,1));s.knob.style.left=(zr.left-wr.left+zr.width/2+cdx)/wr.width*100+'%';s.knob.style.top=(zr.top-wr.top+zr.height/2+cdy)/wr.height*100+'%';s.knob.style.transform='translate(-50%,-50%)'}
+Object.values(sticks).forEach(function(s){s.zone.addEventListener('pointerdown',function(e){e.preventDefault();s.dragging=true;s.pointerId=e.pointerId;s.zone.setPointerCapture(e.pointerId);updateStickFromPointer(s,e.clientX,e.clientY)})});
+window.addEventListener('pointermove',function(e){Object.values(sticks).forEach(function(s){if(s.dragging&&s.pointerId===e.pointerId)updateStickFromPointer(s,e.clientX,e.clientY)})});
+function handlePointerEnd(e){Object.values(sticks).forEach(function(s){if(s.dragging&&s.pointerId===e.pointerId)resetStick(s)})}
+window.addEventListener('pointerup',handlePointerEnd);window.addEventListener('pointercancel',handlePointerEnd);window.addEventListener('blur',function(){Object.values(sticks).forEach(resetStick)});
+// Float card
+(function(){var card=document.getElementById('gamepad-float-card'),tb=document.getElementById('gamepad-titlebar'),cb=document.getElementById('gp-collapse-btn'),bd=document.getElementById('gamepad-card-body'),rh=document.getElementById('gamepad-resize-handle'),collapsed=false,sw=null,sh=null;cb.addEventListener('click',function(e){e.stopPropagation();collapsed=!collapsed;if(collapsed){sw=card.style.width||null;sh=card.style.height||null;bd.style.display='none';rh.style.display='none';card.style.height='auto';cb.textContent='+'}else{bd.style.display='';rh.style.display='';if(sw)card.style.width=sw;if(sh)card.style.height=sh;cb.textContent='\u2212'}});var dr=false,dox=0,doy=0;tb.addEventListener('pointerdown',function(e){if(e.target===cb)return;dr=true;var r=card.getBoundingClientRect();dox=e.clientX-r.left;doy=e.clientY-r.top;tb.setPointerCapture(e.pointerId);e.preventDefault()});tb.addEventListener('pointermove',function(e){if(!dr)return;card.style.left=Math.max(0,Math.min(window.innerWidth-card.offsetWidth,e.clientX-dox))+'px';card.style.top=Math.max(0,Math.min(window.innerHeight-40,e.clientY-doy))+'px';card.style.right='auto';card.style.bottom='auto'});tb.addEventListener('pointerup',function(){dr=false});tb.addEventListener('pointercancel',function(){dr=false});var cr=false,crx=0,cry=0,crw=0,crh=0;rh.addEventListener('pointerdown',function(e){cr=true;crx=e.clientX;cry=e.clientY;crw=card.offsetWidth;crh=card.offsetHeight;rh.setPointerCapture(e.pointerId);e.preventDefault();e.stopPropagation()});rh.addEventListener('pointermove',function(e){if(!cr)return;card.style.width=Math.max(240,crw+(e.clientX-crx))+'px';card.style.height=Math.max(80,crh+(e.clientY-cry))+'px'});rh.addEventListener('pointerup',function(){cr=false});rh.addEventListener('pointercancel',function(){cr=false})})();
+}
+// ── Boot ──
+window.addEventListener('load',function(){
+  if(customCode){
+    if(initialMode==='linear') LINEAR_CODE=customCode;
+    else OPMODE_CODE=customCode;
+  }
+  codeEditor.value=initialMode==='linear'?LINEAR_CODE:OPMODE_CODE;
+  switchMode(initialMode);
+});
+if (window.TelemarkSimulatorBase) window.TelemarkSimulatorBase.installLegacy({state: gamepad});
+</script>
+</body>
+</html>

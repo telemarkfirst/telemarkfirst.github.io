@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Telemark Unit 13.2 Simulator</title>
+<style>
+  #sim-right-panel .u132-panel {
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: clamp(190px, 34vh, 330px);
+    overflow-y: auto;
+    margin: 10px;
+    padding: 12px;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #111118;
+    color: #e0e0e0;
+    font-family: var(--font-ui, Arial, sans-serif);
+  }
+
+  #sim-right-panel #sim-scene-container {
+    flex: 1 0 clamp(360px, 58vh, 560px);
+    min-height: 360px;
+  }
+
+  #sim-right-panel .u132-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  #sim-right-panel .u132-class {
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #0d0d12;
+    margin-bottom: 10px;
+  }
+
+  #sim-right-panel .u132-class-header {
+    padding: 8px 10px;
+    background: #181820;
+    border-bottom: 1px solid #2a2a3a;
+    font-weight: 700;
+  }
+
+  #sim-right-panel .u132-section {
+    padding: 8px 10px;
+    border-bottom: 1px solid #242431;
+  }
+
+  #sim-right-panel .u132-section:last-child {
+    border-bottom: 0;
+  }
+
+  #sim-right-panel .u132-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    color: #888;
+    font-size: 0.82rem;
+  }
+
+  #sim-right-panel .u132-item.valid {
+    color: #22cc66;
+  }
+
+  #sim-right-panel .u132-arrow {
+    text-align: center;
+    color: #38bdf8;
+    font-weight: 700;
+    margin: 4px 0 10px;
+  }
+
+  #sim-right-panel .u132-chain {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 8px;
+    align-items: center;
+    margin-top: 8px;
+  }
+
+  #sim-right-panel .u132-node {
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #0d0d12;
+    padding: 8px;
+    text-align: center;
+    color: #888;
+    font-size: 0.78rem;
+  }
+
+  #sim-right-panel .u132-node.active {
+    color: #93c5fd;
+    border-color: #22d3ee;
+    box-shadow: 0 0 12px rgba(34, 211, 238, 0.2);
+  }
+
+  #sim-right-panel .u132-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  #sim-right-panel .u132-stat {
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #0d0d12;
+    padding: 8px;
+  }
+
+  #sim-right-panel .u132-label {
+    color: #888;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  #sim-right-panel .u132-value {
+    color: #fff;
+    font-weight: 700;
+    margin-top: 2px;
+  }
+
+  #sim-right-panel .u132-warning {
+    display: none;
+    margin-top: 10px;
+    border: 1px solid #5a2626;
+    border-radius: 8px;
+    padding: 8px;
+    background: rgba(204, 34, 34, 0.1);
+    color: #ff8a8a;
+    font-size: 0.82rem;
+  }
+
+  #sim-right-panel .u132-legend {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 8px;
+    color: #888;
+    font-size: 0.78rem;
+  }
+
+  #sim-scene-container .u132-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: rgba(7, 7, 10, 0.88);
+    color: #cbd5e1;
+    font-weight: 700;
+    pointer-events: none;
+  }
+
+  #sim-scene-container .u132-origin {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    z-index: 5;
+    max-width: calc(100% - 24px);
+    padding: 9px 12px;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: rgba(7, 7, 10, 0.88);
+    color: #e0e0e0;
+    font-size: 0.82rem;
+    pointer-events: none;
+  }
+
+  #sim-scene-container .u132-success {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 5;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border: 1px solid #22cc66;
+    border-radius: 8px;
+    background: rgba(7, 12, 9, 0.88);
+    color: #22cc66;
+    font-weight: 700;
+    pointer-events: none;
+  }
+</style>
+<script src="./simulator_base.js"></script>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+<script>
+window.onSimulatorReady = function () {
+  "use strict";
+
+  const starterCode = `import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
+
+// Parent class - provides base servo functionality
+class BaseServoMechanism {
+    protected Servo servo;
+
+    public void init(HardwareMap hwMap, String servoName) {
+        servo = hwMap.get(Servo.class, servoName);
+    }
+
+    public void setPosition(double pos) {
+        servo.setPosition(pos);
+    }
+}
+
+// Child class - extends parent with grabber-specific behavior
+class GrabberMechanism extends BaseServoMechanism {
+    // TODO: Add the open-position constant
+    // TODO: Add the closed-position constant
+
+    public void open() {
+        // TODO: Move to the open constant
+    }
+
+    public void close() {
+        // TODO: Move to the closed constant
+    }
+}
+
+// OpMode using GrabberMechanism
+@TeleOp(name="Grabber_OOP")
+public class GrabberOOP extends OpMode {
+
+    GrabberMechanism grabber = new GrabberMechanism();
+
+    @Override
+    public void init() {
+        grabber.init(hardwareMap, "grabber");
+        telemetry.addData("Status", "Initialized");
+    }
+
+    @Override
+    public void loop() {
+        if (gamepad1.a) {
+            grabber.open();
+            telemetry.addData("Grabber", "Open");
+        } else if (gamepad1.b) {
+            grabber.close();
+            telemetry.addData("Grabber", "Closed");
+        } else {
+            telemetry.addData("Grabber", "Idle");
+        }
+
+        telemetry.addData("Position", grabber.servo.getPosition());
+        telemetry.update();
+    }
+}`;
+
+  const state = {
+    position: 0.1,
+    targetPosition: 0.1,
+    lastMethod: "grabber.open()",
+    chainTimer: 0,
+    pulseTimer: 0
+  };
+
+  let sceneRoot;
+  let leftFinger;
+  let rightFinger;
+  let orb;
+  let leftMaterial;
+  let rightMaterial;
+  let orbMaterial;
+  let servoDevice;
+  let animationRegistered = false;
+  let grabberBehavior = { open: 0.1, close: 0.9 };
+
+  function el(id) {
+    return document.getElementById(id);
+  }
+
+  function safeCall(fn) {
+    if (typeof fn !== "function") return undefined;
+    const args = Array.prototype.slice.call(arguments, 1);
+    return fn.apply(null, args);
+  }
+
+  setCode(starterCode);
+  setChallenge(
+    "Telemark Unit 13.2 Simulator",
+    "Inheritance with a reusable servo parent class.",
+    [
+      "Declare class BaseServoMechanism",
+      "Use a protected Servo servo field",
+      "Define setPosition(double pos) in BaseServoMechanism",
+      "Declare GrabberMechanism extends BaseServoMechanism",
+      "Define OPEN_POS = 0.1",
+      "Define CLOSED_POS = 0.9",
+      "open() calls setPosition(OPEN_POS)",
+      "close() calls setPosition(CLOSED_POS)",
+      "Call grabber.init(hardwareMap, \"grabber\")",
+      "Call grabber.open() and grabber.close() in loop()"
+    ]
+  );
+  setBadges([
+    { iconClass: "fa-solid fa-diagram-project", label: "Inheritance", active: true },
+    { iconClass: "fa-solid fa-gear", label: "Servo", active: true },
+    { iconClass: "fa-solid fa-display", label: "Telemetry", active: true },
+    { iconClass: "fa-solid fa-gamepad", label: "Gamepad", active: true }
+  ]);
+  setActiveInputs(["a", "b"]);
+
+  servoDevice = hardwareMap.registerServo("grabber");
+  hardwareMap.onServoPosition(function (name, value) {
+    updateGrabberVisual(name, value);
+  });
+
+  createPanel();
+  setupScene();
+  setServoPosition("grabber", 0.1);
+  validateCode();
+  updatePanel();
+
+  window.updateGrabberVisual = updateGrabberVisual;
+  window.callGrabberOpen = callGrabberOpen;
+  window.callGrabberClose = callGrabberClose;
+  window.setServoPosition = setServoPosition;
+  window.getServoPosition = getServoPosition;
+
+  window.onInit = function () {
+    compileGrabberBehavior();
+    runStudentInit();
+    validateCode();
+    updatePanel();
+  };
+
+  window.onStart = function () {
+    compileGrabberBehavior();
+    startTeleOpLoop();
+  };
+
+  window.onRun = window.onInit;
+
+  window.onStop = function () {
+    updatePanel();
+  };
+
+  window.onReset = function () {
+    compileGrabberBehavior();
+    setServoPosition("grabber", grabberBehavior.open);
+    state.lastMethod = "grabber.open()";
+    state.chainTimer = 0;
+    state.pulseTimer = 0;
+    updatePanel();
+  };
+
+  if (!animationRegistered && typeof addAnimationCallback === "function") {
+    addAnimationCallback(tick);
+    animationRegistered = true;
+  }
+
+  function createPanel() {
+    const rightPanel = el("sim-right-panel");
+    const sceneContainer = el("sim-scene-container");
+    if (!rightPanel || !sceneContainer) return;
+
+    ["u132-panel", "u132-state-badge", "u132-origin", "u132-success"].forEach(function (id) {
+      const old = el(id);
+      if (old) old.remove();
+    });
+
+    const badge = document.createElement("div");
+    badge.id = "u132-state-badge";
+    badge.className = "u132-badge";
+    badge.innerHTML = '<i class="fa-solid fa-lock-open"></i> OPEN';
+    sceneContainer.appendChild(badge);
+
+    const origin = document.createElement("div");
+    origin.id = "u132-origin";
+    origin.className = "u132-origin";
+    origin.innerHTML = 'GrabberMechanism.open() <i class="fa-solid fa-arrow-right"></i> BaseServoMechanism.setPosition(0.1)';
+    sceneContainer.appendChild(origin);
+
+    const success = document.createElement("div");
+    success.id = "u132-success";
+    success.className = "u132-success";
+    success.innerHTML = '<i class="fa-solid fa-circle-check"></i> Challenge Complete! GrabberMechanism correctly extends BaseServoMechanism.';
+    sceneContainer.appendChild(success);
+
+    const panel = document.createElement("div");
+    panel.id = "u132-panel";
+    panel.className = "u132-panel";
+    panel.innerHTML = `
+      <div class="u132-title"><i class="fa-solid fa-diagram-project"></i> Inheritance Structure</div>
+      <div class="u132-class">
+        <div class="u132-class-header" id="u132-base-class">BaseServoMechanism</div>
+        <div class="u132-section">
+          <div class="u132-item" id="u132-protected"><i class="fa-solid fa-hashtag"></i> servo : Servo</div>
+        </div>
+        <div class="u132-section">
+          <div class="u132-item" id="u132-init"><i class="fa-solid fa-plus"></i> init(hwMap, servoName) : void</div>
+          <div class="u132-item" id="u132-set-position"><i class="fa-solid fa-plus"></i> setPosition(pos : double) : void</div>
+        </div>
+      </div>
+      <div class="u132-arrow"><i class="fa-solid fa-arrow-up"></i> extends</div>
+      <div class="u132-class">
+        <div class="u132-class-header" id="u132-child-class">GrabberMechanism</div>
+        <div class="u132-section">
+          <div class="u132-item" id="u132-open-pos"><i class="fa-solid fa-plus"></i> OPEN_POS = 0.1</div>
+          <div class="u132-item" id="u132-closed-pos"><i class="fa-solid fa-plus"></i> CLOSED_POS = 0.9</div>
+        </div>
+        <div class="u132-section">
+          <div class="u132-item" id="u132-open-method"><i class="fa-solid fa-hand"></i> open() calls setPosition(OPEN_POS)</div>
+          <div class="u132-item" id="u132-close-method"><i class="fa-solid fa-hand-back-fist"></i> close() calls setPosition(CLOSED_POS)</div>
+        </div>
+      </div>
+      <div class="u132-class">
+        <div class="u132-class-header">GrabberOOP</div>
+        <div class="u132-section">
+          <div class="u132-item" id="u132-op-init"><i class="fa-solid fa-plug"></i> grabber.init(hardwareMap, "grabber")</div>
+          <div class="u132-item" id="u132-op-calls"><i class="fa-solid fa-gamepad"></i> grabber.open() and grabber.close()</div>
+        </div>
+      </div>
+      <div class="u132-title"><i class="fa-solid fa-code-branch"></i> Delegation Chain</div>
+      <div class="u132-chain">
+        <div class="u132-node" id="u132-chain-1">grabber.open()</div>
+        <div><i class="fa-solid fa-arrow-right"></i></div>
+        <div class="u132-node" id="u132-chain-2">setPosition(OPEN_POS)</div>
+        <div class="u132-node" id="u132-chain-3">setPosition(0.1)</div>
+        <div><i class="fa-solid fa-arrow-right"></i></div>
+        <div class="u132-node" id="u132-chain-4">servo.setPosition(0.1)</div>
+      </div>
+      <div class="u132-stats">
+        <div class="u132-stat">
+          <div class="u132-label">Position</div>
+          <div class="u132-value" id="u132-position">0.10 (OPEN)</div>
+        </div>
+        <div class="u132-stat">
+          <div class="u132-label">Last Method</div>
+          <div class="u132-value" id="u132-method">grabber.open()</div>
+        </div>
+      </div>
+      <div class="u132-legend">
+        <div><i class="fa-solid fa-plus"></i> public</div>
+        <div><i class="fa-solid fa-hashtag"></i> protected</div>
+        <div><i class="fa-solid fa-minus"></i> private</div>
+      </div>
+      <div class="u132-warning" id="u132-warning"></div>
+    `;
+    rightPanel.appendChild(panel);
+  }
+
+  function setupScene() {
+    if (!window.THREE || !window.scene) return;
+    if (sceneRoot) window.scene.remove(sceneRoot);
+
+    sceneRoot = new THREE.Group();
+    sceneRoot.name = "unit13_2_scene";
+    window.scene.add(sceneRoot);
+    window.scene.background = new THREE.Color(0x050508);
+    safeCall(setFieldVisible, false);
+    safeCall(setCameraOrbit, {
+      theta: 0,
+      phi: 1.08,
+      radius: 7.6,
+      target: { x: 0, y: 0.5, z: -1.2 }
+    });
+
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(9, 9),
+      new THREE.MeshStandardMaterial({ color: 0x1a1a2e, roughness: 0.8, metalness: 0.04 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.12;
+    sceneRoot.add(floor);
+
+    const body = new THREE.Mesh(
+      new THREE.BoxGeometry(3.2, 0.8, 2.4),
+      new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.55, metalness: 0.18 })
+    );
+    body.position.set(0, 0.45, 0.6);
+    sceneRoot.add(body);
+
+    leftMaterial = new THREE.MeshStandardMaterial({
+      color: 0x2255cc,
+      roughness: 0.42,
+      metalness: 0.16,
+      emissive: 0x000000
+    });
+    rightMaterial = new THREE.MeshStandardMaterial({
+      color: 0xcc2222,
+      roughness: 0.42,
+      metalness: 0.16,
+      emissive: 0x000000
+    });
+
+    leftFinger = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.42, 1.7), leftMaterial);
+    rightFinger = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.42, 1.7), rightMaterial);
+    leftFinger.position.y = 0.55;
+    rightFinger.position.y = 0.55;
+    sceneRoot.add(leftFinger);
+    sceneRoot.add(rightFinger);
+
+    orbMaterial = new THREE.MeshStandardMaterial({
+      color: 0x9333ea,
+      roughness: 0.4,
+      metalness: 0.08,
+      emissive: 0x000000
+    });
+    orb = new THREE.Mesh(new THREE.SphereGeometry(0.35, 32, 32), orbMaterial);
+    orb.position.set(0, 0.42, -1.7);
+    sceneRoot.add(orb);
+
+    const arc = makePositionArc();
+    sceneRoot.add(arc);
+  }
+
+  function makePositionArc() {
+    const points = [];
+    const radius = 1.8;
+    for (let d = -70; d <= 70; d += 2) {
+      const rad = THREE.MathUtils.degToRad(d);
+      points.push(new THREE.Vector3(Math.sin(rad) * radius, 0.04, -1.2 - Math.cos(rad) * radius));
+    }
+    return new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(points),
+      new THREE.LineBasicMaterial({ color: 0xff6600 })
+    );
+  }
+
+  function tick() {
+    if (!window.THREE || !leftFinger || !rightFinger) return;
+
+    state.position += (state.targetPosition - state.position) * 0.22;
+    const openAmount = 1 - state.position;
+    const spread = 0.48 + openAmount * 1.25;
+    leftFinger.position.set(-spread, 0.55, -1.35);
+    rightFinger.position.set(spread, 0.55, -1.35);
+    leftFinger.rotation.y = THREE.MathUtils.degToRad(-14 - openAmount * 22);
+    rightFinger.rotation.y = THREE.MathUtils.degToRad(14 + openAmount * 22);
+
+    state.chainTimer = Math.max(0, state.chainTimer - 0.016);
+    state.pulseTimer = Math.max(0, state.pulseTimer - 0.016);
+
+    const pulse = state.pulseTimer > 0 ? pulseColor() : 0x000000;
+    if (leftMaterial) leftMaterial.emissive.setHex(pulse);
+    if (rightMaterial) rightMaterial.emissive.setHex(pulse);
+
+    if (orbMaterial) {
+      if (state.position >= 0.82) {
+        orbMaterial.emissive.setHex(0x0b3d1d);
+        orb.position.z = -1.35;
+      } else {
+        orbMaterial.emissive.setHex(0x000000);
+        orb.position.z = -1.7;
+      }
+    }
+
+    updatePanel();
+  }
+
+  function pulseColor() {
+    return state.targetPosition >= 0.8 ? 0x4a2500 : 0x0b3d1d;
+  }
+
+  function setServoPosition(name, value) {
+    if (name !== "grabber") return;
+    if (servoDevice && typeof servoDevice.setPosition === "function") {
+      servoDevice.setPosition(value);
+    }
+  }
+
+  function getServoPosition(name) {
+    if (name !== "grabber") return 0;
+    return servoDevice && typeof servoDevice.getPosition === "function"
+      ? servoDevice.getPosition()
+      : state.targetPosition;
+  }
+
+  function callGrabberOpen() {
+    state.lastMethod = "grabber.open()";
+    setServoPosition("grabber", grabberBehavior.open);
+  }
+
+  function callGrabberClose() {
+    state.lastMethod = "grabber.close()";
+    setServoPosition("grabber", grabberBehavior.close);
+  }
+
+  function updateGrabberVisual(name, value) {
+    if (name !== "grabber") return;
+    state.targetPosition = Number(value);
+    state.chainTimer = 0.48;
+    state.pulseTimer = 0.32;
+    updatePanel();
+  }
+
+  function updatePanel() {
+    const positionText = el("u132-position");
+    const methodText = el("u132-method");
+    const badge = el("u132-state-badge");
+    const origin = el("u132-origin");
+    const label = state.targetPosition <= 0.2 ? "OPEN" : state.targetPosition >= 0.8 ? "CLOSED" : "MOVING";
+
+    if (positionText) positionText.textContent = state.targetPosition.toFixed(2) + " (" + label + ")";
+    if (methodText) methodText.textContent = state.lastMethod;
+
+    if (badge) {
+      const isClosed = state.targetPosition >= 0.8;
+      badge.innerHTML = isClosed
+        ? '<i class="fa-solid fa-lock"></i> GRIPPED'
+        : '<i class="fa-solid fa-lock-open"></i> OPEN';
+      badge.style.color = isClosed ? "#22cc66" : "#cbd5e1";
+      badge.style.borderColor = isClosed ? "#22cc66" : "#2a2a3a";
+    }
+
+    if (origin) {
+      if (state.targetPosition >= 0.8) {
+        origin.innerHTML = 'GrabberMechanism.close() <i class="fa-solid fa-arrow-right"></i> BaseServoMechanism.setPosition(' + grabberBehavior.close.toFixed(2) + ')';
+      } else {
+        origin.innerHTML = 'GrabberMechanism.open() <i class="fa-solid fa-arrow-right"></i> BaseServoMechanism.setPosition(' + grabberBehavior.open.toFixed(2) + ')';
+      }
+    }
+
+    for (let i = 1; i <= 4; i++) {
+      const node = el("u132-chain-" + i);
+      if (node) node.classList.toggle("active", state.chainTimer > 0);
+    }
+  }
+
+  function startTeleOpLoop() {
+    const code = typeof getCode === "function" ? getCode() : starterCode;
+    const loopBody = extractMethodBody(extractOpModeBody(code), "loop");
+    if (!loopBody) {
+      failStudentExecution("loop() was not found.");
+      return;
+    }
+
+    const js = transpileLoop(loopBody);
+    let loopFn;
+    try {
+      loopFn = new Function(
+        "gamepad",
+        "addTelemetry",
+        "updateTelemetry",
+        "callGrabberOpen",
+        "callGrabberClose",
+        "setServoPosition",
+        "getServoPosition",
+        '"use strict";\n' + js
+      );
+    } catch (err) {
+      failStudentExecution("loop() compile error: " + err.message);
+      return;
+    }
+
+    const runFrame = function () {
+      try {
+        clearTelemetry();
+        loopFn(
+          window.gamepad,
+          addTelemetry,
+          updateTelemetry,
+          callGrabberOpen,
+          callGrabberClose,
+          setServoPosition,
+          getServoPosition
+        );
+        updateTelemetry();
+      validateCode();
+    } catch (err) {
+        failStudentExecution("loop() runtime error: " + err.message);
+      }
+    };
+
+    if (typeof _simStartLoop === "function") _simStartLoop(runFrame);
+    else setInterval(runFrame, 50);
+  }
+
+  function transpileLoop(body) {
+    let js = body
+      .replace(/\bgamepad1\s*\.\s*a\b/g, "gamepad.a")
+      .replace(/\bgamepad1\s*\.\s*b\b/g, "gamepad.b")
+      .replace(/\bgrabber\s*\.\s*open\s*\(\s*\)/g, "callGrabberOpen()")
+      .replace(/\bgrabber\s*\.\s*close\s*\(\s*\)/g, "callGrabberClose()")
+      .replace(/\bgrabber\s*\.\s*setPosition\s*\(/g, 'setServoPosition("grabber",')
+      .replace(/\bgrabber\s*\.\s*servo\s*\.\s*getPosition\s*\(\s*\)/g, 'getServoPosition("grabber")')
+      .replace(/\btelemetry\s*\.\s*addData\s*\(/g, "addTelemetry(")
+      .replace(/\btelemetry\s*\.\s*update\s*\(\s*\)/g, "updateTelemetry()");
+    if (typeof _simTranspile === "function") js = _simTranspile(js);
+    return js;
+  }
+
+  function compileGrabberBehavior() {
+    const code = typeof getCode === "function" ? getCode() : starterCode;
+    const childBody = extractClassBody(code, "GrabberMechanism");
+    const constants = extractDoubleConstants(childBody);
+    grabberBehavior = {
+      open: extractSetPositionValue(childBody, "open", constants, 0.1),
+      close: extractSetPositionValue(childBody, "close", constants, 0.9)
+    };
+  }
+
+  function extractDoubleConstants(scope) {
+    const constants = {};
+    const re = /\b(?:public\s+)?(?:static\s+)?(?:final\s+)?double\s+([A-Z_][A-Z0-9_]*)\s*=\s*([-+]?\d+(?:\.\d+)?)\s*;/g;
+    let match;
+    while ((match = re.exec(scope || ""))) {
+      constants[match[1]] = Number(match[2]);
+    }
+    return constants;
+  }
+
+  function extractSetPositionValue(classBody, methodName, constants, fallback) {
+    const body = extractMethodBody(classBody || "", methodName);
+    const match = /\b(?:setPosition|servo\s*\.\s*setPosition)\s*\(\s*([A-Za-z_][\w]*|[-+]?\d+(?:\.\d+)?)\s*\)/.exec(body);
+    if (!match) return fallback;
+    const token = match[1];
+    if (/[-+]?\d/.test(token)) return Number(token);
+    return Object.prototype.hasOwnProperty.call(constants, token) ? constants[token] : fallback;
+  }
+
+  function runStudentInit() {
+    const code = typeof getCode === "function" ? getCode() : starterCode;
+    const initBody = extractMethodBody(extractOpModeBody(code), "init");
+    if (!initBody) return;
+    let js = initBody
+      .replace(/\bgrabber\s*\.\s*init\s*\(\s*hardwareMap\s*,\s*"grabber"\s*\)/g, "callGrabberInit()")
+      .replace(/\btelemetry\s*\.\s*addData\s*\(/g, "addTelemetry(")
+      .replace(/\btelemetry\s*\.\s*update\s*\(\s*\)/g, "updateTelemetry()");
+    if (typeof _simTranspile === "function") js = _simTranspile(js);
+    try {
+      const initFn = new Function("hardwareMap", "callGrabberInit", "addTelemetry", "updateTelemetry", '"use strict";\n' + js);
+      clearTelemetry();
+      initFn(hardwareMap, callGrabberInit, addTelemetry, updateTelemetry);
+      updateTelemetry();
+    } catch (err) {
+      failStudentExecution("init() runtime error: " + err.message);
+    }
+  }
+
+  function callGrabberInit() {
+    state.lastMethod = "grabber.init(hardwareMap, \"grabber\")";
+  }
+
+  function validateCode() {
+    const code = typeof getCode === "function" ? getCode() : starterCode;
+    const baseBody = extractClassBody(code, "BaseServoMechanism");
+    const childBody = extractClassBody(code, "GrabberMechanism");
+    const opBody = extractOpModeBody(code);
+    const loopBody = extractMethodBody(opBody, "loop");
+    const checks = [
+      /class\s+BaseServoMechanism\b/.test(code),
+      /protected\s+Servo\s+servo\s*;/.test(baseBody),
+      /public\s+void\s+setPosition\s*\(\s*double\s+\w+\s*\)[\s\S]*?servo\s*\.\s*setPosition\s*\(\s*\w+\s*\)/.test(baseBody),
+      /class\s+GrabberMechanism\s+extends\s+BaseServoMechanism\b/.test(code),
+      /public\s+static\s+final\s+double\s+OPEN_POS\s*=\s*0\.1\s*;/.test(childBody),
+      /public\s+static\s+final\s+double\s+CLOSED_POS\s*=\s*0\.9\s*;/.test(childBody),
+      /public\s+void\s+open\s*\(\s*\)[\s\S]*?setPosition\s*\(\s*OPEN_POS\s*\)/.test(childBody),
+      /public\s+void\s+close\s*\(\s*\)[\s\S]*?setPosition\s*\(\s*CLOSED_POS\s*\)/.test(childBody),
+      /grabber\s*\.\s*init\s*\(\s*hardwareMap\s*,\s*"grabber"\s*\)/.test(code),
+      /grabber\s*\.\s*open\s*\(\s*\)/.test(loopBody) && /grabber\s*\.\s*close\s*\(\s*\)/.test(loopBody)
+    ];
+
+    checks.forEach(function (passed, index) {
+      safeCall(setRequirement, index, !!passed);
+    });
+
+    const ids = [
+      "u132-base-class",
+      "u132-protected",
+      "u132-set-position",
+      "u132-child-class",
+      "u132-open-pos",
+      "u132-closed-pos",
+      "u132-open-method",
+      "u132-close-method",
+      "u132-op-init",
+      "u132-op-calls"
+    ];
+    ids.forEach(function (id, index) {
+      const item = el(id);
+      if (item) item.classList.toggle("valid", !!checks[index]);
+    });
+    const initItem = el("u132-init");
+    if (initItem) {
+      initItem.classList.toggle(
+        "valid",
+        /public\s+void\s+init\s*\(\s*HardwareMap\s+\w+\s*,\s*String\s+\w+\s*\)/.test(baseBody)
+      );
+    }
+
+    const success = el("u132-success");
+    if (success) success.style.display = checks.every(Boolean) ? "flex" : "none";
+    updateWarning(code, baseBody, childBody);
+  }
+
+  function updateWarning(code, baseBody, childBody) {
+    const warning = el("u132-warning");
+    if (!warning) return;
+    let message = "";
+    if (/private\s+Servo\s+servo\s*;/.test(baseBody)) {
+      message = "Make servo protected, not private. Child classes need access through the parent hierarchy.";
+    } else if (!/class\s+GrabberMechanism\s+extends\s+BaseServoMechanism\b/.test(code)) {
+      message = "Add extends BaseServoMechanism to GrabberMechanism.";
+    } else if (/open\s*\(\s*\)[\s\S]*?setPosition\s*\(\s*0\.1\s*\)/.test(childBody)) {
+      message = "Use OPEN_POS instead of hardcoding 0.1 in open().";
+    } else if (/close\s*\(\s*\)[\s\S]*?setPosition\s*\(\s*0\.9\s*\)/.test(childBody)) {
+      message = "Use CLOSED_POS instead of hardcoding 0.9 in close().";
+    } else if (/open\s*\(\s*\)[\s\S]*?servo\s*\.\s*setPosition\s*\(/.test(childBody)) {
+      message = "Call the inherited setPosition() method instead of servo.setPosition() directly.";
+    } else if (/grabber\s*\.\s*servo\s*\.\s*setPosition\s*\(/.test(code)) {
+      message = "servo is protected. Use grabber.open() and grabber.close() instead of accessing it directly.";
+    } else if (!/telemetry\s*\.\s*update\s*\(\s*\)/.test(code)) {
+      message = "Call telemetry.update() to send data to the Driver Station.";
+    }
+
+    warning.style.display = message ? "block" : "none";
+    warning.innerHTML = message ? '<i class="fa-solid fa-triangle-exclamation"></i> ' + message : "";
+  }
+
+  function extractMethodBody(code, name) {
+    const re = new RegExp("\\b(?:public\\s+)?(?:void|boolean|double)\\s+" + name + "\\s*\\([^)]*\\)\\s*\\{");
+    const match = re.exec(code);
+    if (!match) return "";
+    let index = match.index + match[0].length;
+    let depth = 1;
+    for (; index < code.length; index++) {
+      if (code[index] === "{") depth++;
+      if (code[index] === "}") {
+        depth--;
+        if (depth === 0) return code.slice(match.index + match[0].length, index);
+      }
+    }
+    return "";
+  }
+
+  function extractClassBody(code, name) {
+    const re = new RegExp("\\bclass\\s+" + name + "\\b[^{]*\\{");
+    const match = re.exec(code);
+    if (!match) return "";
+    let index = match.index + match[0].length;
+    let depth = 1;
+    for (; index < code.length; index++) {
+      if (code[index] === "{") depth++;
+      if (code[index] === "}") {
+        depth--;
+        if (depth === 0) return code.slice(match.index + match[0].length, index);
+      }
+    }
+    return "";
+  }
+
+  function extractOpModeBody(code) {
+    const match = /\bclass\s+([A-Za-z_$][\w$]*)\s+extends\s+OpMode\b/.exec(code);
+    return match ? extractClassBody(code, match[1]) : extractClassBody(code, "GrabberOOP");
+  }
+
+  function showStudentError(message) {
+    if (typeof _simShowTelemetryError === "function") {
+      _simShowTelemetryError(message);
+    } else {
+      addTelemetry("ERROR", message);
+      updateTelemetry();
+    }
+  }
+
+
+  function failStudentExecution(message) {
+    if (typeof stopExecution === "function") stopExecution();
+    showStudentError(message);
+  }
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkcake_recipes=globalThis.webpackChunkcake_recipes||[]).push([[3584],{97639(e,a,c){c.r(a),c.d(a,{default:()=>u});c(96540);var r=c(56347),s=c(86025),i=c(74848);function u(){return(0,i.jsx)(r.rd,{to:(0,s.Ay)("/mechanical")})}}}]);

@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>Telemark Unit 11.1 Simulator</title>
+
+<script src="simulator_base.js"></script>
+
+<style>
+:root{
+    --bg:#0a0f18;
+    --panel:#121826;
+    --panel2:#181f2d;
+    --border:rgba(255,255,255,.08);
+    --text:#edf2ff;
+    --muted:#94a3b8;
+    --green:#22c55e;
+    --red:#ef4444;
+    --yellow:#facc15;
+    --blue:#3b82f6;
+}
+
+body{
+    background:var(--bg);
+    overflow:hidden;
+}
+
+.sensor-panel{
+    margin:10px;
+    padding:16px;
+    border-radius:16px;
+    background:#0b1118;
+    border:1px solid var(--border);
+    color:var(--text);
+    font-family:Inter,sans-serif;
+    box-shadow:
+        0 24px 60px rgba(0,0,0,.5),
+        inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+.panel-title{
+    font-size:1.1rem;
+    font-weight:800;
+    margin-bottom:14px;
+}
+
+.status-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px;
+    border-radius:12px;
+    background:rgba(255,255,255,.03);
+    border:1px solid rgba(255,255,255,.05);
+    margin-bottom:14px;
+}
+
+.status-row i{
+    font-size:1.2rem;
+}
+
+.sensor-state{
+    font-weight:800;
+}
+
+.sensor-state.pressed{
+    color:var(--green);
+}
+
+.sensor-state.notpressed{
+    color:#f87171;
+}
+
+.power-wrap{
+    margin-top:14px;
+}
+
+.bar-label{
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:6px;
+    color:#d7def0;
+    font-size:.88rem;
+}
+
+.power-bar{
+    position:relative;
+    height:20px;
+    border-radius:999px;
+    overflow:hidden;
+    background:#1b2435;
+    border:1px solid rgba(255,255,255,.05);
+}
+
+.power-fill{
+    position:absolute;
+    top:0;
+    bottom:0;
+    left:50%;
+    width:0%;
+    transition:all .05s linear;
+}
+
+.height-layout{
+    display:grid;
+    grid-template-columns:90px 1fr;
+    gap:16px;
+    margin-top:20px;
+}
+
+.height-meter{
+    height:240px;
+    width:40px;
+    border-radius:999px;
+    overflow:hidden;
+    position:relative;
+    background:#1b2435;
+    border:1px solid rgba(255,255,255,.08);
+}
+
+.height-fill{
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    height:0%;
+    background:linear-gradient(180deg,#67e8f9,#2563eb);
+}
+
+.height-percent{
+    margin-top:10px;
+    text-align:center;
+    font-weight:800;
+}
+
+.logic-panel{
+    background:rgba(255,255,255,.03);
+    border:1px solid rgba(255,255,255,.05);
+    border-radius:14px;
+    padding:14px;
+}
+
+.logic-title{
+    font-weight:800;
+    margin-bottom:12px;
+}
+
+.logic-line{
+    margin-bottom:10px;
+    padding:10px;
+    border-radius:10px;
+    background:#141b28;
+    border:1px solid rgba(255,255,255,.05);
+    display:flex;
+    justify-content:space-between;
+    font-family:monospace;
+}
+
+.logic-value.true{
+    color:var(--green);
+    font-weight:800;
+}
+
+.logic-value.false{
+    color:#f87171;
+    font-weight:800;
+}
+
+.trigger-btn{
+    margin-top:16px;
+    width:100%;
+    border:none;
+    border-radius:12px;
+    padding:12px;
+    background:#2563eb;
+    color:white;
+    font-weight:800;
+    cursor:pointer;
+}
+
+.overlay-warning{
+    position:absolute;
+    left:20px;
+    top:20px;
+    z-index:100;
+    padding:12px 16px;
+    border-radius:999px;
+    background:rgba(80,10,10,.94);
+    border:1px solid rgba(255,0,0,.3);
+    color:#ffd2d2;
+    font-weight:800;
+    display:none;
+    font-family:Inter,sans-serif;
+}
+
+.overlay-warning.visible{
+    display:block;
+}
+
+.limit-badge{
+    position:absolute;
+    right:20px;
+    top:20px;
+    z-index:100;
+    padding:10px 14px;
+    border-radius:999px;
+    background:rgba(10,70,20,.95);
+    border:1px solid rgba(0,255,100,.25);
+    color:#86efac;
+    font-weight:900;
+    display:none;
+    font-family:Inter,sans-serif;
+}
+
+.limit-badge.visible{
+    display:block;
+    animation:pulse .8s infinite;
+}
+
+.damage-overlay{
+    position:absolute;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,0,0,.12);
+    z-index:120;
+    font-size:2rem;
+    color:#ffb4b4;
+    font-weight:900;
+    font-family:Inter,sans-serif;
+    letter-spacing:.08em;
+}
+
+.damage-overlay.visible{
+    display:flex;
+    animation:damageFlash .25s linear infinite;
+}
+
+@keyframes damageFlash{
+    0%{background:rgba(255,0,0,.08)}
+    50%{background:rgba(255,0,0,.22)}
+    100%{background:rgba(255,0,0,.08)}
+}
+
+@keyframes pulse{
+    0%{opacity:.4}
+    50%{opacity:1}
+    100%{opacity:.4}
+}
+</style>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+
+<body>
+
+<script>
+(() => {
+
+"use strict";
+
+const starterCode = `@TeleOp(name="Lift_Touch_Sensor")
+public class LiftTouchSensor extends OpMode {
+
+    DcMotor lift;
+    TouchSensor limit;
+
+    @Override
+    public void init() {
+        lift  = hardwareMap.get(DcMotor.class, "lift");
+        limit = hardwareMap.get(TouchSensor.class, "limit");
+
+        lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        telemetry.addData("Status", "Initialized");
+    }
+
+    @Override
+    public void loop() {
+        double liftPower = -gamepad1.left_stick_y;
+        boolean limitPressed = false;
+
+        // TODO: update limitPressed from the touch sensor.
+        // TODO: stop the lift only when the bottom limit is pressed
+        // and the driver is commanding downward movement.
+        lift.setPower(liftPower);
+
+        telemetry.addData("Limit", limitPressed ? "Pressed" : "Not Pressed");
+        telemetry.addData("Power",  liftPower);
+        telemetry.update();
+    }
+}`;
+
+const requirements = [
+    "Get DcMotor lift from hardwareMap",
+    "Get TouchSensor limit from hardwareMap",
+    "Use limit.isPressed() in loop",
+    "Block downward movement when limit pressed",
+    "Allow upward movement even when limit pressed",
+    "Use telemetry.addData()"
+];
+
+const sim = {
+
+    running:false,
+
+    touchPressed:false,
+
+    rawStick:0,
+
+    requestedPower:0,
+    commandedPower:0,
+    effectivePower:0,
+
+    height:0.35,
+
+    damage:false,
+
+    hasCorrectLogic:false,
+    setupOk:false,
+
+    req:[false,false,false,false,false,false]
+};
+
+const LIMIT_SWITCH_HEIGHT = 0.08;
+const LIMIT_RELEASE_HEIGHT = 0.12;
+const HARD_STOP_HEIGHT = 0;
+
+let liftCarriage;
+let touchDisc;
+let railStress;
+
+let sensorText;
+let powerFill;
+let heightFill;
+let heightPercent;
+let stickValue;
+let effectiveValue;
+
+let logicLimit;
+let logicDirection;
+let logicCombined;
+
+let warningBox;
+let limitBadge;
+let damageOverlay;
+
+function clamp(v,min,max){
+    return Math.max(min,Math.min(max,v));
+}
+
+function updateRequirementStates(){
+
+    const setRequirement =
+        window.setRequirementState ||
+        window.setRequirement;
+
+    sim.req.forEach((v,i)=>{
+        if(setRequirement){
+            setRequirement(i,v);
+        }
+    });
+
+    const complete =
+        sim.req.every(Boolean) &&
+        sim.setupOk;
+
+    const banner =
+        document.getElementById(
+            "sim-success-banner"
+        );
+
+    if(complete && banner){
+
+        banner.classList.add("visible");
+
+        banner.innerHTML =
+            '<i class="fa-solid fa-circle-check"></i> Challenge Complete! Your lift is protected by the limit switch.';
+
+    }else if(banner){
+
+        banner.classList.remove("visible");
+    }
+}
+
+function updateUI(){
+
+    sensorText.className =
+        sim.touchPressed
+            ? "sensor-state pressed"
+            : "sensor-state notpressed";
+
+    sensorText.textContent =
+        sim.touchPressed
+            ? "PRESSED"
+            : "NOT PRESSED";
+
+    const p =
+        clamp(
+            sim.requestedPower,
+            -1,
+            1
+        );
+
+    powerFill.style.left =
+        p >= 0 ? "50%" : `${50 + p * 50}%`;
+
+    powerFill.style.width =
+        `${Math.abs(p) * 50}%`;
+
+    powerFill.style.background =
+        p >= 0
+            ? "linear-gradient(90deg,#22c55e,#4ade80)"
+            : "linear-gradient(90deg,#ef4444,#f87171)";
+
+    heightFill.style.height =
+        `${sim.height * 100}%`;
+
+    heightPercent.textContent =
+        `${Math.round(sim.height * 100)}%`;
+
+    stickValue.textContent =
+        `liftPower: ${sim.requestedPower.toFixed(2)} (Stick Y: ${sim.rawStick.toFixed(2)})`;
+
+    effectiveValue.textContent =
+        `Motor Output: ${sim.effectivePower.toFixed(2)}`;
+
+    const downward =
+        sim.requestedPower < 0;
+
+    const combined =
+        sim.touchPressed && downward;
+
+    logicLimit.innerHTML =
+        `<span>limit.isPressed()</span><span class="logic-value ${sim.touchPressed ? "true":"false"}">${sim.touchPressed}</span>`;
+
+    logicDirection.innerHTML =
+        `<span>liftPower &lt; 0</span><span class="logic-value ${downward ? "true":"false"}">${downward}</span>`;
+
+    logicCombined.innerHTML =
+        `<span>limit.isPressed() && liftPower &lt; 0</span><span class="logic-value ${combined ? "true":"false"}">${combined}</span>`;
+
+    if(sim.touchPressed && downward){
+
+        limitBadge.classList.add("visible");
+
+    }else{
+
+        limitBadge.classList.remove("visible");
+    }
+
+    update3D();
+}
+
+function playCrunch(){
+
+    try{
+
+        const ctx =
+            new (
+                window.AudioContext ||
+                window.webkitAudioContext
+            )();
+
+        const osc =
+            ctx.createOscillator();
+
+        const gain =
+            ctx.createGain();
+
+        osc.type = "sawtooth";
+        osc.frequency.value = 80;
+
+        gain.gain.value = 0.2;
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start();
+
+        gain.gain.exponentialRampToValueAtTime(
+            0.0001,
+            ctx.currentTime + 0.4
+        );
+
+        osc.stop(ctx.currentTime + 0.4);
+
+    }catch(err){
+        console.warn(err);
+    }
+}
+
+function triggerDamage(){
+
+    sim.damage = true;
+
+    damageOverlay.classList.add(
+        "visible"
+    );
+
+    warningBox.innerHTML =
+        '<i class="fa-solid fa-triangle-exclamation"></i> Your lift will crash — check your limit switch condition';
+
+    warningBox.classList.add(
+        "visible"
+    );
+
+    playCrunch();
+
+    setTimeout(()=>{
+        sim.damage = false;
+        damageOverlay.classList.remove(
+            "visible"
+        );
+    },1500);
+}
+
+function createPanel(){
+
+    const right =
+        document.getElementById(
+            "sim-right-panel"
+        );
+
+    const panel =
+        document.createElement("div");
+
+    panel.className =
+        "sensor-panel";
+
+    panel.innerHTML = `
+        <div class="panel-title">
+            Touch Sensor State Panel
+        </div>
+
+        <div class="status-row">
+            <i class="fa-solid fa-hand-point-up"></i>
+            <div id="sensor-state" class="sensor-state notpressed">
+                NOT PRESSED
+            </div>
+        </div>
+
+        <div class="power-wrap">
+
+            <div class="bar-label">
+                <span>Requested liftPower</span>
+                <span id="effective-value">Motor Output: 0.00</span>
+            </div>
+
+            <div class="power-bar">
+                <div class="power-fill" id="power-fill"></div>
+            </div>
+
+            <div class="bar-label" style="margin-top:8px;">
+                <span id="stick-value">Stick: 0.00</span>
+            </div>
+        </div>
+
+        <div class="height-layout">
+
+            <div>
+                <div class="height-meter">
+                    <div class="height-fill" id="height-fill"></div>
+                </div>
+
+                <div class="height-percent" id="height-percent">
+                    0%
+                </div>
+            </div>
+
+            <div class="logic-panel">
+
+                <div class="logic-title">
+                    Condition Inspector
+                </div>
+
+                <div class="logic-line" id="logic-limit"></div>
+
+                <div class="logic-line" id="logic-direction"></div>
+
+                <div class="logic-line" id="logic-combined"></div>
+
+                <button class="trigger-btn" id="trigger-btn">
+                    Trigger Limit Switch
+                </button>
+            </div>
+        </div>
+    `;
+
+    right.appendChild(panel);
+
+    sensorText =
+        document.getElementById(
+            "sensor-state"
+        );
+
+    powerFill =
+        document.getElementById(
+            "power-fill"
+        );
+
+    heightFill =
+        document.getElementById(
+            "height-fill"
+        );
+
+    heightPercent =
+        document.getElementById(
+            "height-percent"
+        );
+
+    stickValue =
+        document.getElementById(
+            "stick-value"
+        );
+
+    effectiveValue =
+        document.getElementById(
+            "effective-value"
+        );
+
+    logicLimit =
+        document.getElementById(
+            "logic-limit"
+        );
+
+    logicDirection =
+        document.getElementById(
+            "logic-direction"
+        );
+
+    logicCombined =
+        document.getElementById(
+            "logic-combined"
+        );
+
+    document
+        .getElementById(
+            "trigger-btn"
+        )
+        .addEventListener(
+            "click",
+            ()=>{
+
+                sim.touchPressed =
+                    !sim.touchPressed;
+
+                updateUI();
+            }
+        );
+
+    const sceneContainer =
+        document.getElementById(
+            "sim-scene-container"
+        );
+
+    warningBox =
+        document.createElement("div");
+
+    warningBox.className =
+        "overlay-warning";
+
+    sceneContainer.appendChild(
+        warningBox
+    );
+
+    limitBadge =
+        document.createElement("div");
+
+    limitBadge.className =
+        "limit-badge";
+
+    limitBadge.innerHTML =
+        '<i class="fa-solid fa-shield"></i> LIMIT ACTIVE';
+
+    sceneContainer.appendChild(
+        limitBadge
+    );
+
+    damageOverlay =
+        document.createElement("div");
+
+    damageOverlay.className =
+        "damage-overlay";
+
+    damageOverlay.innerHTML =
+        "HARDWARE DAMAGE";
+
+    sceneContainer.appendChild(
+        damageOverlay
+    );
+
+    updateUI();
+}
+
+function buildScene(){
+
+    requestAnimationFrame(()=>{
+
+        if(
+            !window.THREE ||
+            !window.scene
+        ) return;
+
+        const THREE =
+            window.THREE;
+
+        const scene =
+            window.scene;
+
+        if(window.setFieldVisible){
+            window.setFieldVisible(false);
+        }
+
+        scene.background =
+            new THREE.Color(
+                0x0b1018
+            );
+
+        const ambient =
+            new THREE.AmbientLight(
+                0xffffff,
+                1.5
+            );
+
+        scene.add(ambient);
+
+        const key =
+            new THREE.DirectionalLight(
+                0xffffff,
+                2
+            );
+
+        key.position.set(
+            6,
+            10,
+            6
+        );
+
+        scene.add(key);
+
+        const floor =
+            new THREE.Mesh(
+                new THREE.PlaneGeometry(
+                    20,
+                    20
+                ),
+                new THREE.MeshPhysicalMaterial({
+                    color:0x121926,
+                    metalness:.9,
+                    roughness:.3
+                })
+            );
+
+        floor.rotation.x =
+            -Math.PI / 2;
+
+        scene.add(floor);
+
+        const body =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    3.5,
+                    1.6,
+                    3
+                ),
+                new THREE.MeshPhysicalMaterial({
+                    color:0x2a2a2a,
+                    metalness:1,
+                    roughness:.25
+                })
+            );
+
+        body.position.y = .8;
+
+        scene.add(body);
+
+        const railMaterial =
+            new THREE.MeshPhysicalMaterial({
+                color:0x8d99ae,
+                metalness:1,
+                roughness:.15
+            });
+
+        const rail1 =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    .12,
+                    6,
+                    .12
+                ),
+                railMaterial
+            );
+
+        rail1.position.set(
+            -.5,
+            3,
+            0
+        );
+
+        scene.add(rail1);
+
+        const rail2 =
+            rail1.clone();
+
+        rail2.position.x = .5;
+
+        scene.add(rail2);
+
+        liftCarriage =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    1.2,
+                    .7,
+                    .9
+                ),
+                new THREE.MeshPhysicalMaterial({
+                    color:0xc7d2fe,
+                    metalness:1,
+                    roughness:.12
+                })
+            );
+
+        liftCarriage.position.set(
+            0,
+            1.1,
+            0
+        );
+
+        scene.add(liftCarriage);
+
+        touchDisc =
+            new THREE.Mesh(
+                new THREE.CylinderGeometry(
+                    .18,
+                    .18,
+                    .12,
+                    24
+                ),
+                new THREE.MeshPhysicalMaterial({
+                    color:0xaa2222,
+                    emissive:0x220000,
+                    metalness:.5,
+                    roughness:.25
+                })
+            );
+
+        touchDisc.rotation.z =
+            Math.PI / 2;
+
+        touchDisc.position.set(
+            -.9,
+            1.05,
+            0
+        );
+
+        scene.add(touchDisc);
+
+        railStress =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    .16,
+                    6,
+                    .16
+                ),
+                new THREE.MeshBasicMaterial({
+                    color:0xff0000,
+                    transparent:true,
+                    opacity:0
+                })
+            );
+
+        railStress.position.set(
+            .8,
+            3,
+            0
+        );
+
+        scene.add(railStress);
+
+        touchDisc.userData.clickable =
+            true;
+
+        if(window.camera){
+
+            window.camera.position.set(
+                7,
+                5,
+                7
+            );
+
+            window.camera.lookAt(
+                0,
+                2,
+                0
+            );
+        }
+
+        if(window.renderer){
+
+            window.renderer.domElement
+                .addEventListener(
+                    "click",
+                    ()=>{
+                        sim.touchPressed =
+                            !sim.touchPressed;
+
+                        updateUI();
+                    }
+                );
+        }
+
+        update3D();
+    });
+}
+
+function update3D(){
+
+    if(!liftCarriage) return;
+
+    liftCarriage.position.y =
+        1.1 + sim.height * 4.2;
+
+    touchDisc.material.color.setHex(
+        sim.touchPressed
+            ? 0x22ff66
+            : 0xaa2222
+    );
+
+    touchDisc.material.emissive.setHex(
+        sim.touchPressed
+            ? 0x00ff66
+            : 0x220000
+    );
+
+    railStress.material.opacity =
+        sim.damage ? 1 : 0;
+
+    if(sim.damage){
+
+        liftCarriage.material.emissive
+            .setHex(0xff0000);
+
+    }else{
+
+        liftCarriage.material.emissive
+            .setHex(0x000000);
+    }
+}
+
+function transpile(code){
+
+    return code
+        .replace(
+            /\b(double|int|boolean|String|float|long|byte|short|char)\s+(?=[A-Za-z_$])/g,
+            "let "
+        )
+        .replace(
+            /\b(DcMotor|DcMotorEx|TouchSensor|DigitalChannel|Servo|CRServo)\s+(?=[A-Za-z_$])/g,
+            "let "
+        )
+        .replace(
+            /\bhardwareMap\s*\.\s*get\s*\(\s*(\w+)\.class\s*,/g,
+            'hardwareMap.get("$1",'
+        )
+        .replace(
+            /\blimit\s*\.\s*isPressed\s*\(\s*\)/g,
+            'isTouchPressed("limit")'
+        )
+        .replace(
+            /\blift\s*\.\s*setPower\s*\(/g,
+            'setMotorPower("lift",'
+        )
+        .replace(
+            /\bgamepad1\./g,
+            "gamepad."
+        )
+        .replace(
+            /\btelemetry\s*\.\s*addData\s*\(/g,
+            "addTelemetry("
+        )
+        .replace(
+            /\btelemetry\s*\.\s*update\s*\(\s*\)/g,
+            "updateTelemetry()"
+        )
+        .replace(
+            /\btelemetry\s*\.\s*clear\s*\(\s*\)/g,
+            "clearTelemetry()"
+        )
+        .replace(
+            /\b(?:DcMotor|DcMotorSimple)\s*\.\s*Direction\s*\.\s*(FORWARD|REVERSE)\b/g,
+            '"$1"'
+        )
+        .replace(
+            /\bDcMotor\s*\.\s*ZeroPowerBehavior\s*\.\s*(BRAKE|FLOAT)\b/g,
+            '"$1"'
+        );
+}
+
+function evaluateStudentLogic(code){
+
+    sim.req[0] =
+        code.includes(
+            'hardwareMap.get(DcMotor.class, "lift")'
+        );
+
+    sim.req[1] =
+        code.includes(
+            'hardwareMap.get(TouchSensor.class, "limit")'
+        );
+
+    sim.req[2] =
+        code.includes(
+            "limit.isPressed()"
+        );
+
+    sim.req[5] =
+        code.includes(
+            "telemetry.addData("
+        );
+
+    const correctDownwardBlock =
+        code.includes(
+            "limit.isPressed() && liftPower < 0"
+        );
+
+    sim.req[3] =
+        correctDownwardBlock;
+
+    const allowsUpward =
+        correctDownwardBlock &&
+        code.includes(
+            "else"
+        );
+
+    sim.req[4] =
+        allowsUpward;
+
+    sim.hasCorrectLogic =
+        correctDownwardBlock;
+
+    if(
+        !code.includes(
+            "-gamepad1.left_stick_y"
+        )
+    ){
+
+        warningBox.innerHTML =
+            '<i class="fa-solid fa-triangle-exclamation"></i> Remember: pushing stick up gives negative value — negate it for intuitive control';
+
+        warningBox.classList.add(
+            "visible"
+        );
+    }
+
+    if(
+        code.includes(
+            "limit.isPressed()"
+        ) &&
+        !code.includes(
+            "liftPower < 0"
+        )
+    ){
+
+        warningBox.innerHTML =
+            '<i class="fa-solid fa-triangle-exclamation"></i> Make sure you only block movement when going DOWN and limit is pressed — not when going up';
+
+        warningBox.classList.add(
+            "visible"
+        );
+    }
+
+    if(
+        !code.includes(
+            "telemetry.update()"
+        )
+    ){
+
+        warningBox.innerHTML =
+            '<i class="fa-solid fa-triangle-exclamation"></i> Call telemetry.update() to send data to the Driver Station';
+
+        warningBox.classList.add(
+            "visible"
+        );
+    }
+
+    updateRequirementStates();
+}
+
+function createRuntime(){
+
+    window.isTouchPressed =
+        function(){
+            return sim.touchPressed;
+        };
+
+    window.setMotorPower =
+        function(name,power){
+
+            sim.commandedPower =
+                power;
+
+            sim.effectivePower =
+                power;
+        };
+}
+
+function physicsLoop(generation){
+
+    if(!sim.running || generation !== executionGeneration) return;
+
+    sim.rawStick =
+        gamepad.left_stick_y;
+
+    sim.requestedPower =
+        -sim.rawStick;
+
+    sim.height +=
+        sim.effectivePower * 0.008;
+
+    if(sim.height <= LIMIT_SWITCH_HEIGHT){
+
+        sim.touchPressed = true;
+    }else if(sim.height >= LIMIT_RELEASE_HEIGHT){
+
+        sim.touchPressed = false;
+    }
+
+    if(sim.height <= HARD_STOP_HEIGHT){
+
+        sim.height = HARD_STOP_HEIGHT;
+
+        sim.touchPressed = true;
+
+        if(
+            sim.commandedPower < 0 &&
+            sim.effectivePower < 0
+        ){
+
+            triggerDamage();
+        }
+    }
+
+    sim.height =
+        clamp(
+            sim.height,
+            0,
+            1
+        );
+
+    updateUI();
+
+    requestAnimationFrame(function(){
+        physicsLoop(generation);
+    });
+}
+
+window.onSimulatorReady = function(){
+
+    setCode(starterCode);
+
+    setChallenge(
+        "Lift with Bottom Touch Sensor Protection",
+        "Use a touch sensor to prevent your lift from crashing into the bottom hard stop while still allowing upward movement.",
+        requirements
+    );
+
+    setHeader(
+        "Telemark Unit 11.1 Simulator",
+        "Lift with Bottom Touch Sensor Protection"
+    );
+
+    setBadges([
+        {
+            icon:"fa-microchip",
+            label:"DcMotor",
+            active:true
+        },
+        {
+            icon:"fa-hand-point-up",
+            label:"TouchSensor",
+            active:true
+        },
+        {
+            icon:"fa-display",
+            label:"Telemetry",
+            active:true
+        },
+        {
+            icon:"fa-gamepad",
+            label:"Gamepad",
+            active:true
+        }
+    ]);
+
+    setActiveInputs([
+        "left_stick_y"
+    ]);
+
+    hardwareMap.registerMotor(
+        "lift"
+    );
+
+    hardwareMap.registerTouchSensor(
+        "limit"
+    );
+
+    createPanel();
+
+    buildScene();
+
+    if(
+        hardwareMap.onMotorPower
+    ){
+
+        hardwareMap.onMotorPower(
+            (name,value)=>{
+
+                if(name !== "lift")
+                    return;
+
+                sim.effectivePower =
+                    value;
+            }
+        );
+    }
+
+    if(
+        hardwareMap.onTouchSensor
+    ){
+
+        hardwareMap.onTouchSensor(
+            (name,pressed)=>{
+
+                if(name !== "limit")
+                    return;
+
+                sim.touchPressed =
+                    pressed;
+
+                updateUI();
+            }
+        );
+    }
+};
+
+let executionGeneration = 0;
+let preparedLoopRunner = null;
+
+window.onInit = function(){
+
+    const generation = ++executionGeneration;
+    sim.running = false;
+    sim.setupOk = false;
+    sim.loopFunction = null;
+    preparedLoopRunner = null;
+
+    warningBox.classList.remove(
+        "visible"
+    );
+
+    const editor =
+        document.getElementById(
+            "sim-code-editor"
+        );
+
+    const code =
+        editor?.value ||
+        starterCode;
+
+    evaluateStudentLogic(code);
+
+    try{
+
+        const transpiled =
+            transpile(code);
+
+        createRuntime();
+
+        if(!window._simGetMethodBody){
+            throw new Error("Java method parser is unavailable");
+        }
+
+        const initBody =
+            window._simGetMethodBody(
+                transpiled,
+                "init"
+            );
+
+        const loopBody =
+            window._simGetMethodBody(
+                transpiled,
+                "loop"
+            );
+
+        if(initBody === null){
+            throw new Error("Required init() method is missing or has unmatched braces");
+        }
+
+        if(loopBody === null){
+            throw new Error("Required loop() method is missing or has unmatched braces");
+        }
+
+        new Function(initBody)();
+
+        sim.loopFunction =
+            new Function(loopBody);
+
+        sim.setupOk = true;
+        updateRequirementStates();
+
+    }catch(err){
+
+        console.error(err);
+
+        const message =
+            err && err.message
+                ? err.message
+                : String(err);
+
+        warningBox.textContent =
+            'Setup error in OpMode: ' + message;
+
+        warningBox.classList.add(
+            "visible"
+        );
+
+        if(window._simShowTelemetryError){
+            window._simShowTelemetryError(
+                "Java compile/runtime error: " + message
+            );
+        }
+
+        updateRequirementStates();
+        if(window.stopExecution){
+            window.stopExecution();
+        }
+
+        return;
+    }
+
+    preparedLoopRunner = function loopRunner(){
+
+        if(!sim.running || generation !== executionGeneration)
+            return;
+
+        try{
+
+            window.clearTelemetry?.();
+            sim.loopFunction?.();
+
+        }catch(err){
+
+            console.error(err);
+            const message =
+                err && err.message
+                    ? err.message
+                    : String(err);
+
+            if(window._simShowTelemetryError){
+                window._simShowTelemetryError(
+                    "loop() runtime error: " + message
+                );
+            }
+
+            if(window.stopExecution){
+                window.stopExecution();
+            }
+
+            return;
+        }
+
+        setTimeout(
+            loopRunner,
+            50
+        );
+    };
+};
+
+window.onStart = function(){
+    if(!sim.setupOk || !preparedLoopRunner) return;
+
+    sim.running = true;
+    preparedLoopRunner();
+    physicsLoop(executionGeneration);
+};
+
+window.onStop = function(){
+
+    executionGeneration++;
+    sim.running = false;
+    preparedLoopRunner = null;
+
+    sim.commandedPower = 0;
+    sim.requestedPower = 0;
+    sim.effectivePower = 0;
+
+    updateUI();
+};
+
+window.onReset = function(){
+
+    window.onStop();
+
+    sim.touchPressed = false;
+    sim.height = .35;
+
+    sim.damage = false;
+
+    sim.req =
+        [false,false,false,false,false,false];
+
+    updateRequirementStates();
+
+    warningBox.classList.remove(
+        "visible"
+    );
+
+    damageOverlay.classList.remove(
+        "visible"
+    );
+
+    limitBadge.classList.remove(
+        "visible"
+    );
+
+    updateUI();
+};
+
+})();
+</script>
+
+</body>
+</html>

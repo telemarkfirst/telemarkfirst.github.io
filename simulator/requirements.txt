@@ -1,0 +1,29 @@
+To be truly educational, an online robotics code simulator must balance technical accuracy with accessibility, ensuring it minimizes hardware barriers while keeping students engaged.
+The core requirements for an educational online robotics code simulator are structured into five key pillars: [3] 
+## 1. Low Barrier to Entry (Accessibility) [4, 5] 
+
+* Zero-Installation Architecture: The simulator must run entirely in a standard web browser without plugins, eliminating hardware compatibility issues in school environments
+* Cross-Platform Support: It must function smoothly across lower-spec hardware commonly used in schools, including Chromebooks, Windows, and Mac systems.
+## 2. Pedagogy & Curriculum Integration
+
+* Structured Lessons: The platform should offer guided modules aligned with educational standards (like Next Generation Science Standards (NGSS) or Computer Science Teachers Association (CSTA) guidelines) or try to allign with them
+* Immediate Feedback Loops: Give learners instant visual and text-based errors. A dedicated sensor dashboard helps students inspect what the robot "sees" in real time to fast-track debugging when appropriate
+* Creative Freedom: Simulator includes full support for controls, movements, respective modules/subsystems, in the code and reflects in the 3d viewer
+* Gamified Challenges: Include clear, objective-driven "arenas" (e.g., maze solving, line following, or sumo-bot battles) rather than just a blank sandbox, keeping students motivated
+
+## 3. Realistic Physics & Hardware Emulation
+
+* Determinism vs. Real-World Noise: The underlying physics engine must reliably model kinematics, friction, and collisions while retaining a slight touch of real-world variance (such as driving on carpet vs. wood) to teach true robotics principles
+* Comprehensive Sensor Array: Support standard virtual hardware components like distance sensors, color/light sensors, gyroscopes, and bump switches
+* Native Transferability: The simulated environment should match real-world logic so closely that code written online can easily be deployed onto physical robots with minimal changes. This means the pre-mapped/base code should be full, including all imports, initialization, and control flow aspects.
+
+## 4. Robust Educator Tooling: [*] = Future Plans
+
+* [*] Classroom Management Dashboard: Allow teachers to monitor student code submissions, track learning progress, and review live simulation playbacks.
+* [*] Auto-Grading and Assessments: Include deterministic code verification tests alongside multiple-choice quizzes at the end of modules to check for systemic comprehension
+* Pre-configured Starting Environments: Save teachers setup time by providing pre-mapped configurations so that every student starts an assignment from the exact same baseline
+
+## 5. Collaboration & Scalability: All Future Plans
+
+* Multi-User Environments: Enable cloud-based team programming where students can collaborate in the same virtual room to solve high-level tasks
+* Asset/Environment Customization: Allow advanced users or instructors to build custom fields, obstacles, or 3D objects to expand the course's longevity

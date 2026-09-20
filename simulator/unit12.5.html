@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Telemark Unit 12.5 Simulator</title>
+<style>
+  #sim-right-panel .u125-panel {
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: clamp(190px, 34vh, 330px);
+    overflow-y: auto;
+    margin: 10px;
+    padding: 12px;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #111118;
+    color: #e0e0e0;
+    font-family: var(--font-ui, Arial, sans-serif);
+  }
+
+  #sim-right-panel #sim-scene-container {
+    flex: 1 0 clamp(360px, 58vh, 560px);
+    min-height: 360px;
+  }
+
+  #sim-right-panel .u125-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  #sim-right-panel .u125-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  #sim-right-panel .u125-card {
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #0d0d12;
+    padding: 9px;
+    min-width: 0;
+  }
+
+  #sim-right-panel .u125-label {
+    color: #888;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  #sim-right-panel .u125-value {
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-top: 2px;
+  }
+
+  #sim-right-panel .u125-wide {
+    grid-column: 1 / -1;
+  }
+
+  #sim-right-panel .u125-bar {
+    height: 8px;
+    margin-top: 7px;
+    border-radius: 999px;
+    background: #242431;
+    overflow: hidden;
+  }
+
+  #sim-right-panel .u125-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #38bdf8, #22d3ee);
+    transition: width 80ms linear;
+  }
+
+  #sim-right-panel #u125-error-graph {
+    width: 100%;
+    height: 92px;
+    margin-top: 8px;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #07070a;
+    display: block;
+  }
+
+  #sim-right-panel .u125-slider {
+    width: 100%;
+    accent-color: #22d3ee;
+  }
+
+  #sim-right-panel .u125-phase-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  #sim-right-panel .u125-phase {
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    padding: 8px;
+    color: #888;
+    background: #0d0d12;
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+
+  #sim-right-panel .u125-phase.active {
+    color: #93c5fd;
+    border-color: #22d3ee;
+    box-shadow: 0 0 12px rgba(34, 211, 238, 0.2);
+  }
+
+  #sim-right-panel .u125-phase.done {
+    color: #22cc66;
+    border-color: #22cc66;
+  }
+
+  #sim-right-panel .u125-hint {
+    margin-top: 10px;
+    border: 1px solid #55421d;
+    border-radius: 8px;
+    padding: 8px;
+    background: rgba(255, 204, 102, 0.08);
+    color: #ffcc66;
+    display: none;
+    font-size: 0.82rem;
+  }
+
+  #sim-scene-container .u125-banner {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #22cc66;
+    background: rgba(7, 12, 9, 0.88);
+    color: #22cc66;
+    font-weight: 700;
+    pointer-events: none;
+  }
+</style>
+<script src="./simulator_base.js"></script>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+<script>
+window.onSimulatorReady = function () {
+  "use strict";
+
+  const starterCode = `@Autonomous(name="Auto_Turn_90")
+public class AutoTurn90 extends LinearOpMode {
+
+    IMU imu;
+    DcMotor leftFront, rightFront, leftBack, rightBack;
+
+    @Override
+    public void runOpMode() {
+        imu = hardwareMap.get(IMU.class, "imu");
+
+        IMU.Parameters parameters = new IMU.Parameters(
+            new RevHubOrientationOnRobot(
+                RevHubOrientationOnRobot.LogoFacingDirection.UP,
+                RevHubOrientationOnRobot.UsbFacingDirection.FORWARD
+            )
+        );
+        imu.initialize(parameters);
+
+        leftFront  = hardwareMap.get(DcMotor.class, "leftFront");
+        rightFront = hardwareMap.get(DcMotor.class, "rightFront");
+        leftBack   = hardwareMap.get(DcMotor.class, "leftBack");
+        rightBack  = hardwareMap.get(DcMotor.class, "rightBack");
+
+        telemetry.addData("Status", "Ready");
+        telemetry.update();
+
+        waitForStart();
+
+        // Phase 1: Turn to 90 degrees
+        double targetHeading = 90.0;
+        double Kp            = 0.03;
+        double tolerance     = 2.0;
+
+        while (opModeIsActive()) {
+            double currentHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            double error          = targetHeading - currentHeading;
+
+            if (Math.abs(error) <= tolerance) break;
+
+            double turnPower = 0.0;
+            // TODO: calculate proportional turn power and apply opposite
+            // powers to the left and right side motors.
+
+            telemetry.addData("Heading", currentHeading);
+            telemetry.addData("Error",   error);
+            telemetry.addData("Power",   turnPower);
+            telemetry.update();
+            break;
+        }
+
+        // Stop after turn
+        leftFront.setPower(0);
+        rightFront.setPower(0);
+        leftBack.setPower(0);
+        rightBack.setPower(0);
+
+        // TODO: drive forward at 0.4 power for 1.5 seconds.
+
+        leftFront.setPower(0);
+        rightFront.setPower(0);
+        leftBack.setPower(0);
+        rightBack.setPower(0);
+
+        telemetry.addData("Status", "Complete");
+        telemetry.update();
+    }
+}`;
+
+  const state = {
+    heading: 0,
+    target: 90,
+    tolerance: 2,
+    kp: 0.03,
+    turnPower: 0,
+    phase: "WAITING",
+    active: false,
+    startRequested: false,
+    token: 0,
+    reachedTarget: false,
+    droveForward: false,
+    driveTimer: 0,
+    position: { x: 0, z: 0 },
+    path: [],
+    errorHistory: [],
+    motorPowers: {
+      leftFront: 0,
+      rightFront: 0,
+      leftBack: 0,
+      rightBack: 0
+    }
+  };
+
+  let sceneRoot;
+  let robotGroup;
+  let headingNeedle;
+  let targetNeedle;
+  let toleranceArc;
+  let pathLine;
+  let lastTick = performance.now();
+  let imuDevice = null;
+  let animationRegistered = false;
+
+  const DEG = "\u00b0";
+
+  function el(id) {
+    return document.getElementById(id);
+  }
+
+  function safeCall(fn) {
+    if (typeof fn !== "function") return undefined;
+    const args = Array.prototype.slice.call(arguments, 1);
+    return fn.apply(null, args);
+  }
+
+  setCode(starterCode);
+  setChallenge(
+    "Autonomous Turn to Heading with Proportional Control",
+    "Use IMU heading feedback and proportional control to rotate to 90 degrees, then drive forward.",
+    [
+      "Get the imu from hardwareMap in runOpMode()",
+      "Call imu.initialize()",
+      "Call waitForStart()",
+      "Read getYaw(AngleUnit.DEGREES)",
+      "Use Kp * error proportional control",
+      "Use a while loop with an error tolerance",
+      "Target heading is 90 degrees",
+      "Stop all motors after the turn",
+      "Call sleep(1500) for the drive phase",
+      "Set all drive motors to 0.4 for forward drive",
+      "Robot reaches 90 degrees within tolerance"
+    ]
+  );
+  setHeader(
+    "Telemark Unit 12.5 Simulator",
+    "Autonomous Turn to Heading with Proportional Control"
+  );
+  setBadges([
+    { iconClass: "fa-solid fa-compass", label: "IMU", active: true },
+    { iconClass: "fa-solid fa-rotate", label: "Autonomous", active: true },
+    { iconClass: "fa-solid fa-gauge", label: "PID", active: true },
+    { iconClass: "fa-solid fa-display", label: "Telemetry", active: true }
+  ]);
+  setActiveInputs([]);
+
+  imuDevice = hardwareMap.registerIMU("imu");
+  ["leftFront", "rightFront", "leftBack", "rightBack"].forEach(function (name) {
+    hardwareMap.registerMotor(name);
+  });
+
+  hardwareMap.onMotorPower(function (name, value) {
+    updateMotorPower(name, value);
+  });
+  if (typeof hardwareMap.onIMUHeading === "function") {
+    hardwareMap.onIMUHeading(function (value) {
+      updateHeadingVisual(value);
+    });
+  } else if (typeof hardwareMap.onIMU === "function") {
+    hardwareMap.onIMU(function (name, data) {
+      if (name === "imu" && data && typeof data.heading === "number") {
+        updateHeadingVisual(data.heading);
+      }
+    });
+  }
+
+  createPanel();
+  setupScene();
+  validateCode();
+  updateUI();
+
+  window.updateMotorPower = updateMotorPower;
+  window.updateHeadingVisual = updateHeadingVisual;
+
+  window.onInit = function () {
+    resetRuntime(false);
+    state.active = true;
+    state.startRequested = false;
+    state.phase = "WAITING";
+    runStudentCode();
+  };
+
+  window.onStart = function () {
+    releaseAutonomousStart(true);
+  };
+
+  window.onStop = function () {
+    state.active = false;
+    state.startRequested = false;
+    if (state.phase !== "COMPLETE") state.phase = "STOPPED";
+    state.token++;
+    releaseAutonomousStart(false);
+    setAllMotors(0);
+    updateUI();
+  };
+
+  window.onReset = function () {
+    resetRuntime(true);
+  };
+
+  if (!animationRegistered && typeof addAnimationCallback === "function") {
+    addAnimationCallback(tick);
+    animationRegistered = true;
+  }
+
+  function createPanel() {
+    const rightPanel = el("sim-right-panel");
+    const sceneContainer = el("sim-scene-container");
+    if (!rightPanel || !sceneContainer) return;
+
+    const oldPanel = el("u125-panel");
+    if (oldPanel) oldPanel.remove();
+    const oldBanner = el("u125-success");
+    if (oldBanner) oldBanner.remove();
+
+    const banner = document.createElement("div");
+    banner.id = "u125-success";
+    banner.className = "u125-banner";
+    banner.innerHTML = '<i class="fa-solid fa-circle-check"></i> Challenge Complete! Autonomous turn sequence executed successfully.';
+    sceneContainer.appendChild(banner);
+
+    const panel = document.createElement("div");
+    panel.id = "u125-panel";
+    panel.className = "u125-panel";
+    panel.innerHTML = `
+      <div class="u125-title"><i class="fa-solid fa-gauge"></i> Proportional Control</div>
+      <div class="u125-grid">
+        <div class="u125-card">
+          <div class="u125-label">Target</div>
+          <div class="u125-value" id="u125-target">90.0&deg;</div>
+        </div>
+        <div class="u125-card">
+          <div class="u125-label">Heading</div>
+          <div class="u125-value" id="u125-heading">0.0&deg;</div>
+        </div>
+        <div class="u125-card u125-wide">
+          <div class="u125-label">Error</div>
+          <div class="u125-value" id="u125-error">90.0&deg;</div>
+          <div class="u125-bar"><div class="u125-fill" id="u125-error-fill"></div></div>
+        </div>
+        <div class="u125-card u125-wide">
+          <div class="u125-label">Turn Power</div>
+          <div class="u125-value" id="u125-power">0.00</div>
+          <div class="u125-bar"><div class="u125-fill" id="u125-power-fill"></div></div>
+        </div>
+        <div class="u125-card">
+          <div class="u125-label">Kp</div>
+          <div class="u125-value" id="u125-kp">0.030</div>
+        </div>
+        <div class="u125-card">
+          <div class="u125-label">Tolerance</div>
+          <div class="u125-value" id="u125-tolerance">2.0&deg;</div>
+        </div>
+        <div class="u125-card u125-wide">
+          <div class="u125-label">Phase</div>
+          <div class="u125-value" id="u125-phase">WAITING</div>
+          <div class="u125-phase-row">
+            <div class="u125-phase" id="u125-phase-turn"><i class="fa-solid fa-rotate"></i> TURNING TO 90&deg;</div>
+            <div class="u125-phase" id="u125-phase-drive"><i class="fa-solid fa-arrow-up"></i> DRIVING FORWARD</div>
+          </div>
+        </div>
+        <div class="u125-card u125-wide">
+          <div class="u125-label">Error vs Time</div>
+          <canvas id="u125-error-graph" width="420" height="92"></canvas>
+        </div>
+        <div class="u125-card u125-wide">
+          <div class="u125-label">Kp Tuning Slider</div>
+          <input class="u125-slider" id="u125-kp-slider" type="range" min="0.005" max="0.1" step="0.001" value="0.03" />
+        </div>
+      </div>
+      <div class="u125-hint" id="u125-hint"></div>
+    `;
+    rightPanel.appendChild(panel);
+
+    const slider = el("u125-kp-slider");
+    if (slider) {
+      slider.addEventListener("input", function (event) {
+        state.kp = Number(event.target.value) || state.kp;
+        const kpText = el("u125-kp");
+        if (kpText) kpText.textContent = state.kp.toFixed(3);
+      });
+    }
+  }
+
+  function setupScene() {
+    if (!window.THREE || !window.scene) return;
+
+    if (sceneRoot) {
+      window.scene.remove(sceneRoot);
+    }
+
+    sceneRoot = new THREE.Group();
+    sceneRoot.name = "unit12_5_scene";
+    window.scene.add(sceneRoot);
+    window.scene.background = new THREE.Color(0x050508);
+    safeCall(setFieldVisible, false);
+    safeCall(setCameraOrbit, {
+      theta: 0,
+      phi: 0.08,
+      radius: 13,
+      target: { x: 0, y: 0, z: 0 }
+    });
+
+    const ambient = new THREE.AmbientLight(0xffffff, 0.45);
+    sceneRoot.add(ambient);
+
+    const field = new THREE.Mesh(
+      new THREE.PlaneGeometry(12, 12),
+      new THREE.MeshStandardMaterial({ color: 0x1a1a2e, roughness: 0.78, metalness: 0.08 })
+    );
+    field.rotation.x = -Math.PI / 2;
+    field.position.y = -0.03;
+    sceneRoot.add(field);
+
+    const grid = new THREE.GridHelper(12, 6, 0x3b3b58, 0x262640);
+    grid.position.y = 0;
+    sceneRoot.add(grid);
+
+    const targetGeom = new THREE.BoxGeometry(0.08, 0.08, 5.2);
+    targetNeedle = new THREE.Mesh(
+      targetGeom,
+      new THREE.MeshBasicMaterial({ color: 0xff6600 })
+    );
+    targetNeedle.position.y = 0.08;
+    targetNeedle.rotation.y = THREE.MathUtils.degToRad(state.target);
+    sceneRoot.add(targetNeedle);
+
+    toleranceArc = makeArc(2.8, 88, 92, 0x22cc66, 0.06);
+    toleranceArc.position.y = 0.1;
+    sceneRoot.add(toleranceArc);
+
+    headingNeedle = new THREE.Mesh(
+      new THREE.BoxGeometry(0.1, 0.1, 4.4),
+      new THREE.MeshBasicMaterial({ color: 0xffcc66 })
+    );
+    headingNeedle.position.y = 0.12;
+    sceneRoot.add(headingNeedle);
+
+    robotGroup = new THREE.Group();
+    const body = new THREE.Mesh(
+      new THREE.BoxGeometry(1.4, 0.35, 1.9),
+      new THREE.MeshStandardMaterial({
+        color: 0xff6600,
+        roughness: 0.54,
+        metalness: 0.18,
+        emissive: 0x120600
+      })
+    );
+    body.position.y = 0.25;
+    robotGroup.add(body);
+
+    const front = new THREE.Mesh(
+      new THREE.BoxGeometry(0.78, 0.08, 0.12),
+      new THREE.MeshBasicMaterial({ color: 0x22d3ee })
+    );
+    front.position.set(0, 0.48, -0.92);
+    robotGroup.add(front);
+    sceneRoot.add(robotGroup);
+
+    pathLine = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0.05, 0), new THREE.Vector3(0, 0.05, 0)]),
+      new THREE.LineBasicMaterial({ color: 0x38bdf8 })
+    );
+    sceneRoot.add(pathLine);
+  }
+
+  function makeArc(radius, startDeg, endDeg, color, width) {
+    const points = [];
+    for (let d = startDeg; d <= endDeg; d += 1) {
+      const rad = THREE.MathUtils.degToRad(d);
+      points.push(new THREE.Vector3(Math.sin(rad) * radius, 0, -Math.cos(rad) * radius));
+      points.push(new THREE.Vector3(Math.sin(rad) * (radius + width), 0, -Math.cos(rad) * (radius + width)));
+    }
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    return new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({ color: color }));
+  }
+
+  function updateMotorPower(name, value) {
+    if (Object.prototype.hasOwnProperty.call(state.motorPowers, name)) {
+      state.motorPowers[name] = Number(value) || 0;
+    }
+  }
+
+  function updateHeadingVisual(value) {
+    if (typeof value === "number" && isFinite(value)) {
+      state.heading = wrapHeading(value);
+    }
+  }
+
+  function tick() {
+    const now = performance.now();
+    const dt = Math.min(0.08, Math.max(0, (now - lastTick) / 1000));
+    lastTick = now;
+    updateSimulation(dt);
+    updateVisuals();
+    updateUI();
+  }
+
+  function updateSimulation(dt) {
+    const left = (state.motorPowers.leftFront + state.motorPowers.leftBack) / 2;
+    const right = (state.motorPowers.rightFront + state.motorPowers.rightBack) / 2;
+    state.turnPower = (left - right) / 2;
+
+    if (Math.abs(state.turnPower) > 0.001) {
+      state.heading = wrapHeading(state.heading + state.turnPower * 118 * dt);
+      if (imuDevice && typeof imuDevice._setHeading === "function") {
+        imuDevice._setHeading(state.heading);
+      }
+    }
+
+    const error = state.target - state.heading;
+    state.errorHistory.push(error);
+    if (state.errorHistory.length > 220) state.errorHistory.shift();
+
+    if (Math.abs(error) <= state.tolerance) {
+      state.reachedTarget = true;
+    }
+
+    const driving = Math.abs(left - 0.4) < 0.015 && Math.abs(right - 0.4) < 0.015;
+    if (driving) {
+      state.phase = state.reachedTarget ? "PHASE 2: DRIVING" : state.phase;
+      state.droveForward = true;
+      state.driveTimer += dt;
+      const rad = THREE.MathUtils.degToRad(state.heading);
+      state.position.x += Math.sin(rad) * left * dt * 2.8;
+      state.position.z -= Math.cos(rad) * left * dt * 2.8;
+      state.path.push(new THREE.Vector3(state.position.x, 0.06, state.position.z));
+      if (state.path.length > 160) state.path.shift();
+    }
+  }
+
+  function updateVisuals() {
+    if (!window.THREE || !robotGroup) return;
+
+    const rad = THREE.MathUtils.degToRad(state.heading);
+    robotGroup.position.set(state.position.x, 0, state.position.z);
+    robotGroup.rotation.y = rad;
+    headingNeedle.rotation.y = rad;
+
+    if (pathLine && state.path.length > 1) {
+      pathLine.geometry.dispose();
+      pathLine.geometry = new THREE.BufferGeometry().setFromPoints(state.path);
+    }
+  }
+
+  function updateUI() {
+    const error = state.target - state.heading;
+    const absError = Math.abs(error);
+    const headingText = el("u125-heading");
+    const errorText = el("u125-error");
+    const powerText = el("u125-power");
+    const phaseText = el("u125-phase");
+    const errorFill = el("u125-error-fill");
+    const powerFill = el("u125-power-fill");
+    const kpText = el("u125-kp");
+    const toleranceText = el("u125-tolerance");
+    const phaseTurn = el("u125-phase-turn");
+    const phaseDrive = el("u125-phase-drive");
+    const banner = el("u125-success");
+
+    if (headingText) headingText.textContent = state.heading.toFixed(1) + DEG;
+    if (errorText) {
+      errorText.textContent = error.toFixed(1) + DEG;
+      errorText.style.color = absError <= state.tolerance ? "#22cc66" : "#fff";
+    }
+    if (powerText) powerText.textContent = state.turnPower.toFixed(2);
+    if (phaseText) phaseText.textContent = state.phase;
+    if (errorFill) errorFill.style.width = Math.min(100, absError / 90 * 100).toFixed(1) + "%";
+    if (powerFill) powerFill.style.width = Math.min(100, Math.abs(state.turnPower) * 100).toFixed(1) + "%";
+    if (kpText) kpText.textContent = state.kp.toFixed(3);
+    if (toleranceText) toleranceText.textContent = state.tolerance.toFixed(1) + DEG;
+    if (phaseTurn) {
+      phaseTurn.classList.toggle("active", /^PHASE 1/.test(state.phase));
+      phaseTurn.classList.toggle("done", state.reachedTarget);
+    }
+    if (phaseDrive) {
+      phaseDrive.classList.toggle("active", /^PHASE 2/.test(state.phase));
+      phaseDrive.classList.toggle("done", state.phase === "COMPLETE");
+    }
+    if (banner) banner.style.display = state.phase === "COMPLETE" ? "flex" : "none";
+
+    drawGraph();
+    validateCode();
+  }
+
+  function drawGraph() {
+    const canvas = el("u125-error-graph");
+    if (!canvas || !canvas.getContext) return;
+    const ctx = canvas.getContext("2d");
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = "#2a2a3a";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, h / 2);
+    ctx.lineTo(w, h / 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = "#22cc66";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    state.errorHistory.forEach(function (value, index) {
+      const x = index / Math.max(1, state.errorHistory.length - 1) * w;
+      const y = h / 2 - Math.max(-100, Math.min(100, value)) / 100 * (h * 0.42);
+      if (index === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  }
+
+  function resetRuntime(updateOnly) {
+    state.token++;
+    state.active = false;
+    state.startRequested = false;
+    state.heading = 0;
+    state.turnPower = 0;
+    state.phase = "WAITING";
+    state.reachedTarget = false;
+    state.droveForward = false;
+    state.driveTimer = 0;
+    state.position.x = 0;
+    state.position.z = 0;
+    state.path = [new THREE.Vector3(0, 0.06, 0)];
+    state.errorHistory = [];
+    setAllMotors(0);
+    updateHeadingVisual(0);
+    if (imuDevice && typeof imuDevice._setHeading === "function") {
+      imuDevice._setHeading(0);
+    }
+    if (!updateOnly) {
+      const banner = el("u125-success");
+      if (banner) banner.style.display = "none";
+    }
+    updateUI();
+  }
+
+  function setAllMotors(power) {
+    ["leftFront", "rightFront", "leftBack", "rightBack"].forEach(function (name) {
+      const device = hardwareMap._devices && hardwareMap._devices[name];
+      state.motorPowers[name] = power;
+      if (device && typeof device.setPower === "function") {
+        device.setPower(power);
+      }
+    });
+  }
+
+  function runStudentCode() {
+    const code = typeof getCode === "function" ? getCode() : starterCode;
+    const runBody = extractMethodBody(code, "runOpMode");
+    if (!runBody) {
+      showStudentError("runOpMode() was not found.");
+      return;
+    }
+
+    const token = state.token;
+    state.kp = extractNumber(code, /\bKp\s*=\s*([-+]?\d+(?:\.\d+)?)/, state.kp);
+    state.tolerance = extractNumber(code, /\btolerance\s*=\s*([-+]?\d+(?:\.\d+)?)/, state.tolerance);
+    const slider = el("u125-kp-slider");
+    if (slider) slider.value = String(Math.max(0.005, Math.min(0.1, state.kp)));
+
+    let js = transpileLinearBody(runBody);
+    js = "let imu, leftFront, rightFront, leftBack, rightBack;\n" + js;
+
+    try {
+      const fn = new Function(
+        "hardwareMap",
+        "addTelemetry",
+        "updateTelemetry",
+        "sleep",
+        "waitForStart",
+        "opModeIsActive",
+        "getIMUAngles",
+        "initializeIMU",
+        "createIMUParams",
+        "createHubOrientation",
+        "LogoFacing",
+        "UsbFacing",
+        "toRadians",
+        '"use strict"; return (async function(){\n' + js + "\n})();"
+      );
+
+      fn(
+        hardwareMap,
+        addTelemetry,
+        updateTelemetry,
+        sleep,
+        waitForStart,
+        function () { return state.active && token === state.token; },
+        function () { return { yaw: state.heading, pitch: 0, roll: 0 }; },
+        function () { return true; },
+        function (orientation) { return { orientation: orientation }; },
+        function (logo, usb) { return { logo: logo, usb: usb }; },
+        { UP: "UP", DOWN: "DOWN", FORWARD: "FORWARD", BACKWARD: "BACKWARD", LEFT: "LEFT", RIGHT: "RIGHT" },
+        { UP: "UP", DOWN: "DOWN", FORWARD: "FORWARD", BACKWARD: "BACKWARD", LEFT: "LEFT", RIGHT: "RIGHT" },
+        function (deg) { return deg * Math.PI / 180; }
+      ).then(function () {
+        if (state.active && token === state.token) {
+          state.active = false;
+          state.phase = state.reachedTarget && state.droveForward ? "COMPLETE" : "STOPPED";
+          setAllMotors(0);
+          updateUI();
+          if (state.phase === "COMPLETE" && typeof _simHandleStop === "function") {
+            _simHandleStop();
+          }
+        }
+      }).catch(function (err) {
+        if (token === state.token) showStudentError(err.message || String(err));
+      });
+    } catch (err) {
+      showStudentError(err.message || String(err));
+    }
+  }
+
+  async function waitForStart() {
+    state.phase = "WAITING";
+    addTelemetry("Status", "Waiting for start");
+    updateTelemetry();
+    await new Promise(function (resolve) {
+      state._resolveStart = function () {
+        state._resolveStart = null;
+        resolve();
+      };
+      if (state.startRequested) releaseAutonomousStart(false);
+    });
+    if (state.active) state.phase = "PHASE 1: TURNING";
+  }
+
+  function releaseAutonomousStart(markRequested) {
+    if (markRequested !== false) state.startRequested = true;
+    if (typeof state._resolveStart === "function") {
+      state._resolveStart();
+    }
+  }
+
+  function transpileLinearBody(body) {
+    let js = body;
+    js = js.replace(/\bIMU\s*\.\s*Parameters\s+([A-Za-z_$][\w$]*)/g, "let $1");
+    js = js.replace(/\b(double|int|boolean|String|float|long|byte|short|char|DcMotor|DcMotorEx|Servo|CRServo|IMU)\s+([A-Za-z_$][\w$]*)/g, "let $2");
+    js = js.replace(/\bhardwareMap\s*\.\s*get\s*\(\s*(\w+)\.class\s*,/g, 'hardwareMap.get("$1",');
+    js = js.replace(/\bimu\s*\.\s*initialize\s*\(/g, "initializeIMU(");
+    js = js.replace(/\bnew\s+IMU\s*\.\s*Parameters\s*\(/g, "createIMUParams(");
+    js = js.replace(/\bnew\s+RevHubOrientationOnRobot\s*\(/g, "createHubOrientation(");
+    js = js.replace(/\bRevHubOrientationOnRobot\s*\.\s*LogoFacingDirection\s*\./g, "LogoFacing.");
+    js = js.replace(/\bRevHubOrientationOnRobot\s*\.\s*UsbFacingDirection\s*\./g, "UsbFacing.");
+    js = js.replace(/\bimu\s*\.\s*getRobotYawPitchRollAngles\s*\(\s*\)/g, "getIMUAngles()");
+    js = js.replace(/\.getYaw\s*\(\s*AngleUnit\s*\.\s*DEGREES\s*\)/g, ".yaw");
+    js = js.replace(/\bMath\s*\.\s*toRadians\s*\(/g, "toRadians(");
+    js = js.replace(/\btelemetry\s*\.\s*addData\s*\(/g, "addTelemetry(");
+    js = js.replace(/\btelemetry\s*\.\s*update\s*\(\s*\)/g, "updateTelemetry()");
+    js = js.replace(/\bwaitForStart\s*\(\s*\)\s*;/g, "await waitForStart(); if (!opModeIsActive()) return;");
+    js = js.replace(/\bsleep\s*\(/g, "await sleep(");
+    js = addAwaitToLoops(js);
+    return js;
+  }
+
+  function addAwaitToLoops(js) {
+    let output = "";
+    let cursor = 0;
+    let loopIndex = 0;
+    const whileRe = /\bwhile\s*\(/g;
+    let match;
+
+    while ((match = whileRe.exec(js)) !== null) {
+      let index = whileRe.lastIndex;
+      let depth = 1;
+      for (; index < js.length; index++) {
+        if (js[index] === "(") depth++;
+        if (js[index] === ")") {
+          depth--;
+          if (depth === 0) break;
+        }
+      }
+      if (depth !== 0) break;
+
+      let brace = index + 1;
+      while (brace < js.length && /\s/.test(js[brace])) brace++;
+      if (js[brace] !== "{") continue;
+
+      const condition = js.slice(whileRe.lastIndex, index);
+      const guard = "__autoLoopGuard" + loopIndex++;
+      output += js.slice(cursor, match.index);
+      output += "let " + guard + " = 0; while(" + condition + ") { if (++" + guard + " > 2000) throw new Error('Autonomous loop exceeded 2000 iterations'); await sleep(20);";
+      cursor = brace + 1;
+      whileRe.lastIndex = brace + 1;
+    }
+
+    return output + js.slice(cursor);
+  }
+
+  function extractMethodBody(code, name) {
+    const re = new RegExp("\\b(?:public\\s+)?(?:void|boolean|double)\\s+" + name + "\\s*\\([^)]*\\)\\s*\\{");
+    const match = re.exec(code);
+    if (!match) return "";
+    let index = match.index + match[0].length;
+    let depth = 1;
+    for (; index < code.length; index++) {
+      if (code[index] === "{") depth++;
+      if (code[index] === "}") {
+        depth--;
+        if (depth === 0) return code.slice(match.index + match[0].length, index);
+      }
+    }
+    return "";
+  }
+
+  function extractNumber(code, regex, fallback) {
+    const match = code.match(regex);
+    return match ? Number(match[1]) : fallback;
+  }
+
+  function validateCode() {
+    const code = typeof getCode === "function" ? getCode() : starterCode;
+    const runBody = extractMethodBody(code, "runOpMode");
+    const checks = [
+      /hardwareMap\s*\.\s*get\s*\(\s*IMU\.class\s*,\s*"imu"\s*\)/.test(code),
+      /imu\s*\.\s*initialize\s*\(/.test(code),
+      /waitForStart\s*\(\s*\)/.test(code),
+      /getYaw\s*\(\s*AngleUnit\s*\.\s*DEGREES\s*\)/.test(code),
+      /(?:Kp\s*\*\s*error|error\s*\*\s*Kp)/.test(code),
+      /while\s*\([\s\S]*?\)[\s\S]*?(?:Math\.abs\s*\(\s*error\s*\)|tolerance)/.test(runBody),
+      /\btargetHeading\s*=\s*90(?:\.0)?\b/.test(code),
+      motorsStoppedAfterTurn(code),
+      /sleep\s*\(\s*1500\s*\)/.test(code),
+      forwardPowerIsCorrect(code),
+      state.reachedTarget
+    ];
+
+    checks.forEach(function (passed, index) {
+      safeCall(setRequirement, index, !!passed);
+    });
+
+    updateHint(code);
+  }
+
+  function motorsStoppedAfterTurn(code) {
+    return ["leftFront", "rightFront", "leftBack", "rightBack"].every(function (name) {
+      const re = new RegExp("\\b" + name + "\\s*\\.\\s*setPower\\s*\\(\\s*0(?:\\.0)?\\s*\\)");
+      return re.test(code);
+    });
+  }
+
+  function forwardPowerIsCorrect(code) {
+    return ["leftFront", "rightFront", "leftBack", "rightBack"].every(function (name) {
+      const re = new RegExp("\\b" + name + "\\s*\\.\\s*setPower\\s*\\(\\s*0\\.4\\s*\\)");
+      return re.test(code);
+    });
+  }
+
+  function updateHint(code) {
+    const hint = el("u125-hint");
+    if (!hint) return;
+    const kp = extractNumber(code, /\bKp\s*=\s*([-+]?\d+(?:\.\d+)?)/, state.kp);
+    const tolerance = extractNumber(code, /\btolerance\s*=\s*([-+]?\d+(?:\.\d+)?)/, state.tolerance);
+    let message = "";
+    if (kp > 0.1) message = "Kp is too aggressive. Try a value between 0.02 and 0.05.";
+    else if (kp < 0.005) message = "Kp is too small. Try a value between 0.02 and 0.05.";
+    else if (tolerance === 0) message = "Zero tolerance means the robot may never stop turning. Use 1.0 or 2.0 degrees.";
+    else if (tolerance > 15) message = "Tolerance is very loose, so the robot can stop far from the target.";
+    else if (!/opModeIsActive\s*\(\s*\)/.test(code)) message = "Include opModeIsActive() in autonomous loops so Stop can interrupt the robot.";
+    else if (!/telemetry\s*\.\s*update\s*\(\s*\)/.test(code)) message = "Call telemetry.update() while turning so you can monitor convergence.";
+
+    hint.style.display = message ? "block" : "none";
+    hint.innerHTML = message ? '<i class="fa-solid fa-triangle-exclamation"></i> ' + message : "";
+  }
+
+  function showStudentError(message) {
+    state.active = false;
+    state.phase = "ERROR";
+    setAllMotors(0);
+    if (typeof _simShowTelemetryError === "function") {
+      _simShowTelemetryError(message);
+    } else {
+      addTelemetry("ERROR", message);
+      updateTelemetry();
+    }
+    updateUI();
+  }
+
+  function wrapHeading(value) {
+    let h = value;
+    while (h > 180) h -= 360;
+    while (h < -180) h += 360;
+    return h;
+  }
+};
+</script>
+</body>
+</html>

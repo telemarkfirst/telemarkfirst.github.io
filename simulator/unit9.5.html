@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Telemark Unit 9.5 Simulator</title>
+    <script src="simulator_base.js"></script>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+<script src="./telemark-project.js"></script>
+<link rel="stylesheet" href="./telemark-project.css"/>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+<script>
+(function () {
+    "use strict";
+
+    const REST_POS = 0.5;
+    const LEFT_CLOSE = 0.1;
+    const RIGHT_CLOSE_NO_OFFSET = 0.80;
+    const OFFSET_VALUE = 0.05;
+    const RIGHT_CLOSE = RIGHT_CLOSE_NO_OFFSET + OFFSET_VALUE;
+    const CLAW_MAX_ANGLE = Math.PI * 0.16;
+
+    let robotBody = null;
+    let clawBase = null;
+    let leftFingerPivot = null;
+    let rightFingerPivot = null;
+    let leftFingerMesh = null;
+    let rightFingerMesh = null;
+    let sphereMesh = null;
+    let offsetArrowGroup = null;
+    let leftTargetSprite = null;
+    let rightTargetSprite = null;
+    let gripStatusSprite = null;
+    let animationCallbackId = -1;
+
+    let overlayPanelEl = null;
+    let overlayStatusEl = null;
+    let overlayDiffEl = null;
+
+    const servoPositions = {
+        servoL: REST_POS,
+        servoR: REST_POS
+    };
+
+    const targetAngles = {
+        servoL: 0,
+        servoR: 0
+    };
+
+    const currentAngles = {
+        servoL: 0,
+        servoR: 0
+    };
+
+    let misalignmentPulse = 0;
+
+    function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    function normalizeServo(value) {
+        return clamp((Number(value) || 0), 0, 1);
+    }
+
+    function approxEqual(a, b, tolerance) {
+        return Math.abs(a - b) <= (tolerance == null ? 0.02 : tolerance);
+    }
+
+    function ensureOverlayStyles() {
+        if (document.getElementById("sim-unit95-style")) return;
+
+        const style = document.createElement("style");
+        style.id = "sim-unit95-style";
+        style.textContent = `
+            .sim-unit95-overlay-panel {
+                margin: 8px 10px 0;
+                min-width: 0;
+                padding: 12px 14px;
+                border-radius: 10px;
+                border: 1px solid rgba(255,255,255,0.14);
+                background: rgba(10,10,18,0.86);
+                color: #d8d8e6;
+                font-family: "JetBrains Mono", Consolas, monospace;
+                font-size: 0.8rem;
+                line-height: 1.55;
+                box-shadow: 0 10px 28px rgba(0,0,0,0.28);
+                pointer-events: none;
+                z-index: 12;
+            }
+            .sim-unit95-overlay-title {
+                font-weight: 800;
+                color: #ffffff;
+                margin-bottom: 8px;
+                font-family: "IBM Plex Sans", sans-serif;
+                letter-spacing: 0.02em;
+            }
+            .sim-unit95-line {
+                display: flex;
+                justify-content: space-between;
+                gap: 12px;
+                margin: 3px 0;
+            }
+            .sim-unit95-label {
+                color: #9aa4ba;
+            }
+            .sim-unit95-value {
+                color: #f0f3ff;
+            }
+            .sim-unit95-value.good {
+                color: #7cffb0;
+            }
+            .sim-unit95-value.warn {
+                color: #ffd866;
+            }
+            .sim-unit95-value.muted {
+                color: #82889a;
+            }
+            .sim-unit95-diff {
+                margin-top: 10px;
+                padding-top: 8px;
+                border-top: 1px solid rgba(255,255,255,0.08);
+                color: #ffd866;
+                font-weight: 700;
+            }
+            .sim-unit95-status-chip {
+                position: absolute;
+                left: 16px;
+                top: 16px;
+                padding: 10px 14px;
+                border-radius: 999px;
+                border: 1px solid rgba(255,255,255,0.14);
+                background: rgba(10,10,18,0.82);
+                color: #d6d9e4;
+                font-family: "IBM Plex Sans", sans-serif;
+                font-size: 0.82rem;
+                font-weight: 800;
+                letter-spacing: 0.02em;
+                box-shadow: 0 10px 28px rgba(0,0,0,0.28);
+            }
+            .sim-unit95-status-chip.good {
+                color: #7cffb0;
+                border-color: rgba(124,255,176,0.38);
+                background: rgba(10,42,22,0.86);
+            }
+            .sim-unit95-status-chip.warn {
+                color: #ffd866;
+                border-color: rgba(255,216,102,0.34);
+                background: rgba(48,34,8,0.86);
+            }
+            .sim-unit95-status-chip.bad {
+                color: #ff9a9a;
+                border-color: rgba(255,154,154,0.34);
+                background: rgba(60,14,14,0.86);
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    function ensureOverlay() {
+        ensureOverlayStyles();
+
+        const sceneContainer = document.getElementById("sim-scene-container");
+        const rightPanel = document.getElementById("sim-right-panel");
+        if (!sceneContainer || !rightPanel) return;
+
+        if (!overlayPanelEl) {
+            overlayPanelEl = document.createElement("div");
+            overlayPanelEl.className = "sim-unit95-overlay-panel";
+            overlayPanelEl.innerHTML = [
+                '<div class="sim-unit95-overlay-title"><i class="fa-solid fa-sliders"></i> Offset Visualizer</div>',
+                '<div class="sim-unit95-line"><span class="sim-unit95-label">servoL target</span><span class="sim-unit95-value">0.10</span></div>',
+                '<div class="sim-unit95-line"><span class="sim-unit95-label">servoR w/o offset</span><span class="sim-unit95-value muted">0.80</span></div>',
+                '<div class="sim-unit95-line"><span class="sim-unit95-label">servoR with offset</span><span class="sim-unit95-value good">0.85</span></div>',
+                '<div class="sim-unit95-diff"><i class="fa-solid fa-arrow-right"></i> Difference highlighted: +0.05</div>'
+            ].join("");
+            rightPanel.insertBefore(overlayPanelEl, sceneContainer);
+            overlayDiffEl = overlayPanelEl.querySelector(".sim-unit95-diff");
+        }
+
+        if (!overlayStatusEl) {
+            overlayStatusEl = document.createElement("div");
+            overlayStatusEl.className = "sim-unit95-status-chip";
+            overlayStatusEl.innerHTML = '<i class="fa-solid fa-circle-info"></i> Waiting for claw input';
+            sceneContainer.appendChild(overlayStatusEl);
+        }
+    }
+
+    function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+
+        if (fill) {
+            ctx.fillStyle = fill;
+            ctx.fill();
+        }
+        if (stroke) {
+            ctx.strokeStyle = stroke;
+            ctx.lineWidth = 4;
+            ctx.stroke();
+        }
+    }
+
+    function makeTextSprite(text, options) {
+        const cfg = Object.assign({
+            width: 512,
+            height: 160,
+            font: "bold 60px monospace",
+            color: "#ffffff",
+            background: "rgba(0,0,0,0.45)",
+            border: "rgba(255,255,255,0.18)",
+            radius: 18,
+            scaleX: 2.5,
+            scaleY: 0.8
+        }, options || {});
+
+        const canvas = document.createElement("canvas");
+        canvas.width = cfg.width;
+        canvas.height = cfg.height;
+        const ctx = canvas.getContext("2d");
+        if (cfg.background) {
+            roundRect(ctx, 8, 8, canvas.width - 16, canvas.height - 16, cfg.radius, cfg.background, cfg.border);
+        }
+        ctx.fillStyle = cfg.color;
+        ctx.font = cfg.font;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.needsUpdate = true;
+        const material = new THREE.SpriteMaterial({
+            map: texture,
+            transparent: true,
+            depthTest: false
+        });
+        const sprite = new THREE.Sprite(material);
+        sprite.scale.set(cfg.scaleX, cfg.scaleY, 1);
+        return sprite;
+    }
+
+    function updateTextSprite(sprite, text, options) {
+        if (!sprite || !sprite.material || !sprite.material.map) return;
+
+        const cfg = Object.assign({
+            width: 512,
+            height: 160,
+            font: "bold 60px monospace",
+            color: "#ffffff",
+            background: "rgba(0,0,0,0.45)",
+            border: "rgba(255,255,255,0.18)",
+            radius: 18
+        }, options || {});
+
+        const canvas = sprite.material.map.image;
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (cfg.background) {
+            roundRect(ctx, 8, 8, canvas.width - 16, canvas.height - 16, cfg.radius, cfg.background, cfg.border);
+        }
+        ctx.fillStyle = cfg.color;
+        ctx.font = cfg.font;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+        sprite.material.map.needsUpdate = true;
+    }
+
+    function createArrowGroup() {
+        const group = new THREE.Group();
+
+        const shaft = new THREE.Mesh(
+            new THREE.BoxGeometry(0.62, 0.05, 0.05),
+            new THREE.MeshPhongMaterial({ color: 0xffdd55, emissive: 0x3a2f00 })
+        );
+        shaft.position.x = 0.22;
+        group.add(shaft);
+
+        const head = new THREE.Mesh(
+            new THREE.ConeGeometry(0.10, 0.22, 18),
+            new THREE.MeshPhongMaterial({ color: 0xffdd55, emissive: 0x3a2f00 })
+        );
+        head.rotation.z = -Math.PI / 2;
+        head.position.x = 0.57;
+        group.add(head);
+
+        const label = makeTextSprite("+0.05", {
+            color: "#ffd866",
+            background: "rgba(38,28,6,0.78)",
+            border: "rgba(255,216,102,0.25)",
+            scaleX: 1.45,
+            scaleY: 0.48,
+            font: "bold 52px monospace"
+        });
+        label.position.set(0.22, 0.26, 0);
+        group.add(label);
+
+        return group;
+    }
+
+    function buildScene() {
+        const scene = window.scene;
+        if (!scene) return;
+
+        ensureOverlay();
+
+        window.setFieldVisible(false);
+        window.setCameraOrbit({
+            radius: 7.8,
+            theta: 0.0,
+            phi: 1.12,
+            target: { x: 0, y: 1.35, z: 0.15 }
+        });
+
+        const floor = new THREE.Mesh(
+            new THREE.PlaneGeometry(10, 10),
+            new THREE.MeshPhongMaterial({ color: 0x14141b, shininess: 8 })
+        );
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = 0;
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+        const robotShadowPad = new THREE.Mesh(
+            new THREE.CylinderGeometry(1.8, 1.8, 0.04, 32),
+            new THREE.MeshPhongMaterial({ color: 0x1d1d24 })
+        );
+        robotShadowPad.position.set(0, 0.02, 0.18);
+        robotShadowPad.receiveShadow = true;
+        scene.add(robotShadowPad);
+
+        robotBody = new THREE.Group();
+        scene.add(robotBody);
+
+        const body = new THREE.Mesh(
+            new THREE.BoxGeometry(3.2, 1.15, 2.2),
+            new THREE.MeshPhongMaterial({ color: 0x2a2a2a })
+        );
+        body.position.set(0, 0.65, 0.55);
+        body.castShadow = true;
+        body.receiveShadow = true;
+        robotBody.add(body);
+
+        const frontPlate = new THREE.Mesh(
+            new THREE.BoxGeometry(2.7, 0.22, 0.34),
+            new THREE.MeshPhongMaterial({ color: 0x3a3a3a })
+        );
+        frontPlate.position.set(0, 1.1, -0.64);
+        frontPlate.castShadow = true;
+        robotBody.add(frontPlate);
+
+        const mountBar = new THREE.Mesh(
+            new THREE.BoxGeometry(1.8, 0.18, 0.22),
+            new THREE.MeshPhongMaterial({ color: 0x666666 })
+        );
+        mountBar.position.set(0, 1.38, -0.93);
+        mountBar.castShadow = true;
+        scene.add(mountBar);
+
+        clawBase = new THREE.Group();
+        clawBase.position.set(0, 1.34, -1.02);
+        scene.add(clawBase);
+
+        const centerBridge = new THREE.Mesh(
+            new THREE.BoxGeometry(1.28, 0.22, 0.26),
+            new THREE.MeshPhongMaterial({ color: 0x777777 })
+        );
+        centerBridge.position.set(0, 0.02, 0.12);
+        centerBridge.castShadow = true;
+        clawBase.add(centerBridge);
+
+        leftFingerPivot = new THREE.Group();
+        leftFingerPivot.position.set(-0.76, 0.02, 0.12);
+        clawBase.add(leftFingerPivot);
+
+        rightFingerPivot = new THREE.Group();
+        rightFingerPivot.position.set(0.76, 0.02, 0.12);
+        clawBase.add(rightFingerPivot);
+
+        const pivotMat = new THREE.MeshPhongMaterial({ color: 0x999999 });
+        const leftHub = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.12, 18), pivotMat);
+        leftHub.rotation.x = Math.PI / 2;
+        leftFingerPivot.add(leftHub);
+
+        const rightHub = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.12, 18), pivotMat);
+        rightHub.rotation.x = Math.PI / 2;
+        rightFingerPivot.add(rightHub);
+
+        const fingerGeo = new THREE.BoxGeometry(0.18, 0.18, 1.25);
+
+        leftFingerMesh = new THREE.Mesh(
+            fingerGeo,
+            new THREE.MeshPhongMaterial({ color: 0x2255cc, emissive: 0x08142f })
+        );
+        leftFingerMesh.position.set(0, 0, -0.64);
+        leftFingerMesh.castShadow = true;
+        leftFingerMesh.receiveShadow = true;
+        leftFingerPivot.add(leftFingerMesh);
+
+        rightFingerMesh = new THREE.Mesh(
+            fingerGeo,
+            new THREE.MeshPhongMaterial({ color: 0xcc2222, emissive: 0x340909 })
+        );
+        rightFingerMesh.position.set(0, 0, -0.64);
+        rightFingerMesh.castShadow = true;
+        rightFingerMesh.receiveShadow = true;
+        rightFingerPivot.add(rightFingerMesh);
+
+        const leftTip = new THREE.Mesh(
+            new THREE.BoxGeometry(0.14, 0.14, 0.34),
+            new THREE.MeshPhongMaterial({ color: 0x9db7ff })
+        );
+        leftTip.position.set(0, 0.02, -1.0);
+        leftFingerPivot.add(leftTip);
+
+        const rightTip = new THREE.Mesh(
+            new THREE.BoxGeometry(0.14, 0.14, 0.34),
+            new THREE.MeshPhongMaterial({ color: 0xffa0a0 })
+        );
+        rightTip.position.set(0, 0.02, -1.0);
+        rightFingerPivot.add(rightTip);
+
+        sphereMesh = new THREE.Mesh(
+            new THREE.SphereGeometry(0.25, 28, 28),
+            new THREE.MeshPhongMaterial({
+                color: 0x8048d8,
+                emissive: 0x111111,
+                shininess: 50
+            })
+        );
+        sphereMesh.position.set(0, 1.42, -1.78);
+        sphereMesh.castShadow = true;
+        scene.add(sphereMesh);
+
+        const smallPad = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.36, 0.36, 0.05, 24),
+            new THREE.MeshPhongMaterial({ color: 0x202028 })
+        );
+        smallPad.position.set(0, 1.12, -1.78);
+        smallPad.receiveShadow = true;
+        scene.add(smallPad);
+
+        offsetArrowGroup = createArrowGroup();
+        offsetArrowGroup.position.set(0.93, 0.36, -0.42);
+        clawBase.add(offsetArrowGroup);
+
+        leftTargetSprite = makeTextSprite("servoL 0.10", {
+            color: "#8eb4ff",
+            background: "rgba(9,18,42,0.72)",
+            border: "rgba(142,180,255,0.2)",
+            scaleX: 1.85,
+            scaleY: 0.54,
+            font: "bold 48px monospace"
+        });
+        leftTargetSprite.position.set(-1.4, 0.92, -0.42);
+        clawBase.add(leftTargetSprite);
+
+        rightTargetSprite = makeTextSprite("servoR 0.85", {
+            color: "#ffb0b0",
+            background: "rgba(50,10,10,0.72)",
+            border: "rgba(255,176,176,0.2)",
+            scaleX: 1.9,
+            scaleY: 0.54,
+            font: "bold 48px monospace"
+        });
+        rightTargetSprite.position.set(1.46, 0.92, -0.42);
+        clawBase.add(rightTargetSprite);
+
+        gripStatusSprite = makeTextSprite("OPEN", {
+            color: "#d6d9e4",
+            background: "rgba(10,10,18,0.72)",
+            border: "rgba(255,255,255,0.14)",
+            scaleX: 1.7,
+            scaleY: 0.56,
+            font: "bold 54px sans-serif"
+        });
+        gripStatusSprite.position.set(0, 1.25, -0.18);
+        clawBase.add(gripStatusSprite);
+
+        setInitialVisualState();
+    }
+
+    function mapLeftPositionToAngle(pos) {
+        const amount = clamp((REST_POS - pos) / (REST_POS - LEFT_CLOSE), 0, 1);
+        return -amount * CLAW_MAX_ANGLE;
+    }
+
+    function mapRightPositionToAngle(pos) {
+        const amount = clamp((pos - REST_POS) / (RIGHT_CLOSE - REST_POS), 0, 1.2);
+        return amount * CLAW_MAX_ANGLE;
+    }
+
+    function isClosedCommand() {
+        return servoPositions.servoL < 0.3 || servoPositions.servoR > 0.7;
+    }
+
+    function isGripAligned() {
+        return approxEqual(servoPositions.servoL, LEFT_CLOSE, 0.03) && approxEqual(servoPositions.servoR, RIGHT_CLOSE, 0.03);
+    }
+
+    function isMissingOffset() {
+        return approxEqual(servoPositions.servoL, LEFT_CLOSE, 0.03) && approxEqual(servoPositions.servoR, RIGHT_CLOSE_NO_OFFSET, 0.03);
+    }
+
+    function updateOverlayPanel() {
+        if (!overlayStatusEl || !overlayDiffEl) return;
+
+        overlayStatusEl.className = "sim-unit95-status-chip";
+        if (!isClosedCommand()) {
+            overlayStatusEl.classList.add("warn");
+            overlayStatusEl.innerHTML = '<i class="fa-solid fa-hand"></i> Claw open at rest position';
+        } else if (isGripAligned()) {
+            overlayStatusEl.classList.add("good");
+            overlayStatusEl.innerHTML = '<i class="fa-solid fa-circle-check"></i> Offset compensated — symmetric grip';
+        } else {
+            overlayStatusEl.classList.add("bad");
+            overlayStatusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Mechanical slop — offset not compensated';
+        }
+
+        if (isGripAligned()) {
+            overlayDiffEl.innerHTML = '<i class="fa-solid fa-arrow-right"></i> Difference highlighted: +0.05';
+        } else if (isMissingOffset()) {
+            overlayDiffEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Missing compensation: servoR is still 0.80';
+        } else {
+            overlayDiffEl.innerHTML = '<i class="fa-solid fa-ruler"></i> Target comparison: servoR should reach 0.85';
+        }
+    }
+
+    function updateGripIndicators() {
+        if (!sphereMesh || !gripStatusSprite || !offsetArrowGroup) return;
+
+        if (!isClosedCommand()) {
+            sphereMesh.material.color.setHex(0x8048d8);
+            sphereMesh.material.emissive.setHex(0x101010);
+            updateTextSprite(gripStatusSprite, "OPEN", {
+                color: "#d6d9e4",
+                background: "rgba(10,10,18,0.72)",
+                border: "rgba(255,255,255,0.14)",
+                font: "bold 54px sans-serif"
+            });
+            offsetArrowGroup.visible = false;
+        } else if (isGripAligned()) {
+            sphereMesh.material.color.setHex(0x66dd88);
+            sphereMesh.material.emissive.setHex(0x1e5a2d);
+            updateTextSprite(gripStatusSprite, "GRIPPED", {
+                color: "#7cffb0",
+                background: "rgba(10,42,22,0.76)",
+                border: "rgba(124,255,176,0.22)",
+                font: "bold 54px sans-serif"
+            });
+            offsetArrowGroup.visible = true;
+        } else {
+            sphereMesh.material.color.setHex(0x777777);
+            sphereMesh.material.emissive.setHex(0x202020);
+            updateTextSprite(gripStatusSprite, "MISSED", {
+                color: "#ff9a9a",
+                background: "rgba(52,10,10,0.78)",
+                border: "rgba(255,154,154,0.22)",
+                font: "bold 54px sans-serif"
+            });
+            offsetArrowGroup.visible = false;
+        }
+
+        updateOverlayPanel();
+    }
+
+    function updateRequirementVisuals() {
+        return;
+    }
+
+    function updateClawVisual(name, logicalPos) {
+        if (name !== "servoL" && name !== "servoR") return;
+
+        const pos = normalizeServo(logicalPos);
+        servoPositions[name] = pos;
+
+        if (name === "servoL") {
+            targetAngles.servoL = mapLeftPositionToAngle(pos);
+        } else {
+            targetAngles.servoR = mapRightPositionToAngle(pos);
+        }
+
+        updateGripIndicators();
+        updateRequirementVisuals();
+    }
+
+    function setInitialVisualState() {
+        servoPositions.servoL = REST_POS;
+        servoPositions.servoR = REST_POS;
+        targetAngles.servoL = 0;
+        targetAngles.servoR = 0;
+        currentAngles.servoL = 0;
+        currentAngles.servoR = 0;
+        misalignmentPulse = 0;
+
+        if (leftFingerPivot) leftFingerPivot.rotation.y = 0;
+        if (rightFingerPivot) rightFingerPivot.rotation.y = 0;
+        if (leftFingerMesh) leftFingerMesh.material.emissive.setHex(0x08142f);
+        if (rightFingerMesh) rightFingerMesh.material.emissive.setHex(0x340909);
+        if (sphereMesh) {
+            sphereMesh.position.set(0, 1.42, -1.78);
+        }
+        if (offsetArrowGroup) {
+            offsetArrowGroup.visible = false;
+            offsetArrowGroup.position.y = 0.36;
+        }
+        updateGripIndicators();
+    }
+
+    function animateScene() {
+        if (!leftFingerPivot || !rightFingerPivot) return;
+
+        currentAngles.servoL += (targetAngles.servoL - currentAngles.servoL) * 0.16;
+        currentAngles.servoR += (targetAngles.servoR - currentAngles.servoR) * 0.16;
+
+        leftFingerPivot.rotation.y = currentAngles.servoL;
+        rightFingerPivot.rotation.y = currentAngles.servoR;
+
+        if (isClosedCommand() && !isGripAligned()) {
+            misalignmentPulse += 0.22;
+            if (rightFingerMesh) {
+                rightFingerMesh.position.x = Math.sin(misalignmentPulse) * 0.045;
+                rightFingerMesh.material.emissive.setHex(0x5a1111);
+            }
+            if (sphereMesh) {
+                sphereMesh.position.x = Math.sin(misalignmentPulse * 0.9) * 0.07;
+                sphereMesh.position.y = 1.40 + Math.abs(Math.sin(misalignmentPulse * 1.1)) * 0.03;
+            }
+        } else {
+            if (rightFingerMesh) {
+                rightFingerMesh.position.x += (0 - rightFingerMesh.position.x) * 0.18;
+                rightFingerMesh.material.emissive.setHex(0x340909);
+            }
+            if (sphereMesh) {
+                sphereMesh.position.x += (0 - sphereMesh.position.x) * 0.18;
+                sphereMesh.position.y += (1.42 - sphereMesh.position.y) * 0.18;
+            }
+        }
+
+        if (offsetArrowGroup && offsetArrowGroup.visible) {
+            offsetArrowGroup.position.y = 0.36 + Math.sin(Date.now() * 0.006) * 0.03;
+        }
+
+        if (leftFingerMesh && isGripAligned()) {
+            leftFingerMesh.material.emissive.setHex(0x143c74);
+        } else if (leftFingerMesh) {
+            leftFingerMesh.material.emissive.setHex(0x08142f);
+        }
+    }
+
+    function preprocessJavaCode(code) {
+        let processed = code;
+        processed = processed.replace(/\bservoL\s*\.\s*setPosition\s*\(/g, 'setServoPosition("servoL", ');
+        processed = processed.replace(/\bservoR\s*\.\s*setPosition\s*\(/g, 'setServoPosition("servoR", ');
+        processed = processed.replace(/\bgamepad1\s*\.\s*x\b/g, "gamepad.x");
+        processed = processed.replace(/\btelemetry\s*\.\s*addData\s*\(/g, "addTelemetry(");
+        processed = processed.replace(/\btelemetry\s*\.\s*update\s*\(\s*\)/g, "updateTelemetry()");
+        return processed;
+    }
+
+    function extractBranchBody(loopBody, buttonName) {
+        const re = new RegExp(
+            '(?:if|else\\s+if)\\s*\\(\\s*(?:gamepad1|gamepad)\\s*\\.\\s*' +
+                buttonName +
+                '\\s*\\)\\s*\\{([\\s\\S]*?)\\}',
+            'i'
+        );
+        const match = loopBody.match(re);
+        return match ? match[1] : "";
+    }
+
+    function extractElseBody(loopBody) {
+        const match = loopBody.match(/\belse\s*\{([\s\S]*?)\}/i);
+        return match ? match[1] : "";
+    }
+
+    function getVariableMap(code) {
+        const vars = {};
+        const declRe = /\b(?:double|float|int)\s+([A-Za-z_]\w*)\s*=\s*([^;]+);/g;
+        let match;
+        let progress = true;
+
+        while (progress) {
+            progress = false;
+            declRe.lastIndex = 0;
+            while ((match = declRe.exec(code)) !== null) {
+                const name = match[1];
+                if (Object.prototype.hasOwnProperty.call(vars, name)) continue;
+                const value = evaluateExpression(match[2], vars);
+                if (typeof value === "number" && Number.isFinite(value)) {
+                    vars[name] = value;
+                    progress = true;
+                }
+            }
+        }
+
+        return vars;
+    }
+
+    function evaluateExpression(expr, vars) {
+        if (!expr) return null;
+        let normalized = String(expr).trim();
+        if (!/^[0-9+\-*/().,\sA-Za-z_]+$/.test(normalized)) return null;
+        normalized = normalized.replace(/,/g, ".");
+        normalized = normalized.replace(/\b([A-Za-z_]\w*)\b/g, function (full, name) {
+            if (Object.prototype.hasOwnProperty.call(vars, name)) {
+                return String(vars[name]);
+            }
+            return full;
+        });
+        if (/[A-Za-z_]/.test(normalized)) return null;
+        try {
+            return Function('"use strict"; return (' + normalized + ');')();
+        } catch (err) {
+            return null;
+        }
+    }
+
+    function getSetPositionExpressions(body, servoName) {
+        const values = [];
+        const re = new RegExp('\\b' + servoName + '\\s*\\.\\s*setPosition\\s*\\(\\s*([^;\\n\\r\\)](?:[\\s\\S]*?))\\s*\\)', 'g');
+        let match;
+        while ((match = re.exec(body)) !== null) {
+            values.push(match[1].trim());
+        }
+        return values;
+    }
+
+    function getSetPositionValues(body, servoName, vars) {
+        return getSetPositionExpressions(body, servoName).map(function (expr) {
+            return {
+                expr: expr,
+                value: evaluateExpression(expr, vars)
+            };
+        });
+    }
+
+    function branchHasTarget(body, servoName, targetValue, vars, tolerance) {
+        return getSetPositionValues(body, servoName, vars).some(function (entry) {
+            return typeof entry.value === "number" && approxEqual(entry.value, targetValue, tolerance == null ? 0.02 : tolerance);
+        });
+    }
+
+    function firstValue(body, servoName, vars) {
+        const values = getSetPositionValues(body, servoName, vars);
+        return values.length ? values[0] : null;
+    }
+
+    function setRequirementStatesFromCode(code) {
+        const vars = getVariableMap(code);
+        const initBody = window._simGetMethodBody(code, "init") || "";
+        const loopBody = window._simGetMethodBody(code, "loop") || "";
+        const xBranchBody = extractBranchBody(loopBody, "x");
+        const elseBody = extractElseBody(loopBody);
+
+        const req1 = /\bhardwareMap\s*\.\s*get\(\s*Servo\.class\s*,\s*"servoL"\s*\)/.test(initBody);
+        const req2 = /\bhardwareMap\s*\.\s*get\(\s*Servo\.class\s*,\s*"servoR"\s*\)/.test(initBody);
+        const req3 = branchHasTarget(xBranchBody, "servoL", LEFT_CLOSE, vars, 0.02);
+        const req4 = branchHasTarget(xBranchBody, "servoR", RIGHT_CLOSE, vars, 0.02);
+        const req5 = branchHasTarget(elseBody, "servoL", REST_POS, vars, 0.02) && branchHasTarget(elseBody, "servoR", REST_POS, vars, 0.02);
+        const req6 = /\btelemetry\s*\.\s*addData\s*\(/.test(code);
+
+        window.setRequirement(0, req1);
+        window.setRequirement(1, req2);
+        window.setRequirement(2, req3);
+        window.setRequirement(3, req4);
+        window.setRequirement(4, req5);
+        window.setRequirement(5, req6);
+
+        configureHints(code, initBody, loopBody, xBranchBody, elseBody, vars);
+    }
+
+    function configureHints(code, initBody, loopBody, xBranchBody, elseBody, vars) {
+        const leftClose = firstValue(xBranchBody, "servoL", vars);
+        const rightClose = firstValue(xBranchBody, "servoR", vars);
+        const leftRest = firstValue(elseBody, "servoL", vars);
+        const rightRest = firstValue(elseBody, "servoR", vars);
+
+        if (!elseBody) {
+            window.addHint("Add an else branch to return servos to rest position when X is released", "warn");
+        }
+
+        if (leftClose && rightClose && typeof leftClose.value === "number" && typeof rightClose.value === "number" && approxEqual(leftClose.value, rightClose.value, 0.03)) {
+            window.addHint("These servos are not mirrored — servoL goes to 0.1 but servoR needs to go to 0.85 to account for mounting and mechanical slop", "error");
+        }
+
+        if (leftClose && /\boffset\b/.test(leftClose.expr) && (!rightClose || !/\boffset\b/.test(rightClose.expr))) {
+            window.addHint("The offset compensates for servoR's mechanical slop — apply it to servoR not servoL", "warn");
+        }
+
+        if (rightClose && typeof rightClose.value === "number" && approxEqual(rightClose.value, RIGHT_CLOSE_NO_OFFSET, 0.02)) {
+            window.addHint("You're missing the 0.05 mechanical offset — use 0.85 not 0.80 for servoR", "warn");
+        }
+
+        if (rightClose && typeof rightClose.value === "number" && !approxEqual(rightClose.value, RIGHT_CLOSE, 0.02) && !approxEqual(rightClose.value, RIGHT_CLOSE_NO_OFFSET, 0.02)) {
+            window.addHint("The offset is 0.05 — servoR target should be 0.80 + 0.05 = 0.85", "warn");
+        }
+
+        if (!leftRest || !rightRest || typeof leftRest.value !== "number" || typeof rightRest.value !== "number" || !approxEqual(leftRest.value, REST_POS, 0.02) || !approxEqual(rightRest.value, REST_POS, 0.02)) {
+            window.addHint("Both servos should rest at 0.5 (center position) when not gripping", "warn");
+        }
+
+        if (!/\btelemetry\s*\.\s*update\s*\(\s*\)/.test(code)) {
+            window.addHint("Call telemetry.update() to send data to the Driver Station", "warn");
+        }
+
+        if (!/\btelemetry\s*\.\s*addData\s*\(/.test(code)) {
+            window.addHint("Add telemetry.addData(...) so the Driver Station shows claw state", "warn");
+        }
+
+        if (!/\bif\s*\(\s*gamepad1\s*\.\s*x\s*\)/.test(code) && !/\bif\s*\(\s*gamepad\s*\.\s*x\s*\)/.test(code)) {
+            window.addHint("Use the X button branch to close the claw with synchronized positions", "info");
+        }
+
+        if (!/\bservoL\s*\.\s*setPosition\s*\(/.test(xBranchBody) || !/\bservoR\s*\.\s*setPosition\s*\(/.test(xBranchBody)) {
+            window.addHint("Set both claw servos in the same X-button branch so they move together", "warn");
+        }
+
+        if (/\bhardwareMap\s*\.\s*get\(\s*Servo\.class\s*,\s*"servoL"\s*\)/.test(loopBody) || /\bhardwareMap\s*\.\s*get\(\s*Servo\.class\s*,\s*"servoR"\s*\)/.test(loopBody)) {
+            window.addHint("Map both servos in init() before using them in loop()", "error");
+        }
+    }
+
+    window.setServoPosition = function (name, pos) {
+        const numeric = Number(pos);
+        const servo = window.hardwareMap.get("Servo", name);
+        if (!servo || !Number.isFinite(numeric)) return;
+        servo.setPosition(numeric);
+    };
+
+    window.onSimulatorReady = function () {
+        const starterCode = `@TeleOp(name="Synchronized_Servos")
+public class SynchronizedServos extends OpMode {
+
+    Servo servoL, servoR;
+    double offset = 0.05;
+
+    @Override
+    public void init() {
+        servoL = hardwareMap.get(Servo.class, "servoL");
+        servoR = hardwareMap.get(Servo.class, "servoR");
+        telemetry.addData("Status", "Initialized");
+    }
+
+    @Override
+    public void loop() {
+        if (gamepad1.x) {
+            // TODO: Move servoL to 0.1
+            // TODO: Move servoR to 0.80 + offset
+            // TODO: Report that the claw is closed
+        } else {
+            // TODO: Return both servos to 0.5
+            // TODO: Report that the claw is at rest
+        }
+
+        // TODO: Add telemetry for both servo positions
+        telemetry.addData("Offset", offset);
+        telemetry.update();
+    }
+}`;
+
+        window.setCode(starterCode);
+
+        window.setChallenge(
+            "Synchronized Servos with Mechanical Offset",
+            "Map both claw servos, apply the 0.05 mechanical offset to servoR, and use X to close the claw symmetrically around the game element.",
+            [
+                "Map servoL in init()",
+                "Map servoR in init()",
+                "Set servoL to 0.1 in the X branch",
+                "Set servoR to 0.85 in the X branch",
+                "Return both servos to 0.5 in the else branch",
+                "Send telemetry with telemetry.addData(...)"
+            ]
+        );
+
+        window.setHeader(
+            "Telemark Unit 9.5 Simulator",
+            "Use X to close the claw and compensate for mechanical slop on servoR"
+        );
+
+        window.setBadges([
+            { iconClass: "fa-solid fa-gears", label: "Servo x2", active: true },
+            { iconClass: "fa-solid fa-tower-broadcast", label: "Telemetry", active: true },
+            { iconClass: "fa-solid fa-gamepad", label: "Gamepad", active: true }
+        ]);
+
+        window.setActiveInputs(["x"]);
+        window.hardwareMap.registerServo("servoL");
+        window.hardwareMap.registerServo("servoR");
+        window.hardwareMap.onServoPosition(function (name, value) {
+            updateClawVisual(name, value);
+        });
+
+        buildScene();
+
+        const successBanner = document.getElementById("sim-success-banner");
+        if (successBanner) {
+            successBanner.innerHTML = '<i class="fa-solid fa-circle-check"></i> Challenge Complete! Your servos are synchronized with offset compensation.';
+        }
+
+        if (animationCallbackId >= 0) {
+            window.removeAnimationCallback(animationCallbackId);
+        }
+        animationCallbackId = window.addAnimationCallback(animateScene);
+    };
+
+    window.onRun = function () {
+        window.clearHints();
+        setInitialVisualState();
+
+        const code = window.getCode();
+        setRequirementStatesFromCode(code);
+
+        const processedCode = preprocessJavaCode(code);
+
+        window.transpileAndRun(
+            processedCode,
+            function (initFn) {
+                try {
+                    initFn();
+                } catch (err) {
+                    window._simShowTelemetryError("Init error: " + err.message);
+                }
+            },
+            function (loopFn) {
+                window._simStartLoop(function () {
+                    try {
+                        loopFn();
+                    } catch (err) {
+                        window._simShowTelemetryError("Loop error: " + err.message);
+                    }
+                });
+            }
+        );
+    };
+
+    window.onStop = function () {
+        const leftServo = window.hardwareMap.get("Servo", "servoL");
+        const rightServo = window.hardwareMap.get("Servo", "servoR");
+        if (leftServo) leftServo.setPosition(REST_POS);
+        if (rightServo) rightServo.setPosition(REST_POS);
+        setInitialVisualState();
+    };
+
+    window.onReset = function () {
+        window.onStop();
+        window.clearHints();
+        setInitialVisualState();
+    };
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Telemark Unit 15.3 Simulator</title>
+<style>
+  #sim-right-panel #sim-scene-container {
+    flex: 0 0 clamp(400px, 58vh, 660px);
+    min-height: 280px;
+    background: #020204;
+  }
+
+  #sim-right-panel .u153-panel {
+    flex: 1 1 0;
+    min-height: 220px;
+    max-height: none;
+    overflow-y: auto;
+    margin: 10px;
+    padding: 12px;
+    border: 1px solid #333333;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #1a1a1a, #151515);
+    color: #e8e8e8;
+    font-family: "Poppins", var(--font-ui, sans-serif);
+  }
+
+  #sim-right-panel .u153-vertical-resizer {
+    flex: 0 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 10px;
+    border: 1px solid #2a2a3a;
+    border-radius: 999px;
+    background: #08080c;
+    cursor: row-resize;
+    touch-action: none;
+    user-select: none;
+  }
+
+  #sim-right-panel .u153-vertical-resizer::before {
+    content: "";
+    width: 72px;
+    height: 3px;
+    border-radius: 999px;
+    background: #facc15;
+  }
+
+  #sim-right-panel .u153-vertical-resizer:hover,
+  #sim-right-panel .u153-vertical-resizer.active {
+    border-color: #facc15;
+    background: #222222;
+  }
+
+  body.u153-resizing,
+  body.u153-resizing * {
+    cursor: row-resize !important;
+    user-select: none !important;
+  }
+
+  #sim-scene-container .u153-scene-badge,
+  #sim-scene-container .u153-pose-badge,
+  #sim-scene-container .u153-phase-badge {
+    position: absolute;
+    z-index: 5;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: rgba(4, 4, 7, 0.9);
+    color: #f4f4f5;
+    pointer-events: none;
+    font-weight: 800;
+  }
+
+  #sim-scene-container .u153-scene-badge {
+    top: 12px;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 11px;
+  }
+
+  #sim-scene-container .u153-pose-badge {
+    right: 12px;
+    bottom: 12px;
+    padding: 10px 13px;
+    font-size: 1rem;
+  }
+
+  #sim-scene-container .u153-phase-badge {
+    left: 12px;
+    bottom: 12px;
+    padding: 9px 12px;
+  }
+
+  #sim-right-panel .u153-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0 8px;
+    font-weight: 800;
+  }
+
+  #sim-right-panel .u153-title:first-child {
+    margin-top: 0;
+  }
+
+  #sim-right-panel .u153-visualizer-title {
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  #sim-right-panel .u153-title-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  #sim-right-panel .u153-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border: 1px solid #444444;
+    border-radius: 8px;
+    background: #2a2a2a;
+    color: #e8e8e8;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 800;
+    padding: 7px 10px;
+  }
+
+  #sim-right-panel .u153-button:hover {
+    border-color: #facc15;
+    color: #ffffff;
+  }
+
+  #sim-right-panel .u153-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  #sim-right-panel .u153-card,
+  #sim-right-panel .u153-point-row {
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    background: #08080c;
+    color: #9ca3af;
+    padding: 9px;
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  #sim-right-panel .u153-card strong {
+    color: #f4f4f5;
+    font-size: 1.12rem;
+  }
+
+  #sim-right-panel .u153-card.large strong {
+    font-size: 1.35rem;
+  }
+
+  #sim-right-panel .u153-card.good,
+  #sim-right-panel .u153-point-row.good {
+    border-color: #22cc66;
+    color: #bbf7d0;
+    box-shadow: 0 0 12px rgba(34, 204, 102, 0.12);
+  }
+
+  #sim-right-panel .u153-card.warn {
+    border-color: #8a6a20;
+    color: #fde68a;
+  }
+
+  #sim-right-panel .u153-card.bad,
+  #sim-right-panel .u153-point-row.bad {
+    border-color: #7f1d1d;
+    color: #fecaca;
+  }
+
+  #sim-right-panel .u153-bar {
+    height: 10px;
+    margin-top: 6px;
+    border-radius: 999px;
+    background: #1f2937;
+    overflow: hidden;
+  }
+
+  #sim-right-panel .u153-fill {
+    height: 100%;
+    width: 0%;
+    background: #22d3ee;
+  }
+
+  #sim-right-panel .u153-visualizer-wrap {
+    border: 1px solid #333333;
+    border-radius: 12px;
+    background: #0a0a0a;
+    padding: 8px;
+    height: clamp(420px, 52vh, 700px);
+    min-height: 320px;
+    max-height: 82vh;
+    overflow: auto;
+    resize: vertical;
+    scrollbar-width: thin;
+    scrollbar-color: #facc15 #0a0a0a;
+  }
+
+  #sim-right-panel .u153-pedro-visualizer {
+    display: block;
+    box-sizing: border-box;
+    width: max(100%, 1500px);
+    max-width: none;
+    height: 100%;
+    margin: 0;
+    border: 1px solid #333333;
+    border-radius: 10px;
+    background: #0a0a0a;
+  }
+
+  .u153-modal {
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    bottom: 8px;
+    left: max(340px, 22vw);
+    z-index: 9999;
+    display: none;
+    pointer-events: none;
+  }
+
+  .u153-modal.open {
+    display: block;
+  }
+
+  .u153-modal-card {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    border: 1px solid #2a2a3a;
+    border-radius: 10px;
+    background: #050505;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+    pointer-events: auto;
+    overflow: hidden;
+  }
+
+  .u153-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #2a2a3a;
+    color: #f4f4f5;
+    font-family: var(--font-ui, Arial, sans-serif);
+    font-weight: 900;
+    background: #08080c;
+  }
+
+  .u153-modal-body {
+    flex: 1;
+    min-height: 0;
+    padding: 8px;
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #22d3ee #05080d;
+  }
+
+  .u153-modal-body .u153-pedro-visualizer {
+    display: block;
+    box-sizing: border-box;
+    width: 1680px;
+    max-width: none;
+    height: max(100%, 980px);
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    background: #05080d;
+  }
+
+  #sim-right-panel .u153-visualizer-wrap::-webkit-scrollbar,
+  .u153-modal-body::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  #sim-right-panel .u153-visualizer-wrap::-webkit-scrollbar-track,
+  .u153-modal-body::-webkit-scrollbar-track {
+    background: #08080c;
+    border-radius: 999px;
+  }
+
+  #sim-right-panel .u153-visualizer-wrap::-webkit-scrollbar-thumb,
+  .u153-modal-body::-webkit-scrollbar-thumb {
+    background: #facc15;
+    border: 2px solid #05080d;
+    border-radius: 999px;
+  }
+
+  #sim-right-panel .u153-visualizer-wrap::-webkit-scrollbar-thumb:hover,
+  .u153-modal-body::-webkit-scrollbar-thumb:hover {
+    background: #facc15;
+  }
+
+  .u153-dock-note {
+    color: #a1a1aa;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  @media (max-width: 1100px) {
+    .u153-modal {
+      left: 12px;
+      min-width: 0;
+    }
+  }
+
+  #sim-right-panel .u153-callout,
+  #sim-right-panel .u153-warning,
+  #sim-right-panel .u153-success {
+    margin-top: 10px;
+    border-radius: 8px;
+    padding: 9px;
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  #sim-right-panel .u153-callout {
+    border: 1px solid #374151;
+    background: rgba(244, 244, 245, 0.05);
+    color: #e5e7eb;
+  }
+
+  #sim-right-panel .u153-warning {
+    display: none;
+    border: 1px solid #8a6a20;
+    background: rgba(255, 204, 102, 0.08);
+    color: #fde68a;
+  }
+
+  #sim-right-panel .u153-warning.error {
+    border-color: #7f1d1d;
+    background: rgba(239, 68, 68, 0.1);
+    color: #fecaca;
+  }
+
+  #sim-right-panel .u153-success {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #22cc66;
+    background: rgba(34, 204, 102, 0.1);
+    color: #22cc66;
+    font-weight: 800;
+  }
+</style>
+<script src="./simulator_base.js"></script>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+<script>
+window.onSimulatorReady = function () {
+  "use strict";
+
+  const starterCode = `@Autonomous(name="Pedro3_Bezier")
+public class Pedro3Bezier extends LinearOpMode {
+
+    Follower  follower;
+    Path scoringRoutine;
+
+    @Override
+    public void runOpMode() {
+
+        PoseFactory poseFactory = PoseFactory.degrees();
+        follower = Constants.create(hardwareMap);
+
+        Pose start   = poseFactory.of(0, 0, 0);
+        Pose join    = poseFactory.of(60, 0, 0);
+        Pose control = poseFactory.of(80, 30, 45);
+        Pose end     = poseFactory.of(60, 60, 90);
+
+        follower.setPose(start);
+        follower.update();
+
+        // TODO: Build scoringRoutine with path(line(...), curve(...))
+
+        telemetry.addData("Status",   "Path Built");
+        telemetry.addData("Segments", 2);
+        telemetry.update();
+
+        waitForStart();
+
+        follower.follow(scoringRoutine);
+
+        while (opModeIsActive() && follower.isBusy()) {
+            follower.update();
+
+            Pose pose = follower.pose();
+            telemetry.addData("X",       pose.x());
+            telemetry.addData("Y",       pose.y());
+            telemetry.addData("Heading", pose.heading());
+            telemetry.update();
+        }
+
+        telemetry.addData("Status", "Path Complete");
+        telemetry.update();
+    }
+}`;
+
+  const requirements = [
+    "Create poses with PoseFactory.degrees()",
+    "Build a compound path with path(...) ",
+    "Add line(start, join) from (0,0) to (60,0)",
+    "Start point is (0,0)",
+    "First segment ends at (60,0)",
+    "Add curve(join, control, end)",
+    "Second segment starts at (60,0)",
+    "Control point is (80,30)",
+    "Second segment ends at (60,60)",
+    "Assign the compound Path to scoringRoutine"
+  ];
+
+  const FIELD_INCHES = 144;
+  const FIELD_SCALE = 0.045;
+  const FOLLOW_SPEED = 62;
+  const EXPECTED_POINTS = [
+    { x: 0, y: 0 },
+    { x: 60, y: 0 },
+    { x: 60, y: 0 },
+    { x: 80, y: 30 },
+    { x: 60, y: 60 }
+  ];
+
+  const state = {
+    active: false,
+    stopRequested: false,
+    waitingForStart: false,
+    startRequested: false,
+    phase: "IDLE",
+    runToken: 0,
+    followerCreated: false,
+    poseSet: false,
+    pathBuilt: false,
+    scoringRoutineDefined: false,
+    following: false,
+    completed: false,
+    updateCount: 0,
+    pose: { x: 0, y: 0, heading: 0 },
+    segments: makeExpectedSegments(),
+    samples: [],
+    cumulative: [],
+    segmentLengths: [],
+    totalLength: 0,
+    currentSegmentIndex: 0,
+    currentSegmentProgress: 0,
+    overallProgress: 0,
+    pathStartMs: 0,
+    turnDurationMs: 650,
+    turningAtJoin: false,
+    parsedPoints: []
+  };
+
+  let followerDevice;
+  let sceneRoot;
+  let robotGroup;
+  let pathPreviewLine;
+  let pathCompletedLine;
+  let headingLine;
+  let controlMarker;
+  let controlLineA;
+  let controlLineB;
+  let poseLabel;
+  let phaseLabel;
+  let animationRegistered = false;
+  let lastValidationMs = 0;
+  let lastPanelMs = 0;
+  let lastPathGeometryMs = 0;
+  let lastCompletedProgress = -1;
+  const followerCallbacks = [];
+  const pathCallbacks = [];
+
+  function el(id) {
+    return document.getElementById(id);
+  }
+
+  function safeCall(fn) {
+    if (typeof fn !== "function") return undefined;
+    const args = Array.prototype.slice.call(arguments, 1);
+    return fn.apply(null, args);
+  }
+
+  ensureFollowerHardware();
+
+  setCode(starterCode);
+  setChallenge(
+    "Telemark Unit 15.3 Simulator",
+    "Pedro 3 compound Path with a Bézier curve",
+    requirements
+  );
+  setBadges([
+    { icon: "fa-route", iconClass: "fa-solid fa-route", label: "Compound Path", active: true },
+    { icon: "fa-bezier-curve", iconClass: "fa-solid fa-bezier-curve", label: "Bezier", active: true },
+    { icon: "fa-location-dot", iconClass: "fa-solid fa-location-dot", label: "Pose", active: true },
+    { icon: "fa-display", iconClass: "fa-solid fa-display", label: "Telemetry", active: true }
+  ]);
+  setActiveInputs([]);
+
+  const banner = el("sim-success-banner");
+  if (banner) {
+    banner.innerHTML = '<i class="fa-solid fa-circle-check"></i> Challenge Complete! Pedro 3 compound path correctly constructed.';
+  }
+
+  followerDevice = hardwareMap.registerFollower("follower");
+  hardwareMap.onFollowerUpdate(function (x, y, heading) {
+    updateRobotPose(x, y, heading);
+  });
+  hardwareMap.onPath(function (segments) {
+    updatePathVisual(segments);
+  });
+
+  createPanel();
+  setupScene();
+  setPathSegments(state.segments);
+  validateCode();
+  updatePanel();
+
+  window.onInit = function () {
+    state.runToken += 1;
+    state.active = true;
+    state.stopRequested = false;
+    state.waitingForStart = false;
+    state.startRequested = false;
+    state.phase = "INIT";
+    state.followerCreated = false;
+    state.poseSet = false;
+    state.pathBuilt = false;
+    state.scoringRoutineDefined = false;
+    state.following = false;
+    state.completed = false;
+    state.updateCount = 0;
+    state.currentSegmentIndex = 0;
+    state.currentSegmentProgress = 0;
+    state.overallProgress = 0;
+    state.pose = { x: 0, y: 0, heading: 0 };
+    safeCall(clearTelemetry);
+    validateCode();
+    updatePanel();
+    runLinearOpMode(state.runToken);
+  };
+
+  window.onStart = function () {
+    state.startRequested = true;
+    releaseWaitForStart();
+  };
+
+  window.onRun = window.onInit;
+
+  window.onStop = function () {
+    state.stopRequested = true;
+    state.active = false;
+    state.waitingForStart = false;
+    state.startRequested = false;
+    state.following = false;
+    state.phase = "STOPPED";
+    releaseWaitForStart();
+    updatePanel();
+  };
+
+  window.onReset = function () {
+    state.runToken += 1;
+    state.active = false;
+    state.stopRequested = false;
+    state.waitingForStart = false;
+    state.startRequested = false;
+    releaseWaitForStart();
+    safeCall(clearTelemetry);
+    resetRuntimeState();
+    validateCode();
+    updatePanel();
+  };
+
+  if (!animationRegistered && typeof addAnimationCallback === "function") {
+    addAnimationCallback(tick);
+    animationRegistered = true;
+  }
+
+  function ensureFollowerHardware() {
+    if (typeof hardwareMap.registerFollower !== "function") {
+      hardwareMap.registerFollower = function (name) {
+        const device = {
+          _name: name,
+          setPose: function (pose) { setFollowerStartPose(pose); },
+          follow: function (path) { followPath(path); },
+          update: function () { updateFollower(); },
+          isBusy: function () { return isFollowerBusy(); },
+          pose: function () { return getFollowerPose(); }
+        };
+        hardwareMap._devices[name] = device;
+        return device;
+      };
+    }
+
+    if (typeof hardwareMap.onFollowerUpdate !== "function") {
+      hardwareMap.onFollowerUpdate = function (cb) { followerCallbacks.push(cb); };
+    } else {
+      const originalFollower = hardwareMap.onFollowerUpdate.bind(hardwareMap);
+      hardwareMap.onFollowerUpdate = function (cb) {
+        followerCallbacks.push(cb);
+        originalFollower(cb);
+      };
+    }
+
+    if (typeof hardwareMap.onPath !== "function") {
+      hardwareMap.onPath = function (cb) { pathCallbacks.push(cb); };
+    } else {
+      const originalPath = hardwareMap.onPath.bind(hardwareMap);
+      hardwareMap.onPath = function (cb) {
+        pathCallbacks.push(cb);
+        originalPath(cb);
+      };
+    }
+  }
+
+  function createPanel() {
+    const rightPanel = el("sim-right-panel");
+    const sceneContainer = el("sim-scene-container");
+    if (!rightPanel || !sceneContainer) return;
+
+    ["u153-panel", "u153-scene-badge", "u153-pose-badge", "u153-phase-badge", "u153-vertical-resizer"].forEach(function (id) {
+      const old = el(id);
+      if (old) old.remove();
+    });
+    const oldModal = el("u153-visualizer-modal");
+    if (oldModal) oldModal.remove();
+
+    const sceneBadge = document.createElement("div");
+    sceneBadge.id = "u153-scene-badge";
+    sceneBadge.className = "u153-scene-badge";
+    sceneContainer.appendChild(sceneBadge);
+
+    const poseBadge = document.createElement("div");
+    poseBadge.id = "u153-pose-badge";
+    poseBadge.className = "u153-pose-badge";
+    sceneContainer.appendChild(poseBadge);
+
+    const phaseBadge = document.createElement("div");
+    phaseBadge.id = "u153-phase-badge";
+    phaseBadge.className = "u153-phase-badge";
+    sceneContainer.appendChild(phaseBadge);
+
+    const panel = document.createElement("div");
+    panel.id = "u153-panel";
+    panel.className = "u153-panel";
+    panel.innerHTML = `
+      <div class="u153-title"><i class="fa-solid fa-route"></i> Pedro 3 Path Summary</div>
+      <div class="u153-grid">
+        <div class="u153-card" id="u153-seg1-card"></div>
+        <div class="u153-card" id="u153-seg2-card"></div>
+        <div class="u153-card" id="u153-chain-card"></div>
+        <div class="u153-card" id="u153-count-card"></div>
+      </div>
+
+      <div class="u153-title u153-visualizer-title">
+        <span class="u153-title-label"><i class="fa-solid fa-bezier-curve"></i> Pedro Pathing Visualizer</span>
+        <button class="u153-button" type="button" id="u153-open-visualizer">
+          <i class="fa-solid fa-table-columns"></i> Dock beside editor
+        </button>
+      </div>
+      <div class="u153-visualizer-wrap" id="u153-visualizer-inline">
+        <iframe
+          id="u153-pedro-iframe"
+          src="https://visualizer.pedropathing.com/"
+          title="Pedro Pathing Visualizer"
+          class="u153-pedro-visualizer"
+          allow="fullscreen"
+          loading="lazy">
+        </iframe>
+      </div>
+
+      <div class="u153-title"><i class="fa-solid fa-list-check"></i> Coordinates</div>
+      <div id="u153-point-list"></div>
+
+      <div class="u153-title"><i class="fa-solid fa-location-dot"></i> Robot Progress</div>
+      <div class="u153-grid">
+        <div class="u153-card large" id="u153-segment-card"></div>
+        <div class="u153-card large" id="u153-progress-card"></div>
+        <div class="u153-card" id="u153-x-card"></div>
+        <div class="u153-card" id="u153-y-card"></div>
+        <div class="u153-card" id="u153-heading-card"></div>
+        <div class="u153-card" id="u153-update-card"></div>
+      </div>
+
+      <div class="u153-callout">
+        <i class="fa-solid fa-circle-info"></i>
+        This is the live official visualizer. Its Java export uses Pedro 3 PoseFactory and Paths API calls; copy those poses and path methods into the editor.
+      </div>
+      <div class="u153-success" id="u153-success"><i class="fa-solid fa-circle-check"></i> Challenge Complete! Pedro 3 compound path correctly constructed.</div>
+      <div class="u153-warning" id="u153-warning"></div>
+    `;
+    const verticalResizer = document.createElement("div");
+    verticalResizer.id = "u153-vertical-resizer";
+    verticalResizer.className = "u153-vertical-resizer";
+    verticalResizer.setAttribute("role", "separator");
+    verticalResizer.setAttribute("aria-orientation", "horizontal");
+    verticalResizer.setAttribute("aria-label", "Resize 3D viewer and simulator details");
+    rightPanel.appendChild(verticalResizer);
+    rightPanel.appendChild(panel);
+    setupVerticalResizer(verticalResizer, sceneContainer);
+
+    const modal = document.createElement("div");
+    modal.id = "u153-visualizer-modal";
+    modal.className = "u153-modal";
+    modal.innerHTML = `
+      <div class="u153-modal-card" role="dialog" aria-modal="false" aria-label="Pedro Pathing Visualizer Dock">
+        <div class="u153-modal-header">
+          <span><i class="fa-solid fa-bezier-curve"></i> Pedro Pathing Visualizer</span>
+          <span class="u153-dock-note">Editor remains active on the left</span>
+          <button class="u153-button" type="button" id="u153-close-visualizer">
+            <i class="fa-solid fa-xmark"></i> Close
+          </button>
+        </div>
+        <div class="u153-modal-body" id="u153-visualizer-large-slot"></div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const openButton = el("u153-open-visualizer");
+    const closeButton = el("u153-close-visualizer");
+    if (openButton) openButton.addEventListener("click", openPedroVisualizer);
+    if (closeButton) closeButton.addEventListener("click", closePedroVisualizer);
+    modal.addEventListener("click", function (event) {
+      if (event.target === modal) closePedroVisualizer();
+    });
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") closePedroVisualizer();
+    });
+  }
+
+  function setupVerticalResizer(handle, sceneContainer) {
+    const rightPanel = el("sim-right-panel");
+    const panel = el("u153-panel");
+    if (!handle || !sceneContainer || !rightPanel || !panel) return;
+
+    let dragging = false;
+
+    function setSceneHeight(clientY) {
+      const panelBounds = rightPanel.getBoundingClientRect();
+      const badgeStrip = rightPanel.querySelector(".sim-badge-strip");
+      const badgeHeight = badgeStrip ? badgeStrip.getBoundingClientRect().height : 0;
+      const top = panelBounds.top + badgeHeight;
+      const available = Math.max(520, panelBounds.height - badgeHeight);
+      const minScene = Math.min(320, Math.max(240, available * 0.32));
+      const minDetails = Math.min(300, Math.max(220, available * 0.28));
+      const maxScene = Math.max(minScene, available - minDetails - handle.offsetHeight - 24);
+      const nextHeight = Math.max(minScene, Math.min(maxScene, clientY - top));
+      sceneContainer.style.flex = "0 0 " + Math.round(nextHeight) + "px";
+      panel.style.flex = "1 1 0";
+      window.dispatchEvent(new Event("resize"));
+    }
+
+    handle.addEventListener("pointerdown", function (event) {
+      dragging = true;
+      handle.classList.add("active");
+      document.body.classList.add("u153-resizing");
+      handle.setPointerCapture(event.pointerId);
+      setSceneHeight(event.clientY);
+      event.preventDefault();
+    });
+
+    handle.addEventListener("pointermove", function (event) {
+      if (!dragging) return;
+      setSceneHeight(event.clientY);
+      event.preventDefault();
+    });
+
+    function stopDragging(event) {
+      if (!dragging) return;
+      dragging = false;
+      handle.classList.remove("active");
+      document.body.classList.remove("u153-resizing");
+      try {
+        handle.releasePointerCapture(event.pointerId);
+      } catch (err) {
+        // Pointer capture may already be released if the cursor leaves the frame.
+      }
+    }
+
+    handle.addEventListener("pointerup", stopDragging);
+    handle.addEventListener("pointercancel", stopDragging);
+  }
+
+  function openPedroVisualizer() {
+    const modal = el("u153-visualizer-modal");
+    const iframe = el("u153-pedro-iframe");
+    const slot = el("u153-visualizer-large-slot");
+    if (iframe && slot) slot.appendChild(iframe);
+    if (modal) modal.classList.add("open");
+  }
+
+  function closePedroVisualizer() {
+    const modal = el("u153-visualizer-modal");
+    const iframe = el("u153-pedro-iframe");
+    const inline = el("u153-visualizer-inline");
+    if (iframe && inline) inline.appendChild(iframe);
+    if (modal) modal.classList.remove("open");
+  }
+
+  function setupScene() {
+    if (!window.THREE || !window.scene) return;
+    if (sceneRoot) window.scene.remove(sceneRoot);
+
+    sceneRoot = new THREE.Group();
+    sceneRoot.name = "unit15_3_scene";
+    window.scene.add(sceneRoot);
+    window.scene.background = new THREE.Color(0x000000);
+    safeCall(setFieldVisible, false);
+    safeCall(setCameraOrbit, {
+      theta: -0.55,
+      phi: 0.82,
+      radius: 9.4,
+      target: { x: -1.0, y: 0.2, z: -1.0 }
+    });
+
+    const ambient = new THREE.AmbientLight(0xffffff, 0.84);
+    sceneRoot.add(ambient);
+    const key = new THREE.DirectionalLight(0xffffff, 1.12);
+    key.position.set(4, 6, 4);
+    sceneRoot.add(key);
+
+    const fieldSize = FIELD_INCHES * FIELD_SCALE;
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(fieldSize, fieldSize),
+      new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.92, metalness: 0.02 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.02;
+    sceneRoot.add(floor);
+
+    const grid = new THREE.GridHelper(fieldSize, 6, 0xf3ead7, 0x1f1f1f);
+    grid.position.y = 0.003;
+    sceneRoot.add(grid);
+
+    sceneRoot.add(makeFieldBoundary(fieldSize));
+    addAxis(0xff6b6b, new THREE.Vector3(-fieldSize / 2, 0.03, -fieldSize / 2), new THREE.Vector3(fieldSize / 2, 0.03, -fieldSize / 2));
+    addAxis(0x22cc66, new THREE.Vector3(-fieldSize / 2, 0.035, -fieldSize / 2), new THREE.Vector3(-fieldSize / 2, 0.035, fieldSize / 2));
+
+    pathPreviewLine = makeLine(0xf3ead7, 0.45);
+    pathCompletedLine = makeLine(0xf97316, 1.0);
+    sceneRoot.add(pathPreviewLine);
+    sceneRoot.add(pathCompletedLine);
+
+    controlLineA = makeLine(0xf97316, 0.45, true);
+    controlLineB = makeLine(0xf97316, 0.45, true);
+    sceneRoot.add(controlLineA);
+    sceneRoot.add(controlLineB);
+
+    addMarker("START", 0, 0, 0x22cc66, "dot");
+    addMarker("SEGMENT JOIN", 60, 0, 0x60a5fa, "dot");
+    addMarker("END", 60, 60, 0xf97316, "dot");
+    controlMarker = addMarker("CONTROL POINT", 80, 30, 0xf97316, "diamond");
+
+    robotGroup = new THREE.Group();
+    sceneRoot.add(robotGroup);
+    buildRobot();
+
+    headingLine = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
+      new THREE.LineBasicMaterial({ color: 0xa5f3fc })
+    );
+    sceneRoot.add(headingLine);
+
+    poseLabel = null;
+    phaseLabel = null;
+  }
+
+  function makeFieldBoundary(size) {
+    const points = [
+      new THREE.Vector3(-size / 2, 0.015, -size / 2),
+      new THREE.Vector3(size / 2, 0.015, -size / 2),
+      new THREE.Vector3(size / 2, 0.015, size / 2),
+      new THREE.Vector3(-size / 2, 0.015, size / 2),
+      new THREE.Vector3(-size / 2, 0.015, -size / 2)
+    ];
+    return new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), new THREE.LineBasicMaterial({ color: 0xf3ead7 }));
+  }
+
+  function addAxis(color, start, end) {
+    const line = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([start, end]),
+      new THREE.LineBasicMaterial({ color: color })
+    );
+    sceneRoot.add(line);
+
+    const direction = new THREE.Vector3().subVectors(end, start).normalize();
+    const cone = new THREE.Mesh(
+      new THREE.ConeGeometry(0.1, 0.28, 24),
+      new THREE.MeshBasicMaterial({ color: color })
+    );
+    cone.position.copy(end);
+    cone.position.addScaledVector(direction, -0.08);
+    cone.rotation.z = -Math.PI / 2;
+    if (Math.abs(direction.z) > Math.abs(direction.x)) cone.rotation.x = Math.PI / 2;
+    sceneRoot.add(cone);
+  }
+
+  function makeLine(color, opacity, dashed) {
+    const material = dashed
+      ? new THREE.LineDashedMaterial({ color: color, transparent: true, opacity: opacity, dashSize: 0.12, gapSize: 0.08 })
+      : new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: opacity });
+    return new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), material);
+  }
+
+  function addMarker(label, x, y, color, shape) {
+    const group = new THREE.Group();
+    const pos = fieldToScene(x, y);
+    group.position.set(pos.x, 0.06, pos.z);
+    const mesh = shape === "diamond"
+      ? new THREE.Mesh(new THREE.OctahedronGeometry(0.13, 0), new THREE.MeshBasicMaterial({ color: color }))
+      : new THREE.Mesh(new THREE.SphereGeometry(0.1, 24, 16), new THREE.MeshBasicMaterial({ color: color }));
+    mesh.position.y = 0.09;
+    group.add(mesh);
+    sceneRoot.add(group);
+    return group;
+  }
+
+  function buildRobot() {
+    const body = new THREE.Mesh(
+      new THREE.BoxGeometry(0.78, 0.38, 0.62),
+      new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.68, metalness: 0.08 })
+    );
+    body.position.y = 0.22;
+    robotGroup.add(body);
+
+    const front = new THREE.Mesh(
+      new THREE.BoxGeometry(0.12, 0.1, 0.42),
+      new THREE.MeshStandardMaterial({ color: 0xf3ead7, roughness: 0.52, metalness: 0.04 })
+    );
+    front.position.set(0.45, 0.44, 0);
+    robotGroup.add(front);
+
+    const arrow = new THREE.Mesh(
+      new THREE.ConeGeometry(0.12, 0.32, 28),
+      new THREE.MeshBasicMaterial({ color: 0xa5f3fc })
+    );
+    arrow.rotation.z = -Math.PI / 2;
+    arrow.position.set(0.67, 0.47, 0);
+    robotGroup.add(arrow);
+
+    const tireMaterial = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.84, metalness: 0.03 });
+    const hubMaterial = new THREE.MeshStandardMaterial({ color: 0xf3ead7, roughness: 0.58, metalness: 0.12 });
+    [
+      [-0.26, 0.15, -0.38],
+      [0.26, 0.15, -0.38],
+      [-0.26, 0.15, 0.38],
+      [0.26, 0.15, 0.38]
+    ].forEach(function (pos) {
+      const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.14, 28), tireMaterial);
+      tire.rotation.x = Math.PI / 2;
+      tire.position.set(pos[0], pos[1], pos[2]);
+      robotGroup.add(tire);
+
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.15, 20), hubMaterial);
+      hub.rotation.x = Math.PI / 2;
+      hub.position.set(pos[0], pos[1], pos[2]);
+      robotGroup.add(hub);
+    });
+  }
+
+  function tick() {
+    const now = performance.now();
+    if (now - lastValidationMs > 420) {
+      lastValidationMs = now;
+      validateCode();
+    }
+    if (state.following) advanceFollowerFromClock(false);
+    updateSceneVisuals(now);
+    if (now - lastPanelMs > 110) {
+      lastPanelMs = now;
+      updatePanel();
+    }
+  }
+
+  function updateSceneVisuals(now) {
+    if (robotGroup) {
+      const pos = fieldToScene(state.pose.x, state.pose.y);
+      robotGroup.position.set(pos.x, 0, pos.z);
+      robotGroup.rotation.y = -state.pose.heading;
+    }
+    if (headingLine) {
+      const pos = fieldToScene(state.pose.x, state.pose.y);
+      const end = new THREE.Vector3(
+        pos.x + Math.cos(state.pose.heading) * 0.85,
+        0.2,
+        pos.z - Math.sin(state.pose.heading) * 0.85
+      );
+      updateLinePointsFast(headingLine, [new THREE.Vector3(pos.x, 0.2, pos.z), end]);
+    }
+    if (poseLabel) {
+      const pos = fieldToScene(state.pose.x, state.pose.y);
+      poseLabel.position.set(pos.x + 0.95, 0.8, pos.z + 0.28);
+      updateTextSprite(poseLabel, "X " + state.pose.x.toFixed(1) + "  Y " + state.pose.y.toFixed(1) + "  H " + state.pose.heading.toFixed(2), "#f3ead7");
+    }
+    if (phaseLabel) updateTextSprite(phaseLabel, phaseText(), phaseColor());
+    updatePathGeometry(false, now);
+  }
+
+  function getPathBuilder() {
+    state.followerCreated = true;
+    state.phase = "BUILDING PATH";
+    const builder = {
+      _segments: [],
+      addPath: function (path) {
+        const segment = normalizePath(path);
+        if (segment) this._segments.push(segment);
+        setPathSegments(this._segments.length ? this._segments : makeExpectedSegments());
+        return this;
+      },
+      addLinearSegment: function (a, b) {
+        this._segments.push(createBezierLine(a, b));
+        setPathSegments(this._segments);
+        return this;
+      },
+      addQuadraticSegment: function (a, b, c) {
+        this._segments.push(createBezierCurve(a, b, c));
+        setPathSegments(this._segments);
+        return this;
+      },
+      buildChain: function () {
+        const chain = { segments: this._segments.slice() };
+        state.scoringRoutineDefined = true;
+        state.pathBuilt = true;
+        state.phase = "PATH BUILT";
+        updatePathVisual(chain.segments);
+        emitPath(chain.segments);
+        validateCode();
+        updatePanel();
+        return chain;
+      }
+    };
+    return builder;
+  }
+
+  function createFollower() {
+    state.followerCreated = true;
+    state.phase = "FOLLOWER CREATED";
+    return followerDevice || hardwareMap.registerFollower("follower");
+  }
+
+  function createPose(x, y, heading) {
+    return { x: Number(x), y: Number(y), heading: Number(heading) };
+  }
+
+  function createPoint(x, y, mode) {
+    return { x: Number(x), y: Number(y), mode: mode || "CARTESIAN" };
+  }
+
+  function createBezierLine(a, b) {
+    return { type: "line", points: [a, b] };
+  }
+
+  function createBezierCurve(a, b, c) {
+    return { type: "quadratic", points: [a, b, c] };
+  }
+
+  function createPath(curve) {
+    return { curve: curve };
+  }
+
+  function withHeading(path) {
+    path.linear = function () { return path; };
+    path.constant = function () { return path; };
+    path.tangent = function () { return path; };
+    path.reverseTangent = function () { return path; };
+    path.facingPoint = function () { return path; };
+    return path;
+  }
+
+  function createLinePath(start, end) {
+    return withHeading({ segments: [createBezierLine(start, end)] });
+  }
+
+  function createCurvePath() {
+    const points = Array.prototype.slice.call(arguments);
+    return withHeading({ segments: [{ type: points.length === 3 ? "quadratic" : "bezier", points: points }] });
+  }
+
+  function createCompoundPath() {
+    const paths = Array.prototype.slice.call(arguments);
+    const compound = withHeading({
+      segments: paths.reduce(function (all, path) {
+        return all.concat(path && Array.isArray(path.segments) ? path.segments : []);
+      }, [])
+    });
+    state.scoringRoutineDefined = true;
+    state.pathBuilt = compound.segments.length > 0;
+    state.phase = state.pathBuilt ? "PATH BUILT" : state.phase;
+    updatePathVisual(compound.segments);
+    emitPath(compound.segments);
+    return compound;
+  }
+
+  function normalizePath(path) {
+    const curve = path && path.curve ? path.curve : path;
+    if (!curve || !curve.points) return null;
+    return curve;
+  }
+
+  function setFollowerStartPose(pose) {
+    state.poseSet = true;
+    state.phase = "STARTING POSE SET";
+    state.pose = {
+      x: Number(pose && pose.x) || 0,
+      y: Number(pose && pose.y) || 0,
+      heading: Number(pose && pose.heading) || 0
+    };
+    emitFollowerUpdate();
+  }
+
+  function followPath(chain) {
+    const segments = chain && Array.isArray(chain.segments) ? chain.segments : [];
+    if (!segments.length) {
+      throw new Error("follower.follow() received an empty Path.");
+    }
+    setPathSegments(segments);
+    state.following = true;
+    state.completed = false;
+    state.pathStartMs = performance.now();
+    state.turningAtJoin = false;
+    state.phase = "FOLLOWING PATH";
+    state.updateCount = 0;
+    state.overallProgress = 0;
+    updateFollower();
+  }
+
+  function updateFollower() {
+    state.updateCount += 1;
+    advanceFollowerFromClock(true);
+  }
+
+  function advanceFollowerFromClock(emit) {
+    if (!state.following) {
+      if (emit) emitFollowerUpdate();
+      return;
+    }
+    const elapsedMs = Math.max(0, performance.now() - state.pathStartMs);
+    setPoseForElapsed(elapsedMs);
+    if (state.overallProgress >= 1) {
+      state.following = false;
+      state.completed = true;
+      state.turningAtJoin = false;
+      state.phase = "PATH COMPLETE";
+    }
+    if (emit) emitFollowerUpdate();
+  }
+
+  function isFollowerBusy() {
+    return state.active && !state.stopRequested && state.following;
+  }
+
+  function getFollowerPose() {
+    return { x: state.pose.x, y: state.pose.y, heading: state.pose.heading };
+  }
+
+  function updateRobotPose(x, y, heading) {
+    state.pose.x = Number(x) || 0;
+    state.pose.y = Number(y) || 0;
+    state.pose.heading = Number(heading) || 0;
+  }
+
+  function updatePathVisual(segments) {
+    setPathSegments(segments && segments.length ? segments : makeExpectedSegments());
+  }
+
+  function emitFollowerUpdate() {
+    followerCallbacks.forEach(function (cb) {
+      try {
+        cb(state.pose.x, state.pose.y, state.pose.heading);
+      } catch (err) {
+        console.error("[Follower callback error]", err);
+      }
+    });
+  }
+
+  function emitPath(segments) {
+    pathCallbacks.forEach(function (cb) {
+      try {
+        cb(segments);
+      } catch (err) {
+        console.error("[Path callback error]", err);
+      }
+    });
+  }
+
+  function waitForStart() {
+    state.waitingForStart = true;
+    state.phase = "WAITING FOR START";
+    updatePanel();
+    return new Promise(function (resolve) {
+      state._resolveStart = function () {
+        if (!state.active || state.stopRequested) {
+          resolve();
+          return;
+        }
+        state.waitingForStart = false;
+        state.phase = "STARTED";
+        updatePanel();
+        resolve();
+      };
+      if (state.startRequested) releaseWaitForStart();
+    });
+  }
+
+  function releaseWaitForStart() {
+    if (typeof state._resolveStart === "function") {
+      const resolve = state._resolveStart;
+      state._resolveStart = null;
+      resolve();
+    }
+  }
+
+  function opModeIsActive() {
+    return state.active && !state.stopRequested;
+  }
+
+  function sleep(ms) {
+    return new Promise(function (resolve) {
+      window.setTimeout(resolve, Math.max(0, Number(ms) || 0));
+    });
+  }
+
+  function linearTick() {
+    validateCode();
+    updatePanel();
+    return sleep(50);
+  }
+
+  async function runLinearOpMode(token) {
+    const code = getCodeSafe();
+    const runBody = extractMethodBody(code, "runOpMode");
+    if (!runBody) {
+      failStudentExecution("runOpMode() was not found.");
+      return;
+    }
+
+    const js = transpileLinearBody(runBody);
+    let fn;
+    try {
+      fn = new Function(
+        "hardwareMap",
+        "createFollower",
+        "getPathBuilder",
+        "createPose",
+        "createPoint",
+        "createPath",
+        "createBezierLine",
+        "createBezierCurve",
+        "createLinePath",
+        "createCurvePath",
+        "createCompoundPath",
+        "setFollowerStartPose",
+        "followPath",
+        "updateFollower",
+        "isFollowerBusy",
+        "getFollowerPose",
+        "waitForStart",
+        "opModeIsActive",
+        "sleep",
+        "linearTick",
+        "addTelemetry",
+        "updateTelemetry",
+        "clearTelemetry",
+        '"use strict"; let follower; let scoringRoutine; return (async function(){\n' + js + '\n})();'
+      );
+    } catch (err) {
+      failStudentExecution("compile error: " + err.message);
+      return;
+    }
+
+    try {
+      safeCall(clearTelemetry);
+      await fn(
+        hardwareMap,
+        createFollower,
+        getPathBuilder,
+        createPose,
+        createPoint,
+        createPath,
+        createBezierLine,
+        createBezierCurve,
+        createLinePath,
+        createCurvePath,
+        createCompoundPath,
+        setFollowerStartPose,
+        followPath,
+        updateFollower,
+        isFollowerBusy,
+        getFollowerPose,
+        waitForStart,
+        opModeIsActive,
+        sleep,
+        linearTick,
+        addTelemetry,
+        updateTelemetry,
+        clearTelemetry
+      );
+      if (token === state.runToken && !state.stopRequested && state.completed) {
+        state.phase = "PATH COMPLETE";
+        updatePanel();
+      }
+    } catch (err) {
+      if (token === state.runToken && !state.stopRequested) {
+        failStudentExecution("runOpMode() runtime error: " + err.message);
+      }
+    }
+  }
+
+  function transpileLinearBody(body) {
+    let js = body || "";
+    js = js
+      .replace(/\bConstants\s*\.\s*create\s*\(\s*hardwareMap\s*\)/g, "createFollower()")
+      .replace(/\bPoseFactory\s*\.\s*degrees\s*\(\s*\)/g, "({ of: createPose })")
+      .replace(/\bpath\s*\(/g, "createCompoundPath(")
+      .replace(/\bline\s*\(/g, "createLinePath(")
+      .replace(/\bcurve\s*\(/g, "createCurvePath(")
+      .replace(/\bnew\s+Path\s*\(/g, "createPath(")
+      .replace(/\bnew\s+(?:BezierLine|LinearBezierCurve)\s*\(/g, "createBezierLine(")
+      .replace(/\bnew\s+(?:BezierCurve|QuadraticBezierCurve)\s*\(/g, "createBezierCurve(")
+      .replace(/\bnew\s+Point\s*\(/g, "createPoint(")
+      .replace(/\bPoint\s*\.\s*CARTESIAN\b/g, '"CARTESIAN"')
+      .replace(/\.build\s*\(\s*\)/g, ".buildChain()")
+      .replace(/\bfollower\s*\.\s*follow\s*\(/g, "followPath(")
+      .replace(/\bfollower\s*\.\s*setPose\s*\(/g, "setFollowerStartPose(")
+      .replace(/\bnew\s+Pose\s*\(/g, "createPose(")
+      .replace(/\bfollower\s*\.\s*update\s*\(\s*\)/g, "updateFollower()")
+      .replace(/\bfollower\s*\.\s*isBusy\s*\(\s*\)/g, "isFollowerBusy()")
+      .replace(/\bfollower\s*\.\s*pose\s*\(\s*\)/g, "getFollowerPose()")
+      .replace(/\.x\s*\(\s*\)/g, ".x")
+      .replace(/\.y\s*\(\s*\)/g, ".y")
+      .replace(/\.heading\s*\(\s*\)/g, ".heading")
+      .replace(/\.getX\s*\(\s*\)/g, ".x")
+      .replace(/\.getY\s*\(\s*\)/g, ".y")
+      .replace(/\.getHeading\s*\(\s*\)/g, ".heading")
+      .replace(/\btelemetry\s*\.\s*addData\s*\(/g, "addTelemetry(")
+      .replace(/\btelemetry\s*\.\s*update\s*\(\s*\)/g, "updateTelemetry()")
+      .replace(/\bwaitForStart\s*\(\s*\)\s*;/g, "await waitForStart(); if (!opModeIsActive()) return;")
+      .replace(/\bsleep\s*\(/g, "await sleep(")
+      .replace(/(^|[;{}\n]\s*)(?:final\s+)?(?:double|int|boolean|String|float|long|byte|short|char|Follower|PoseFactory|Pose|Path)\s+([A-Za-z_$])/gm, "$1let $2");
+    js = addAwaitToWhileLoops(js);
+    if (typeof _simTranspile === "function") js = _simTranspile(js);
+    return js;
+  }
+
+  function addAwaitToWhileLoops(js) {
+    let output = "";
+    let cursor = 0;
+    let match;
+    const whileRe = /\bwhile\s*\(/g;
+    while ((match = whileRe.exec(js)) !== null) {
+      let index = whileRe.lastIndex;
+      let depth = 1;
+      for (; index < js.length; index++) {
+        if (js[index] === "(") depth++;
+        else if (js[index] === ")") {
+          depth--;
+          if (depth === 0) break;
+        }
+      }
+      if (depth !== 0) break;
+      let brace = index + 1;
+      while (brace < js.length && /\s/.test(js[brace])) brace++;
+      if (js[brace] !== "{") continue;
+      output += js.slice(cursor, brace + 1) + " await linearTick();";
+      cursor = brace + 1;
+      whileRe.lastIndex = brace + 1;
+    }
+    return output + js.slice(cursor);
+  }
+
+  function setPathSegments(segments) {
+    state.segments = normalizeSegments(segments);
+    if (!state.segments.length) state.segments = makeExpectedSegments();
+    rebuildPathSamples();
+    rebuildStaticPathGeometry();
+    lastCompletedProgress = -1;
+    updatePathGeometry(true);
+  }
+
+  function normalizeSegments(segments) {
+    return (segments || []).map(normalizePath).filter(Boolean).map(function (segment) {
+      return {
+        type: segment.type === "line" ? "line" : "quadratic",
+        points: segment.points.map(function (point) {
+          return { x: Number(point.x) || 0, y: Number(point.y) || 0, mode: point.mode || "CARTESIAN" };
+        })
+      };
+    });
+  }
+
+  function makeExpectedSegments() {
+    return [
+      createBezierLine(createPoint(0, 0, "CARTESIAN"), createPoint(60, 0, "CARTESIAN")),
+      createBezierCurve(createPoint(60, 0, "CARTESIAN"), createPoint(80, 30, "CARTESIAN"), createPoint(60, 60, "CARTESIAN"))
+    ];
+  }
+
+  function rebuildPathSamples() {
+    state.samples = [];
+    state.cumulative = [];
+    state.segmentLengths = [];
+    state.totalLength = 0;
+    state.segments.forEach(function (segment, segmentIndex) {
+      let last = null;
+      let segmentLength = 0;
+      for (let i = 0; i <= 44; i++) {
+        const t = i / 44;
+        const point = evalSegment(segment, t);
+        if (last) {
+          segmentLength += distance(point, last);
+          state.totalLength += distance(point, last);
+        }
+        state.samples.push({ x: point.x, y: point.y, segmentIndex: segmentIndex, t: t, distance: state.totalLength });
+        last = point;
+      }
+      state.segmentLengths.push(segmentLength);
+      state.cumulative.push(state.totalLength);
+    });
+  }
+
+  function setPoseAtDistance(distanceInches) {
+    if (!state.samples.length || state.totalLength <= 0) return;
+    const clamped = Math.max(0, Math.min(state.totalLength, distanceInches));
+    state.overallProgress = clamped / state.totalLength;
+    let segmentIndex = 0;
+    let segmentStartDistance = 0;
+    for (let i = 0; i < state.cumulative.length; i++) {
+      if (clamped <= state.cumulative[i]) {
+        segmentIndex = i;
+        break;
+      }
+      segmentStartDistance = state.cumulative[i];
+    }
+    const segment = state.segments[segmentIndex] || state.segments[0];
+    const segmentLength = Math.max(0.001, state.segmentLengths[segmentIndex] || 1);
+    const t = Math.max(0, Math.min(1, (clamped - segmentStartDistance) / segmentLength));
+    const point = evalSegment(segment, t);
+    const tangent = evalTangent(segment, t);
+    state.pose.x = point.x;
+    state.pose.y = point.y;
+    state.pose.heading = Math.atan2(tangent.y, tangent.x);
+    state.currentSegmentIndex = segmentIndex;
+    state.currentSegmentProgress = t;
+  }
+
+  function setPoseForElapsed(elapsedMs) {
+    if (state.segments.length < 2 || state.segmentLengths.length < 2) {
+      setPoseAtDistance(elapsedMs / 1000 * FOLLOW_SPEED);
+      state.turningAtJoin = false;
+      return;
+    }
+
+    const firstLength = state.segmentLengths[0];
+    const firstMs = firstLength / FOLLOW_SPEED * 1000;
+    const turnMs = state.turnDurationMs;
+
+    if (elapsedMs < firstMs) {
+      state.turningAtJoin = false;
+      state.phase = "FOLLOWING SEGMENT 1";
+      setPoseAtDistance(elapsedMs / 1000 * FOLLOW_SPEED);
+      return;
+    }
+
+    if (elapsedMs < firstMs + turnMs) {
+      const first = state.segments[0];
+      const second = state.segments[1];
+      const join = evalSegment(first, 1);
+      const fromHeading = angleOf(evalTangent(first, 1));
+      const toHeading = angleOf(evalTangent(second, 0));
+      const t = easeInOut((elapsedMs - firstMs) / turnMs);
+      state.turningAtJoin = true;
+      state.phase = "TURNING AT SEGMENT JOIN";
+      state.pose.x = join.x;
+      state.pose.y = join.y;
+      state.pose.heading = lerpAngle(fromHeading, toHeading, t);
+      state.currentSegmentIndex = 1;
+      state.currentSegmentProgress = 0;
+      state.overallProgress = firstLength / Math.max(1, state.totalLength);
+      return;
+    }
+
+    state.turningAtJoin = false;
+    state.phase = "FOLLOWING SEGMENT 2";
+    const curveDistance = (elapsedMs - firstMs - turnMs) / 1000 * FOLLOW_SPEED;
+    setPoseAtDistance(firstLength + curveDistance);
+  }
+
+  function angleOf(vector) {
+    return Math.atan2(vector.y, vector.x);
+  }
+
+  function lerpAngle(a, b, t) {
+    let delta = b - a;
+    while (delta > Math.PI) delta -= Math.PI * 2;
+    while (delta < -Math.PI) delta += Math.PI * 2;
+    return a + delta * t;
+  }
+
+  function easeInOut(t) {
+    const clamped = Math.max(0, Math.min(1, t));
+    return clamped * clamped * (3 - 2 * clamped);
+  }
+
+  function evalSegment(segment, t) {
+    const points = segment.points;
+    if (segment.type === "line") {
+      return {
+        x: lerp(points[0].x, points[1].x, t),
+        y: lerp(points[0].y, points[1].y, t)
+      };
+    }
+    const a = points[0];
+    const b = points[1];
+    const c = points[2];
+    const omt = 1 - t;
+    return {
+      x: omt * omt * a.x + 2 * omt * t * b.x + t * t * c.x,
+      y: omt * omt * a.y + 2 * omt * t * b.y + t * t * c.y
+    };
+  }
+
+  function evalTangent(segment, t) {
+    const points = segment.points;
+    if (segment.type === "line") {
+      return { x: points[1].x - points[0].x, y: points[1].y - points[0].y };
+    }
+    const a = points[0];
+    const b = points[1];
+    const c = points[2];
+    return {
+      x: 2 * (1 - t) * (b.x - a.x) + 2 * t * (c.x - b.x),
+      y: 2 * (1 - t) * (b.y - a.y) + 2 * t * (c.y - b.y)
+    };
+  }
+
+  function rebuildStaticPathGeometry() {
+    if (!pathPreviewLine || !pathCompletedLine || !state.samples.length) return;
+    const preview = state.samples.map(function (sample) { return sampleToVector(sample, 0.06); });
+    setLinePoints(pathPreviewLine, preview);
+
+    const curve = state.segments[1];
+    if (curve && curve.points.length >= 3) {
+      const start = pointToVector(curve.points[0], 0.05);
+      const control = pointToVector(curve.points[1], 0.05);
+      const end = pointToVector(curve.points[2], 0.05);
+      setLinePoints(controlLineA, [start, control]);
+      setLinePoints(controlLineB, [control, end]);
+      if (controlLineA.computeLineDistances) controlLineA.computeLineDistances();
+      if (controlLineB.computeLineDistances) controlLineB.computeLineDistances();
+      if (controlMarker) controlMarker.position.copy(control);
+    }
+  }
+
+  function updatePathGeometry(force, now) {
+    if (!pathCompletedLine || !state.samples.length) return;
+    const time = typeof now === "number" ? now : performance.now();
+    if (!force && time - lastPathGeometryMs < 34) return;
+    if (!force && Math.abs(state.overallProgress - lastCompletedProgress) < 0.006) return;
+    lastPathGeometryMs = time;
+    lastCompletedProgress = state.overallProgress;
+
+    const completed = [];
+    const maxDistance = state.totalLength * state.overallProgress;
+    state.samples.forEach(function (sample) {
+      if (sample.distance <= maxDistance) completed.push(sampleToVector(sample, 0.08));
+    });
+    if (completed.length < 2) completed.push(sampleToVector(state.samples[0], 0.08), sampleToVector(state.samples[0], 0.08));
+    setLinePoints(pathCompletedLine, completed);
+  }
+
+  function setLinePoints(line, points) {
+    if (!line || !points || points.length < 2) return;
+    line.geometry.dispose();
+    line.geometry = new THREE.BufferGeometry().setFromPoints(points);
+    if (line.computeLineDistances) line.computeLineDistances();
+  }
+
+  function updateLinePointsFast(line, points) {
+    if (!line || !line.geometry || !points || points.length < 2) return;
+    const attribute = line.geometry.getAttribute("position");
+    if (!attribute || attribute.count !== points.length) {
+      setLinePoints(line, points);
+      return;
+    }
+    for (let i = 0; i < points.length; i++) {
+      attribute.setXYZ(i, points[i].x, points[i].y, points[i].z);
+    }
+    attribute.needsUpdate = true;
+    if (line.geometry.computeBoundingSphere) line.geometry.computeBoundingSphere();
+  }
+
+  function pointToVector(point, y) {
+    const pos = fieldToScene(point.x, point.y);
+    return new THREE.Vector3(pos.x, y, pos.z);
+  }
+
+  function sampleToVector(sample, y) {
+    return pointToVector(sample, y);
+  }
+
+  function fieldToScene(x, y) {
+    return {
+      x: (Number(x) - FIELD_INCHES / 2) * FIELD_SCALE,
+      z: (Number(y) - FIELD_INCHES / 2) * FIELD_SCALE
+    };
+  }
+
+  function lerp(a, b, t) {
+    return a + (b - a) * t;
+  }
+
+  function distance(a, b) {
+    const dx = a.x - b.x;
+    const dy = a.y - b.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function updatePanel() {
+    const checks = validateCode(false);
+    const seg1Good = checks[1] && checks[2] && checks[3];
+    const seg2Good = checks[4] && checks[5] && checks[6] && checks[7];
+    renderCard("u153-seg1-card", '<i class="fa-solid fa-minus"></i> Segment 1<br><strong>line(): (0,0) to (60,0)</strong>', seg1Good ? "good" : "bad");
+    renderCard("u153-seg2-card", '<i class="fa-solid fa-bezier-curve"></i> Segment 2<br><strong>curve(): start (60,0), control (80,30), end (60,60)</strong>', seg2Good ? "good" : "bad");
+    renderCard("u153-chain-card", '<i class="fa-solid fa-route"></i> scoringRoutine<br><strong>' + (checks[9] ? "defined" : "missing") + "</strong>", checks[9] ? "good" : "bad");
+    renderCard("u153-count-card", '<i class="fa-solid fa-list-ol"></i> Segment count<br><strong>' + state.segments.length + '</strong>', state.segments.length === 2 ? "good" : "bad");
+
+    renderPointList(checks);
+
+    const currentSegment = state.completed ? "Complete" : state.turningAtJoin ? "Turning at join" : state.following ? "Segment " + (state.currentSegmentIndex + 1) + " of " + state.segments.length : state.pathBuilt ? "Ready" : "Waiting";
+    renderCard("u153-segment-card", '<i class="fa-solid fa-location-arrow"></i> Current segment<br><strong>' + currentSegment + "</strong>", state.completed ? "good" : state.following ? "warn" : state.pathBuilt ? "good" : "");
+    renderCard("u153-progress-card", '<i class="fa-solid fa-bars-progress"></i> Progress<br><strong>' + Math.round(state.overallProgress * 100) + '%</strong><div class="u153-bar"><div class="u153-fill" style="width:' + Math.round(state.overallProgress * 100) + '%"></div></div>', state.completed ? "good" : state.following ? "warn" : "");
+    renderCard("u153-x-card", '<i class="fa-solid fa-arrows-left-right"></i> X<br><strong>' + state.pose.x.toFixed(2) + ' in</strong>', state.poseSet || state.following ? "good" : "");
+    renderCard("u153-y-card", '<i class="fa-solid fa-arrows-up-down"></i> Y<br><strong>' + state.pose.y.toFixed(2) + ' in</strong>', state.poseSet || state.following ? "good" : "");
+    renderCard("u153-heading-card", '<i class="fa-solid fa-location-arrow"></i> Heading<br><strong>' + state.pose.heading.toFixed(3) + ' rad</strong>', state.following || state.completed ? "good" : "");
+    renderCard("u153-update-card", '<i class="fa-solid fa-rotate"></i> update() calls<br><strong>' + state.updateCount + '</strong>', state.updateCount > 0 ? "good" : "");
+
+    const sceneBadge = el("u153-scene-badge");
+    if (sceneBadge) {
+      sceneBadge.style.color = state.pathBuilt ? "#bbf7d0" : "#fde68a";
+      sceneBadge.innerHTML = '<i class="fa-solid fa-route"></i> ' + escapeHTML(phaseText());
+    }
+    const poseBadge = el("u153-pose-badge");
+    if (poseBadge) {
+      poseBadge.innerHTML = '<i class="fa-solid fa-location-dot"></i> X ' + state.pose.x.toFixed(1) + '  Y ' + state.pose.y.toFixed(1) + '  H ' + state.pose.heading.toFixed(2);
+    }
+    const phaseBadge = el("u153-phase-badge");
+    if (phaseBadge) {
+      phaseBadge.style.color = phaseColor();
+      phaseBadge.innerHTML = '<i class="fa-solid fa-clock"></i> ' + escapeHTML(phaseText());
+    }
+  }
+
+  function renderCard(id, html, status) {
+    const card = el(id);
+    if (!card) return;
+    card.classList.toggle("good", status === "good");
+    card.classList.toggle("bad", status === "bad");
+    card.classList.toggle("warn", status === "warn");
+    card.innerHTML = html;
+  }
+
+  function renderPointList(checks) {
+    const list = el("u153-point-list");
+    if (!list) return;
+    const points = state.parsedPoints;
+    const rows = [
+      { label: "Start", expected: EXPECTED_POINTS[0], actual: points[0], good: checks[3] },
+      { label: "Line end", expected: EXPECTED_POINTS[1], actual: points[1], good: checks[4] },
+      { label: "Curve start", expected: EXPECTED_POINTS[2], actual: points[2], good: checks[6] },
+      { label: "Control", expected: EXPECTED_POINTS[3], actual: points[3], good: checks[7] },
+      { label: "Curve end", expected: EXPECTED_POINTS[4], actual: points[4], good: checks[8] }
+    ];
+    list.innerHTML = rows.map(function (row) {
+      const actual = row.actual ? "(" + row.actual.x + "," + row.actual.y + ")" : "missing";
+      return '<div class="u153-point-row ' + (row.good ? "good" : "bad") + '"><i class="fa-solid ' + (row.good ? "fa-circle-check" : "fa-triangle-exclamation") + '"></i> ' + escapeHTML(row.label) + ': ' + escapeHTML(actual) + ' expected (' + row.expected.x + ',' + row.expected.y + ')</div>';
+    }).join("");
+  }
+
+  function validateCode(updateRequirements) {
+    if (updateRequirements !== false) updateRequirements = true;
+    const rawCode = getCodeSafe();
+    const code = stripComments(rawCode);
+    const runBody = extractMethodBody(code, "runOpMode") || "";
+    const points = parsePoints(runBody);
+    state.parsedPoints = points;
+    const parsedSegments = parseSegments(runBody);
+    if (parsedSegments.length && !state.following && !state.pathBuilt) {
+      setPathSegments(parsedSegments);
+    }
+
+    const lineBeforeCurve = /\bline\s*\(/.test(runBody) && /\bcurve\s*\(/.test(runBody) &&
+      runBody.search(/\bline\s*\(/) < runBody.search(/\bcurve\s*\(/);
+    const checks = [
+      /PoseFactory\s*\.\s*degrees\s*\(\s*\)/.test(runBody),
+      /\bpath\s*\(/.test(runBody),
+      lineBeforeCurve && pointClose(points[0], 0, 0) && pointClose(points[1], 60, 0),
+      pointClose(points[0], 0, 0),
+      pointClose(points[1], 60, 0),
+      /\bcurve\s*\(/.test(runBody),
+      pointClose(points[2], 60, 0),
+      pointClose(points[3], 80, 30),
+      pointClose(points[4], 60, 60),
+      /scoringRoutine\s*=\s*path\s*\(/.test(runBody)
+    ];
+
+    if (updateRequirements) {
+      checks.forEach(function (passed, index) {
+        safeCall(setRequirement, index, !!passed);
+      });
+      const success = el("u153-success");
+      if (success) success.style.display = checks.every(Boolean) ? "flex" : "none";
+      updateWarning(runBody, checks, points);
+    }
+    return checks;
+  }
+
+  function parsePoints(body) {
+    const points = [];
+    const re = /[A-Za-z_$][\w$]*\s*\.\s*of\s*\(\s*([-+]?\d+(?:\.\d+)?)\s*,\s*([-+]?\d+(?:\.\d+)?)/g;
+    let match;
+    while ((match = re.exec(body)) !== null) {
+      points.push({ x: Number(match[1]), y: Number(match[2]) });
+    }
+    if (points.length === 4) return [points[0], points[1], points[1], points[2], points[3]];
+    return points;
+  }
+
+  function parseSegments(body) {
+    const points = parsePoints(body);
+    const segments = [];
+    if (points.length >= 2 && /\bline\s*\(/.test(body)) {
+      segments.push(createBezierLine(createPoint(points[0].x, points[0].y, "CARTESIAN"), createPoint(points[1].x, points[1].y, "CARTESIAN")));
+    }
+    if (points.length >= 5 && /\bcurve\s*\(/.test(body)) {
+      segments.push(createBezierCurve(createPoint(points[2].x, points[2].y, "CARTESIAN"), createPoint(points[3].x, points[3].y, "CARTESIAN"), createPoint(points[4].x, points[4].y, "CARTESIAN")));
+    }
+    return segments;
+  }
+
+  function pointClose(point, x, y) {
+    return !!point && Math.abs(point.x - x) <= 0.01 && Math.abs(point.y - y) <= 0.01;
+  }
+
+  function updateWarning(runBody, checks, points) {
+    const warning = el("u153-warning");
+    if (!warning) return;
+    let message = "";
+    let type = "warn";
+
+    if (/\bcurve\s*\(/.test(runBody) && /\bline\s*\(/.test(runBody) &&
+        runBody.search(/\bcurve\s*\(/) < runBody.search(/\bline\s*\(/)) {
+      message = "Put line(start, join) before curve(join, control, end) inside path(...).";
+      type = "error";
+    } else if (!checks[7] && points[3]) {
+      message = "Control point should be at (80,30), not (" + points[3].x + "," + points[3].y + "). This produces the correct arc around the corner.";
+      type = "error";
+    } else if (!checks[6] && points[2]) {
+      message = "Segment 1 ends at (60,0), so segment 2 must start at (60,0). The segments must connect at the same point.";
+      type = "error";
+    } else if (!checks[8] && points[4]) {
+      message = "Second segment must end at (60,60), not (" + points[4].x + "," + points[4].y + ").";
+      type = "error";
+    } else if (!checks[9]) {
+      message = "Assign path(line(...), curve(...)) to a Path variable named scoringRoutine.";
+      type = "error";
+    } else if (!/PoseFactory\s*\.\s*degrees\s*\(\s*\)/.test(runBody)) {
+      message = "Use PoseFactory.degrees() so the pose headings match the official visualizer output.";
+    } else if (!/telemetry\s*\.\s*update\s*\(\s*\)/.test(runBody)) {
+      message = "Call telemetry.update() to send data to the Driver Station.";
+    }
+
+    warning.classList.toggle("error", type === "error");
+    warning.style.display = message ? "block" : "none";
+    warning.innerHTML = message ? '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(message) : "";
+    safeCall(clearHints);
+    if (message) safeCall(addHint, warning.innerHTML, type === "error" ? "error" : "warn");
+  }
+
+  function resetRuntimeState() {
+    state.phase = "IDLE";
+    state.startRequested = false;
+    state.followerCreated = false;
+    state.poseSet = false;
+    state.pathBuilt = false;
+    state.scoringRoutineDefined = false;
+    state.following = false;
+    state.completed = false;
+    state.turningAtJoin = false;
+    state.updateCount = 0;
+    state.pose = { x: 0, y: 0, heading: 0 };
+    state.currentSegmentIndex = 0;
+    state.currentSegmentProgress = 0;
+    state.overallProgress = 0;
+    setPathSegments(makeExpectedSegments());
+    emitFollowerUpdate();
+  }
+
+  function phaseText() {
+    if (state.waitingForStart) return "WAITING FOR START";
+    return state.phase;
+  }
+
+  function phaseColor() {
+    if (state.completed) return "#bbf7d0";
+    if (state.waitingForStart) return "#fde68a";
+    if (state.following) return "#fed7aa";
+    if (state.phase === "STOPPED") return "#fecaca";
+    return "#f3ead7";
+  }
+
+  function makeTextSprite(text, color) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 512;
+    canvas.height = 128;
+    const ctx = canvas.getContext("2d");
+    drawSpriteText(ctx, text, color);
+    const texture = new THREE.CanvasTexture(canvas);
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false }));
+    sprite.scale.set(1.25, 0.32, 1);
+    return sprite;
+  }
+
+  function updateTextSprite(sprite, text, color) {
+    if (!sprite || !sprite.material || !sprite.material.map) return;
+    const ctx = sprite.material.map.image.getContext("2d");
+    drawSpriteText(ctx, text, color);
+    sprite.material.map.needsUpdate = true;
+  }
+
+  function drawSpriteText(ctx, text, color) {
+    ctx.clearRect(0, 0, 512, 128);
+    ctx.fillStyle = "rgba(0,0,0,0.72)";
+    roundRect(ctx, 10, 18, 492, 92, 18);
+    ctx.fill();
+    ctx.fillStyle = color || "#ffffff";
+    ctx.font = "bold 38px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, 256, 64);
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function extractMethodBody(code, name) {
+    if (!code) return "";
+    const re = new RegExp("\\b(?:public\\s+|private\\s+|protected\\s+)?(?:void|boolean|double|int|String)\\s+" + name + "\\s*\\([^)]*\\)\\s*\\{");
+    const match = re.exec(code);
+    if (!match) return "";
+    let index = match.index + match[0].length;
+    let depth = 1;
+    for (; index < code.length; index++) {
+      if (code[index] === "{") depth++;
+      else if (code[index] === "}") {
+        depth--;
+        if (depth === 0) return code.slice(match.index + match[0].length, index);
+      }
+    }
+    return "";
+  }
+
+  function stripComments(code) {
+    return String(code || "")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\/\/.*$/gm, "");
+  }
+
+  function getCodeSafe() {
+    if (typeof getCode !== "function") return starterCode;
+    try {
+      return getCode();
+    } catch (err) {
+      return starterCode;
+    }
+  }
+
+  function showStudentError(message) {
+    const warning = el("u153-warning");
+    if (warning) {
+      warning.classList.add("error");
+      warning.style.display = "block";
+      warning.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(message);
+    }
+    safeCall(addHint, '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHTML(message), "error");
+    if (typeof _simShowTelemetryError === "function") _simShowTelemetryError(message);
+    else {
+      safeCall(addTelemetry, "ERROR", message);
+      safeCall(updateTelemetry);
+    }
+  }
+
+  function failStudentExecution(message) {
+    if (typeof stopExecution === "function") stopExecution();
+    showStudentError(message);
+  }
+
+  function escapeHTML(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+};
+</script>
+</body>
+</html>

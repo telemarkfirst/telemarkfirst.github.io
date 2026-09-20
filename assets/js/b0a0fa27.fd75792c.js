@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkcake_recipes=globalThis.webpackChunkcake_recipes||[]).push([[4396],{9372(e){e.exports=JSON.parse('{"name":"docusaurus-plugin-content-docs","id":"blocks"}')}}]);

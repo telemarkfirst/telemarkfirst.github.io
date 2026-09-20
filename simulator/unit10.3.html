@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Telemark Unit 10.3 Simulator</title>
+
+    <script src="simulator_base.js"></script>
+
+    <style>
+        .lift-panel {
+            margin: 10px;
+            background: rgba(8,8,14,0.92);
+            border: 1px solid rgba(34,211,238,0.28);
+            border-radius: 8px;
+            padding: 16px;
+            color: #e6e6ef;
+            font-family: "IBM Plex Sans", sans-serif;
+            box-shadow: 0 10px 24px rgba(0,0,0,0.34);
+        }
+
+        .lift-title {
+            color: #7dd3fc;
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+
+        .lift-position {
+            color: #f4f4fb;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 1.2rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            letter-spacing: 0;
+        }
+
+        .lift-bar {
+            position: relative;
+            height: 24px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #111118;
+            margin-bottom: 14px;
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+
+        .lift-bar-fill {
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 0%;
+            background: linear-gradient(90deg,#38bdf8,#22d3ee);
+            transition: width 0.06s linear;
+        }
+
+        .lift-target-marker {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #22cc66;
+        }
+
+        .lift-grid {
+            display: grid;
+            grid-template-columns: 1fr 70px;
+            gap: 16px;
+            align-items: stretch;
+        }
+
+        .lift-side {
+            position: relative;
+            background: #111118;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+
+        .lift-side-fill {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 0%;
+            background: linear-gradient(to top,#38bdf8,#22d3ee);
+            transition: height 0.06s linear;
+        }
+
+        .lift-side-target {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #22cc66;
+        }
+
+        .lift-side-label {
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            writing-mode: vertical-rl;
+            font-size: 0.7rem;
+            color: #9ea0b5;
+            letter-spacing: 0;
+            font-family: monospace;
+        }
+
+        .lift-mode {
+            margin-top: 10px;
+            font-family: monospace;
+            color: #9ea0b5;
+        }
+
+        .lift-power-wrap {
+            margin-top: 12px;
+        }
+
+        .lift-power-bar {
+            height: 14px;
+            background: #111118;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+
+        .lift-power-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg,#22cc66,#66ff99);
+        }
+
+        .lift-busy {
+            margin-top: 12px;
+            font-weight: 800;
+            color: #7dd3fc;
+        }
+
+        .lift-busy.at-target {
+            color: #66ff99;
+        }
+
+        .lift-busy.moving {
+            animation: pulseBusy 0.8s infinite;
+        }
+
+        @keyframes pulseBusy {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+
+        .lift-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(8,8,14,0.88);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 18px;
+            z-index: 100;
+            color: #f4f4fb;
+            font-family: sans-serif;
+        }
+
+        .lift-overlay.visible {
+            display: flex;
+        }
+
+        .lift-overlay button {
+            padding: 12px 26px;
+            border-radius: 8px;
+            border: none;
+            background: #22cc66;
+            color: white;
+            font-weight: 800;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .lift-warning {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            z-index: 100;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 800;
+            display: none;
+        }
+
+        .lift-warning.warn {
+            display: block;
+            background: rgba(60,44,10,0.94);
+            color: #ffd966;
+            border: 1px solid rgba(255,196,0,0.25);
+        }
+
+        .lift-warning.error {
+            display: block;
+            background: rgba(52,10,10,0.94);
+            color: #ff9f9f;
+            border: 1px solid rgba(255,0,0,0.3);
+        }
+
+        .lift-target-reached {
+            position: absolute;
+            right: 16px;
+            top: 16px;
+            background: rgba(10,52,22,0.95);
+            border: 1px solid rgba(0,255,120,0.3);
+            color: #66ff99;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-weight: 800;
+            display: none;
+            z-index: 100;
+        }
+
+        .lift-target-reached.visible {
+            display: block;
+            animation: reachedFlash 0.6s ease-out;
+        }
+
+        @keyframes reachedFlash {
+            0% {
+                transform: scale(0.7);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+    </style>
+  <script src="./telemark-java.js"></script>
+  <script src="./telemark-editor.js"></script>
+<script src="./telemark-project.js"></script>
+<link rel="stylesheet" href="./telemark-project.css"/>
+  <script src="./gamepad-controls.js"></script>
+<link href="telemark-sim.css" rel="stylesheet"/>
+</head>
+<body>
+
+<script>
+(function () {
+    "use strict";
+
+    const TARGET_TICKS = 1200;
+    const TARGET_TOLERANCE_TICKS = 10;
+
+    const starterCode = `@Autonomous(name="Auto_Lift_Challenge")
+public class AutoLift extends LinearOpMode {
+
+    private DcMotor lift;
+
+    @Override
+    public void runOpMode() {
+        lift = hardwareMap.get(DcMotor.class, "lift");
+
+        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        waitForStart();
+
+        // TODO: Set the target position to 1200 ticks
+        // TODO: Switch the motor to RUN_TO_POSITION mode
+        // TODO: Apply 0.6 power to start the lift moving
+
+        while (opModeIsActive() && lift.isBusy()) {
+            telemetry.addData("Status",   "Lifting...");
+            telemetry.addData("Position", lift.getCurrentPosition());
+            telemetry.update();
+        }
+
+        lift.setPower(0.0);
+
+        telemetry.addData("Status", "Done");
+        telemetry.update();
+    }
+}`;
+
+    const requirements = [
+        "Get lift motor from hardwareMap",
+        "Reset encoder before movement",
+        "Set RUN_TO_POSITION mode",
+        "Set target position to 1200 ticks",
+        "Apply nonzero motor power",
+        "Use while(opModeIsActive() && lift.isBusy()) loop",
+        "Lift reaches target position"
+    ];
+
+    const sim = {
+        active: false,
+        running: false,
+        waitingForStart: false,
+        startRequested: false,
+        started: false,
+
+        currentTicks: 0,
+        targetTicks: 0,
+
+        mode: "RUN_WITHOUT_ENCODER",
+        power: 0,
+
+        encoderReset: false,
+        busy: false,
+
+        movementInterval: null,
+
+        requirements: [false, false, false, false, false, false, false]
+    };
+
+    let carriage = null;
+    let markerLine = null;
+
+    let overlay = null;
+    let warningChip = null;
+    let targetReached = null;
+
+    let positionText = null;
+    let modeText = null;
+    let busyText = null;
+
+    let progressFill = null;
+    let sideFill = null;
+    let targetMarker = null;
+    let sideTarget = null;
+
+    let powerFill = null;
+
+    let startResolver = null;
+    let executionToken = 0;
+    let compiledProgram = null;
+    const STOP_SIGNAL = {};
+
+    function clamp(v, min, max) {
+        return Math.max(min, Math.min(max, v));
+    }
+
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function ticksToHeight(ticks) {
+        return 1.2 + clamp(ticks / TARGET_TICKS, 0, 1.2) * 4.3;
+    }
+
+    function setWarning(message, type) {
+        if (!message) {
+            warningChip.style.display = "none";
+            return;
+        }
+
+        warningChip.textContent = message;
+        warningChip.className = `lift-warning ${type}`;
+    }
+
+    function updateRequirements() {
+        if (!window.setRequirement) return;
+
+        sim.requirements.forEach((v, i) => {
+            window.setRequirement(i, v);
+        });
+    }
+
+    function pushLiftTelemetry(status) {
+        if (
+            !window.clearTelemetry ||
+            !window.addTelemetry ||
+            !window.updateTelemetry
+        ) {
+            return;
+        }
+
+        window.clearTelemetry();
+        window.addTelemetry("Status", status);
+        window.addTelemetry("Position", Math.round(sim.currentTicks));
+        window.addTelemetry("Target", sim.targetTicks || TARGET_TICKS);
+        window.addTelemetry("Power", Number(sim.power || 0).toFixed(2));
+        window.updateTelemetry();
+    }
+
+    function updateLiftVisual() {
+        if (!carriage) return;
+
+        carriage.position.y = ticksToHeight(sim.currentTicks);
+
+        if (sim.busy) {
+            carriage.material.color.setHex(0xff6600);
+        } else {
+            carriage.material.color.setHex(0x22cc66);
+        }
+    }
+
+    function updatePanel() {
+        const pct = clamp(sim.currentTicks / TARGET_TICKS, 0, 1);
+        const targetPct = clamp(sim.targetTicks / TARGET_TICKS, 0, 1);
+
+        positionText.textContent =
+            `POSITION: ${Math.round(sim.currentTicks)} / ${TARGET_TICKS} ticks`;
+
+        progressFill.style.width = `${pct * 100}%`;
+        sideFill.style.height = `${pct * 100}%`;
+
+        targetMarker.style.left = `${targetPct * 100}%`;
+        sideTarget.style.bottom = `${targetPct * 100}%`;
+
+        modeText.textContent = `MODE: ${sim.mode}`;
+
+        powerFill.style.width =
+            `${clamp(Math.abs(sim.power), 0, 1) * 100}%`;
+
+        if (sim.busy) {
+            busyText.textContent = "MOVING";
+            busyText.className = "lift-busy moving";
+        } else if (
+            Math.abs(sim.currentTicks - sim.targetTicks) <= TARGET_TOLERANCE_TICKS &&
+            sim.targetTicks > 0
+        ) {
+            busyText.textContent = "AT TARGET";
+            busyText.className = "lift-busy at-target";
+        } else {
+            busyText.textContent = "IDLE";
+            busyText.className = "lift-busy";
+        }
+    }
+
+    function createPanel() {
+        const rightPanel =
+            document.getElementById("sim-right-panel");
+
+        const sceneContainer =
+            document.getElementById("sim-scene-container");
+
+        const panel = document.createElement("div");
+
+        panel.className = "lift-panel";
+
+        panel.innerHTML = `
+            <div class="lift-title">
+                Autonomous Lift Encoder
+            </div>
+
+            <div class="lift-grid">
+                <div>
+                    <div class="lift-position" id="lift-position">
+                        POSITION: 0 / ${TARGET_TICKS} ticks
+                    </div>
+
+                    <div class="lift-bar">
+                        <div class="lift-bar-fill" id="lift-fill"></div>
+                        <div class="lift-target-marker" id="lift-target"></div>
+                    </div>
+
+                    <div class="lift-mode" id="lift-mode">
+                        MODE: RUN_WITHOUT_ENCODER
+                    </div>
+
+                    <div class="lift-power-wrap">
+                        <div style="margin-bottom:6px;font-size:0.82rem;">
+                            MOTOR POWER
+                        </div>
+
+                        <div class="lift-power-bar">
+                            <div class="lift-power-fill" id="lift-power"></div>
+                        </div>
+                    </div>
+
+                    <div class="lift-busy" id="lift-busy">
+                        IDLE
+                    </div>
+                </div>
+
+                <div class="lift-side">
+                    <div class="lift-side-fill" id="lift-side-fill"></div>
+                    <div class="lift-side-target" id="lift-side-target"></div>
+                    <div class="lift-side-label">ENCODER</div>
+                </div>
+            </div>
+        `;
+
+        rightPanel.appendChild(panel);
+
+        positionText = document.getElementById("lift-position");
+        modeText = document.getElementById("lift-mode");
+        busyText = document.getElementById("lift-busy");
+
+        progressFill = document.getElementById("lift-fill");
+        sideFill = document.getElementById("lift-side-fill");
+
+        targetMarker = document.getElementById("lift-target");
+        sideTarget = document.getElementById("lift-side-target");
+
+        powerFill = document.getElementById("lift-power");
+
+        warningChip = document.createElement("div");
+        warningChip.className = "lift-warning";
+        sceneContainer.appendChild(warningChip);
+
+        targetReached = document.createElement("div");
+        targetReached.className = "lift-target-reached";
+        targetReached.innerHTML = "TARGET REACHED";
+        sceneContainer.appendChild(targetReached);
+
+        overlay = document.createElement("div");
+        overlay.className = "lift-overlay";
+
+        overlay.innerHTML = `
+            <div style="font-size:1.4rem;font-weight:800;">
+                Waiting for start...
+            </div>
+
+            <div style="font-size:0.88rem;color:#d1d5db;margin-top:8px;">
+                Press Start in the bottom Driver Station controls.
+            </div>
+        `;
+
+        sceneContainer.appendChild(overlay);
+
+        updatePanel();
+    }
+
+    function buildScene() {
+        requestAnimationFrame(() => {
+
+            const scene = window.scene;
+
+            if (!scene || !window.THREE) {
+                console.error("Three.js scene not ready");
+                return;
+            }
+
+            const THREE = window.THREE;
+
+            window.setFieldVisible(false);
+            window.setCameraOrbit({
+                theta: 0.58,
+                phi: 0.72,
+                radius: 8,
+                target: { x: 0, y: 2.8, z: 0 }
+            });
+
+            const ambient =
+                new THREE.AmbientLight(0xffffff, 1.0);
+
+            scene.add(ambient);
+
+            const dir =
+                new THREE.DirectionalLight(0xffffff, 1.0);
+
+            dir.position.set(5, 8, 5);
+
+            scene.add(dir);
+
+            const floor = new THREE.Mesh(
+                new THREE.PlaneGeometry(20, 20),
+                new THREE.MeshPhongMaterial({
+                    color: 0x0f0f16
+                })
+            );
+
+            floor.userData.telemarkThemeRole = "floor";
+            floor.rotation.x = -Math.PI / 2;
+
+            scene.add(floor);
+
+            const body = new THREE.Mesh(
+                new THREE.BoxGeometry(3.2, 1.2, 2.4),
+                new THREE.MeshPhongMaterial({
+                    color: 0x24242c
+                })
+            );
+
+            body.userData.telemarkThemeRole = "wall";
+            body.position.y = 0.6;
+
+            scene.add(body);
+
+            const railMat =
+                new THREE.MeshPhongMaterial({
+                    color: 0x9a9aa8
+                });
+
+            const leftRail = new THREE.Mesh(
+                new THREE.BoxGeometry(0.12, 5.2, 0.12),
+                railMat
+            );
+
+            leftRail.position.set(-0.4, 3, 0);
+
+            scene.add(leftRail);
+
+            const rightRail = leftRail.clone();
+
+            rightRail.position.x = 0.4;
+
+            scene.add(rightRail);
+
+            carriage = new THREE.Mesh(
+                new THREE.BoxGeometry(1.0, 0.45, 0.8),
+                new THREE.MeshPhongMaterial({
+                    color: 0x22cc66
+                })
+            );
+
+            carriage.position.set(0, 1.2, 0);
+
+            scene.add(carriage);
+
+            markerLine = new THREE.Mesh(
+                new THREE.BoxGeometry(1.3, 0.05, 0.05),
+                new THREE.MeshPhongMaterial({
+                    color: 0xff6600
+                })
+            );
+
+            markerLine.position.y = ticksToHeight(TARGET_TICKS);
+
+            scene.add(markerLine);
+
+            updateLiftVisual();
+            window.TelemarkSimulatorBase.themeThreeScene(scene);
+        });
+    }
+
+    function installMotorHooks() {
+        hardwareMap.registerMotor("lift");
+
+        const originalGet =
+            hardwareMap.get.bind(hardwareMap);
+
+        hardwareMap.get = function (clazz, name) {
+
+            const motor =
+                originalGet(clazz, name);
+
+            if (!motor || motor.__hooked) {
+                return motor;
+            }
+
+            motor.__hooked = true;
+
+            motor.setMode = function (mode) {
+
+                sim.mode = String(mode);
+
+                if (
+                    sim.mode.includes(
+                        "STOP_AND_RESET_ENCODER"
+                    )
+                ) {
+                    sim.currentTicks = 0;
+                    sim.targetTicks = 0;
+                    sim.busy = false;
+
+                    sim.encoderReset = true;
+
+                    sim.requirements[1] = true;
+                }
+
+                if (
+                    sim.mode.includes(
+                        "RUN_TO_POSITION"
+                    )
+                ) {
+                    sim.requirements[2] = true;
+                }
+
+                updateRequirements();
+                updatePanel();
+                updateLiftVisual();
+                maybeBeginMotion();
+            };
+
+            motor.setTargetPosition = function (target) {
+
+                sim.targetTicks =
+                    Number(target) || 0;
+
+                if (sim.targetTicks === TARGET_TICKS) {
+                    sim.requirements[3] = true;
+                }
+
+                if (!sim.encoderReset) {
+                    setWarning(
+                        "Encoder not reset - starting from unknown position",
+                        "warn"
+                    );
+                }
+
+                updateRequirements();
+                updatePanel();
+                maybeBeginMotion();
+            };
+
+            motor.setPower = function (power) {
+
+                sim.power =
+                    Number(power) || 0;
+
+                if (
+                    Math.abs(sim.power) > 0.001
+                ) {
+                    sim.requirements[4] = true;
+                } else {
+                    sim.busy = false;
+                    clearInterval(sim.movementInterval);
+                    sim.movementInterval = null;
+                }
+
+                updateRequirements();
+                updatePanel();
+                updateLiftVisual();
+                maybeBeginMotion();
+            };
+
+            motor.getCurrentPosition = function () {
+                return Math.round(sim.currentTicks);
+            };
+
+            motor.getTargetPosition = function () {
+                return Math.round(sim.targetTicks);
+            };
+
+            motor.getPower = function () {
+                return sim.power;
+            };
+
+            motor.isBusy = function () {
+                return sim.busy;
+            };
+
+            return motor;
+        };
+    }
+
+    function hasRunToPositionPower() {
+        return (
+            sim.active &&
+            sim.mode.includes("RUN_TO_POSITION") &&
+            Math.abs(sim.power) > 0.001
+        );
+    }
+
+    function canRunToTarget() {
+        return (
+            hasRunToPositionPower() &&
+            Math.abs(sim.targetTicks - sim.currentTicks) > TARGET_TOLERANCE_TICKS
+        );
+    }
+
+    function maybeBeginMotion() {
+        if (!canRunToTarget()) {
+            sim.busy = false;
+            updatePanel();
+            updateLiftVisual();
+            return;
+        }
+
+        if (sim.movementInterval) {
+            return;
+        }
+
+        sim.busy = true;
+        updatePanel();
+        updateLiftVisual();
+        beginMotion();
+    }
+
+    function beginMotion() {
+        clearInterval(sim.movementInterval);
+
+        sim.movementInterval = setInterval(() => {
+
+            if (!hasRunToPositionPower()) {
+                sim.busy = false;
+                clearInterval(sim.movementInterval);
+                sim.movementInterval = null;
+                updatePanel();
+                updateLiftVisual();
+                return;
+            }
+
+            if (window.isFaultActive && isFaultActive("lift-stall")) {
+                sim.busy = true;
+                setWarning(
+                    "Lift stalled: power is applied, but encoder position is not changing",
+                    "warn"
+                );
+                if (window.addHint) {
+                    addHint(
+                        '<i class="fa-solid fa-gears"></i> The encoder is stationary while the motor is powered. Check for a jam, disconnected mechanism, or current limit.',
+                        "info"
+                    );
+                }
+                updatePanel();
+                updateLiftVisual();
+                pushLiftTelemetry("Stalled");
+                return;
+            }
+
+            const error =
+                sim.targetTicks -
+                sim.currentTicks;
+
+            if (Math.abs(error) <= TARGET_TOLERANCE_TICKS) {
+
+                sim.currentTicks =
+                    sim.targetTicks;
+
+                sim.busy = false;
+
+                sim.requirements[6] = true;
+
+                targetReached.classList.add("visible");
+
+                setTimeout(() => {
+                    targetReached.classList.remove("visible");
+                }, 1500);
+
+                updateRequirements();
+                updatePanel();
+                updateLiftVisual();
+                pushLiftTelemetry("Done");
+
+                clearInterval(sim.movementInterval);
+                sim.movementInterval = null;
+
+                return;
+            }
+
+            const direction =
+                Math.sign(error);
+
+            const slowdown =
+                Math.max(
+                    0.18,
+                    Math.min(
+                        1,
+                        Math.abs(error) / 300
+                    )
+                );
+
+            const velocity =
+                direction *
+                Math.abs(sim.power) *
+                24 *
+                slowdown;
+
+            sim.currentTicks += velocity;
+
+            sim.busy = true;
+
+            updatePanel();
+            updateLiftVisual();
+            pushLiftTelemetry("Lifting...");
+
+        }, 50);
+    }
+
+    function validateStudentCode(code) {
+        sim.requirements[0] =
+            /hardwareMap\s*\.\s*get\s*\(\s*DcMotor(?:Ex)?\s*\.\s*class\s*,\s*"lift"\s*\)/.test(code);
+        sim.requirements[5] =
+            /while\s*\(\s*opModeIsActive\s*\(\s*\)\s*&&\s*lift\s*\.\s*isBusy\s*\(\s*\)\s*\)/.test(code);
+        updateRequirements();
+    }
+
+    function ensureCurrentExecution(token) {
+        if (token !== executionToken || !sim.running) throw STOP_SIGNAL;
+    }
+
+    async function waitForDriverStationStart(token) {
+        sim.waitingForStart = true;
+        sim.active = false;
+
+        overlay.classList.add("visible");
+        pushLiftTelemetry("Waiting for start");
+
+        await new Promise(resolve => {
+            startResolver = resolve;
+            if (sim.startRequested) releaseDriverStationStart(false);
+        });
+
+        ensureCurrentExecution(token);
+        sim.waitingForStart = false;
+        sim.started = true;
+        sim.active = true;
+
+        maybeBeginMotion();
+        pushLiftTelemetry("Started");
+    }
+
+    async function executeJavaLinearOpMode(code, token) {
+        validateStudentCode(code);
+
+        if (!/\bwaitForStart\s*\(\s*\)/.test(code)) {
+            sim.active = true;
+            sim.started = true;
+            pushLiftTelemetry("Running");
+        }
+
+        const runtime = window.TelemarkSimulatorBase.createRuntime({
+            gamepad1: window.gamepad || {},
+            gamepad2: window.gamepad2 || {},
+            getRuntime: window.getRuntime,
+            isStopRequested: function () {
+                return token !== executionToken || !sim.running;
+            },
+            opModeIsActive: function () {
+                return token === executionToken && sim.running && sim.active;
+            },
+            waitForStart: function () {
+                return waitForDriverStationStart(token);
+            },
+            sleep: async function (ms) {
+                await sleep(ms);
+                ensureCurrentExecution(token);
+            },
+            onTelemetryUpdate: function (frame) {
+                window.clearTelemetry();
+                frame.forEach(function (item) {
+                    window.addTelemetry(item.key, item.value);
+                });
+                window.updateTelemetry();
+            },
+            onTelemetryClear: function (event) {
+                if (!event || !event.automatic) window.clearTelemetry();
+            }
+        });
+        runtime.hardwareMap = window.hardwareMap;
+        runtime.linearTick = async function () {
+            await sleep(50);
+            ensureCurrentExecution(token);
+        };
+
+        compiledProgram = window.TelemarkSimulatorBase.compileStudentSource(code, runtime);
+        if (!compiledProgram.ok) {
+            const diagnostic = compiledProgram.diagnostics[0];
+            throw new Error(
+                diagnostic.message +
+                " (line " + diagnostic.line +
+                ", column " + diagnostic.column + ")"
+            );
+        }
+
+        if (compiledProgram.kind !== "linear" || !compiledProgram.methods.runOpMode) {
+            throw new Error("This challenge requires a LinearOpMode with runOpMode().");
+        }
+
+        await compiledProgram.methods.runOpMode();
+    }
+
+    window.onSimulatorReady = function () {
+
+        setCode(starterCode);
+
+        setChallenge({
+            title: "Autonomous Lift to Position",
+            scenario: "Use RUN_TO_POSITION mode and motor encoders to raise the lift to 1200 ticks using a LinearOpMode.",
+            successMessage: "Lift reached 1200 ticks and stopped.",
+            faultModes: [
+                {
+                    id: "lift-stall",
+                    label: "Jammed lift",
+                    description: "The motor receives power, but the mechanism is physically stalled and the encoder does not advance."
+                }
+            ],
+            requirements: requirements
+        });
+
+        setHeader(
+            "Telemark Unit 10.3 Simulator",
+            "Autonomous Lift to Position · RUN_TO_POSITION"
+        );
+
+        setBadges([
+            {
+                iconClass: "fa-solid fa-gear",
+                label: "DcMotor",
+                active: true
+            },
+            {
+                iconClass: "fa-solid fa-gauge-high",
+                label: "Encoder",
+                active: true
+            },
+            {
+                iconClass: "fa-solid fa-list-check",
+                label: "Telemetry",
+                active: true
+            }
+        ]);
+
+        setActiveInputs([]);
+
+        createPanel();
+
+        installMotorHooks();
+
+        buildScene();
+
+        updatePanel();
+    };
+
+    function releaseDriverStationStart(markRequested) {
+        if (markRequested !== false) sim.startRequested = true;
+        if (overlay) overlay.classList.remove("visible");
+        sim.waitingForStart = false;
+        if (startResolver) {
+            const resolve = startResolver;
+            startResolver = null;
+            resolve();
+        }
+    }
+
+    window.onInit = async function () {
+
+        if (sim.running) return;
+
+        sim.running = true;
+        sim.active = false;
+        sim.started = false;
+        sim.startRequested = false;
+        const token = ++executionToken;
+        compiledProgram = null;
+
+        setWarning(null);
+        pushLiftTelemetry("Initialized");
+
+        const editor =
+            document.getElementById(
+                "sim-code-editor"
+            );
+
+        const code =
+            editor?.value || starterCode;
+
+        try {
+            await executeJavaLinearOpMode(code, token);
+        } catch (err) {
+            if (err === STOP_SIGNAL) return;
+            console.error(err);
+
+            if (window._simShowTelemetryError) {
+                window._simShowTelemetryError(err.message || String(err));
+            } else if (window.addTelemetry && window.updateTelemetry) {
+                window.addTelemetry("ERROR", err.message || String(err));
+                window.updateTelemetry();
+            }
+        }
+    };
+
+    window.onStart = function () {
+        releaseDriverStationStart(true);
+    };
+
+    window.onStop = function () {
+
+        executionToken++;
+        sim.active = false;
+        sim.running = false;
+        sim.busy = false;
+        sim.waitingForStart = false;
+        sim.startRequested = false;
+        compiledProgram = null;
+
+        clearInterval(sim.movementInterval);
+        sim.movementInterval = null;
+
+        overlay.classList.remove("visible");
+
+        if (startResolver) {
+            releaseDriverStationStart(false);
+        }
+        sim.startRequested = false;
+
+        updatePanel();
+        updateLiftVisual();
+    };
+
+    window.onReset = function () {
+
+        window.onStop();
+
+        sim.currentTicks = 0;
+        sim.targetTicks = 0;
+
+        sim.power = 0;
+
+        sim.mode =
+            "RUN_WITHOUT_ENCODER";
+
+        sim.encoderReset = false;
+        sim.started = false;
+        sim.waitingForStart = false;
+        sim.startRequested = false;
+
+        sim.requirements =
+            [false, false, false, false, false, false, false];
+
+        targetReached.classList.remove("visible");
+
+        if (window.clearTelemetry) {
+            window.clearTelemetry();
+        }
+
+        updatePanel();
+        updateLiftVisual();
+        updateRequirements();
+    };
+
+})();
+</script>
+
+</body>
+</html>
