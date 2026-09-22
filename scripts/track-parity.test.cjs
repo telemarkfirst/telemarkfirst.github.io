@@ -8,7 +8,7 @@ const ts = require('typescript');
  *
  * The software and mechanical tracks teach different subjects, so their
  * lesson content differs by design. What must not differ is the furniture: a
- * student moving between them should meet the same landing page and navigation.
+ * student moving between them should meet the same navigation.
  * Assessment follows the work: blank-file coding challenges for software and
  * scored design quizzes for mechanical.
  */
@@ -26,33 +26,20 @@ function loadTs(relative, exportName) {
   return module[exportName];
 }
 
-// ── Both landings render the same component ─────────────────────────────────
+// ── Both tracks start at Unit/Module 0 ──────────────────────────────────────
 
-// Both landings are docs index pages, so each opens with its own sidebar and
-// the same shell. /curriculum survives only as a redirect for old links.
-const softwareLanding = read('docs/index.mdx');
-const mechanicalLanding = read('mechanical/index.mdx');
-const legacyAlias = read('src/pages/curriculum.tsx');
-
-assert.match(legacyAlias, /Redirect/, '/curriculum must redirect rather than duplicate the landing');
-assert.match(legacyAlias, /\/docs/, '/curriculum must redirect to the software landing');
-
-assert.match(softwareLanding, /TrackOverview/, 'software landing must use the shared TrackOverview');
-assert.match(mechanicalLanding, /TrackOverview/, 'engineering landing must use the shared TrackOverview');
-assert.match(softwareLanding, /trackId="software"/);
-assert.match(mechanicalLanding, /trackId="mechanical"/);
-
-// Each landing must point at the other, so the tracks are discoverable from
-// one another rather than only from the navbar.
-assert.match(softwareLanding, /companionTrackId="mechanical"/);
-assert.match(mechanicalLanding, /companionTrackId="software"/);
-
-// The old bespoke software grid must not come back.
-// Both landings must be docs indexes, which is what gives them the same shell.
-for (const [name, source] of [['software', softwareLanding], ['mechanical', mechanicalLanding]]) {
-  assert.match(source, /^slug: \/$/m, `${name} landing must own its track root as a docs index`);
-  assert.match(source, /hide_table_of_contents: true/, `${name} landing should not show a table of contents`);
+for (const track of ['docs', 'mechanical']) {
+  assert.ok(!fs.existsSync(path.join(root, track, 'index.mdx')), `${track} still has a landing page`);
 }
+const legacyAlias = read('src/pages/curriculum.tsx');
+const softwareRoot = read('src/pages/docs.tsx');
+const mechanicalRoot = read('src/pages/mechanical.tsx');
+
+for (const source of [legacyAlias, softwareRoot]) {
+  assert.match(source, /Redirect/, 'software legacy routes must redirect');
+  assert.match(source, /\/docs\/unit-00\/classes-and-objects/, 'software starts at Unit 0');
+}
+assert.match(mechanicalRoot, /\/mechanical\/module-00\/design-cycle/, 'mechanical starts at Module 0');
 
 // ── Every page uses the shared shell ────────────────────────────────────────
 // The homepage used to hand roll its own navbar, which meant it had different
@@ -71,19 +58,19 @@ for (const file of fs.readdirSync(pagesDir).filter((name) => name.endsWith('.tsx
   );
 }
 
-// ── Both tracks offer the same track-level pages ────────────────────────────
-
-const REQUIRED_PAGES = ['getting-started', 'learning-paths'];
-for (const page of REQUIRED_PAGES) {
-  assert.ok(
-    fs.existsSync(path.join(root, 'docs', `${page}.mdx`)),
-    `software track is missing ${page}.mdx`,
-  );
-  assert.ok(
-    fs.existsSync(path.join(root, 'mechanical', `${page}.mdx`)),
-    `mechanical track is missing ${page}.mdx`,
-  );
+// The sidebars now begin at Unit/Module 0; the former pre-unit guide pages
+// are gone from both tracks.
+for (const track of ['docs', 'mechanical']) {
+  for (const page of ['getting-started', 'learning-paths', 'official-docs']) {
+    assert.ok(
+      !fs.existsSync(path.join(root, track, `${page}.mdx`)),
+      `${track} still contains ${page}.mdx`,
+    );
+  }
 }
+assert.ok(!fs.existsSync(path.join(root, 'mechanical/cad-practice.mdx')));
+assert.ok(!fs.existsSync(path.join(root, 'src/components/TrackOverview.tsx')));
+assert.match(read('blocks/index.mdx'), /<BlocksOverview \/>/, 'Blocks keeps its separate landing page');
 
 // ── Every mastery quiz in both tracks is scored ─────────────────────────────
 
@@ -168,14 +155,13 @@ for (const bank of banks) {
 
 for (const [file, component] of [
   ['src/components/UnitOverview.tsx', 'UnitOverview'],
-  ['src/components/TrackOverview.tsx', 'TrackOverview'],
   ['src/components/mechanical/ScoredQuiz.tsx', 'ScoredQuiz'],
 ]) {
   assert.ok(fs.existsSync(path.join(root, file)), `${component} is missing`);
 }
 
 console.log(
-  `Track parity checks passed: both landings share TrackOverview, `
+  `Track parity checks passed: both sidebars start at Unit/Module 0, `
   + `${softwareChallenges.length} software coding challenges, ${mechanicalQuizzes.length} mechanical quizzes, `
   + `${totalQuestions} questions validated`,
 );

@@ -77,7 +77,9 @@ const calculators = fs.existsSync(calculatorIndex)
   : [];
 
 for (const calculator of calculators) {
-  if (!mechanicalText.includes(`<${calculator} />`)) {
+  const linkedFromLesson = calculator === 'CadChecker'
+    && mechanicalText.includes('](/simulator#cad-check)');
+  if (!mechanicalText.includes(`<${calculator} />`) && !linkedFromLesson) {
     failures.push(`Calculator ${calculator} is not used by any mechanical lesson`);
   }
 }

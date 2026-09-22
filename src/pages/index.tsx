@@ -22,6 +22,30 @@ function HeroVideo(): React.JSX.Element {
   const playbackTimeRef = React.useRef(0);
   const switchingRef = React.useRef(false);
   const shouldPlayRef = React.useRef(true);
+  const reducedMotionRef = React.useRef(false);
+
+  React.useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return undefined;
+
+    const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const syncPlayback = (): void => {
+      reducedMotionRef.current = preference.matches;
+      shouldPlayRef.current = !preference.matches;
+
+      if (preference.matches) {
+        video.pause();
+      } else {
+        void video.play().catch(() => {
+          // Browsers may still block autoplay. The poster remains available.
+        });
+      }
+    };
+
+    syncPlayback();
+    preference.addEventListener('change', syncPlayback);
+    return () => preference.removeEventListener('change', syncPlayback);
+  }, []);
 
   React.useEffect(() => {
     const video = videoRef.current;
@@ -30,7 +54,8 @@ function HeroVideo(): React.JSX.Element {
     const currentPosition = Number.isFinite(video.currentTime) ? video.currentTime : 0;
     if (currentPosition > 0.05) playbackTimeRef.current = currentPosition;
     if (!switchingRef.current) {
-      shouldPlayRef.current = (!video.paused && !video.ended) || video.autoplay;
+      shouldPlayRef.current = !reducedMotionRef.current
+        && ((!video.paused && !video.ended) || video.autoplay);
     }
     const snapshot = {
       time: playbackTimeRef.current,
@@ -107,7 +132,8 @@ function HeroSection(): React.JSX.Element {
         </h1>
 
         <p className={styles.heroSub}>
-          Learn through experience with integrated lessons featuring software and mechanical simulators.
+          Learn through experience with integrated lessons featuring software and
+          mechanical simulators.
         </p>
 
         <div className={styles.heroActions}>

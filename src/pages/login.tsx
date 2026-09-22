@@ -48,8 +48,7 @@ export default function LoginPage(): React.JSX.Element {
           </div>
           <h1 className={styles.brand}>Telemark</h1>
           <p className={styles.sub}>
-            The curriculum works without an account. Sign in only when you want
-            Sharp AI and cloud progress across devices.
+            Sign to access Sharp AI and cloud progress across devices.
           </p>
 
           <button className={styles.googleBtn} onClick={handleSignIn}>
@@ -65,8 +64,7 @@ export default function LoginPage(): React.JSX.Element {
           {error && <p className={styles.error} role="alert">{error}</p>}
 
           <p className={styles.privacy}>
-            Google provides a verified email. Progress already saved in this browser
-            will be merged into your account.
+            Progress already saved in this browser will be merged into your account.
           </p>
         </div>
       </main>

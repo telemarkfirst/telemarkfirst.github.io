@@ -174,7 +174,7 @@ export default function AskPanel(): React.JSX.Element {
       <section className={styles.panel}>
         <p className={styles.title}>Ask about this lesson</p>
         <p className={styles.blurb}>
-          Sign in to ask Sharp AI about the lesson and section you’re reading.
+          Sign in to access Sharp AI
         </p>
         <button type="button" className={styles.signIn} onClick={() => signInWithGoogle()}>
           Sign in to ask

@@ -5,9 +5,8 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 /**
  * Legacy alias for the mechanical track.
  *
- * The track was renamed from Engineering to Mechanical, which moved its root.
- * This keeps existing links and bookmarks working rather than breaking them.
+ * The track was renamed from Engineering to Mechanical and now starts at Module 0.
  */
 export default function EngineeringRedirect(): React.JSX.Element {
-  return <Redirect to={useBaseUrl('/mechanical')} />;
+  return <Redirect to={useBaseUrl('/mechanical/module-00/design-cycle')} />;
 }

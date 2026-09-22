@@ -31,12 +31,12 @@ assert.equal(make([], undefined), null);
 assert.equal(make(['software'], undefined), null);
 assert.equal(make(['unknown'], undefined), null);
 assert.equal(make(['mechanical'], undefined).blocksPlacement, undefined);
-assert.equal(profileDestination(make(['mechanical'], undefined)), '/mechanical');
+assert.equal(profileDestination(make(['mechanical'], undefined)), '/mechanical/module-00/design-cycle');
 
 for (const [level, placement, destination] of [
   ['complete_beginner', 'required', '/blocks'],
-  ['block_experience', 'auto_completed', '/docs'],
-  ['text_experience', 'auto_completed', '/docs'],
+  ['block_experience', 'auto_completed', '/docs/unit-00/classes-and-objects'],
+  ['text_experience', 'auto_completed', '/docs/unit-00/classes-and-objects'],
 ]) {
   const software = make(['software'], level);
   assert.equal(software.blocksPlacement, placement);
@@ -51,7 +51,7 @@ assert.equal(make(['software'], 'complete_beginner', {postBlocksChoice: 'java'})
 assert.equal(make(['software'], 'complete_beginner', {postBlocksChoice: 'fll'}).postBlocksChoice, 'fll');
 assert.equal(make(['software'], 'complete_beginner', {postBlocksChoice: 'invalid'}).postBlocksChoice, undefined);
 assert.equal(profileDestination(make(['software'], 'block_experience', {postBlocksChoice: 'python'})), '/blocks/python-resources');
-assert.equal(profileDestination(make(['software'], 'block_experience', {postBlocksChoice: 'java'})), '/docs');
+assert.equal(profileDestination(make(['software'], 'block_experience', {postBlocksChoice: 'java'})), '/docs/unit-00/classes-and-objects');
 
 const personalizationSource = fs.readFileSync(path.join(root, 'src/pages/personalize.tsx'), 'utf8');
 assert.match(personalizationSource, /softwareLevel === 'block_experience' && !blockExperienceChoice/);
@@ -77,6 +77,12 @@ for (const route of ['/docs', '/blocks', '/mechanical', '/simulator', '/dashboar
 assert.ok(!curriculumRoutes.includes('changelog'), 'the changelog never starts curriculum personalization');
 const loginSource = fs.readFileSync(path.join(root, 'src/pages/login.tsx'), 'utf8');
 assert.match(loginSource, /profileStatus === 'absent' \? '\/' : '\/dashboard'/, 'sign-in alone does not start personalization');
+const basePathSource = fs.readFileSync(path.join(root, 'src/telemark/useBasePath.ts'), 'utf8');
+assert.match(
+  basePathSource,
+  /return useCallback\([\s\S]*?\[base\],[\s\S]*?\);/,
+  'programmatic redirect effects receive a stable basePath callback',
+);
 assert.doesNotMatch(gateSource, /useTelemarkAccount|accountStatus|setupError/);
 assert.doesNotMatch(gateSource, /<aside|Continue to public lessons|Sign out/);
 

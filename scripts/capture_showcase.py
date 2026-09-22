@@ -63,7 +63,7 @@ SHOTS = [
     ("beam-deflection", "/simulator#deflection", WORKBENCH),
     ("weight-budget", "/simulator#weight", WORKBENCH),
     ("lesson", "/docs/unit-00/classes-and-objects", "article, main"),
-    ("cad-practice", "/mechanical/module-00/design-cycle", "article, main"),
+    ("mechanical-module-00", "/mechanical/module-00/design-cycle", "article, main"),
     # The full-screen simulator, which is the one that shows the 3D field, the
     # gamepad and the editor at once. The whole page is the app, so there is
     # nothing to scroll to.

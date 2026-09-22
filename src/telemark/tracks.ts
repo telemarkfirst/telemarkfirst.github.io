@@ -48,8 +48,6 @@ export interface Track {
   label: string;
   shortLabel: string;
   tagline: string;
-  /** Landing page listing every unit in the track. */
-  indexPath: string;
   units: CurriculumUnit[];
   lessons: CurriculumLesson[];
   unitCount: number;
@@ -60,8 +58,7 @@ export const SOFTWARE_TRACK: Track & {id: 'software'} = {
   id: 'software',
   label: 'Software Track',
   shortLabel: 'Software',
-  tagline: 'FTC Java, from setup to autonomous.',
-  indexPath: '/docs',
+  tagline: 'FTC Java from your first OpMode to autonomous pathing.',
   units: CURRICULUM_UNITS,
   lessons: CURRICULUM_LESSONS,
   unitCount: CURRICULUM_UNIT_COUNT,
@@ -72,8 +69,7 @@ export const MECHANICAL_TRACK: Track & {id: 'mechanical'} = {
   id: 'mechanical',
   label: 'Mechanical Track',
   shortLabel: 'Mechanical',
-  tagline: 'Design, build, and fabricate the robot the code runs on.',
-  indexPath: '/mechanical',
+  tagline: 'Design, size, build, and wire the robot that code controls.',
   units: MECHANICAL_UNITS,
   lessons: MECHANICAL_LESSONS,
   unitCount: MECHANICAL_UNIT_COUNT,
@@ -85,7 +81,6 @@ export const BLOCKS_TRACK: Track = {
   label: 'Software: Blocks Foundations',
   shortLabel: 'Blocks',
   tagline: 'Core programming skills before FTC Java.',
-  indexPath: '/blocks',
   units: BLOCKS_UNITS,
   lessons: BLOCKS_LESSONS,
   unitCount: BLOCKS_UNIT_COUNT,

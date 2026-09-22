@@ -14,77 +14,55 @@ interface SearchEntry {
   excerpt: string;
 }
 
-type TrackFilter = 'all' | 'software' | 'mechanical';
-
-const TRACK_FILTERS: {value: TrackFilter; label: string}[] = [
-  {value: 'all', label: 'All'},
-  {value: 'software', label: 'Software'},
-  {value: 'mechanical', label: 'Mechanical'},
-];
-
 export default function SearchPage(): React.JSX.Element {
   const entries = usePluginData('telemark-search') as SearchEntry[];
   const location = useLocation();
   const [query, setQuery] = useState(
     () => new URLSearchParams(location.search).get('q') ?? '',
   );
-  const [track, setTrack] = useState<TrackFilter>('all');
   const normalized = query.trim().toLowerCase();
 
   const results = useMemo(() => {
     if (normalized.length < 2) return [];
     return entries
-      .filter((entry) => track === 'all'
-        || entry.track === track
-        || (track === 'software' && entry.track === 'blocks'))
       .filter((entry) => (
         `${entry.title} ${entry.label} ${entry.excerpt}`.toLowerCase().includes(normalized)
       ))
       .slice(0, 30);
-  }, [entries, normalized, track]);
+  }, [entries, normalized]);
 
   return (
-    <Layout title="Search · Telemark" description="Search Telemark FTC software and engineering lessons.">
+    <Layout title="Search · Telemark" description="Search Telemark FTC software, Blocks, and mechanical lessons.">
       <main className={styles.page}>
         <div className={styles.shell}>
-          <h1 className={styles.title}>Find a Telemark lesson</h1>
-          <p className={styles.intro}>
-            Search lesson titles and text across every open Telemark curriculum.
-          </p>
+          <h1 className={styles.title}>Search lessons</h1>
 
-          <label htmlFor="telemark-search" className="sr-only">Search lessons</label>
+          <label htmlFor="telemark-search" className={styles.searchLabel}>
+            Topic or term
+          </label>
           <input
             id="telemark-search"
             className={styles.search}
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Try “encoder”, “hardwareMap”, or “field centric”"
+            placeholder="Try “encoder”, “hardwareMap”, or “field-centric drive”"
             autoComplete="off"
-            autoFocus
           />
 
-          <div className={styles.trackFilter} role="group" aria-label="Filter by track">
-            {TRACK_FILTERS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                className={`${styles.trackButton} ${
-                  track === option.value ? styles.trackButtonActive : ''
-                }`}
-                aria-pressed={track === option.value}
-                onClick={() => setTrack(option.value)}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
+          {normalized.length >= 2 && (
+            <p className={styles.status} role="status" aria-live="polite">
+              {results.length === 0
+                ? 'No lessons found.'
+                : `${results.length} result${results.length === 1 ? '' : 's'}`}
+            </p>
+          )}
 
-          <p className={styles.status} role="status" aria-live="polite">
-            {normalized.length < 2
-              ? 'Enter at least two characters.'
-              : `${results.length} result${results.length === 1 ? '' : 's'}`}
-          </p>
+          {normalized.length >= 2 && results.length === 0 && (
+            <p className={styles.empty}>
+              Try a broader term.
+            </p>
+          )}
 
           <div className={styles.results}>
             {results.map((entry) => {

@@ -2,9 +2,7 @@ import React from 'react';
 import {Redirect} from '@docusaurus/router';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 
-/**
- * Legacy alias for the software track. The track now starts at Unit 0.
- */
-export default function CurriculumRedirect(): React.JSX.Element {
+/** Preserve old software-track bookmarks after removing the track landing. */
+export default function DocsRedirect(): React.JSX.Element {
   return <Redirect to={useBaseUrl('/docs/unit-00/classes-and-objects')} />;
 }

@@ -15,20 +15,18 @@ const TRACKS = {
     pdfName: 'Java for FTC Curriculum.pdf',
     dataFile: 'src/telemark/curriculum.ts',
     docs: [
-      'docs/learning-paths.mdx',
       ...Array.from({ length: 16 }, (_, i) =>
         listUnitDocs(`docs/unit-${String(i).padStart(2, '0')}`),
       ).flat(),
     ],
   },
-  engineering: {
+  mechanical: {
     title: 'Mechanical for FTC Curriculum',
     htmlName: 'mechanical-ftc-curriculum.html',
     pdfName: 'Mechanical for FTC Curriculum.pdf',
     dataFile: 'src/telemark/mechanical.ts',
     docs: [
-      'engineering/getting-started.mdx',
-      ...Array.from({ length: 13 }, (_, i) =>
+      ...Array.from({ length: 14 }, (_, i) =>
         listUnitDocs(`mechanical/module-${String(i).padStart(2, '0')}`),
       ).flat(),
     ],

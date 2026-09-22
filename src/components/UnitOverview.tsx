@@ -61,7 +61,7 @@ export default function UnitOverview({
           </div>
           <div className={styles.stat}>
             <span className={styles.statValue}>{status}</span>
-            <span className={styles.statLabel}>Current Status</span>
+            <span className={styles.statLabel}>Status</span>
           </div>
         </div>
 
@@ -74,17 +74,17 @@ export default function UnitOverview({
             to={nextLesson?.path ?? unit.startPath}
             className={styles.primaryAction}
           >
-            {nextLesson ? `Resume ${nextLesson.label}` : 'Review Unit'}
+            {nextLesson ? `Resume ${nextLesson.label}` : 'Review unit'}
           </Link>
           <Link to="/dashboard" className={styles.secondaryAction}>
-            Open Dashboard
+            View progress
           </Link>
         </div>
       </section>
 
       <section className={styles.grid}>
         <div className={styles.panel}>
-          <h2 className={styles.panelTitle}>Lesson Roadmap</h2>
+          <h2 className={styles.panelTitle}>Lessons</h2>
           <div className={styles.lessonList}>
             {lessons.map((lesson) => {
               const done = isComplete(lesson.id);

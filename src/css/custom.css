@@ -488,31 +488,6 @@ code {
   }
 }
 
-/* ---- SCROLLBARS ---- */
-* {
-  scrollbar-color: var(--telemark-color-aqua) transparent;
-  scrollbar-width: thin;
-}
-
-*::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
-}
-
-*::-webkit-scrollbar-track,
-*::-webkit-scrollbar-corner {
-  background: transparent;
-}
-
-*::-webkit-scrollbar-thumb {
-  background: var(--telemark-color-aqua);
-  border-radius: var(--tm-r-lg);
-}
-
-*::-webkit-scrollbar-thumb:hover {
-  background: var(--telemark-color-aqua);
-}
-
 /* ---- SIMULATOR IFRAME ---- */
 .simulator-fullscreen-shell {
   margin: 1.5rem 0;
@@ -874,6 +849,13 @@ summary:focus-visible,
 
 @media (prefers-reduced-motion: reduce) {
   .pagination-nav__link:hover { }
+}
+
+@media (max-width: 996px) {
+  article {
+    padding: var(--tm-sp-4) 0;
+    background: transparent;
+  }
 }
 
 /* ── Quick search launcher placement ─────────────────────────────────── */

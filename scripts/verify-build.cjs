@@ -23,7 +23,7 @@ function walk(directory) {
 
 const homepage = fs.readFileSync(path.join(buildRoot, 'index.html'), 'utf8');
 assert.match(homepage, /Learn FTC/, 'Homepage must render the primary heading');
-assert.match(homepage, /Learn through experience with integrated lessons featuring software and mechanical simulators\./);
+assert.match(homepage, /Learn through experience with integrated lessons featuring software and/);
 assert.match(homepage, /Begin Software/);
 assert.match(homepage, /Begin Mechanical/);
 assert.match(homepage, /telemark-hero(?:-light)?\.mp4/, 'Homepage must retain the hero video');

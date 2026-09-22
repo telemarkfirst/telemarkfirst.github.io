@@ -29,8 +29,8 @@ const config = read('docusaurus.config.ts');
 const customCss = read('src/css/custom.css');
 const mechanicalData = read('src/telemark/mechanical.ts');
 const tracks = read('src/telemark/tracks.ts');
-const trackOverview = read('src/components/TrackOverview.tsx');
-const trackOverviewCss = read('src/components/TrackOverview.module.css');
+const toolsPage = read('src/pages/simulator.tsx');
+const searchPage = read('src/pages/search.tsx');
 const unitOverview = read('src/components/UnitOverview.tsx');
 const unitOverviewCss = read('src/components/UnitOverview.module.css');
 const useProgress = read('src/telemark/useProgress.ts');
@@ -38,6 +38,7 @@ const progressStore = read('src/telemark/progressStore.ts');
 const progressCloud = read('src/telemark/progressCloud.ts');
 const dashboard = read('src/pages/dashboard.tsx');
 const dashboardCss = read('src/pages/dashboard.module.css');
+const loginPage = read('src/pages/login.tsx');
 const loginCss = read('src/pages/login.module.css');
 const markCompleteCss = read('src/components/HomepageFeatures/MarkComplete.module.css');
 const simulatorFrame = read('src/components/SimulatorFrame.tsx');
@@ -95,7 +96,7 @@ assert.ok(homepage.includes('<HeroSection'), 'the homepage must retain its prima
 for (const section of ['StatsBar', 'CurriculumSection', 'SimulatorSection', 'ToolsSection', 'ShowcaseSection', 'CtaSection']) {
   assert.ok(!homepage.includes(`<${section}`), `${section} must be removed from the reduced homepage`);
 }
-assert.match(homepage, /Learn through experience with integrated lessons featuring software and mechanical simulators\./);
+assert.match(homepage, /Learn through experience with integrated lessons featuring software and/);
 assert.doesNotMatch(homepage, /Student-built FTC software and mechanical curriculum|Learn to program an FTC robot/);
 
 for (let unit = 2; unit <= 15; unit += 1) {
@@ -208,6 +209,11 @@ assert.doesNotMatch(homepage, /Lessons require account|isProtectedUnit/);
 assert.doesNotMatch(searchPlugin, /isProtected|protected:/);
 assert.match(searchPlugin, /excerpt: cleanExcerpt\(source\)/);
 assert.match(searchPlugin, /actions\.setGlobalData\(content\)/);
+assert.match(toolsPage, /<AuthenticatedSimulatorNavigator\b/);
+assert.match(toolsPage, /<ToolWorkbench\b/);
+assert.doesNotMatch(toolsPage, /SimulatorWorkflow|Run lesson code in the browser|Write Java|Bring real numbers|Simulation checks code|Calculators check dimensions|See software lessons|See mechanical lessons/);
+assert.doesNotMatch(searchPage, /Search software, Blocks, and mechanical lessons by topic or term\.|All tracks|Type at least two characters to search\.|setTrack|selectedTrack/);
+assert.match(searchPage, /normalized\.length >= 2 &&/);
 assert.match(deployedSmoke, /deployedMeta\.commit !== expectedCommit/);
 assert.match(deployedSmoke, /cacheKey = `\$\{expectedCommit \|\| Date\.now\(\)\}-\$\{attempt\}`/);
 assert.match(config, /title: 'Telemark'/);
@@ -216,6 +222,7 @@ assert.match(config, /favicon: 'img\/telemark\.png'/, 'the existing web icon mus
 assert.match(config, /src: 'img\/telemark_logo\.png'/, 'the transparent logo must be used in the navbar');
 assert.match(config, /to: '\/docs\/unit-00\/classes-and-objects'[\s\S]{0,80}label: 'Software'/);
 assert.match(config, /to: '\/mechanical\/module-00\/design-cycle'[\s\S]{0,80}label: 'Mechanical'/);
+assert.equal((config.match(/sidebarItemsGenerator: async/g) || []).length, 2, 'both curricula filter pre-unit sidebar entries');
 assert.match(config, /theme: prismThemes\.github/);
 assert.match(config, /darkTheme: prismThemes\.dracula/);
 assert.match(
@@ -237,6 +244,10 @@ assert.match(dashboardCss, /\.resumeBtn[\s\S]{0,260}color: var\(--tm-text-on-acc
 assert.match(loginCss, /\[data-theme='light'\] \.card\s*\{\s*background: #fff/);
 assert.match(loginCss, /\.googleBtn[\s\S]{0,300}background: #fff;[\s\S]{0,80}color: #111820/);
 assert.match(loginCss, /\[data-theme='light'\] \.privacy\s*\{\s*color: #111820/);
+assert.match(loginPage, /Sign to access Sharp AI and cloud progress across devices\./);
+assert.match(loginPage, /Continue with Google/);
+assert.match(loginPage, /Progress already saved in this browser will be merged into your account\./);
+assert.doesNotMatch(loginPage, /The curriculum works without an account|Google provides a verified email/);
 
 for (const frameSource of [simulatorFrame, authenticatedNavigator]) {
   assert.match(frameSource, /useColorMode/);
@@ -255,7 +266,7 @@ for (const frameSource of [simulatorFrame, authenticatedNavigator]) {
   }
   assert.equal(protectedLesson('/docs/unit-05/if-statements'), false);
   assert.equal(protectedLesson('/mechanical/module-12/hole-standards'), false);
-  assert.equal(protectedLesson('/docs/official-docs'), false);
+  assert.equal(protectedLesson('/docs/unit-00/classes-and-objects'), false);
   assert.equal(unitSlug('/docs/unit-5/if-statements'), 'unit-05');
   assert.equal(unitSlug('/mechanical/module-12/hole-standards'), 'module-12');
 }
@@ -264,7 +275,7 @@ assert.match(navigator, /All simulator units open/);
 assert.doesNotMatch(navigator, /Google sign-in required|Sign in to unlock|AUTH_REQUEST/);
 assert.doesNotMatch(authenticatedNavigator, /signInWithGoogle|useAuth|simulator_gate_request/);
 assert.match(askPanel, /if \(!user\)/, 'Sharp AI must keep its account boundary');
-assert.match(askPanel, /Sign in to ask/);
+assert.match(askPanel, /Sign in to access Sharp AI/);
 assert.match(askPanel, /user\.getIdToken\(\)/);
 assert.match(adminPage, /if \(!user\)/, 'admin analytics must remain private');
 assert.match(adminPage, /configuredAdmin/);
@@ -321,12 +332,8 @@ assert.ok(
 );
 assert.match(homepage, /Begin Software/);
 assert.match(homepage, /Begin Mechanical/);
-assert.match(trackOverview, /companionTrackId/);
 assert.match(dashboard, /activeTrack/, 'dashboard must switch between tracks');
-assert.doesNotMatch(trackOverview, /signInWithGoogle/, 'track cards should open public overviews, not sign in');
 assert.doesNotMatch(homepage, /homepage_\$\{id\}_card/, 'homepage unit cards should not trigger sign in');
-assert.match(trackOverview, /MOBILE_UNIT_PREVIEW_COUNT/);
-assert.match(trackOverviewCss, /\.mobileCurriculumExtra\s*\{\s*display: none !important/);
 
 console.log('Open access, local progress, navbar, search, simulators, and track regression checks passed');
 

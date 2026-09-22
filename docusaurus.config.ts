@@ -26,7 +26,7 @@ const buildCommit = process.env.TELEMARK_BUILD_COMMIT
 
 const config: Config = {
   title: 'Telemark',
-  tagline: 'FTC software and mechanical design, from setup to competition.',
+  tagline: 'FTC software and mechanical design, taught as one robot.',
   favicon: 'img/telemark.png',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
@@ -84,6 +84,12 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
+          sidebarItemsGenerator: async ({defaultSidebarItemsGenerator, ...args}) => {
+            const items = await defaultSidebarItemsGenerator(args);
+            return args.item.dirName === '.'
+              ? items.filter((item) => item.type === 'category')
+              : items;
+          },
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
@@ -135,6 +141,12 @@ const config: Config = {
         path: 'mechanical',
         routeBasePath: 'mechanical',
         sidebarPath: './sidebarsMechanical.ts',
+        sidebarItemsGenerator: async ({defaultSidebarItemsGenerator, ...args}) => {
+          const items = await defaultSidebarItemsGenerator(args);
+          return args.item.dirName === '.'
+            ? items.filter((item) => item.type === 'category')
+            : items;
+        },
         editUrl:
           'https://github.com/telemarkfirst/telemarkfirst.github.io/tree/main/',
       },
@@ -194,11 +206,6 @@ const config: Config = {
           position: 'left',
         },
         {
-          href: 'https://github.com/telemarkfirst/telemarkfirst.github.io',
-          label: 'GitHub',
-          position: 'left',
-        },
-        {
           to: '/dashboard',
           label: 'Dashboard',
           position: 'right',
@@ -213,7 +220,13 @@ const config: Config = {
       links: [
         {
           title: 'Telemark',
-          items: [{label: 'Changelog', to: '/changelog'}],
+          items: [
+            {label: 'Changelog', to: '/changelog'},
+            {
+              label: 'GitHub',
+              href: 'https://github.com/telemarkfirst/telemarkfirst.github.io',
+            },
+          ],
         },
       ],
       copyright:

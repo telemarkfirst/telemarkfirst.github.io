@@ -121,11 +121,6 @@ for (const module of modules) {
 
 assert.equal(lessonFileCount, 76, `expected 76 mechanical lessons, found ${lessonFileCount}`);
 
-// Track-level pages the navbar and sidebar depend on.
-const indexDoc = fs.readFileSync(path.join(mechanicalRoot, 'index.mdx'), 'utf8');
-assert.match(indexDoc, /slug: \//, 'engineering index must own the /engineering route');
-assert.match(indexDoc, /TrackOverview/, 'engineering index must render the track overview');
-
 const config = fs.readFileSync(path.join(root, 'docusaurus.config.ts'), 'utf8');
 assert.match(config, /routeBasePath: 'mechanical'/, 'engineering docs plugin not configured');
 assert.match(config, /sidebarPath: '\.\/sidebarsMechanical\.ts'/, 'engineering sidebar not configured');

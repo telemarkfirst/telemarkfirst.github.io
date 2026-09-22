@@ -24,7 +24,7 @@ export const TOOL_CATALOG: ToolEntry[] = [
     name: 'CAD file check',
     group: 'Checking',
     keywords: 'cad step stl export check hole clearance size mass watertight submit',
-    lesson: {path: '/mechanical/cad-practice', label: 'CAD Practice'},
+    lesson: {path: '/mechanical/module-05/imported-and-surface-geometry', label: 'Lesson 5.7: Imports and Surfaces'},
     render: () => <Tools.CadChecker />,
   },
   {

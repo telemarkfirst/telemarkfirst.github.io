@@ -1,3 +1,4 @@
+import {useCallback} from 'react';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 
 /**
@@ -15,6 +16,9 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
  */
 export function useBasePath(): (path: string) => string {
   const base = useBaseUrl('/');
-  return (path: string) =>
-    path.startsWith('/') ? `${base.replace(/\/$/, '')}${path}` : path;
+  return useCallback(
+    (path: string) =>
+      path.startsWith('/') ? `${base.replace(/\/$/, '')}${path}` : path,
+    [base],
+  );
 }

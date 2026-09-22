@@ -64,9 +64,9 @@ export function profileDestination(profile: LearnerProfile): string {
     if (profile.softwareLevel === 'block_experience' && profile.postBlocksChoice === 'python') {
       return '/blocks/python-resources';
     }
-    return '/docs';
+    return '/docs/unit-00/classes-and-objects';
   }
-  return '/mechanical';
+  return '/mechanical/module-00/design-cycle';
 }
 
 function profileRef(user: User) {

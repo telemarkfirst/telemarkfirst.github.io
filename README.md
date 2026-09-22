@@ -134,12 +134,10 @@ to record the lesson through the same progress store the rest of the site uses.
 `npm run test:mechanical` validates every question: answer indices in range,
 no duplicate options, and a real explanation on each.
 
-### CAD practice
+### CAD file check
 
-`mechanical/cad-practice.mdx` holds graded exercises with hard numbers and
-self-check lists, rendered by `CadExercise`. Each exercise names the mistake it
-is designed to provoke, so a student can tell whether they passed without a
-mentor.
+The CAD file checker remains in the design calculators on the Tools page. Module 5
+links to the checker for reviewing CAD exports.
 
 ### Photographs
 
@@ -260,36 +258,15 @@ erases completion that exists in only one place.
 
 ### Keeping the two tracks consistent
 
-The tracks teach different subjects, so their lesson content differs by design.
-What must not differ is the furniture: a student moving between them should
-meet the same landing page and the same navigation. Assessment matches the
-kind of work each track teaches.
+The tracks teach different subjects but use the same lesson navigation. Their
+sidebars start at Unit 0 and Module 0; the former track landing pages and
+pre-unit guides are gone. `/docs`, `/mechanical`, and `/curriculum` redirect to
+the first lessons so old links still lead into the curriculum.
 
-They had already drifted, and the fixes were:
-
-- **One landing component.** The software landing was a bespoke page with its
-  own 317 line stylesheet while the mechanical landing rendered
-  `TrackOverview`. Both now render `TrackOverview`, including the same local
-  progress indicators.
-- **The same track-level pages.** Both tracks have `getting-started.mdx` and
-  `learning-paths.mdx`.
-- **Purpose-built assessment.** Software Units 2–15 end with one comprehensive
-  coding challenge that supplies the FTC SDK imports, annotation, and empty
-  class shell while leaving the implementation unscaffolded. Its checks cover the whole unit. The
-  mechanical modules retain scored mastery quizzes because calculations and
-  design judgment are better checked directly than through a Java simulator.
-
-- **The same shell.** Both landings are docs index pages owning their track
-  root (`/docs` and `/engineering`), so each opens with its own sidebar and
-  identical chrome. `/curriculum` survives as a redirect for old links, and is
-  public so old bookmarks keep working.
-- **One navbar.** The homepage used to hand roll its own `<nav>`, so it had
-  different chrome from every other page and the command palette was
-  unreachable there. It now renders inside the shared `Layout`.
-
-`npm run test:parity` enforces all of it, verifies all 14 software coding
-challenges and 14 mechanical mastery quizzes, validates the mechanical question
-bank, and fails if any page stops using the shared shell or grows its own navbar.
+Software Units 2–15 end with comprehensive coding challenges. Mechanical
+modules use scored quizzes for calculations and design judgment. Both tracks
+use the shared site shell and navbar. `npm run test:parity` checks these routes,
+assessments, and shared navigation.
 
 Legitimate differences remain: software lessons carry browser simulators and
 mechanical lessons carry calculators, because a mechanism's behaviour is

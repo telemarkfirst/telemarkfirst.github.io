@@ -32,88 +32,6 @@
   line-height: 1;
 }
 
-.sectionDesc {
-  max-width: 46rem;
-  margin: 0 0 2rem;
-  color: var(--tm-text-soft);
-  font-size: var(--tm-fs-md);
-  line-height: 1.7;
-}
-
-.simulatorWorkflow {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 0.85rem;
-  margin: 0 0 1rem;
-}
-
-.simulatorStep {
-  display: flex;
-  gap: 0.85rem;
-  min-height: 8.5rem;
-  padding: 1rem;
-  transition: border-color 150ms ease;
-}
-
-.simulatorStep:nth-child(even) {
-  border-radius: var(--tm-r-sm);
-}
-
-.simulatorStep:hover {
-  border-color: var(--tm-blue-a32);
-}
-
-.simulatorStep > span {
-  display: grid;
-  width: 1.75rem;
-  height: 1.75rem;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--tm-accent);
-  color: var(--tm-text-on-accent);
-  font-family: var(--telemark-font-label);
-  font-size: var(--tm-fs-xs);
-  font-weight: 700;
-}
-
-.simulatorStep strong {
-  display: block;
-  color: var(--tm-text-strong);
-  font-family: var(--telemark-font-display);
-  font-size: var(--tm-fs-md);
-}
-
-.simulatorStep p {
-  margin: 0.35rem 0 0;
-  color: var(--tm-text-muted);
-  font-size: var(--tm-fs-sm);
-  line-height: 1.55;
-}
-
-.simulatorTasks {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  margin: 0 0 1.75rem;
-}
-
-.simulatorTasks span {
-  padding: 0.5rem 0.75rem;
-  color: var(--tm-text-soft);
-  font-size: var(--tm-fs-xs);
-}
-
-.simulatorLimit {
-  max-width: 64ch;
-  margin: var(--tm-sp-4) auto;
-  padding: var(--tm-sp-3) var(--tm-sp-4);
-  color: var(--tm-text-muted);
-  font-size: var(--tm-fs-sm);
-  line-height: var(--tm-lh-normal);
-  text-align: center;
-}
-
 .simulatorToolbar {
   display: flex;
   justify-content: flex-end;
@@ -177,54 +95,9 @@
   border-radius: 0;
 }
 
-.heroActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.8rem;
-  margin-top: 2rem;
-}
-
-.btnPrimary,
-.btnSecondary {
-  display: inline-block;
-  padding: 0.85rem 1.25rem;
-  border-radius: var(--tm-r-sm);
-  font-weight: 700;
-  text-decoration: none !important;
-  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
-}
-
-.btnPrimary {
-  border: 1px solid var(--tm-blue);
-  background: var(--tm-blue);
-  color: var(--tm-text-on-accent) !important;
-}
-
-.btnPrimary:hover {
-  border-color: var(--tm-blue-soft);
-  background: var(--tm-blue-soft);
-  color: var(--tm-text-on-accent) !important;
-}
-
-.btnSecondary {
-  border: 1px solid var(--tm-blue-a32);
-  background: var(--tm-surface-2);
-  color: var(--tm-blue-soft) !important;
-}
-
-.btnSecondary:hover {
-  border-color: var(--tm-accent);
-  background: var(--tm-accent-a08);
-  color: var(--tm-text-strong) !important;
-}
-
 @media (max-width: 700px) {
   .section {
     padding: 3rem 1rem 4rem;
-  }
-
-  .simulatorStep {
-    min-height: 0;
   }
 
   .simulatorToolbar {
@@ -234,15 +107,6 @@
   .simulatorWrapper {
     min-height: 34rem;
     aspect-ratio: auto;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-
-  .simulatorStep,
-  .btnPrimary,
-  .btnSecondary {
-    transition: none;
   }
 }
 

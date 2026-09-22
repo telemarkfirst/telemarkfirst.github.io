@@ -330,21 +330,6 @@ assert.equal(
   'the removed scroll progress component must not return',
 );
 
-const CadExercise = require(path.join(root, 'src/components/mechanical/CadExercise.tsx')).default;
-renders(
-  'CadExercise',
-  React.createElement(CadExercise, {
-    number: '1.1',
-    title: 'Test exercise',
-    difficulty: 'Starter',
-    minutes: 20,
-    brief: 'A brief that is long enough to be meaningful.',
-    requirements: ['One requirement'],
-    acceptance: ['One acceptance check'],
-    trap: 'The thing this is really testing.',
-  }),
-);
-
 // ── Workbench and lesson framing ────────────────────────────────────────────
 // The catalogue drives both the workbench rail and the lesson embeds, so a
 // tool cannot appear in one and be missing from the other.
@@ -366,11 +351,10 @@ for (const tool of TOOL_CATALOG) {
   seenIds.add(tool.id);
   assert.ok(tool.keywords.length > 10, `${tool.id} has no search keywords`);
   // Every tool must send the student back to the teaching that explains it.
-  // Usually that is a module lesson; the CAD checker's home is the practice
-  // page, which is track material for the same reason.
+  // The workbench links each tool back to a module lesson.
   assert.match(
     tool.lesson.path,
-    /^\/mechanical\/(module-|cad-practice)/,
+    /^\/mechanical\/module-/,
     `${tool.id} does not link to track teaching`,
   );
   const markup = renderToStaticMarkup(tool.render());

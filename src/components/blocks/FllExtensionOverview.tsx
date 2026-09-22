@@ -3,7 +3,7 @@ import Link from '@docusaurus/Link';
 import {FLL_LESSONS, FLL_UNITS} from '@site/src/telemark/fllCurriculum';
 import {useAuth} from '@site/src/telemark/useAuth';
 import {useProgress} from '@site/src/telemark/useProgress';
-import styles from '../TrackOverview.module.css';
+import styles from './BlocksOverview.module.css';
 
 export default function FllExtensionOverview(): React.JSX.Element {
   const {user} = useAuth();

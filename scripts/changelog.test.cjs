@@ -13,10 +13,10 @@ new Function('exports', 'require', 'module', outputText)(mod, require, {exports:
 
 const {CHANGELOG, LATEST_RELEASE, formatChangeDate} = mod;
 
-assert.equal(CHANGELOG.length, 11, 'versions 1.0 through 1.10 are present');
+assert.equal(CHANGELOG.length, 10, 'the ten supplied changelog entries are present');
 assert.deepEqual(
   CHANGELOG.map((entry) => entry.version),
-  ['1.10', '1.9', '1.8', '1.7', '1.6', '1.5', '1.4', '1.3', '1.2', '1.1', '1.0'],
+  ['1.10', '1.9', '1.8', '1.7', '1.6', '1.5', '1.4', '1.2', '1.1', '1.0'],
   'versions count down from the current release',
 );
 assert.equal(LATEST_RELEASE, CHANGELOG[0]);
@@ -33,13 +33,17 @@ dates.forEach((date) => {
 CHANGELOG.forEach((entry) => {
   assert.ok(entry.title.length > 4, `version ${entry.version} has a title`);
   assert.ok(entry.body.length > 20, `version ${entry.version} has a summary`);
+  assert.ok(entry.body.split(/\s+/).length <= 25, `version ${entry.version} summary stays brief`);
   assert.ok(entry.additions.length > 0, `version ${entry.version} lists additions`);
   assert.ok(entry.additions.every((addition) => addition.length > 15));
   assert.ok(
     ['curriculum', 'simulator', 'tools', 'site'].includes(entry.kind),
     `version ${entry.version} has a known kind`,
   );
-  if (entry.href) assert.ok(entry.href.startsWith('/'), `${entry.title} links within the site`);
+  if (entry.href) {
+    assert.ok(entry.href.startsWith('/'), `${entry.title} links within the site`);
+    assert.ok(entry.actionLabel, `${entry.title} has a specific link label`);
+  }
 });
 
 const releaseCopy = CHANGELOG
@@ -53,12 +57,12 @@ assert.doesNotMatch(
 
 assert.deepEqual(
   [...CHANGELOG].reverse().slice(0, 3).map((entry) => entry.title),
-  ['Mechanical curriculum', 'Sharp AI in every lesson', 'An interactive gallery'],
-  'the first three releases follow deployed history',
+  ['Mechanical Lessons', 'AI Chatbot Integration', 'Unit Coding Challenges'],
+  'the first three supplied releases remain in order',
 );
 
-assert.equal(LATEST_RELEASE.title, 'Test the full DECODE robot');
-assert.ok(LATEST_RELEASE.body.includes('DECODE field'));
+assert.equal(LATEST_RELEASE.title, 'Full Decode Field');
+assert.ok(LATEST_RELEASE.body.includes('fully animated team robot and field'));
 assert.ok(LATEST_RELEASE.additions.some((item) => item.includes('intake stages')));
 assert.ok(LATEST_RELEASE.additions.some((item) => item.includes('trigger servo')));
 assert.ok(LATEST_RELEASE.additions.some((item) => item.includes('reorder their tabs')));
@@ -111,6 +115,10 @@ assert.doesNotMatch(cardCss, /object-fit:\s*cover/, 'release artwork is never cr
 const changelogPage = fs.readFileSync(path.join(root, 'src/pages/changelog.tsx'), 'utf8');
 assert.equal((changelogPage.match(/<h1/g) || []).length, 1);
 assert.match(changelogPage, />Changelog<\/h1>/);
+assert.match(changelogPage, /<h2 className=\{styles\.entryTitle\}>/);
+assert.match(changelogPage, /\{entry\.version\}: \{entry\.title\}/);
+assert.match(changelogPage, /<p className=\{styles\.body\}>\{entry\.body\}<\/p>/);
+assert.doesNotMatch(changelogPage, /entry\.(?:kind|date|additions|href|actionLabel)/);
 assert.doesNotMatch(changelogPage, /What Telemark added|Only additions are listed/);
 
 console.log('Changelog and release-card tests passed');

@@ -40,7 +40,7 @@
   font-family: var(--telemark-font-display);
   font-size: clamp(52px, 6.25vw, 92px);
   font-weight: var(--tm-weight-display);
-  letter-spacing: -0.04em;
+  letter-spacing: -0.035em;
   line-height: 0.98;
   text-wrap: pretty;
 }
@@ -59,7 +59,7 @@
 }
 
 .heroSub {
-  max-width: 640px;
+  max-width: 610px;
   margin: 0 0 2rem;
   color: var(--home-muted);
   font-size: var(--tm-fs-lg);
@@ -69,8 +69,8 @@
 }
 
 .heroActions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 13.5rem));
   align-items: center;
   justify-content: flex-start;
   gap: 0.9rem;
@@ -78,8 +78,11 @@
 
 .btnPrimary,
 .btnTrackAlt {
-  display: inline-block;
-  padding: 16px 38px;
+  display: inline-flex;
+  min-height: 54px;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 24px;
   border-radius: 6px;
   cursor: pointer;
   font-family: var(--telemark-font-display);
@@ -92,21 +95,21 @@
 }
 
 .btnPrimary {
-  border: 1px solid var(--home-blue-strong);
-  background: var(--home-blue-strong);
-  color: var(--tm-text-on-accent) !important;
+  border: 1px solid var(--tm-blue-a32);
+  background: var(--tm-blue-a10);
+  color: var(--home-blue-strong) !important;
 }
 
 .btnPrimary:hover {
   border-color: var(--home-blue);
-  background: var(--home-blue);
-  color: var(--tm-text-on-accent) !important;
+  background: var(--tm-blue-a10);
+  color: var(--home-blue) !important;
   text-decoration: none;
 }
 
 .btnTrackAlt {
-  border: 1px solid var(--home-aqua);
-  background: transparent;
+  border: 1px solid var(--tm-accent-a35);
+  background: var(--tm-accent-a08);
   color: var(--home-aqua) !important;
 }
 
@@ -128,6 +131,7 @@
   width: 100%;
   margin: 0;
   overflow: hidden;
+  border: 1px solid var(--tm-border-hair);
   border-radius: 6px;
   background: var(--tm-surface-1);
 }
@@ -177,6 +181,7 @@
   .heroActions {
     justify-content: flex-start;
   }
+
 }
 
 @media (max-width: 620px) {
@@ -196,12 +201,13 @@
   }
 
   .heroActions {
+    grid-template-columns: 1fr;
     width: 100%;
   }
 
   .btnPrimary,
   .btnTrackAlt {
-    width: min(100%, 320px);
+    width: min(100%, 360px);
     text-align: center;
   }
 }
@@ -245,7 +251,7 @@
   }
 
   .heroActions {
-    flex-direction: row;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.6rem;
   }
 
@@ -254,6 +260,12 @@
     padding-right: 1.1rem;
     padding-left: 1.1rem;
     font-size: var(--tm-fs-sm);
+  }
+}
+
+@media (max-width: 520px) and (max-height: 700px) {
+  .heroActions {
+    grid-template-columns: 1fr;
   }
 }
 

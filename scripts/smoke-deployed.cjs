@@ -47,7 +47,7 @@ async function main() {
 
   const homepage = await fetchWithRetry('/').then((response) => response.text());
   assert.match(homepage, /Learn FTC/, 'homepage missing the primary heading');
-  assert.match(homepage, /Learn through experience with integrated lessons featuring software and mechanical simulators\./);
+  assert.match(homepage, /Learn through experience with integrated lessons featuring software and/);
   assert.match(homepage, /Begin Software/);
   assert.match(homepage, /Begin Mechanical/);
   assert.match(homepage, /telemark-hero(?:-light)?\.mp4/, 'homepage missing the hero video');

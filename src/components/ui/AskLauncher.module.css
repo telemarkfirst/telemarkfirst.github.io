@@ -47,9 +47,19 @@
   }
 
   .launcher {
-    min-width: 52px;
+    right: var(--tm-sp-3);
+    bottom: calc(var(--tm-sp-3) + env(safe-area-inset-bottom));
+    width: 48px;
+    min-width: 48px;
+    min-height: 48px;
     justify-content: center;
-    padding: var(--tm-sp-3);
+    padding: 10px;
+  }
+
+  .dock {
+    right: var(--tm-sp-3);
+    bottom: calc(var(--tm-sp-3) + 60px + env(safe-area-inset-bottom));
+    width: calc(100vw - 2 * var(--tm-sp-3));
   }
 }
 
