@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkcake_recipes=globalThis.webpackChunkcake_recipes||[]).push([[5802],{43085(e,s,c){c.r(s),c.d(s,{default:()=>u});c(96540);var a=c(56347),r=c(86025),t=c(74848);function u(){return(0,t.jsx)(a.rd,{to:(0,r.Ay)("/docs/unit-00/classes-and-objects")})}}}]);
