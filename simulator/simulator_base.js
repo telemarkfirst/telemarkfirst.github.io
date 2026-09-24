@@ -906,28 +906,36 @@
     /* ── Scene Controls ── */
     .sim-scene-reset-controls {
       position: absolute;
-      top: 8px;
-      right: 8px;
+      top: 10px;
+      right: 10px;
       z-index: 5;
       display: flex;
-      gap: 7px;
+      gap: 2px;
+      padding: 3px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(19, 19, 26, 0.88);
     }
     .sim-scene-reset-btn {
+      min-height: 32px;
       padding: 6px 12px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: rgba(19, 19, 26, 0.85);
-      color: var(--text-primary);
+      border: 0;
+      border-radius: 5px;
+      background: transparent;
+      color: var(--text-secondary);
       font-family: var(--font-ui);
       font-size: 0.8rem;
       font-weight: 600;
       cursor: pointer;
-      transition: 0.15s;
+      transition: color 0.15s, background 0.15s;
     }
     .sim-scene-reset-btn:hover {
-      background: rgba(40, 40, 60, 0.9);
-      border-color: var(--active);
+      background: rgba(34, 211, 238, 0.1);
       color: var(--active);
+    }
+    .sim-scene-reset-btn:focus-visible {
+      outline: 2px solid var(--active);
+      outline-offset: 1px;
     }
 
     /* ── Reset Confirmation ── */
@@ -954,18 +962,6 @@
       color: var(--text-primary);
       box-shadow: 0 24px 70px rgba(0, 0, 0, 0.65);
       font-family: var(--font-ui);
-    }
-    .sim-reset-dialog-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 36px;
-      height: 36px;
-      margin-bottom: 14px;
-      border-radius: 9px;
-      background: rgba(255, 181, 71, 0.12);
-      color: var(--warn);
-      font-size: 1rem;
     }
     .sim-reset-dialog h2 {
       margin: 0 0 8px;
@@ -1540,16 +1536,14 @@
       color: var(--text-primary);
       filter: none;
     }
-    :root[data-theme="light"] .sim-scene-reset-btn,
-    :root[data-telemark-theme="light"] .sim-scene-reset-btn {
+    :root[data-theme="light"] .sim-scene-reset-controls,
+    :root[data-telemark-theme="light"] .sim-scene-reset-controls {
       background: rgba(255, 255, 255, 0.92);
       border-color: var(--border);
-      color: var(--text-primary);
     }
     :root[data-theme="light"] .sim-scene-reset-btn:hover,
     :root[data-telemark-theme="light"] .sim-scene-reset-btn:hover {
-      background: #ffffff;
-      border-color: var(--active);
+      background: rgba(12, 126, 145, 0.08);
       color: var(--active);
     }
     :root[data-theme="light"] .sim-reset-dialog,
@@ -1813,7 +1807,7 @@
       className: "sim-scene-reset-btn",
       id: "sim-code-reset-btn",
     });
-    codeResetBtn.innerHTML = '<i class="fa-solid fa-rotate-left"></i> Reset code';
+    codeResetBtn.textContent = "Reset code";
     resetControls.appendChild(codeResetBtn);
     sceneContainer.appendChild(resetControls);
     rightPanel.appendChild(sceneContainer);
@@ -1835,7 +1829,6 @@
     resetDialog.setAttribute("aria-labelledby", "sim-reset-dialog-title");
     resetDialog.setAttribute("aria-describedby", "sim-reset-dialog-description");
     resetDialog.innerHTML = `
-      <span class="sim-reset-dialog-icon" aria-hidden="true"><i class="fa-solid fa-rotate-left"></i></span>
       <h2 id="sim-reset-dialog-title">Restore starter code?</h2>
       <p id="sim-reset-dialog-description">This will stop the simulator and replace your current code with the lesson's original starter code.</p>
       <div class="sim-reset-dialog-actions">
@@ -4792,9 +4785,9 @@
     const reqList = document.getElementById("sim-requirements-list");
     const banner = document.getElementById("sim-success-banner");
 
-    if (headerTitle) headerTitle.textContent = config.title || "Simulator Challenge";
+    if (headerTitle) headerTitle.textContent = config.title || "Challenge";
     if (headerSub) headerSub.textContent = config.scenario || config.description || "";
-    if (titleText) titleText.innerHTML = '<i class="fa-solid fa-trophy" style="margin-right:4px"></i> ' + escHTML(config.title || "Simulator Challenge");
+    if (titleText) titleText.innerHTML = '<i class="fa-solid fa-trophy" style="margin-right:4px"></i> ' + escHTML(config.title || "Challenge");
     if (desc) desc.innerHTML = config.scenario || config.description || "";
     if (banner) {
       banner.classList.remove("visible");
