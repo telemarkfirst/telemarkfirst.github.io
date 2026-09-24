@@ -9,15 +9,11 @@ import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
 
 # Lesson 5.5: Fillet, Chamfer, Shell, Draft, Rib, and Hole
 
----
-
 ## Technical Context
 
 The features in Lesson 5.4 create material. These six modify what already exists. They are applied to edges and faces rather than sketched, which makes them fast to add and easy to add carelessly.
 
 Every one of them exists for a physical reason. Knowing the reason tells you the size to use.
-
----
 
 ## Fillet
 
@@ -37,8 +33,6 @@ Rules of thumb for FTC parts:
 Add fillets near the end of the feature list. Fillets applied early get copied by patterns, break when the faces beneath them change, and are the most common cause of a feature list that fails on a small edit.
 :::
 
----
-
 ## Chamfer
 
 A **chamfer** cuts an angled flat instead of a round. Prefer it over a fillet when the edge needs to guide something into place.
@@ -48,8 +42,6 @@ A **chamfer** cuts an angled flat instead of a round. Prefer it over a fillet wh
 - A chamfer on a 3D print's bottom edge counteracts elephant's foot
 
 Chamfers are also easier to machine than fillets on a manual mill, which matters if the part is being made in the shop rather than printed.
-
----
 
 ## Shell
 
@@ -65,8 +57,6 @@ The wall thickness is a manufacturing decision, not an aesthetic one:
 
 Shell fails when the wall thickness is larger than the smallest internal radius. If a shell will not compute, look for a tight corner before blaming the feature.
 
----
-
 ## Draft
 
 **Draft** angles a face away from vertical so a part can leave a mould, or so a print's overhang is printable.
@@ -78,8 +68,6 @@ FTC teams meet draft in two places, and mostly the second:
 
 Drafting a wall to 45° instead of 90° often turns an unprintable feature into one that prints unsupported, which is faster and comes out cleaner.
 
----
-
 ## Rib
 
 A **rib** adds a thin supporting web from a sketched line, without you having to model the web as a solid.
@@ -87,8 +75,6 @@ A **rib** adds a thin supporting web from a sketched line, without you having to
 Ribs are the efficient answer to a bracket that flexes. Adding material to the whole part adds mass everywhere; a rib adds stiffness exactly along the line where the part is bending. A tall thin rib resists bending far better than the same mass spread flat, because stiffness grows with the cube of depth in the bending direction.
 
 Put ribs where the part bends, running along the direction of the load, and fillet where they meet the wall.
-
----
 
 ## Hole
 
@@ -108,9 +94,7 @@ The mistake that costs a build day: a **3 mm hole for an M3 screw**. An M3 screw
 An extruded circle records only a diameter. A hole feature records the intent, shows in the drawing correctly, and can be changed from clearance to tapped in one edit. Every hole on a part someone else has to manufacture should be a hole feature.
 :::
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. A `__________` on an internal corner reduces the stress concentration that causes brackets to crack.
 2. Hollowing a solid to a set wall thickness while removing chosen faces is done with `__________`.
@@ -128,8 +112,6 @@ An extruded circle records only a diameter. A hole feature records the intent, s
 5. **3.2** (3.2 to 3.4 is fine)
 
 </details>
-
----
 
 ## Exercise
 

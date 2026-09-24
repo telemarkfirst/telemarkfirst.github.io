@@ -11,8 +11,6 @@ import {MASTERY_QUESTIONS} from '@site/src/telemark/mechanicalQuizzes';
 
 # Module 13 Mastery Quiz: Proven Mechanisms and Why They Work
 
----
-
 ## I. Conceptual Questions
 
 **1. The compliance trade:** A team's rigid claw works on the bench and misses constantly on the field. Explain what a compliant intake changes about the problem, in terms of grip force.
@@ -26,8 +24,6 @@ A compliant intake makes normal force a function of deformation, roughly N = kx.
 
 </details>
 
----
-
 **2. Paying for lift speed:** A three stage cascading lift extends three times as far per spool rotation as a single stage. Say what that costs and where it shows up as a failure.
 
 <details>
@@ -38,8 +34,6 @@ Work is conserved, so tripling the extension per rotation triples the force in t
 It fails at the cable and the spool rather than in the slides: the cable itself, the point where it is terminated, and the spool mounting are all carrying three times what a naive payload calculation suggests. Teams size the slides correctly and then break the 2 mm cable.
 
 </details>
-
----
 
 **3. Why a parallelogram is a guarantee:** State what a parallelogram four-bar guarantees, and what would break the guarantee.
 
@@ -52,8 +46,6 @@ It breaks if the opposite members are not equal in length, or if the linkage rea
 
 </details>
 
----
-
 **4. The silent linkage failure:** Compare how a physical four-bar and a virtual four-bar fail, and say which is more dangerous in a match.
 
 <details>
@@ -64,8 +56,6 @@ A physical four-bar degrades visibly and gradually: bent members and worn pivots
 A virtual four-bar fails when the belt skips a tooth. The end effector is then wrong by that tooth for the rest of the match, the error is permanent until someone re-indexes it, and nothing on the robot reports it. That silence is what makes it more dangerous, and it is why belt tension and wrap angle are not optional details.
 
 </details>
-
----
 
 **5. Why dead wheels work:** Explain why a dead wheel measures position better than a drive wheel, and give the general principle.
 
@@ -79,8 +69,6 @@ A dead wheel carries almost no load and transmits no torque, so it does not slip
 The general principle is that odometry works by decoupling measurement from actuation. Any time the same element both acts and measures, the measurement inherits every error of the actuator.
 
 </details>
-
----
 
 ## II. Read the Design
 
@@ -121,8 +109,6 @@ that is actually under your control.
 ```
 
 </details>
-
----
 
 ## III. Scored Check
 

@@ -10,13 +10,9 @@ import Unit2Simulator from '@site/src/components/Unit2Simulator';
 
 # Lesson 2.1: Getting Your OpModes to Show Up with @TeleOp and @Autonomous
 
----
-
 ## Technical Context
 
 Sometimes valid Java classes fail to appear on the Driver Station menu. This is often due to incorrect annotation. In a competition environment, precise registration ensures the drive team can distinguish between driver-controlled programs and sensor-dependent autonomous routines, preventing the accidental execution of the wrong logic.
-
----
 
 ## What Are Annotations?
 
@@ -25,8 +21,6 @@ Annotations in the FTC SDK are metadata tags that start with the `@` symbol. Whe
 Because `LinearOpMode` extends `OpMode`, both TeleOp and Autonomous classes are still discovered through this same registration system.
 
 Using parameters like `name` and `group` within the annotation provides human-readable labels and organized folders for the drivers. Adding `@Disabled` does **not** hide the class from the Java compiler; the code is still compiled. It tells the FTC SDK not to make that OpMode available in the Driver Station's selectable list. Remove or comment out `@Disabled` when the OpMode is ready to run, as shown in the [official FTC sample](https://github.com/FIRST-Tech-Challenge/FtcRobotController/blob/master/FtcRobotController/src/main/java/org/firstinspires/ftc/robotcontroller/external/samples/RobotAutoDriveByTime_Linear.java).
-
----
 
 ## Annotated Code
 
@@ -54,8 +48,6 @@ public class ManualControl extends OpMode {
 }
 ```
 
----
-
 ## Practice
 
 1. To register a program for the 30-second pre-programmed phase, the class must use the `__________` annotation.
@@ -71,9 +63,7 @@ public class ManualControl extends OpMode {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Your team has a dedicated program for testing a new intake mechanism. Register this class as an Autonomous program named `"Intake_Test"` so it appears in the correct folder on the Driver Station.
 

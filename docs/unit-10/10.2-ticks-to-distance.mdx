@@ -10,15 +10,11 @@ import Unit10Simulator from '@site/src/components/Unit10Simulator';
 
 # Lesson 10.2: Calculating Distances based on Ticks Per Revolution Data
 
----
-
 ## From Raw Numbers to Real Distances
 
 Raw ticks are useful for monitoring, but you cannot tell your robot to "drive 24 inches" using ticks alone without a conversion. This lesson covers exactly how to build that conversion so your autonomous code talks in real-world units rather than abstract encoder counts.
 
 The math only requires two pieces of information: how many ticks your motor produces per full output shaft revolution, and how far the robot travels per revolution of that shaft.
-
----
 
 ## The Conversion Formula Explained
 
@@ -32,8 +28,6 @@ distance   = rotations * (Math.PI * wheelDiameter)
 The SDK stores the configured motor resolution in `motor.getMotorType().getTicksPerRev()`. That is useful when code intentionally follows the Robot Controller motor configuration. For an autonomous distance routine, it is also common to declare a named `TICKS_PER_REV` constant beside the wheel diameter so every conversion input is visible and reviewable. If the motor or gearbox changes, update the Robot Controller configuration and this constant together.
 
 One subtle but important point: `getCurrentPosition()` returns an `int`, but `ticksPerRev` should be stored as a `double`. If you divide an `int` by an `int` in Java, you get integer division. Java discards the remainder, and you lose precision. Storing one of the values as a `double` promotes the entire calculation to floating point automatically.
-
----
 
 ## Annotated Code
 
@@ -74,9 +68,7 @@ public class TicksToDistanceDemo extends OpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. To find how far a wheel has traveled, you must multiply the number of rotations by the wheel's `__________`.
 2. A readable autonomous conversion stores motor resolution in a named `__________` constant.
@@ -91,9 +83,7 @@ public class TicksToDistanceDemo extends OpMode {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Use the simulator below to complete the winch conversion code. Fill in the missing lines so raw encoder ticks become motor rotations and cable length in inches.
 

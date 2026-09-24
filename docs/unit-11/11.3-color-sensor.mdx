@@ -10,15 +10,11 @@ import Unit11Simulator from '@site/src/components/Unit11Simulator';
 
 # Lesson 11.3: Sampling Alliance Colors with the REV Color Sensor
 
----
-
 ## The Challenge of Color Detection Under Field Lighting
 
 RGB color sensing sounds straightforward until you run it at a real competition venue. Stadium lighting varies between arenas, and shadow from the robot itself or from game elements can shift the raw channel values by a significant margin between one match and the next. A threshold that worked in your school gymnasium may completely fail under the bright LEDs of a competition field.
 
 A useful first heuristic is to compare relative color channels instead of matching one exact raw value. A red game element may produce a higher `red()` reading than `blue()` or `green()`, but that relationship can change with sensor distance, ambient light, surface finish, LED intensity, and the sensor's spectral response. Competition code should log samples, require a minimum brightness or channel margin, and test an `UNKNOWN` region instead of assuming the largest channel is always correct.
-
----
 
 ## ColorSensor in the SDK
 
@@ -27,8 +23,6 @@ The `ColorSensor` class provides three primary methods for reading individual co
 The sensor operates using an internal white LED that illuminates the target surface. The photodetector then measures how much of each wavelength the surface reflects back. This means the proximity of the sensor to the object matters for consistent readings. The REV Color Sensor works best when held a few millimeters to a few centimeters from the target. Mounting it at a fixed, known distance from the scoring area or intake opening produces far more repeatable results than a sensor that can wobble or shift position.
 
 A combined ARGB value is also accessible through `argb()`, which packs all four channels into a single `int`. For most FTC use cases, working with the individual channel methods is cleaner and more readable than unpacking a packed integer.
-
----
 
 ## Annotated Code
 
@@ -79,9 +73,7 @@ public class ColorSensorDemo extends OpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. To read the intensity of the blue light channel from a `ColorSensor`, call `colorSensor.__________()`.
 2. The individual channel methods (`red()`, `green()`, `blue()`) each return an `__________` in the range of 0 to 255.
@@ -96,9 +88,7 @@ public class ColorSensorDemo extends OpMode {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Use the simulator below to complete the alliance color detector. The editor starts with incomplete starter code, so fill in the color-channel reads and comparison logic before sampling the tiles.
 

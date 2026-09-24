@@ -6,22 +6,18 @@ import { useAuth } from '../telemark/useAuth';
 import { signInWithGoogle } from '../telemark/googleAuth';
 import styles from './login.module.css';
 import {useBasePath} from '@site/src/telemark/useBasePath';
-import {useLearnerProfile} from '@site/src/telemark/useLearnerProfile';
 
 export default function LoginPage(): React.JSX.Element {
   const { user, loading } = useAuth();
-  const {status: profileStatus} = useLearnerProfile();
   const [error, setError] = useState<string | null>(null);
   const history           = useHistory();
   const basePath = useBasePath();
 
-  // A new account stays on the general site until the learner chooses a
-  // curriculum destination. That click is what starts personalization.
   useEffect(() => {
-    if (!loading && user && ['absent', 'ready', 'error'].includes(profileStatus)) {
-      history.push(basePath(profileStatus === 'absent' ? '/' : '/dashboard'));
+    if (!loading && user) {
+      history.push(basePath('/dashboard'));
     }
-  }, [user, loading, profileStatus, history, basePath]);
+  }, [user, loading, history, basePath]);
 
   async function handleSignIn() {
     setError(null);
@@ -41,7 +37,7 @@ export default function LoginPage(): React.JSX.Element {
           <div className={styles.logoWrap}>
             <img
               className={styles.logoMark}
-              src={useBaseUrl('img/telemark_logo.png')}
+              src={useBaseUrl('img/Telemark_logo.png')}
               alt=""
               aria-hidden="true"
             />

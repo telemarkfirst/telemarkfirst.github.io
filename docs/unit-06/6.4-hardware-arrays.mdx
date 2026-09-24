@@ -10,13 +10,9 @@ import Unit6Simulator from '@site/src/components/Unit6Simulator';
 
 # Lesson 6.4: Looping Through Hardware Arrays with for-each
 
----
-
 ## Technical Context
 
 Complex robots often utilize four drivetrain motors or multiple identical sensors. Iterating through these components individually is inefficient; using a `for..each` loop with a hardware array allows the programmer to apply a single command (like `BRAKE` behavior) to every component simultaneously, reducing the risk of accidentally missing a port.
-
----
 
 ## Why for-each Loops Scale Better with More Hardware
 
@@ -25,8 +21,6 @@ A Java array is instantiated to hold a fixed number of SDK objects (e.g., `DcMot
 Two things to remember:
 - Arrays in Java are **zero-indexed**: the first element is at index `0`.
 - The variable type declared in the `for..each` header must match the type stored in the array.
-
----
 
 ## Annotated Code
 
@@ -71,9 +65,7 @@ public class ArrayDriveDemo extends OpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. To declare an array of DC motors, the syntax is `DcMotor__________ motors;`.
 2. The index of the first element in any Java array is `__________`.
@@ -88,9 +80,7 @@ public class ArrayDriveDemo extends OpMode {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Use the simulator below to practice looping across an array of motors and applying the same configuration to every element.
 

@@ -16,7 +16,7 @@ const loaded = {exports: {}};
 new Function('exports', 'require', 'module', outputText)(loaded.exports, require, loaded);
 const {CURRICULUM_UNITS, CURRICULUM_LESSONS, CURRICULUM_LESSON_COUNT} = loaded.exports;
 
-assert.equal(CURRICULUM_LESSON_COUNT, 118);
+assert.equal(CURRICULUM_LESSON_COUNT, 104);
 assert.equal(CURRICULUM_LESSONS.length, 104);
 assert.equal(CURRICULUM_UNITS.find((unit) => unit.slug === 'unit-13').lessonCount, 10);
 

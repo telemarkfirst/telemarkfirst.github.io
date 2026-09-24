@@ -12,15 +12,11 @@ import {StrainReliefDiagram} from '@site/src/components/mechanical/EngineeringDi
 
 # Lesson 9.3: Routing, Strain Relief, and Surviving Robot Motion
 
----
-
 ## Technical Context
 
 Robot wiring sees repeated bending, vibration, and impact. Failures tend to develop near connectors, sharp bends, and unsupported transitions between moving and fixed parts.
 
 Plan wire routes before installation so each cable has room to move, adequate support, and accessible connectors.
-
----
 
 ## Where Wires Fail
 
@@ -33,8 +29,6 @@ Three locations account for nearly all of it.
 **Where a cable rubs on an edge.** Any cable in contact with a frame edge, a rotating part, or a moving mechanism wears through its insulation, then shorts.
 
 Every one is preventable at design time and expensive to fix at a competition.
-
----
 
 ## Strain Relief
 
@@ -53,8 +47,6 @@ Practical implementation:
 With the robot assembled, give each cable a gentle tug at several points along its route. Nothing should move at a connector. If a pull anywhere reaches the connector, the strain relief is not doing its job.
 :::
 
----
-
 ## Cables That Cross Moving Joints
 
 Wherever a cable must move with a mechanism, design the movement rather than allowing it.
@@ -71,16 +63,12 @@ Wherever a cable must move with a mechanism, design the movement rather than all
 It may survive the first hundred cycles. It will not survive a season. If a cable goes tight anywhere in the range of motion, add length and re-route before running the mechanism further.
 :::
 
----
-
 ## Protecting From Abrasion
 
 - **Grommets or edge protection** wherever a cable passes through a hole in a plate. A drilled hole in aluminum has a sharp edge that will cut insulation.
 - **Deburr every pass-through**, which is the same habit from Lesson 2.3 applied to wiring.
 - **Sleeving or spiral wrap** on any cable near a moving mechanism.
 - **Keep cables away from rotating parts.** A cable near a spinning shaft eventually gets wrapped around it, which destroys the cable and can damage the mechanism.
-
----
 
 ## Bundling and Serviceability
 
@@ -97,8 +85,6 @@ Practical balance:
 Decide where the wire runs go while the robot is still in CAD, and reserve the space. Wiring squeezed into whatever gaps remain after mechanisms are built is how cables end up crossing joints and rubbing on edges.
 :::
 
----
-
 <LessonPhoto
   drawing={<StrainRelief />}
   alt="A motor cable pulled taut into its connector with no slack or anchor nearby."
@@ -107,9 +93,7 @@ Decide where the wire runs go while the robot is still in CAD, and reserve the s
   framing="Close on the connector with the mechanism at the extreme of its travel, enough context to show there is no strain relief."
 />
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. A small amount of slack left between the cable anchor and the connector is called a `__________` loop.
 2. Where a cable passes through a hole in a plate, it should be protected by a `__________` or a deburred and radiused edge.
@@ -123,8 +107,6 @@ Decide where the wire runs go while the robot is still in CAD, and reserve the s
 3. **radius**
 
 </details>
-
----
 
 ## Exercise
 

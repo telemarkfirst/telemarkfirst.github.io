@@ -29,8 +29,11 @@ assert.equal(new Set(curriculum.FLL_LESSONS.map((lesson) => lesson.id)).size, 15
 
 for (const unit of curriculum.FLL_UNITS) {
   const directory = path.join(root, 'blocks/fll', unit.slug);
-  assert.ok(fs.existsSync(path.join(directory, '_category_.json')));
-  assert.ok(fs.readdirSync(directory).some((file) => file.endsWith('overview.mdx')));
+  const categoryPath = path.join(directory, '_category_.json');
+  assert.ok(fs.existsSync(categoryPath));
+  const category = JSON.parse(fs.readFileSync(categoryPath, 'utf8'));
+  assert.equal(category.link, undefined, `${unit.slug} category header must only toggle lessons`);
+  assert.equal(fs.readdirSync(directory).some((file) => file.endsWith('overview.mdx')), false);
 }
 for (const lesson of curriculum.FLL_LESSONS) {
   const directory = path.join(root, 'blocks/fll', lesson.unitSlug);

@@ -10,15 +10,11 @@ import {IntakeGeometryDiagram} from '@site/src/components/mechanical/Engineering
 
 # Lesson 8.1: Intake Geometry, Compliance, and Element Handoff
 
----
-
 ## Technical Context
 
 Intake reliability has a direct effect on cycle time. A scoring mechanism that becomes 0.5 seconds faster saves 0.5 seconds per cycle, while a missed acquisition can require the driver to reposition and repeat the whole attempt.
 
 Measure acquisition reliability alongside raw intake speed.
-
----
 
 ## Intake Families
 
@@ -31,8 +27,6 @@ Measure acquisition reliability alongside raw intake speed.
 **Sweeper.** A rotating brush or paddle that moves elements across the floor into a channel. Good for collecting many elements, poor for precise single acquisition.
 
 The choice follows from the element's shape and from what the strategy needs, which is the Module 0 process applied to one subsystem.
-
----
 
 ## Compliance Is What Makes Intakes Work
 
@@ -51,8 +45,6 @@ The relevant question is not "how tightly does it grip" but "how far off can the
 Test with the element off center, rotated, against a wall, and partly under another element. The intake that works only when the element is presented perfectly will work in the pit and fail in matches.
 :::
 
----
-
 ## Approach Geometry
 
 Three geometric relationships determine whether an intake works.
@@ -64,8 +56,6 @@ Three geometric relationships determine whether an intake works.
 **Angle of the entry.** A funnel that is too shallow deflects the element sideways instead of guiding it in. A funnel that is too steep stops it. The correction is usually to increase the angle so the wall pushes the element inward and downward at once.
 
 **Clearance above the floor.** Too high and the element passes underneath. Too low and the intake drags on the tile, wears, and can lift the drive wheels. This is a small dimension with a narrow acceptable range, and it is worth making adjustable.
-
----
 
 ## Handoff
 
@@ -82,8 +72,6 @@ Design questions to answer explicitly:
 An element that moves smoothly through the intake and smoothly through the scoring mechanism can still jam at the point where they meet, because that is where the geometry changes. Prototype the handoff specifically, not just the two mechanisms it connects.
 :::
 
----
-
 ## Deployment and the Starting Envelope
 
 Intakes are frequently the reason a robot does not fit its starting envelope, because the geometry that works well tends to extend past the frame.
@@ -92,9 +80,7 @@ Common approaches: a hinged intake that folds up at start and drops on a spring 
 
 Whichever you choose, deployment is a mechanism with its own failure modes. It must deploy reliably every match, and it must not deploy during inspection or before the match starts.
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. Contacting a round game element above its center tends to `__________` it away rather than draw it in.
 2. Nearly every reliable intake includes `__________` so it conforms to the element and tolerates positioning error.
@@ -108,8 +94,6 @@ Whichever you choose, deployment is a mechanism with its own failure modes. It m
 3. **handoff** (transition)
 
 </details>
-
----
 
 ## Exercise
 

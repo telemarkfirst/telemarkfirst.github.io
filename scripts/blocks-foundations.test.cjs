@@ -26,10 +26,12 @@ assert.equal(new Set(curriculum.BLOCKS_LESSONS.map((lesson) => lesson.id)).size,
 
 for (const unit of curriculum.BLOCKS_UNITS) {
   const unitDirectory = path.join(root, 'blocks', unit.slug);
-  assert.ok(fs.existsSync(path.join(unitDirectory, '_category_.json')), `${unit.slug} has no category`);
+  const categoryPath = path.join(unitDirectory, '_category_.json');
+  assert.ok(fs.existsSync(categoryPath), `${unit.slug} has no category`);
+  const category = JSON.parse(fs.readFileSync(categoryPath, 'utf8'));
+  assert.equal(category.link, undefined, `${unit.slug} category header must only toggle lessons`);
   const overview = fs.readdirSync(unitDirectory).find((file) => file.endsWith('overview.mdx'));
-  assert.ok(overview, `${unit.slug} has no overview`);
-  assert.match(fs.readFileSync(path.join(unitDirectory, overview), 'utf8'), new RegExp(`unitSlug="${unit.slug}"`));
+  assert.equal(overview, undefined, `${unit.slug} should not have an overview page`);
 }
 
 for (const lesson of curriculum.BLOCKS_LESSONS) {

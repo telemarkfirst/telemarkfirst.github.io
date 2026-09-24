@@ -11,13 +11,9 @@ import GearRatioCalculator from '@site/src/components/mechanical/GearRatioCalcul
 
 # Lesson 6.2: Calculating Gear Ratios Across Multiple Stages
 
----
-
 ## Technical Context
 
 A motor produces one combination of speed and torque. A gear ratio trades one for the other. Every mechanism on the robot is an answer to the question "how much of that trade do I need?"
-
----
 
 ## The Basic Relationship
 
@@ -33,8 +29,6 @@ A 12 tooth gear driving a 60 tooth gear is a 5:1 reduction. The output turns at 
 
 If the driven gear is smaller than the driving gear, the ratio is less than 1 and you have an overdrive: faster output, less torque. Correct for a flywheel, almost never correct for a drivetrain or an arm.
 
----
-
 ## Multiple Stages Multiply
 
 Reductions in series multiply:
@@ -44,8 +38,6 @@ total ratio = (driven1/driving1) * (driven2/driving2) * ...
 ```
 
 A 5:1 followed by a 3:1 is 15:1, not 8:1. This is why large reductions are built from several modest stages rather than one enormous gear: a single stage 100:1 reduction would need a gear a hundred times the diameter of its pinion, while three stages of about 4.65:1 each achieve the same in a package that fits on a robot.
-
----
 
 ## Efficiency Compounds
 
@@ -63,8 +55,6 @@ This is why deep reductions built from many stages deliver noticeably less than 
 Spur gears in clean, well aligned mesh are commonly estimated near 95% per stage. Misalignment, tight mesh, debris, and poor lubrication all reduce it, sometimes substantially. Treat the number as a planning estimate, and treat a mechanism that is much slower than predicted as a sign that real efficiency is worse than assumed.
 :::
 
----
-
 ## Choosing a Ratio
 
 Work backward from the requirement.
@@ -80,8 +70,6 @@ Steps 3 and 4 are the ones teams skip. A ratio that supplies plenty of torque an
 Every additional unit of reduction slows the mechanism proportionally. A safety factor of 2 is prudent; a safety factor of 6, chosen because bigger felt safer, produces a mechanism that cannot complete its cycle in time.
 :::
 
----
-
 ## Try It
 
 <LessonTool
@@ -93,8 +81,6 @@ Every additional unit of reduction slows the mechanism proportionally. A safety 
   <GearRatioCalculator />
 </LessonTool>
 
----
-
 ## Practical Gear Notes
 
 **Gears must share a module or pitch to mesh.** Metric gears are specified by module; imperial gears by diametral pitch. A module 1 gear will not mesh with a 32 pitch gear regardless of tooth count.
@@ -105,17 +91,13 @@ Every additional unit of reduction slows the mechanism proportionally. A safety 
 
 **Backlash exists.** Some free play between meshing teeth is necessary; too little causes binding. Lesson 6.4 covers what backlash means for control.
 
----
-
 :::info Connects to the software track
 The ratio you choose here is the number the software team divides by to turn encoder ticks into inches. Get it wrong in either place and the robot drives the wrong distance.
 
 See [Lesson 10.2: Converting Encoder Ticks to Distance](/docs/unit-10/ticks-to-distance).
 :::
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. The gear ratio of a single pair is the driven tooth count divided by the `__________` tooth count.
 2. Reductions in series `__________` rather than add.
@@ -129,8 +111,6 @@ See [Lesson 10.2: Converting Encoder Ticks to Distance](/docs/unit-10/ticks-to-d
 3. **module**
 
 </details>
-
----
 
 ## Exercise
 

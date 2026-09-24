@@ -10,8 +10,6 @@ import Unit4Simulator from '@site/src/components/Unit4Simulator';
 
 # Lesson 4.5: Build a Complete Arcade Drive
 
----
-
 ## Technical Context
 
 An **arcade drive** controls a differential drivetrain with one forward command and one turn command. The program mixes those two commands into separate left and right motor powers:
@@ -22,8 +20,6 @@ right power = forward - turn
 ```
 
 Forward input raises both sides together. Turn input raises one side while lowering the other. Unlike sensitivity shaping, this mixing step is what actually makes the robot steer.
-
----
 
 ## How to Build an Arcade Drive That Feels Good
 
@@ -38,8 +34,6 @@ A competition-ready arcade drive combines every Unit 4 input technique in a deli
 7. Command the motors and report the final values.
 
 The press edge requires the current and previous button values. `gamepad1.a && !previousA` is true for only the first loop after A is pressed. At the end of the loop, save `gamepad1.a` into `previousA` for the next comparison.
-
----
 
 ## Annotated Code
 
@@ -109,9 +103,7 @@ public class ArcadeDrive extends OpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. Arcade drive calculates left power with `forward ______ turn` and right power with `forward ______ turn`.
 2. A button toggle must compare the current button value with the `__________` value so it changes only once per press.
@@ -126,11 +118,9 @@ public class ArcadeDrive extends OpMode {
 
 </details>
 
----
-
 ## Simulator Practice
 
-**Robot Scenario:** Finish the two-motor arcade drive. Apply deadzones, toggle precision mode only on the A-button press edge, mix forward and turn into separate left and right powers, limit both with the right trigger, and send the final values to the motors and telemetry.
+**Task:** Finish the two-motor arcade drive. Apply deadzones, toggle precision mode only on the A-button press edge, mix forward and turn into separate left and right powers, limit both with the right trigger, and send the final values to the motors and telemetry.
 
 <SimulatorRunGuide />
 

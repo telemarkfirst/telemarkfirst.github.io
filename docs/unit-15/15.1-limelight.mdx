@@ -10,15 +10,11 @@ import Unit15Simulator from '@site/src/components/Unit15Simulator';
 
 # Lesson 15.1: Tuning Vision Pipelines on the Limelight 3A Interface
 
----
-
 ## Why a Dedicated Vision Coprocessor Changes the Architecture
 
 In Unit 14, vision processing ran on the Control Hub itself. The `VisionPortal` delivered frames from the webcam to pipeline code running alongside the Robot Controller's other work. This can work well for tasks such as reading an AprilTag ID or comparing zone saturation values. A computationally heavy pipeline can consume CPU time and affect the timing budget available to other Robot Controller tasks.
 
 The Limelight 3A moves its vision processing onto the camera's own processor and pipeline environment. In an FTC control system, its USB-C communication port connects through the Control Hub's **USB** infrastructure (directly or through a compatible USB hub), not an I2C port. The SDK receives structured results such as target coordinates, classification labels, and AprilTag poses after the Limelight has processed the image. This can reduce vision-processing load on the Control Hub, although the robot code still needs to poll results and coordinate them with motion logic.
-
----
 
 ## Pipeline Slots and pipelineSwitch()
 
@@ -31,8 +27,6 @@ From Java code, you activate a pipeline by calling `limelight.pipelineSwitch(int
 - FTC wiring guide: [Configuring an External Webcam](https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/configuring_external_webcam/configuring-external-webcam.html)
 - FTC SDK hardware API: [Limelight3A Javadocs](https://javadoc.io/doc/org.firstinspires.ftc/Hardware/latest/com/qualcomm/hardware/limelightvision/Limelight3A.html)
 :::
-
----
 
 ## Reading Results: LLResult and Validation
 
@@ -47,8 +41,6 @@ The three primary target fields are:
 - **`getTx()`**: horizontal offset of the target from the Limelight's crosshair in degrees. Negative means the target is to the left, positive means right.
 - **`getTy()`**: vertical offset of the target from the crosshair in degrees.
 - **`getTa()`**: area of the target as a percentage of the total frame. Larger values mean the target is closer.
-
----
 
 ## Annotated Code
 
@@ -124,9 +116,7 @@ public class LimelightDemo extends OpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. To switch the active vision pipeline on the Limelight to slot 2, call `limelight.__________( 2 )`.
 2. The method that retrieves the latest completed frame result from the Limelight is `limelight.__________()`.
@@ -141,9 +131,7 @@ public class LimelightDemo extends OpMode {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 The drive team wants the robot to automatically steer toward a target using Limelight pipeline slot 1. Keep the starter code's joystick search mode when no valid target is visible. Once a valid target is visible, if `Tx` is greater than 3.0 degrees to the right, rotate the drivetrain right at 0.2 power. If `Tx` is less than -3.0 degrees to the left, rotate left at 0.2 power. If the target is within the 3-degree dead band, stop both motors.
 

@@ -80,9 +80,9 @@ animation nodes. Neither command fabricates replacement robot mechanisms.
 ### Adding a mechanical module
 
 1. Add a seed to `MODULE_SEEDS` in `src/telemark/mechanical.ts`.
-2. Create `mechanical/module-NN/` with `_category_.json`, an overview that
-   renders `<UnitOverview unitSlug="module-NN" />`, four lessons, and a mastery
-   quiz.
+2. Create `mechanical/module-NN/` with `_category_.json`, four lessons, and a
+   mastery quiz. Keep the category header link-free so it expands and collapses
+   its lessons.
 3. Run `npm run test:mechanical`, which verifies the data model and the MDX
    files agree, and that every lesson records progress under the right id.
 

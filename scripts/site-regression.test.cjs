@@ -31,8 +31,6 @@ const mechanicalData = read('src/telemark/mechanical.ts');
 const tracks = read('src/telemark/tracks.ts');
 const toolsPage = read('src/pages/simulator.tsx');
 const searchPage = read('src/pages/search.tsx');
-const unitOverview = read('src/components/UnitOverview.tsx');
-const unitOverviewCss = read('src/components/UnitOverview.module.css');
 const useProgress = read('src/telemark/useProgress.ts');
 const progressStore = read('src/telemark/progressStore.ts');
 const progressCloud = read('src/telemark/progressCloud.ts');
@@ -53,6 +51,10 @@ const masterySimulator = read('src/components/MasterySimulator.tsx');
 const masteryChallengeRuntime = read('static/simulator/mastery_challenge.js');
 const masteryMotionRuntime = read('static/simulator/mastery_motion.js');
 const curriculum = read('src/telemark/curriculum.ts');
+const unitStartPaths = new Map(
+  [...curriculum.matchAll(/slug: 'unit-(\d{2})'[\s\S]{0,120}?startPath: '([^']+)'/g)]
+    .map((match) => [Number.parseInt(match[1], 10), match[2]]),
+);
 
 assert.match(
   customCss,
@@ -119,7 +121,7 @@ for (let unit = 2; unit <= 15; unit += 1) {
   );
   const expectedNext = unit === 15
     ? '/dashboard'
-    : `/docs/unit-${String(unit + 1).padStart(2, '0')}`;
+    : unitStartPaths.get(unit + 1);
   assert.ok(
     masteryLesson.includes(`nextUnit="${expectedNext}"`),
     `Unit ${unit} coding challenge must proceed directly to ${expectedNext}`,
@@ -219,7 +221,7 @@ assert.match(deployedSmoke, /cacheKey = `\$\{expectedCommit \|\| Date\.now\(\)\}
 assert.match(config, /title: 'Telemark'/);
 assert.match(config, /label: 'GitHub'/);
 assert.match(config, /favicon: 'img\/telemark\.png'/, 'the existing web icon must remain the favicon');
-assert.match(config, /src: 'img\/telemark_logo\.png'/, 'the transparent logo must be used in the navbar');
+assert.match(config, /src: 'img\/Telemark_logo\.png'/, 'the transparent logo must be used in the navbar');
 assert.match(config, /to: '\/docs\/unit-00\/classes-and-objects'[\s\S]{0,80}label: 'Software'/);
 assert.match(config, /to: '\/mechanical\/module-00\/design-cycle'[\s\S]{0,80}label: 'Mechanical'/);
 assert.equal((config.match(/sidebarItemsGenerator: async/g) || []).length, 2, 'both curricula filter pre-unit sidebar entries');
@@ -235,12 +237,18 @@ assert.equal((curriculum.match(/id: 'unit-\d{2}\/mastery-coding-challenge'/g) ||
 assert.equal((curriculum.match(/id: 'unit-\d{2}\/mastery-quiz'/g) || []).length, 0);
 assert.match(customCss, /\.footer[\s\S]*padding: 0\.85rem 1\.5rem/);
 
-// Light mode must use the same shared surfaces and readable action colours on
-// the exact pages that previously retained hard-coded dark styling.
-assert.doesNotMatch(unitOverviewCss.match(/\.hero\s*\{([^}]+)\}/)?.[1] || '', /background:|box-shadow:|border:/, 'unit introductions use the surrounding document surface');
-assert.match(unitOverviewCss, /\.lessonLabel[\s\S]{0,120}color: var\(--tm-text-strong\)/, 'lesson links retain theme-aware text');
+// Light mode must use the same shared surfaces and readable action colours.
 assert.match(markCompleteCss, /\.unmarkBtn[\s\S]{0,180}border-radius: var\(--tm-r-pill\)/);
-assert.match(dashboardCss, /\.resumeBtn[\s\S]{0,260}color: var\(--tm-text-on-accent\) !important/);
+assert.match(dashboard, /heroStyles\.btnPrimary/);
+assert.match(dashboard, /heroStyles\.btnTrackAlt/);
+assert.match(dashboardCss, /\.lessonRequirementDone[\s\S]{0,100}color: var\(--tm-blue-soft\)/);
+assert.match(dashboard, /visibleUnitIndexes/);
+assert.match(dashboard, /visibleUnitIndexes\.length === 2 \? styles\.unitGridTwo/);
+assert.match(dashboard, /markManyComplete/);
+assert.match(dashboard, /Mark unit done/);
+assert.match(dashboard, /unitProgressTrack/);
+assert.match(dashboard, /aria-expanded=\{expanded\}/);
+assert.doesNotMatch(dashboard, /personalize|learning path/i);
 assert.match(loginCss, /\[data-theme='light'\] \.card\s*\{\s*background: #fff/);
 assert.match(loginCss, /\.googleBtn[\s\S]{0,300}background: #fff;[\s\S]{0,80}color: #111820/);
 assert.match(loginCss, /\[data-theme='light'\] \.privacy\s*\{\s*color: #111820/);
@@ -308,8 +316,6 @@ assert.match(mechanicalData, /MECHANICAL_LESSONS/);
 // Shared lookups must be track-aware, not curriculum-only.
 assert.match(tracks, /trackForUnitSlug/);
 assert.match(tracks, /unitSlug\.startsWith\('module-'\)/);
-assert.match(unitOverview, /getAnyUnitBySlug/, 'UnitOverview must resolve units in either track');
-assert.match(unitOverview, /getAnyLessonsForUnit/);
 assert.match(useProgress, /getAnyLessonsForUnit/, 'progress must complete units in either track');
 // Path handling remains track-aware even though both tracks are open.
 assert.match(accessPolicy, /\(blocks-unit\|fll-unit\|unit\|module\)-/);

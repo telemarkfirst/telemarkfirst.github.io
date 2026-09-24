@@ -11,15 +11,11 @@ import {MotorModesDiagram} from '@site/src/components/DocDiagrams';
 
 # Lesson 10.4: Maintaining Speed Consistency with RUN_USING_ENCODER
 
----
-
 ## The Problem with Voltage-Based Speed Control
 
 Suppose an autonomous segment is tuned with a freshly charged battery, then runs more slowly later as battery voltage and mechanism load change. In `RUN_WITHOUT_ENCODER`, `setPower()` requests open-loop motor effort rather than a measured wheel speed, so a timed drive can cover a different distance as conditions change.
 
 `RUN_USING_ENCODER` reduces this problem by letting the Hub use encoder feedback while commanding motor speed. It can improve consistency across battery levels, but it cannot overcome traction loss, incorrect motor configuration, bad wiring, or a mechanism that is physically overloaded.
-
----
 
 ## What Velocity Control Actually Does
 
@@ -39,8 +35,6 @@ Check that the configured motor type matches the real motor and gearbox. A wrong
 :::
 
 One trade-off worth knowing: `RUN_USING_ENCODER` cannot use `setTargetPosition()`. If you need to move to a specific tick position, you want `RUN_TO_POSITION` from Lesson 10.3. These two modes serve different purposes: velocity consistency and positional targeting.
-
----
 
 ## Annotated Code
 
@@ -85,9 +79,7 @@ public class RunUsingEncoderDemo extends OpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. `RUN_USING_ENCODER` uses internal `__________` logic on the Control Hub to maintain motor speed.
 2. This mode improves drivetrain consistency because the robot travels at a fixed `__________` rather than a fixed voltage.
@@ -102,9 +94,7 @@ public class RunUsingEncoderDemo extends OpMode {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Use the simulator below to complete the Unit 8.2 mecanum drive again, this time with `RUN_USING_ENCODER` configured on all four drive motors. Fill in the missing motor direction and encoder-mode setup, then drive with the gamepad.
 

@@ -11,15 +11,11 @@ import {RunToPositionDiagram} from '@site/src/components/DocDiagrams';
 
 # Lesson 10.3: Automating Targeted Movement with RUN_TO_POSITION
 
----
-
 ## Why You Should Let the Hub Handle the Stopping
 
 A common beginner approach to encoder-based movement looks like this: set a target, run the motor, and write a `while` loop that keeps checking `getCurrentPosition()` until it gets close enough, then set power to zero. This works, but it has a real problem. By the time your code reads the position, evaluates the condition, and sends the stop command, the motor has already traveled past the target. At high speeds this overshoot can be significant.
 
 `RUN_TO_POSITION` improves this by moving the stopping logic off of your code and onto the Hub's motor-control layer. The Hub updates its control loop faster than your OpMode loop, so it can react more smoothly than a hand-written "poll position, then stop" loop. It is still not magic: overshoot and settling error can happen if the mechanism is heavy, underpowered, loose, poorly geared, or commanded with too much power.
-
----
 
 ## The Three-Step Setup You Must Follow in Order
 
@@ -42,8 +38,6 @@ For the exact enum names and SDK method signatures, compare your code against th
 :::tip Mentor note: if RUN_TO_POSITION never moves
 Check the order first. The target should be set before `RUN_TO_POSITION`, then power must be nonzero. Also confirm the encoder cable is plugged in and the target sign matches the direction the motor can physically move.
 :::
-
----
 
 ## Annotated Code
 
@@ -86,9 +80,7 @@ public class RunToPositionDemo extends LinearOpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. Before activating `RUN_TO_POSITION` mode, you must define the destination using the `__________` method.
 2. Once the target is reached, the motor continues to draw current to `__________` its position against external forces.
@@ -103,9 +95,7 @@ public class RunToPositionDemo extends LinearOpMode {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Use the simulator below to complete the autonomous lift sequence. Fill in the missing target, mode, and power commands, then start the OpMode and watch the lift move to 1200 ticks.
 

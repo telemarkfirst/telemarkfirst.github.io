@@ -9,15 +9,11 @@ import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
 
 # Lesson 9.1: The FTC Control System Layout and Port Map
 
----
-
 ## Technical Context
 
 The control system connects the physical robot to the software configuration. A motor plugged into a different port than the code expects can look like a software defect, so both groups need one shared port map.
 
 This lesson covers the physical layout. The software track covers how code addresses it.
-
----
 
 ## The Signal Chain
 
@@ -40,8 +36,6 @@ Driver Station phone or device
 
 When something does not respond, walk the chain from the battery outward. Check power, connectors, ports, and configuration before replacing a component.
 
----
-
 ## Ports and What They Carry
 
 **Motor ports** supply high current and receive the encoder signal on a separate connector. A motor that runs but reports no encoder counts usually has the power connected and the encoder cable not.
@@ -57,8 +51,6 @@ When something does not respond, walk the chain from the battery outward. Check 
 :::warning Confirm the current season's rules for the control system
 Legal components, allowed motor and servo counts, wiring requirements, and battery rules are defined in the game manual and change between seasons. Nothing in this module overrides the manual. Check it before designing a wiring layout.
 :::
-
----
 
 ## Label Everything
 
@@ -79,8 +71,6 @@ The labels support configuration and diagnosis.
 
 Use a label maker or write on heat shrink. Add the labels when you install the wire so both ends are identified before they enter a bundle.
 
----
-
 ## The Port Map Document
 
 Keep one document that lists every port, what is plugged into it, and the configuration name. Post it in the pit and put a copy in the notebook.
@@ -95,8 +85,6 @@ Keep one document that lists every port, what is plugged into it, and the config
 
 Use the document as the source for configuration changes and pit diagnosis instead of relying on one person's memory.
 
----
-
 ## Physical Placement
 
 **Keep the Control Hub accessible.** Ports must be reachable without disassembling the robot, and the status lights must remain visible for diagnosis.
@@ -107,17 +95,13 @@ Use the document as the source for configuration changes and pit diagnosis inste
 
 **Separate power from signal where practical.** High current motor leads running alongside sensor cables can induce noise, particularly on I2C and encoder lines. Where they must cross, cross at right angles rather than running parallel.
 
----
-
 :::info Connects to the software track
 The port map you build here is exactly what the code asks for by name.
 
 See [Lesson 7.1: The hardwareMap Object](/docs/unit-07/hardware-map-object).
 :::
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. Every wire should be labeled at both ends with the name used in the robot `__________`.
 2. A motor that runs but reports no encoder counts usually has the power connected and the `__________` cable not.
@@ -131,8 +115,6 @@ See [Lesson 7.1: The hardwareMap Object](/docs/unit-07/hardware-map-object).
 3. **addresses**
 
 </details>
-
----
 
 ## Exercise
 

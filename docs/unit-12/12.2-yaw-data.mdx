@@ -10,15 +10,11 @@ import Unit12Simulator from '@site/src/components/Unit12Simulator';
 
 # Lesson 12.2: Extracting Real-time Yaw Data using the AngleUnit Class
 
----
-
 ## The Three Rotation Axes
 
 The IMU tracks rotation along three distinct axes. Yaw describes rotation around the vertical axis. This is the robot turning left or right on the field, which is what most navigation code cares about. Pitch describes rotation around the side-to-side axis, meaning the robot tilting forward or backward. Roll describes rotation around the front-to-back axis, meaning the robot leaning left or right. Lesson 12.4 covers pitch and roll for tip detection. This lesson focuses entirely on Yaw.
 
 A critical detail: the IMU measures Yaw as the accumulated rotation from wherever the robot was pointing when `resetYaw()` was last called, or from the orientation at power-on if it was never called. The IMU does not know which direction is "toward the opposing alliance wall." What it knows is how many degrees the robot has rotated since the reference point was established. This relative nature is important to keep in mind when designing autonomous routines.
-
----
 
 ## Reading Yaw with AngleUnit
 
@@ -31,8 +27,6 @@ The SDK handles normalization automatically. If the robot spins multiple full re
 The method exists separately from `getYaw(AngleUnit.DEGREES)` on the angles object instead of as a direct call on the `imu` because `getRobotYawPitchRollAngles()` takes one snapshot of all three angles at the same instant. Calling it once and then reading individual axes from the result is slightly more consistent than calling separate methods multiple times, since the second call might capture a slightly different physical orientation than the first.
 
 Drivers also need a way to establish a fresh field reference after placing the robot or after contact rotates it unexpectedly. Calling `imu.resetYaw()` makes the robot's current direction the new zero heading. Put that call behind an intentional gamepad command, such as `gamepad1.a`, and read the angle snapshot after handling the reset so telemetry immediately shows the new reference.
-
----
 
 ## Annotated Code
 
@@ -86,9 +80,7 @@ public class YawDataDemo extends OpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. The method called on the `IMU` object to retrieve all three rotation axes at once is `imu.__________()`.
 2. To receive the heading as a value normalized between -180 and 180, pass `AngleUnit.__________` to `getYaw()`.
@@ -105,9 +97,7 @@ public class YawDataDemo extends OpMode {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Use the simulator below to complete the heading display and alignment check. The editor starts with incomplete starter code, so fill in IMU initialization, yaw extraction, `isAligned`, and telemetry output before rotating the robot.
 

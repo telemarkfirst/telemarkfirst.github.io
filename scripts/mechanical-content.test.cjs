@@ -16,7 +16,7 @@ const mechanicalRoot = path.join(root, 'mechanical');
  * Verifies that the mechanical track's data model and its MDX files agree.
  *
  * The data model in src/telemark/mechanical.ts drives every navigation
- * surface: the track landing page, unit overviews, the dashboard, and progress
+ * surface: the track landing page, dashboard, and progress
  * tracking. A lesson listed there with no corresponding MDX file produces a
  * link to a 404 that no build step catches, because those links are generated
  * at runtime by React rather than written in markdown.
@@ -73,14 +73,15 @@ for (const module of modules) {
     `module-${module.number} category label does not match the data model title`,
   );
   assert.equal(
-    category.link.id,
-    `module-${module.number}/overview`,
-    `module-${module.number} category link should point at its overview`,
+    category.link,
+    undefined,
+    `module-${module.number} category header should only expand and collapse lessons`,
   );
 
-  assert.ok(
+  assert.equal(
     idsPresent.has('overview'),
-    `module-${module.number} has no overview document`,
+    false,
+    `module-${module.number} should not include an overview document`,
   );
   assert.ok(
     idsPresent.has('mastery-quiz'),
@@ -103,12 +104,10 @@ for (const module of modules) {
   }
 
   // Every lesson body must record progress under the right track id, or the
-  // dashboard and unit overview will never mark it complete.
+  // dashboard will never mark it complete.
   for (const file of files.filter((name) => name.endsWith('.mdx'))) {
     const text = fs.readFileSync(path.join(directory, file), 'utf8');
     const id = idFor(file);
-    if (id === 'overview') continue;
-
     lessonFileCount += 1;
     assert.match(
       text,

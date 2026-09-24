@@ -10,13 +10,9 @@ import Unit6Simulator from '@site/src/components/Unit6Simulator';
 
 # Lesson 6.1: Keeping a LinearOpMode Safe with while(opModeIsActive())
 
----
-
 ## Technical Context
 
 In a `LinearOpMode`, failure to check the status of the Robot Controller (RC) can lead to runaway hardware. If a programmer initiates a loop without a safety check, the robot may continue to execute commands even after the "Stop" button is pressed on the Driver Station, potentially causing mechanical damage or safety violations.
-
----
 
 ## Why opModeIsActive() Is Your Safety Check
 
@@ -25,8 +21,6 @@ The `opModeIsActive()` method is a member of `LinearOpMode` that returns a `bool
 This is in contrast to the standard `OpMode` you have used in previous units. A `LinearOpMode` uses a single `runOpMode()` method where you write all your logic sequentially, wrapped in this safety loop.
 
 Never replace the lifecycle guard with `while (true)`. An unbounded loop ignores the Driver Station stop state and fails the unit coding challenge even if its body happens to work in the simulator. Every repeated `LinearOpMode` action must remain conditional on `opModeIsActive()` or another stop-aware SDK condition.
-
----
 
 ## Annotated Code
 
@@ -54,9 +48,7 @@ public class SafeLoopDemo extends LinearOpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. The `opModeIsActive()` method returns a `__________` data type to determine if the program should continue.
 2. Unlike a standard `OpMode` where the `loop()` method is called automatically, a `LinearOpMode` requires a `__________` loop to maintain execution.
@@ -71,9 +63,7 @@ public class SafeLoopDemo extends LinearOpMode {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Use the simulator below to practice building a safe `LinearOpMode` loop around `opModeIsActive()`.
 

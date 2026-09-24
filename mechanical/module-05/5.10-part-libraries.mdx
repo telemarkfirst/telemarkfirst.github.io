@@ -9,13 +9,9 @@ import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
 
 # Lesson 5.10: Using Vendor Part Libraries and Managing Versions
 
----
-
 ## Technical Context
 
 Before modeling a purchased component, check whether the vendor publishes a CAD file. A verified vendor model saves time and usually represents mounting geometry more accurately than a model rebuilt from a datasheet.
-
----
 
 ## What to Pull From Libraries
 
@@ -34,8 +30,6 @@ The major FTC vendors publish CAD for their catalogs, and several maintain Onsha
 You do not need a detailed Control Hub model. A correctly sized box in the correct location answers the questions you have, which are whether it fits, whether the ports are reachable, and whether a mechanism sweeps through the space where the cables go.
 :::
 
----
-
 ## Insert, Do Not Copy
 
 Most CAD systems let you either **reference** an external part or **copy** it into your document.
@@ -43,8 +37,6 @@ Most CAD systems let you either **reference** an external part or **copy** it in
 Referencing keeps a link to the source, so a fix in the source propagates. Copying makes an independent duplicate.
 
 For vendor parts, referencing is usually right: you are not going to modify a motor, and the link keeps your document small. For a part you intend to modify, such as a bracket you will add holes to, copy it into your own document first so you are not modifying something other people depend on.
-
----
 
 ## Versions, Branches, and Not Losing Work
 
@@ -59,8 +51,6 @@ Onshape and most modern CAD tools track a full history. Use it deliberately.
 :::warning Reference a version, not the tip
 When your assembly references another document, reference a specific published version rather than the latest state. Otherwise someone editing that document changes your assembly without knowing it, and your model breaks for reasons that are not visible in your own edit history.
 :::
-
----
 
 ## Naming and Organization
 
@@ -83,8 +73,6 @@ Parts within the robot document
 
 A two or three letter subsystem prefix makes a long parts list sortable and makes it obvious when a part is in the wrong place.
 
----
-
 ## From CAD to Fabrication
 
 The model has to become parts. Two outputs matter.
@@ -98,9 +86,7 @@ The model has to become parts. Two outputs matter.
 - Vendor part models are published on the individual product pages of the major FTC suppliers.
 :::
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. When your assembly uses a part from another document, you should reference a published `__________` rather than the document's latest state.
 2. A part you intend to modify should be `__________` into your own document rather than referenced.
@@ -114,8 +100,6 @@ The model has to become parts. Two outputs matter.
 3. **drawing**
 
 </details>
-
----
 
 ## Exercise
 

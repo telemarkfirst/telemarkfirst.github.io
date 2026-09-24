@@ -24,9 +24,7 @@ interface Message {
  * theirs binds anyway. The last turns travel with each question so a follow-up
  * that says "it" has something to point at.
  *
- * It also watches which heading is on screen and says so, because a student
- * needs to know it can see what they are looking at before they will trust it
- * with "why is this 3.2 and not 3.0".
+ * The current lesson and heading travel with each question.
  */
 export default function AskPanel(): React.JSX.Element {
   const {user, loading} = useAuth();
@@ -34,7 +32,6 @@ export default function AskPanel(): React.JSX.Element {
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
-  const [here, setHere] = useState<PageContext | null>(null);
   const [chatId, setChatId] = useState(() => newChatId());
   const [history, setHistory] = useState<StoredChat[]>([]);
   const [showHistory, setShowHistory] = useState(false);
@@ -49,6 +46,7 @@ export default function AskPanel(): React.JSX.Element {
   // for this lesson means closing the panel to read a paragraph and reopening
   // it does not silently start again from nothing.
   useEffect(() => {
+    hereTitle.current = currentPage()?.title ?? '';
     const resumable = listChats().find((chat) => chat.path === pathname);
     if (resumable) {
       setMessages(resumable.messages);
@@ -80,25 +78,6 @@ export default function AskPanel(): React.JSX.Element {
   useEffect(() => {
     if (showHistory) setHistory(listChats());
   }, [showHistory]);
-
-  // Tracked while scrolling so the panel can show what it is looking at, not
-  // only use it silently when a question is sent.
-  useEffect(() => {
-    const update = () => {
-      const next = currentPage();
-      hereTitle.current = next?.title ?? '';
-      setHere((previous) =>
-        previous && next
-          && previous.title === next.title
-          && previous.section === next.section
-          ? previous
-          : next,
-      );
-    };
-    update();
-    window.addEventListener('scroll', update, {passive: true});
-    return () => window.removeEventListener('scroll', update);
-  }, [pathname]);
 
   useEffect(() => {
     thread.current?.scrollTo({top: thread.current.scrollHeight});
@@ -194,27 +173,7 @@ export default function AskPanel(): React.JSX.Element {
         >
           {showHistory ? 'Back to chat' : 'Past chats'}
         </button>
-        {messages.length > 0 && !showHistory && (
-          <button
-            type="button"
-            className={styles.toolBtn}
-            onClick={() => {
-              setMessages([]);
-              setChatId(newChatId());
-            }}
-          >
-            New chat
-          </button>
-        )}
       </div>
-
-      {here && !showHistory && (
-        <p className={styles.here}>
-          <span className={styles.hereDot} aria-hidden="true" />
-          Reading {here.title}
-          {here.section ? <> · {here.section}</> : null}
-        </p>
-      )}
 
       {showHistory ? (
         <div className={styles.thread}>
@@ -251,48 +210,41 @@ export default function AskPanel(): React.JSX.Element {
             </div>
           ))}
         </div>
-      ) : (
-      <div className={styles.thread} ref={thread} aria-live="polite">
-        {messages.length === 0 && (
-          <p className={styles.empty}>
-            Ask anything about this lesson. Try &ldquo;explain this part again&rdquo; or
-            &ldquo;why does that number matter&rdquo;.
-          </p>
-        )}
-        {messages.map((message, i) => (
-          <div
-            key={i}
-            className={message.role === 'you' ? styles.fromYou : styles.fromAi}
-          >
-            {message.text === '' ? (
-              <span className={styles.typing} aria-label="Thinking">
-                <span className={styles.typingDot} />
-              </span>
-            ) : (
-              readable(message.text).split('\n').filter(Boolean).map((line, n) => (
-                <p key={n}>{line}</p>
-              ))
-            )}
-            {/*
-              Labelled, not blended in. Everything above this line is held up by
-              a cited section; everything below it is the assistant reasoning
-              past them. A student deciding what to trust needs to see where one
-              stops and the other starts, which is the same rule the public site
-              follows.
-            */}
-            {message.beyond ? (
-              <div className={styles.beyond}>
-                <p className={styles.beyondLabel}>Beyond the curriculum: uncited reasoning</p>
-                {readable(message.beyond).split('\n').filter(Boolean).map((line, n) => (
+      ) : messages.length > 0 ? (
+        <div className={styles.thread} ref={thread} aria-live="polite">
+          {messages.map((message, i) => (
+            <div
+              key={i}
+              className={message.role === 'you' ? styles.fromYou : styles.fromAi}
+            >
+              {message.text === '' ? (
+                <span className={styles.typing} aria-label="Thinking">
+                  <span className={styles.typingDot} />
+                </span>
+              ) : (
+                readable(message.text).split('\n').filter(Boolean).map((line, n) => (
                   <p key={n}>{line}</p>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        ))}
-      </div>
-
-      )}
+                ))
+              )}
+              {/*
+                Labelled, not blended in. Everything above this line is held up by
+                a cited section; everything below it is the assistant reasoning
+                past them. A student deciding what to trust needs to see where one
+                stops and the other starts, which is the same rule the public site
+                follows.
+              */}
+              {message.beyond ? (
+                <div className={styles.beyond}>
+                  <p className={styles.beyondLabel}>Beyond the curriculum: uncited reasoning</p>
+                  {readable(message.beyond).split('\n').filter(Boolean).map((line, n) => (
+                    <p key={n}>{line}</p>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       <div className={styles.row}>
         <input
@@ -316,16 +268,7 @@ export default function AskPanel(): React.JSX.Element {
       </div>
 
       <p className={styles.limit}>
-        It can be wrong. Check anything you are about to cut or buy against the
-        lesson. Past chats are kept on this device only.{' '}
-        <a
-          className={styles.limitLink}
-          href="https://sharpftc.pages.dev"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Sharp AI
-        </a>
+        Sharp AI is an AI and can make mistakes; check important information.
       </p>
     </section>
   );

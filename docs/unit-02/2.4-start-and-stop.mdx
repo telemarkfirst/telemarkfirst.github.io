@@ -10,13 +10,9 @@ import Unit2Simulator from '@site/src/components/Unit2Simulator';
 
 # Lesson 2.4: Using start() and stop() for One-Time Robot Actions
 
----
-
 ## Technical Context
 
 `start()` and `stop()` improve robot reliability by handling transitions. `start()` is often used to reset the `getRuntime()` timer exactly when the match begins, ensuring autonomous timing is accurate. `stop()` acts as a fail-safe, allowing you to force motors to zero power or close files when the match ends, preventing hardware damage or data corruption.
-
----
 
 ## start() and stop() Functions
 
@@ -25,8 +21,6 @@ While `init()` and `loop()` are required, `start()` and `stop()` are **optional*
 `start()` is called once the instant the "Play" button is pressed, making it more precise than `init()` for resetting counters.
 
 `stop()` is called once when the "Stop" button is hit or the match timer expires. This is a reliable way to handle cleanup logic, such as ensuring a high-speed flywheel is commanded to `setPower(0)` before the program terminates.
-
----
 
 ## Annotated Code
 
@@ -82,9 +76,7 @@ public void stopMode(TrcRobot.RunMode prevMode, TrcRobot.RunMode nextMode) {
 
 The important design choice is the boundary: construction belongs to initialization, enabling sensors belongs to `startMode()`, and cleanup belongs to `stopMode()`. Adapt the idea to the SDK callbacks in this lesson rather than copying the team's framework types. Excerpted from [Team 3543 Titan Robotics Club's `FtcTeleOp.java` at a pinned commit](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/TeamCode/src/main/java/teamcode/FtcTeleOp.java) under the [MIT License](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/LICENSE).
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. The `__________` method is called exactly once when the driver presses the "Play" button.
 2. To ensure all motors are deactivated at the end of a match, logic should be placed in the `__________` method.
@@ -99,9 +91,7 @@ The important design choice is the boundary: construction belongs to initializat
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Your team needs to reset the robot's timer at the start of the match and display a "Robot Shutdown" message when the program is stopped.
 

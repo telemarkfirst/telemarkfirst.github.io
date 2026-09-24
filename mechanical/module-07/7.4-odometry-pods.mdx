@@ -9,15 +9,11 @@ import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
 
 # Lesson 7.4: Mounting Odometry Pods for Reliable Localization
 
----
-
 ## Technical Context
 
 Odometry pods are unpowered wheels with encoders that measure how far the robot has actually travelled, rather than how far the drive wheels turned. They exist because drive wheels slip, and a drive encoder counts the slip as distance.
 
 Pod preload, wheel contact, alignment, and encoder mounting all affect the position data used by autonomous code. Check those mechanical conditions when odometry drifts or becomes inconsistent.
-
----
 
 ## Why Dead Wheels Beat Drive Encoders
 
@@ -26,8 +22,6 @@ A drive wheel under load slips, scrubs during turns, and compresses, so its effe
 An odometry pod carries almost no load, does not drive, and is usually a hard narrow wheel that neither compresses nor scrubs much. It measures the ground going by.
 
 The software track covers how the pod readings become a position estimate. This lesson covers the mechanical conditions that estimate depends on.
-
----
 
 ## Constant Ground Contact Is Everything
 
@@ -45,8 +39,6 @@ Getting the preload right:
 Nothing in the data says the wheel left the ground. The encoder simply reports fewer counts, and the software believes the robot travelled less than it did. Every subsequent position is offset, and it looks like a software problem.
 :::
 
----
-
 ## Rigid Mounting in the Measurement Direction
 
 The pod must be free to move vertically, to follow the floor, and rigid in every other direction.
@@ -59,8 +51,6 @@ Practical guidance:
 - Use two fasteners spaced apart, since a single fastener lets the pod rotate
 - Keep the suspension travel purely vertical, using a parallel linkage or a well constrained pivot rather than a bracket that also twists
 - Verify by hand: push the pod fore and aft with the robot on blocks. It should not move measurably
-
----
 
 ## Geometry the Software Depends On
 
@@ -76,8 +66,6 @@ The programmers need three things, and all three are mechanical properties you c
 Write the measured wheel diameter and pod offsets into the notebook and give them to the software team as measured values with units. The most common cause of an autonomous that works on one robot and not on its twin is that these numbers were assumed rather than measured.
 :::
 
----
-
 ## Protection and Serviceability
 
 Pods sit low, near the floor, at the edge of the robot, which is exactly where they get hit.
@@ -86,17 +74,13 @@ Pods sit low, near the floor, at the edge of the robot, which is exactly where t
 - Route the encoder cable so nothing sweeps across it, with a service loop and strain relief, as covered in Module 9
 - Make the pod removable without disassembling the drivetrain, because it will need replacing
 
----
-
 :::info Connects to the software track
 The measured wheel diameter and pod offsets from this lesson are configuration values the path follower depends on.
 
 See [Lesson 15.2: Interfacing with Pedro Pathing](/docs/unit-15/pedro-pathing).
 :::
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. Odometry pods are spring loaded so the wheel maintains constant `__________` contact across field seams and during acceleration.
 2. A pod mounted on a flexible bracket reports the bracket's movement as robot `__________`.
@@ -110,8 +94,6 @@ See [Lesson 15.2: Interfacing with Pedro Pathing](/docs/unit-15/pedro-pathing).
 3. **measured**
 
 </details>
-
----
 
 ## Exercise
 

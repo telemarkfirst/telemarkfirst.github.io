@@ -10,15 +10,11 @@ import Unit11Simulator from '@site/src/components/Unit11Simulator';
 
 # Lesson 11.4: Integration of Time-of-Flight Distance Sensors for Obstacle Detection
 
----
-
 ## How Time-of-Flight Ranging Works
 
 A time-of-flight sensor emits a laser pulse and measures how long the pulse takes to return after bouncing off a surface. Because light travels at a fixed and known speed, the elapsed time maps directly and precisely to a distance. The sensor does not need to be calibrated for different materials the way an ultrasonic sensor does, and it is far less susceptible to ambient sound than ultrasonic alternatives.
 
 The REV Color/Distance Sensor integrates this ranging capability alongside the color sensor covered in Lesson 11.3. One physical device, one I2C connection, and one configuration name in the Robot Controller app provide both capabilities at the same time. This is one of the most cost-effective sensor combinations available in FTC.
-
----
 
 ## The DistanceSensor Interface and Unit Handling
 
@@ -33,8 +29,6 @@ DistanceSensor rangeSensor = hardwareMap.get(DistanceSensor.class, "front_sensor
 
 Both variables now reference the same physical device, and you can use them independently throughout your code.
 
----
-
 ## Practical Limits and Validation
 
 The time-of-flight sensor on the REV module is accurate roughly between 1 cm and 200 cm. Objects that are very close, very far away, or made of dark matte materials that absorb the laser rather than reflect it can produce unreliable readings. The SDK returns `Double.MAX_VALUE` when the sensor cannot obtain a valid measurement. Checking for this before using a distance value in control logic prevents erratic motor behavior caused by a stray bad reading.
@@ -45,8 +39,6 @@ if (dist < 200.0) { // Only act on readings within a believable range
     // control logic here
 }
 ```
-
----
 
 ## Annotated Code
 
@@ -92,9 +84,7 @@ public class DistanceSensorDemo extends LinearOpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. To retrieve a distance reading in centimeters, pass `DistanceUnit.__________` as the argument to `getDistance()`.
 2. The Java interface used for laser-based distance measurement in the FTC SDK is `__________`.
@@ -109,9 +99,7 @@ public class DistanceSensorDemo extends LinearOpMode {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Use the simulator below to complete the obstacle cutoff routine. The editor starts with incomplete starter code, so fill in the distance read, validity check, and safe motor cutoff before driving toward the obstacle.
 

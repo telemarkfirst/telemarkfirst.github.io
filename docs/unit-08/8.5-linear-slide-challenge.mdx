@@ -10,13 +10,9 @@ import Unit8Simulator from '@site/src/components/Unit8Simulator';
 
 # Lesson 8.5: Build a Two-Way Linear Slide with Software Limits
 
----
-
 ## Technical Context
 
 Linear slides are prone to mechanical failure if driven past their physical limits, either bottoming out at the base or over-extending at the top. Using upper and lower `DigitalChannel` touch sensors as **software limiters** prevents the motor from applying power in either dangerous direction, protecting the motor from stall current and the mechanism from structural failure.
-
----
 
 ## How to Keep a Linear Slide Safe in Both Directions
 
@@ -31,8 +27,6 @@ This lesson combines concepts from Units 7 and 8. You must:
 A critical hardware nuance: the REV Touch Sensor uses **active-low** logic. `getState()` returns `true` when the sensor is **not** pressed and `false` when it **is** pressed. This means you must use the logical NOT operator (`!`) to invert each signal for intuitive use: `boolean atUpper = !upperLimit.getState()`.
 
 The limiter logic has two safe motion branches. Positive power is allowed only while the upper limit is clear. Negative power is allowed only while the lower limit is clear. Neutral input, a blocked direction, or contradictory sensor data must all produce an explicit zero-power command.
-
----
 
 ## Annotated Code
 
@@ -88,9 +82,7 @@ public class SafeSlideDemo extends OpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. Positive slide power must be blocked by the `__________` limit, while negative power must be blocked by the lower limit.
 2. If a touch sensor returns `false` when physically pressed (active-low logic), you must use the `__________` operator in Java to flip the signal for intuitive use.
@@ -104,8 +96,6 @@ public class SafeSlideDemo extends OpMode {
 3. **`0.0`**
 
 </details>
-
----
 
 ## Simulator Practice
 

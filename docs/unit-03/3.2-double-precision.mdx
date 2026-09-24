@@ -10,19 +10,13 @@ import Unit3Simulator from '@site/src/components/Unit3Simulator';
 
 # Lesson 3.2: Using double for Motor Power and Precise Math
 
----
-
 ## Technical Context
 
 Motor voltage control requires high-precision values to achieve smooth acceleration. Using the `double` datatype allows the robot to handle the fractional values (`-1.0` to `1.0`) required by the `setPower()` method, preventing the jerky movement or rounding errors associated with lower-precision types.
 
----
-
 ## Why FTC Code Uses double So Often
 
 The `double` is a 64-bit primitive datatype used for floating-point numbers. In the FTC SDK, methods such as `setPower()` accept a `double`, and Java treats decimal literals such as `0.5` as doubles by default. Using a `double` for joystick values, sensor measurements, and power calculations preserves fractional values that an `int` would discard.
-
----
 
 ## Annotated Code
 
@@ -49,9 +43,7 @@ public class PrecisionPower extends OpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. To store a number with a decimal point for motor power, you should use the `__________` datatype.
 2. The `double` datatype occupies `__________` bits of memory, making it more accurate than a `float`.
@@ -66,11 +58,9 @@ public class PrecisionPower extends OpMode {
 
 </details>
 
----
+## Challenge
 
-## Simulator Challenge
-
-**Robot Scenario:** Your driver wants a specific "Auton Speed" of `0.45`. Create a `double` variable to store this and apply it to a motor.
+**Task:** Your driver wants a specific "Auton Speed" of `0.45`. Create a `double` variable to store this and apply it to a motor.
 
 <SimulatorRunGuide />
 

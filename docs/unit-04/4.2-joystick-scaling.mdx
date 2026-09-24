@@ -10,19 +10,13 @@ import Unit4Simulator from '@site/src/components/Unit4Simulator';
 
 # Lesson 4.2: Turning Joystick X and Y into Smooth Drive Control
 
----
-
 ## Technical Context
 
 The gamepad joysticks provide a range of motion used for proportional speed control. However, by default, the Y-axis on the gamepad is **negative** when pushed up and **positive** when pushed down. If a programmer fails to negate this value in the Java code, the robot will drive backward when the driver intends to move forward, leading to high-speed collisions and potential drivetrain failure.
 
----
-
 ## How Joystick Values Become Drive Commands
 
 Joysticks are members of the `gamepad` object and are stored as `double` precision variables with a range of `-1.0` to `1.0`. The center position of the joystick is exactly `0.0`. In a Differential Drive (or Tank Drive) configuration, the Y-axis input is typically used to command the voltage of the DC Motors. To correct the hardware's inverted logical bias, the programmer must perform a simple math operation: `double forwardPower = -gamepad1.left_stick_y;`.
-
----
 
 ## Annotated Code
 
@@ -71,9 +65,7 @@ if (robot.robotBase.driveBase.supportsHolonomicDrive()) {
 
 Their framework centralizes scaling inside `getDriveInputs(...)`; the simpler multiplication in this lesson is the same idea without that abstraction. Excerpted from [Team 3543 Titan Robotics Club's `FtcTeleOp.java` at a pinned commit](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/TeamCode/src/main/java/teamcode/FtcTeleOp.java) under the [MIT License](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/LICENSE).
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. A gamepad joystick returns values as a/an `__________` datatype.
 2. When a joystick is pushed fully toward the top of the controller, its Y-value is `__________`.
@@ -88,11 +80,9 @@ Their framework centralizes scaling inside `getDriveInputs(...)`; the simpler mu
 
 </details>
 
----
+## Challenge
 
-## Simulator Challenge
-
-**Robot Scenario:** Your robot's drivetrain is too fast for a rookie driver. Create a program that scales the joystick's Y-axis input to 50% of its maximum value and negates it so the robot moves forward when the stick is pushed up.
+**Task:** Your robot's drivetrain is too fast for a rookie driver. Create a program that scales the joystick's Y-axis input to 50% of its maximum value and negates it so the robot moves forward when the stick is pushed up.
 
 <SimulatorRunGuide />
 

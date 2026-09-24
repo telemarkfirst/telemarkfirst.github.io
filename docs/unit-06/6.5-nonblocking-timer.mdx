@@ -10,21 +10,15 @@ import Unit6Simulator from '@site/src/components/Unit6Simulator';
 
 # Lesson 6.5: Build a Non-Blocking Timer for Parallel Mechanism Control
 
----
-
 ## Technical Context
 
 "Blocking" code (using `sleep()` or empty `while` loops) prevents a robot from performing parallel tasks. A responsive robot may need to drive toward a target while simultaneously raising a lift. A **non-blocking timer loop** lets the program check time, sensors, and encoders in the same loop cycle, so independent mechanisms can continue updating.
-
----
 
 ## How Non-Blocking Timing Lets Mechanisms Work Together
 
 This lesson uses the SDK's `ElapsedTime` utility. Calling `new ElapsedTime()` creates a timer and starts it immediately; calling `reset()` establishes a new zero point when an action begins. The loop can then check `seconds()` or `milliseconds()` without pausing other code.
 
 This pattern is commonly used for state-machine transitions and parallel mechanism control.
-
----
 
 ## Annotated Code
 
@@ -91,9 +85,7 @@ public void run() {
 
 Nothing in `run()` waits. Repeated calls check the deadline, run the function when due, reset the timer, and return. Excerpted from [BunyipsLib's `Periodic.java` at a pinned commit](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/src/main/java/au/edu/sa/mbhs/studentrobotics/bunyipslib/executables/Periodic.java) under the [MIT License](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/LICENSE).
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. Using `sleep()` is discouraged because it `__________` the entire program thread from updating other hardware.
 2. A `__________` timer loop is necessary to allow parallel mechanism control.
@@ -107,8 +99,6 @@ Nothing in `run()` waits. Repeated calls check the deadline, run the function wh
 3. **`timer.seconds()`** (where `timer` is an `ElapsedTime` instance)
 
 </details>
-
----
 
 ## Simulator Practice
 

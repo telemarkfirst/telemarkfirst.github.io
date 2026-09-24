@@ -10,15 +10,11 @@ import Unit13Simulator from '@site/src/components/Unit13Simulator';
 
 # Lesson 13.5: Architecting a Modular Robot Class with Nested Subsystems
 
----
-
 ## Moving Beyond Mechanism Classes
 
 Units 13.1 through 13.4 taught how to move individual mechanisms into their own classes. The next architectural step is to give the entire robot a class of its own. A master `CompetitionRobot` class holds references to every subsystem as member variables and exposes a single `init(HardwareMap hwMap)` method that initializes all of them in the correct order.
 
 The benefit is visible immediately at the OpMode level. Instead of declaring six separate mechanism objects and calling six separate `init()` methods, an OpMode declares one `CompetitionRobot robot` and calls one `robot.init(hardwareMap)`. When a new mechanism is added to the robot, it is added once inside `CompetitionRobot.java`, and every OpMode that uses the robot class gains access to it automatically.
-
----
 
 ## Composition: The "Has-A" Relationship
 
@@ -26,13 +22,9 @@ The robot class uses composition, not inheritance. The `CompetitionRobot` does n
 
 Because the subsystem objects are declared as `public` members of the robot class, OpMode code can access them with dot notation: `robot.lift.extend()`, `robot.intake.collect()`, `robot.drive.setWeights(...)`. Alternatively, the robot class can expose wrapper methods that delegate to its subsystems, which keeps the OpMode even cleaner at the cost of slightly more code in the robot class.
 
----
-
 ## Initialization Order
 
 The order in which subsystems are initialized inside `CompetitionRobot.init()` matters when one subsystem depends on another at startup. A team may initialize the drivetrain first, followed by mechanisms and sensors, but order does not make a failed initialization safe: an uncaught hardware-mapping exception can stop the OpMode before it becomes runnable. Required devices should fail clearly during initialization. Handle a missing device only when the design genuinely treats that device as optional.
-
----
 
 ## Annotated Code
 
@@ -177,9 +169,7 @@ public Robot(TrcRobot.RunMode runMode) {
 
 The types are specific to Titan's framework, but the composition pattern transfers directly: one robot object creates and exposes subsystem objects in dependency order. Excerpted from [Team 3543 Titan Robotics Club's `Robot.java` at a pinned commit](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/TeamCode/src/main/java/teamcode/Robot.java) under the [MIT License](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/LICENSE).
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. When one class contains instances of other classes as member variables (the "has-a" relationship), the design pattern is called `__________`.
 2. To create a new instance of a subsystem object and assign it to a member variable, use the `__________` keyword.
@@ -193,8 +183,6 @@ The types are specific to Titan's framework, but the composition pattern transfe
 3. **fails** (the OpMode does not become runnable)
 
 </details>
-
----
 
 ## Simulator Practice
 

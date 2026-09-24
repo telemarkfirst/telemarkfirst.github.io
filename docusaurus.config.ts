@@ -182,7 +182,7 @@ const config: Config = {
       title: 'Telemark',
       logo: {
         alt: 'Telemark Logo',
-        src: 'img/telemark_logo.png',
+        src: 'img/Telemark_logo.png',
       },
       items: [
         {

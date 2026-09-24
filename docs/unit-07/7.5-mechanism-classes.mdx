@@ -10,21 +10,15 @@ import Unit7Simulator from '@site/src/components/Unit7Simulator';
 
 # Lesson 7.5: Keep Shared Hardware Classes Consistent Across OpModes
 
----
-
 ## Technical Context
 
 As robots become complex, putting all hardware mapping in a single OpMode file leads to unmaintainable "spaghetti code." Creating a dedicated **Hardware Class** (or Mechanism Class) allows you to define your hardware once and share it across every Autonomous and TeleOp program on the robot. If a motor port changes, you update one file: not every OpMode.
-
----
 
 ## Why Shared Mechanism Classes Save Time
 
 A mechanism class can use a custom `init()` method that accepts the `HardwareMap` from the parent OpMode. The mechanism does not automatically receive an OpMode's `hardwareMap`; passing the dependency explicitly lets the class perform its own registry lookups and makes it easier to reuse.
 
 Passing `HardwareMap` into the mechanism constructor or `init()` method gives that class the dependency it needs without relying on a global variable. The mechanism class can then keep its hardware names, directions, and run modes together while the OpMode works through a smaller public interface.
-
----
 
 ## Annotated Code
 
@@ -84,9 +78,7 @@ public class IntakeTeleOp extends OpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. To share hardware across files, we encapsulate the mapping logic into a `__________` class.
 2. The mechanism's `init()` method must accept a `__________` object as a parameter so it can perform registry lookups.
@@ -100,8 +92,6 @@ public class IntakeTeleOp extends OpMode {
 3. **main OpMode** (match / driving) logic
 
 </details>
-
----
 
 ## Simulator Practice
 

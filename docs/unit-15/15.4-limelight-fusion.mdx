@@ -10,8 +10,6 @@ import Unit15Simulator from '@site/src/components/Unit15Simulator';
 
 # Lesson 15.4: Global Field Localization with AprilTag and Limelight Fusion
 
----
-
 ## Two Sensors, Two Different Error Profiles
 
 Odometry is a strong short-term **relative** measurement. It updates quickly and usually changes smoothly, but wheel slip, wheel diameter error, and imperfect geometry can accumulate into drift. An AprilTag field pose is an **absolute** measurement. It can constrain that drift, but its accuracy varies with tag distance, viewing angle, tag count, calibration, blur, and latency.
@@ -22,8 +20,6 @@ Copying every AprilTag pose directly into the localizer is not sensor fusion. It
 2. **Update:** compare a fresh AprilTag measurement with that prediction, reject implausible innovations, and blend an accepted measurement according to the uncertainty of both sources.
 
 This lesson implements a diagonal Kalman-style measurement update. It tracks independent variance for X, Y, and heading. A production estimator may also track cross-covariances, velocity, camera extrinsics, and a timestamped pose history.
-
----
 
 ## From Pose Difference to Kalman Gain
 
@@ -42,8 +38,6 @@ Before the update, the code also calculates a **normalized innovation squared** 
 :::caution Coordinate frames and latency
 The code assumes the Limelight field axes, field origin, camera pose, and Pedro Pathing pose convention have already been configured to agree. If they do not, apply a tested coordinate transform before fusion. The example rejects results older than 100 ms; a faster robot may need timestamped pose history so it can apply a measurement at capture time and replay odometry forward.
 :::
-
----
 
 ## Competition Code in the Wild
 
@@ -79,8 +73,6 @@ pose = new Pose2d(newVec, updateHeading ? newHeading : pose.heading);
 ```
 
 Unlike simply replacing the odometry pose, the filter consumes both the motion delta and the absolute measurement. The implementation also resets its heading filter at the ±π boundary. The estimator below takes the idea further by exposing per-axis uncertainty, measurement noise based on tag geometry, freshness checks, duplicate-frame rejection, and an innovation gate. Excerpted from [BunyipsLib's `AprilTagRelocalizingAccumulator.java` at a pinned commit](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/src/main/java/au/edu/sa/mbhs/studentrobotics/bunyipslib/localization/accumulators/AprilTagRelocalizingAccumulator.java) under the [MIT License](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/LICENSE).
-
----
 
 ## Annotated Code
 
@@ -249,9 +241,7 @@ public class LimelightFusionDemo extends LinearOpMode {
 
 `LLResult` also exposes standard-deviation arrays such as `getStddevMt1()` and `getStddevMt2()`. If testing confirms their units and calibration for the selected pipeline and SDK version, those values can replace the illustrative distance-based noise model above. See the [FTC SDK `LLResult` Javadoc](https://javadoc.io/doc/org.firstinspires.ftc/Hardware/latest/com/qualcomm/hardware/limelightvision/LLResult.html).
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. Odometry supplies the high-rate `__________` step, while AprilTag pose supplies an absolute measurement update.
 2. In a scalar Kalman update, the gain is `P / (P + ________)`, where the missing term is measurement variance.
@@ -266,9 +256,7 @@ public class LimelightFusionDemo extends LinearOpMode {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Implement a complementary version of the estimator in `correctPoseFromLimelight()`. Reject invalid, stale, tagless, null, or implausibly distant measurements. Compute X, Y, and normalized-heading innovations from the current follower estimate, then apply only a fraction of each innovation with a gain between 0 and 1.
 

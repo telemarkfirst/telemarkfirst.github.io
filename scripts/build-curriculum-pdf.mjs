@@ -160,10 +160,9 @@ function diagram(name) {
 function preprocess(body) {
   let text = body;
   text = text.replace(/^import .+;?\n/gm, '');
-  text = text.replace(/\n## Simulator Challenge[\s\S]*?(?=\n<MarkComplete|\n# |$)/g, '');
+  text = text.replace(/\n## Challenge[\s\S]*?(?=\n<MarkComplete|\n# |$)/g, '');
   text = text.replace(/<MarkComplete[\s\S]*?\/>/g, '');
   text = text.replace(/<Unit\d+Simulator[\s\S]*?\/>/g, '');
-  text = text.replace(/<UnitOverview[\s\S]*?\/>/g, '<div class="note">This unit overview is generated from the current Telemark curriculum data on the website.</div>');
   text = text.replace(/<([A-Za-z]+Diagram)\s*\/>/g, (_, name) => diagram(name));
 
   text = text.replace(/:::(\w+)([^\n]*)\n([\s\S]*?)\n:::/g, (_, type, title, content) => {

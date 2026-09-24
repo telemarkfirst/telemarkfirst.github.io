@@ -17,8 +17,7 @@ export default function AskPrompt(): React.JSX.Element {
     <section className={styles.panel}>
       <p className={styles.title}>Stuck on this lesson?</p>
       <p className={styles.blurb}>
-        Ask about anything on this page. It can see which lesson you have open
-        and which part you are reading.
+        Ask Sharp AI about anything on this page; context automatically supplied.
       </p>
       <button
         type="button"

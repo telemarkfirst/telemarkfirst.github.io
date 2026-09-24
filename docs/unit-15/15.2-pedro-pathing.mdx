@@ -11,8 +11,6 @@ import {PathFollowingDiagram} from '@site/src/components/DocDiagrams';
 
 # Lesson 15.2: Controlling a Pedro 3 Follower
 
----
-
 ## Why Use a Path Follower?
 
 Encoder-only autonomous routines often drive to one tick target, stop, turn, and repeat. Wheel slip, battery variation, and contact with field elements make every step start with a little error from the step before it.
@@ -24,8 +22,6 @@ Pedro Pathing continuously estimates the robot's field pose and corrects its dri
 :::info Pedro 3 setup comes first
 Use the [Pedro Pathing Quickstart](https://github.com/Pedro-Pathing/Quickstart) or complete the [official installation](https://pedropathing.com/docs/pathing/installation) and tuning guides before running these examples. In Pedro 3, your generated `Constants.create(hardwareMap)` method constructs the correctly configured `Follower`; `new Follower(hardwareMap)` is an older API and is not valid Pedro 3 setup.
 :::
-
----
 
 ## The Pedro 3 Follower Lifecycle
 
@@ -43,8 +39,6 @@ Pedro 3 reports four follower modes through `follower.mode()`: `FOLLOW`, `HOLD`,
 If the plotted path looks right but the robot oscillates or cuts corners, first check odometry mounting, wheel offsets, motor directions, and whether `follower.update()` runs every cycle.
 :::
 
----
-
 ## Poses and PoseFactory
 
 A `Pose` stores X and Y in inches and heading in radians. Pedro 3 recommends a `PoseFactory` so headings can be written in degrees and common transformations, such as alliance mirroring, can be applied consistently.
@@ -57,8 +51,6 @@ private final Pose parkPose  = poseFactory.of(60, 12, 0);
 ```
 
 `poseFactory.of(x, y, heading)` uses the factory's angle unit. A raw `new Pose(x, y, heading)` always expects radians.
-
----
 
 ## Is Ivy Required?
 
@@ -88,8 +80,6 @@ Ivy is a separate dependency and is not required by the follower itself:
 ```gradle
 implementation 'com.pedropathing.ivy:pedro:1.1.1'
 ```
-
----
 
 ## Annotated Pedro 3 + Ivy Example
 
@@ -149,9 +139,7 @@ public class Pedro3Intro extends LinearOpMode {
 
 The follower and scheduler are separate systems, so both require one update per loop. Ivy's `follow()` command starts the path and handles its completion condition; the OpMode does not need to poll and advance a custom state variable.
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. Pedro 3 creates the configured follower with `Constants.__________(hardwareMap)`.
 2. The current pose is returned by `follower.__________()`.
@@ -166,9 +154,7 @@ The follower and scheduler are separate systems, so both require one update per 
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Complete the Pedro 3 lifecycle. Create the follower with `Constants.create(hardwareMap)`, create a degree-based `PoseFactory`, set the starting pose to `(8, 60, 0°)`, call `follower.update()` before waiting for Start and on every active loop, and report `follower.pose().x()`, `.y()`, and `.heading()`.
 

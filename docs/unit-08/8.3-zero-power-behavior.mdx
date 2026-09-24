@@ -10,13 +10,9 @@ import Unit8Simulator from '@site/src/components/Unit8Simulator';
 
 # Lesson 8.3: Using ZeroPowerBehavior.BRAKE to Hold Position Better
 
----
-
 ## Technical Context
 
 When power is set to `0.0`, a heavy mechanism, such as a lift or a high-momentum drivetrain, may continue to move due to gravity or inertia. `BRAKE` can reduce that motion, but a lift that must maintain a measured height generally needs closed-loop position control, a counterbalance, or both.
-
----
 
 ## Why BRAKE and FLOAT Feel Different on a Real Robot
 
@@ -28,8 +24,6 @@ The `setZeroPowerBehavior()` method defines how the Expansion Hub motor controll
 The behavior is configured on the **hardware controller**, which changes the zero-power behavior of the motor port. Neither mode substitutes for an encoder-based position controller, and a sufficiently large external load can move a motor configured for `BRAKE`.
 
 Set `ZeroPowerBehavior` in `init()` immediately after mapping so the intended response is configured before the match begins.
-
----
 
 ## Annotated Code
 
@@ -80,9 +74,7 @@ this.motor.setPower(autoPower);
 
 This distinction matters on a lift. `BRAKE` resists motion electrically at zero command; it is not by itself a position controller. The remaining lines establish active encoder-based holding. Excerpted from [BunyipsLib's `HoldableActuator.java` at a pinned commit](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/src/main/java/au/edu/sa/mbhs/studentrobotics/bunyipslib/subsystems/HoldableActuator.java) under the [MIT License](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/LICENSE).
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. To allow a robot to coast smoothly to a stop, set the behavior to `DcMotor.ZeroPowerBehavior.__________`.
 2. The `BRAKE` behavior is implemented by the `__________` on the robot, not just the software. The port circuit is physically reconfigured.
@@ -97,9 +89,7 @@ This distinction matters on a lift. `BRAKE` resists motion electrically at zero 
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Use the simulator below to practice switching a lift between `BRAKE` and `FLOAT` while watching the effect live.
 

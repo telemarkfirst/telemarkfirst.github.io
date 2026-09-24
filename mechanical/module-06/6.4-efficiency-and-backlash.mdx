@@ -9,15 +9,11 @@ import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
 
 # Lesson 6.4: Efficiency Losses, Backlash, and Real Transmission Behavior
 
----
-
 ## Technical Context
 
 The calculations in this module assume ideal transmission. Real mechanisms deliver less torque than predicted, run slower than predicted, and have play in them that the math does not show.
 
 Knowing where those losses come from tells you which ones are worth fixing.
-
----
 
 ## Where the Losses Are
 
@@ -37,8 +33,6 @@ The important point is that the last four are not fixed properties of the compon
 Compare the mechanism's actual no-load speed against the calculated free speed. A mechanism running at 60% of its calculated free speed with no load is telling you that friction is consuming a large share of the motor's output, and that is a build quality problem you can find and fix.
 :::
 
----
-
 ## Preload and Over-Tensioning
 
 The most common self-inflicted efficiency loss on an FTC robot is over-tightening. A chain tensioned until it is rigid, a belt tightened until it rings, or a bearing pressed into a bore that pinches all convert motor power into heat and wear.
@@ -51,8 +45,6 @@ Symptoms of over-tension:
 - Components wear visibly within a few sessions
 
 Turn the mechanism by hand with the motor disconnected. It should feel smooth and light. A point that binds or requires force is consuming motor output and needs inspection.
-
----
 
 ## Backlash
 
@@ -70,8 +62,6 @@ Backlash matters for two reasons:
 Each stage adds its own play, and the total referred to the output is the sum. This is another reason to prefer fewer stages, and a reason to put encoders as close to the output as practical when position accuracy matters.
 :::
 
----
-
 ## Back-Driving
 
 A transmission is **back-drivable** if a force on the output can turn the motor. High reductions are often not back-drivable, and that has consequences in both directions.
@@ -81,8 +71,6 @@ Not back-drivable is good when a mechanism must hold a position without consumin
 Not back-drivable is bad when something must be moved by hand: an arm that cannot be lowered manually is a problem in the pit, and a mechanism that cannot yield when hit will break rather than move.
 
 Decide this deliberately rather than discovering it. If an arm must hold position for most of a match, low back-drivability plus a counterbalance is a good combination. If a mechanism will be struck by other robots, it needs to be able to give.
-
----
 
 ## Building Margin In From the Start
 
@@ -96,17 +84,13 @@ Everything in this lesson is a reason that the number from a calculator is optim
 
 A design that only works with perfect efficiency and a fresh battery does not work.
 
----
-
 :::info Connects to the software track
 Backlash is why a position-controlled mechanism does not stop in the same place twice. That symptom gets reported as a software bug.
 
 See [Lesson 10.3: Using RUN_TO_POSITION](/docs/unit-10/run-to-position).
 :::
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. Turning a mechanism by hand with the motor disconnected reveals losses from friction and `__________`.
 2. An encoder mounted on the motor cannot detect the mechanism's true position to better than the transmission's `__________`.
@@ -120,8 +104,6 @@ See [Lesson 10.3: Using RUN_TO_POSITION](/docs/unit-10/run-to-position).
 3. **back-drivable**
 
 </details>
-
----
 
 ## Exercise
 

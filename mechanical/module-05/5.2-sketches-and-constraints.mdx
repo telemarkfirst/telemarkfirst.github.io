@@ -9,13 +9,9 @@ import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
 
 # Lesson 5.2: Fully Defined Sketches and the Core Feature Set
 
----
-
 ## Technical Context
 
 A parametric CAD model is built from sketches turned into solid features. The quality of the model, meaning whether it can be changed later without falling apart, is decided almost entirely at the sketch level.
-
----
 
 ## Fully Defined Sketches
 
@@ -24,8 +20,6 @@ A sketch is **fully defined** when every point in it is locked down by dimension
 An under-defined sketch looks fine and behaves badly. When you later change one dimension, the under-defined geometry moves in unpredictable ways, and features built on it fail.
 
 The habit: **do not exit a sketch until it is fully defined.** It takes a few extra constraints and it makes the model editable for the rest of the season.
-
----
 
 ## Constraints Versus Dimensions
 
@@ -49,8 +43,6 @@ Prefer constraints where they express design intent. If two holes must always be
 Ask "if this part gets 20 mm longer next week, what should stay true?" Constraints that answer that question make the model robust. Models that break every time a dimension changes were built from dimensions where constraints belonged.
 :::
 
----
-
 ## The Core Feature Set
 
 Most FTC parts are made from a small number of features. This is the short version; each one gets a proper treatment later in the module.
@@ -64,8 +56,6 @@ Most FTC parts are made from a small number of features. This is the short versi
 :::tip Get the sketch right first
 Every feature above is built on a sketch. A feature applied to an under-defined sketch inherits its instability, so the habit in this lesson comes before all of them.
 :::
-
----
 
 ## Building Parts That Can Be Changed
 
@@ -81,9 +71,7 @@ Three habits separate a model you can edit from one you rebuild.
 When a dimension is wrong, fix the dimension. Adding a corrective extrude to patch a part whose base sketch is wrong produces a model nobody can edit, including the person who built it.
 :::
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. A sketch in which no geometry can be moved by dragging is said to be fully `__________`.
 2. A `__________` such as symmetry preserves design intent when a dimension changes, whereas two separate dimensions do not.
@@ -97,8 +85,6 @@ When a dimension is wrong, fix the dimension. Adding a corrective extrude to pat
 3. **plane**
 
 </details>
-
----
 
 ## Exercise
 

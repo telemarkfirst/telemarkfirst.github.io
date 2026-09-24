@@ -10,15 +10,11 @@ import Unit11Simulator from '@site/src/components/Unit11Simulator';
 
 # Lesson 11.5: Creating an Automated Sensor-Gated Intake System
 
----
-
 ## What a Sensor Gate Is
 
 A sensor-gated system replaces a driver command with an environmental condition. Instead of requiring the driver to decide when to start and stop the intake, the robot's sensors make that decision automatically. The driver focuses on positioning the robot, and the intake handles itself.
 
 This approach reduces the number of simultaneous decisions the driver must make during a match cycle, which directly reduces errors. It also makes the mechanism more consistent: a sensor reacts in microseconds, whereas a driver's reaction time is measured in tenths of a second.
-
----
 
 ## Combining Multiple Sensor Types
 
@@ -83,8 +79,6 @@ telemetry.addData("Red / Blue", "%d / %d", redValue, blueValue);
 telemetry.addData("Sorter State", sorterState);
 ```
 
----
-
 ## Hysteresis: Preventing Motor Chatter at the Threshold
 
 One subtlety that appears in real hardware: if the distance reading fluctuates right at the threshold boundary, the motor will start and stop many times per second. This rapid switching is called chatter, and it causes mechanical wear and inconsistent behavior.
@@ -92,8 +86,6 @@ One subtlety that appears in real hardware: if the distance reading fluctuates r
 A useful approach is to use two different threshold values. A smaller value triggers the start of collection (for example, 8 cm means "an element is definitely in range"), and a slightly larger value defines when the system allows stopping (for example, 12 cm means "definitely no element present"). The gap between these two values is called a hysteresis band.
 
 Implementing hysteresis requires tracking a state variable, a `boolean` that records whether the intake is currently active, and updating it based on which threshold was crossed most recently. This prevents the motor from switching states on every tiny fluctuation.
-
----
 
 ## Annotated Code
 
@@ -150,9 +142,7 @@ public class SensorGateDemo extends LinearOpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. Combining data from two or more sensors to make a single control decision is a form of sensor `__________`.
 2. The rapid and undesirable switching of a motor on and off as a sensor reading fluctuates at a boundary is called `__________`.
@@ -166,8 +156,6 @@ public class SensorGateDemo extends LinearOpMode {
 3. **hysteresis**
 
 </details>
-
----
 
 ## Simulator Practice
 

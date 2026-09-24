@@ -361,7 +361,6 @@ export function CoachDashboard({
               <button className={styles.secondaryButton} type="button" onClick={() => void refresh()}>
                 Refresh
               </button>
-              <Link className={styles.secondaryLink} to="/personalize">Edit account</Link>
               <button className={styles.secondaryButton} type="button" onClick={() => void signOut(auth)}>
                 Sign out
               </button>

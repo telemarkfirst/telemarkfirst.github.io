@@ -382,6 +382,7 @@ function testResetUsesAnInSimulatorConfirmationDialog() {
   assert.match(simulatorBaseSource, /__telemarkMasteryMotion\.resetPose\(\)/);
   assert.match(simulatorBaseSource, /id:\s*"sim-code-reset-btn"/);
   assert.match(simulatorBaseSource, /Reset code/);
+  assert.doesNotMatch(simulatorBaseSource, /fa-rotate-left/);
 }
 
 testCompileErrorGatesInit();

@@ -10,15 +10,11 @@ import Unit13Simulator from '@site/src/components/Unit13Simulator';
 
 # Lesson 13.4: Managing Shared Constants with the static Keyword
 
----
-
 ## Configuration Drift: A Real Competition Problem
 
 Imagine a robot with three OpMode files: `TeleOpMain.java`, `AutonomousRed.java`, and `AutonomousBlue.java`. Each one maps the drivetrain motors using the strings `"left_front"`, `"right_front"`, `"left_back"`, and `"right_back"`. The drive team re-ports the right rear motor to a different hub slot before a match and updates the configuration name in the Robot Controller app to `"right_back_2"`. Now that string needs to change in three different Java files. One of them gets missed. The autonomous program works. The TeleOp crashes on the second match.
 
 This scenario is called configuration drift, and it is one of the most common sources of last-minute failures at competition. The fix is to store every configuration name and every tunable constant in exactly one location. Any code that needs the value reads it from that single location. When the value needs to change, it changes in one place and every file is automatically updated.
-
----
 
 ## Static and Final
 
@@ -28,15 +24,11 @@ The `final` keyword applied to a variable means the variable cannot be reassigne
 
 By Java naming convention, `static final` constants are written in `ALL_CAPS_WITH_UNDERSCORES` to visually distinguish them from regular variables.
 
----
-
 ## A Shared Configuration Class
 
 The most effective pattern for FTC is a dedicated class named something like `RobotConfig` that contains nothing but `public static final` declarations. No methods, no instances, no constructor. Just constants. Every OpMode and every mechanism class that needs a hardware name or a tunable value imports this class and reads the constant directly: `RobotConfig.LEFT_FRONT_MOTOR`.
 
 When the hardware changes, you open `RobotConfig.java`, change one string, rebuild, and every file is correct again.
-
----
 
 ## Annotated Code
 
@@ -101,9 +93,7 @@ if (Math.abs(input) < RobotConfig.DEADZONE_THRESHOLD) {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. A variable that belongs to the class itself rather than to any particular instance is declared with the `__________` keyword.
 2. A variable that cannot be reassigned after its initial declaration is declared with the `__________` keyword.
@@ -118,9 +108,7 @@ if (Math.abs(input) < RobotConfig.DEADZONE_THRESHOLD) {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Your team has a claw servo, a wrist motor, and a range sensor all with specific configuration names and tunable constants. Complete the simulator's `HardwareNames` configuration class, then use those constants in the OpMode to map hardware, set the claw's open position, and display the configuration values with telemetry.
 

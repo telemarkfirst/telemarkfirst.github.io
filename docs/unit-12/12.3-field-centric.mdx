@@ -10,15 +10,11 @@ import Unit12Simulator from '@site/src/components/Unit12Simulator';
 
 # Lesson 12.3: Normalizing Angular Values for Field-Centric Driving
 
----
-
 ## The Problem with Robot-Centric Control
 
 In a standard robot-centric drive scheme, pushing the left joystick forward always drives the robot toward whatever direction the front of the robot is facing at that moment. If the robot has spun 90 degrees during a defensive maneuver, pushing "forward" on the joystick now drives the robot sideways from the driver's point of view. The driver must mentally account for the robot's rotation and compensate with stick inputs to achieve the intended field direction. Under match pressure, this mental overhead causes errors.
 
 Field-centric control can reduce this burden. With a correctly initialized heading and coordinate convention, pushing the joystick forward commands motion in a consistent field direction even as the robot turns. The code compensates for the measured robot rotation before calculating motor commands.
-
----
 
 ## The Vector Rotation Calculation
 
@@ -31,15 +27,11 @@ The calculation uses two standard trigonometric functions from `java.lang.Math`:
 
 The robot's current heading in radians is subtracted from the joystick's polar angle. This difference, `correctedTheta`, represents the direction the robot should actually move to achieve the driver's intended field direction. The corrected angle is then converted back to Cartesian coordinates to produce the final motor commands.
 
----
-
 ## Angle Wraparound and `AngleUnit.normalizeRadians()`
 
 Subtracting the robot's heading from the joystick angle can produce a result outside the -π to π range. For example, `2.8 - (-2.8)` is `5.6` radians. That value is **not** a problem for `Math.sin()` or `Math.cos()`: both functions are periodic, so adding or subtracting a whole turn produces the same Cartesian vector.
 
 The SDK's `AngleUnit.normalizeRadians(angle)` wraps any radian value into a canonical range around -π to π. Normalization is useful for readable telemetry, comparisons, interpolation, and shortest-path heading error calculations. The example below normalizes for clarity, but the trigonometric conversion would produce the same motor vector without that step.
-
----
 
 ## Annotated Code
 
@@ -141,9 +133,7 @@ protected PoseVelocity2d applyOrientation(PoseVelocity2d robotFrameVel) {
 
 `heading.inverse()` rotates the requested field-frame velocity into the robot frame. `fcOffset` provides a driver-selected zero direction. Excerpted from [BunyipsLib's `FieldOrientableDriveTask.java` at a pinned commit](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/src/main/java/au/edu/sa/mbhs/studentrobotics/bunyipslib/tasks/FieldOrientableDriveTask.java) under the [MIT License](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/LICENSE).
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. The SDK utility method that wraps a radian value into the -π to π range is `AngleUnit.__________()`.
 2. To compute the polar magnitude of a joystick input vector, use the Java math method `Math.__________(x, y)`.
@@ -158,9 +148,7 @@ protected PoseVelocity2d applyOrientation(PoseVelocity2d robotFrameVel) {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Use the simulator below to complete the field-relative strafe helper. The editor starts with incomplete starter code, so fill in the vector-rotation math and compare the live output against the test cases.
 

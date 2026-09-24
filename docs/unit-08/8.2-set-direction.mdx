@@ -10,15 +10,11 @@ import Unit8Simulator from '@site/src/components/Unit8Simulator';
 
 # Lesson 8.2: Configure Mecanum Motor Direction and Wheel Mixing
 
----
-
 ## Technical Context
 
 Most FTC teams use a four-motor mecanum drivetrain because it can drive forward, strafe sideways, and rotate without changing wheel modules. Mecanum is not a differential or tank drive: each wheel needs its own power calculated from forward, strafe, and rotate commands.
 
 The motors are still mounted in mirror-image orientations. Before applying mecanum math, use `setDirection(REVERSE)` in `init()` on the side that is physically opposed. The team CAD and simulator configuration in this lesson use reversed left-side motors. After that correction, positive power has one consistent physical meaning on all four wheels.
-
----
 
 ## When setDirection() Fixes the Real Problem
 
@@ -41,8 +37,6 @@ rightBack  = forward + strafe - rotate
 ```
 
 Dividing all four values by the largest magnitude, or by `1.0` when none exceeds it, preserves their ratio while keeping every command inside the legal motor range.
-
----
 
 ## Annotated Code
 
@@ -102,9 +96,7 @@ public class DirectionDemo extends OpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. Mecanum mixing calculates four separate wheel powers from forward, `__________`, and rotate commands.
 2. The `setDirection()` method is typically called during the `__________` phase of the OpMode lifecycle.
@@ -119,9 +111,7 @@ public class DirectionDemo extends OpMode {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Use the simulator below to practice fixing left-side motor direction on a mecanum drivetrain with lesson-specific starter code.
 

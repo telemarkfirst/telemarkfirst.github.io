@@ -10,19 +10,13 @@ import Unit2Simulator from '@site/src/components/Unit2Simulator';
 
 # Lesson 2.5: Build a Robot Health-Check OpMode with Telemetry
 
----
-
 ## Technical Context
 
 A "Health-Check" routine prevents match-start failures by providing the drive team with real-time feedback on sensor readiness. By utilizing the full OpMode lifecycle, you can verify that the IMU is calibrated and the Control Hub is communicating before the match begins, reducing the likelihood of a dead robot on the field.
 
----
-
 ## Robot Checks
 
 This lesson integrates `init()`, `init_loop()`, and `loop()`. The `init_loop()` method is particularly powerful for teams because it runs repeatedly after "Init" but **before** "Play". This is where hardware-heavy tasks like IMU calibration or computer vision stream processing should occur. By using telemetry in `init_loop()`, the driver can wait for a "System Ready" message before starting the match.
-
----
 
 ## Annotated Code
 
@@ -55,9 +49,7 @@ public class HealthCheck extends OpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. The method `__________` is useful for checking sensor values while the robot is stationary before the match starts.
 2. Providing data to the Driver Station screen is called `__________`.
@@ -71,8 +63,6 @@ public class HealthCheck extends OpMode {
 3. **`OpMode`**
 
 </details>
-
----
 
 ## Simulator Practice
 

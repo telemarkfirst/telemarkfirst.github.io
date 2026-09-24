@@ -9,15 +9,11 @@ import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
 
 # Lesson 7.2: Wheel Selection, Traction, and Weight Transfer
 
----
-
 ## Technical Context
 
 However much torque the motors produce, the robot can only push as hard as the tires can grip. Above that limit the wheels spin and nothing improves.
 
 Understanding that ceiling is what keeps teams from adding motors to solve a traction problem.
-
----
 
 ## The Friction Relationship
 
@@ -35,8 +31,6 @@ Two things follow immediately, and both surprise people.
 
 **Traction scales with weight on the driven wheels.** Adding weight increases grip proportionally. It also increases the mass to accelerate, which is why adding weight improves pushing force but does not improve acceleration.
 
----
-
 ## Choosing a Wheel
 
 | Wheel type | Grip on field tile | Trade-off |
@@ -52,8 +46,6 @@ For FTC field tiles, soft compliant treads produce coefficients commonly estimat
 :::tip Measure your own coefficient of friction
 Put the robot on a field tile, attach a fish scale or luggage scale to it, and pull horizontally until the wheels slip. The reading at slip, divided by the robot's weight, is your effective coefficient of friction. It takes five minutes and replaces a guess with a measurement.
 :::
-
----
 
 ## Weight Transfer
 
@@ -71,8 +63,6 @@ For a four wheel robot with all wheels driven, transfer between front and rear d
 A powered wheel with no load spins, wastes current, and produces false encoder counts. If your robot has six wheels and the middle pair unloads on acceleration, the odometry that the software team relies on becomes unreliable exactly during the motions that matter.
 :::
 
----
-
 ## Center of Gravity Placement
 
 Three guidelines that resolve most drivetrain handling problems:
@@ -82,8 +72,6 @@ Three guidelines that resolve most drivetrain handling problems:
 **Keep it between the driven wheels.** A center of gravity outside the wheelbase makes the robot want to tip in normal driving.
 
 **Account for the worst case, not the resting case.** The robot's center of gravity with the arm extended and loaded is what determines whether it tips. Evaluate that configuration.
-
----
 
 ## Wheel Diameter
 
@@ -96,9 +84,7 @@ force = wheel_torque / wheel_radius
 
 Practical implications: a smaller wheel is effectively an extra reduction, useful when torque is short; a larger wheel crosses field seams and small obstacles better and gives more ground clearance. Lesson 7.3 puts both into one calculation.
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. The maximum force a wheel can transmit is the coefficient of friction times the `__________` force on that wheel.
 2. Wheel width does not appear in the friction relationship, so a wider wheel primarily improves wear and load `__________` rather than grip.
@@ -112,8 +98,6 @@ Practical implications: a smaller wheel is effectively an extra reduction, usefu
 3. **encoder** (odometry)
 
 </details>
-
----
 
 ## Exercise
 

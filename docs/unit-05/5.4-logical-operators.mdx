@@ -10,13 +10,9 @@ import Unit5Simulator from '@site/src/components/Unit5Simulator';
 
 # Lesson 5.4: Combining Sensor Checks with AND and OR Logic
 
----
-
 ## Technical Context
 
 Complex robot behaviors often require data from multiple hardware sources to be true simultaneously before an action is taken. Logical combinations improve performance by adding redundancy: for instance, a launcher should only fire if a game element is detected **AND** the driver confirms the command, preventing "dry firing" that could damage the mechanical tension system.
-
----
 
 ## How AND and OR Change Robot Behavior
 
@@ -28,8 +24,6 @@ Java provides four primary logical operators to combine boolean expressions:
 - **`^`** (XOR): true only if the sides differ
 
 Using these operators lets you create compound safety gates. For example, `if (isArmRaised && isClawClosed)` can permit a behavior only when both software flags are true. The flags still need to come from trustworthy sensors or state logic; their names alone do not prove the mechanism is safe.
-
----
 
 ## Annotated Code
 
@@ -64,9 +58,7 @@ if (RobotParams.Preferences.useVision && robotInfo.camInfos != null &&
 
 The parentheses make the intended rule explicit: initialize vision only when the common prerequisites are true **and** at least one vision implementation is enabled. Excerpted from [Team 3543 Titan Robotics Club's `Robot.java` at a pinned commit](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/TeamCode/src/main/java/teamcode/Robot.java) under the [MIT License](https://github.com/trc492/FtcTemplate/blob/0680f02e5a8281264c16558c9a953aa15f0cd362/LICENSE).
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. The operator `__________` returns `true` only if condition A **and** condition B are both `true`.
 2. To check if either a sensor is tripped **or** a button is pressed, the `__________` operator should be used.
@@ -81,11 +73,9 @@ The parentheses make the intended rule explicit: initialize vision only when the
 
 </details>
 
----
+## Challenge
 
-## Simulator Challenge
-
-**Robot Scenario:** Your robot should only activate the drivetrain if the Start button is **NOT** pressed **AND** the Left Trigger is held down more than halfway. (This is a complex safety check.)
+**Task:** Your robot should only activate the drivetrain if the Start button is **NOT** pressed **AND** the Left Trigger is held down more than halfway. (This is a complex safety check.)
 
 <SimulatorRunGuide />
 

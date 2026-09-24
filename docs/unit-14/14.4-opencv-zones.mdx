@@ -10,8 +10,6 @@ import Unit14Simulator from '@site/src/components/Unit14Simulator';
 
 # Lesson 14.4: Defining Vision Windows with OpenCV Rect Boundaries
 
----
-
 ## Why Limiting the Analysis Region Matters
 
 A standard USB webcam captures a wide field of view. In a typical FTC setup, that frame contains field tiles, alliance wall structures, other robots, the edge of the scoring area, and whatever happens to be behind the field. When you ask an algorithm to analyze the entire frame to find a game element, most of the pixels it examines are irrelevant and computationally expensive to process. Two problems follow from this.
@@ -19,8 +17,6 @@ A standard USB webcam captures a wide field of view. In a typical FTC setup, tha
 The first is performance. Processing a full 640x480 frame on every camera update cycle competes with motor control, sensor polling, and communication tasks on the Control Hub's CPU. Restricting analysis to a small region of interest can reduce the processing load by an order of magnitude.
 
 The second is reliability. A full-frame analysis might find background colors that match a game element, such as a red alliance wall segment, a colored field marking, or a team member's clothing, and misclassify them as the target. Restricting the analysis to a small zone that can only contain the spike mark or scoring target eliminates these false positives structurally.
-
----
 
 ## The OpenCV Coordinate System
 
@@ -39,8 +35,6 @@ Rect centerZone = new Rect(213, 360, 214, 80);
 // Left edge at x=213, top edge at y=360, 214 pixels wide, 80 pixels tall
 ```
 
----
-
 ## Extracting a Submat
 
 Once a `Rect` is defined, you extract the corresponding region from the full frame using `frame.submat(rect)`. The result is a new `Mat` object containing only the pixels inside the rectangle. This submat is what you pass to color analysis functions rather than the full frame.
@@ -50,8 +44,6 @@ Mat zonePixels = frame.submat(centerZone);
 ```
 
 `submat()` does not copy the pixel data. It returns a view into the same memory as the original frame. This makes it extremely efficient. When you are done analyzing it, you should call `zonePixels.release()` to free the view reference, though in the context of a `processFrame()` method that runs repeatedly, the JVM will handle this correctly on its own.
-
----
 
 ## Annotated Code
 
@@ -145,9 +137,7 @@ return input;
 
 This is a useful example of reducing a full frame to the pixels that answer the autonomous question. A competition pipeline should also test the chosen region and thresholds under varied lighting. Excerpted from [KookyBotz's `SleeveDetection.java` at a pinned commit](https://github.com/KookyBotz/PowerPlaySleeveDetection/blob/247fccab99a8bb5de1c4b45ac6095567afa7c087/SleeveDetection.java) under the [MIT License](https://github.com/KookyBotz/PowerPlaySleeveDetection/blob/247fccab99a8bb5de1c4b45ac6095567afa7c087/LICENSE).
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. In the OpenCV coordinate system, the origin (0, 0) is located at the `__________` corner of the image frame.
 2. The `Rect` constructor takes four parameters in this order: left edge x, top edge y, `__________`, and `__________`.
@@ -162,9 +152,7 @@ This is a useful example of reducing a full frame to the pixels that answer the 
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Your camera is a 640x480 stream. Define three `Rect` zone constants named `LEFT_ZONE`, `CENTER_ZONE`, and `RIGHT_ZONE` for detecting a team scoring element at the three possible spike mark positions. Each zone should be 60 pixels wide and 60 pixels tall. Position the left zone starting at x=60, the center zone starting at x=290, and the right zone starting at x=510. All three should have their top edge at y=350.
 

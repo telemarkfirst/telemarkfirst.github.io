@@ -10,15 +10,11 @@ import Unit12Simulator from '@site/src/components/Unit12Simulator';
 
 # Lesson 12.4: Monitoring Pitch and Roll for Robot Tip Detection
 
----
-
 ## When Tipping Becomes a Real Risk
 
 Tall robots, high center-of-mass designs, and fast directional changes are all common in competitive FTC. A robot that tips over during a match cannot score and may receive a penalty if a referee must right it, or worse, it may damage itself or a field element. Physical countermeasures like a wide wheelbase and low ballast weight help, but software can add a second layer of protection by detecting dangerous tilt angles and responding before the tip actually occurs.
 
 The IMU's pitch and roll channels provide exactly this data. Because the IMU detects acceleration along its axes, and gravity is a constant downward acceleration, the sensor can determine how much the robot is leaning in any direction even when the robot is stationary. This is the same principle used in smartphones to detect landscape versus portrait orientation.
-
----
 
 ## Pitch, Roll, and Their Axes
 
@@ -27,8 +23,6 @@ Pitch measures rotation around the robot's side-to-side axis. Visually, this is 
 Both values are retrieved from the same `YawPitchRollAngles` object used for Yaw in Lesson 12.2. The methods are `getPitch(AngleUnit)` and `getRoll(AngleUnit)`, and they accept the same `AngleUnit.DEGREES` or `AngleUnit.RADIANS` parameter.
 
 When checking for tipping, you almost always want to use `Math.abs()` on the result. A robot that is tilting 25 degrees to the left and a robot that is tilting 25 degrees to the right are both in danger, but one produces a positive roll value and the other produces a negative roll value. Taking the absolute value collapses both cases into a single threshold check.
-
----
 
 ## Designing a Tip Safety Response
 
@@ -45,8 +39,6 @@ boolean isTipping = Math.abs(pitch) > 20.0 || Math.abs(roll) > 20.0;
 ```
 
 The threshold value of 20 degrees is a starting point. Each robot's actual tip angle depends on its geometry, and the team should measure and calibrate this number during practice sessions.
-
----
 
 ## Annotated Code
 
@@ -111,9 +103,7 @@ public class TipDetectionDemo extends OpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. Rotation around the robot's side-to-side axis, describing a forward or backward lean, is called `__________`.
 2. Rotation around the robot's front-to-back axis, describing a left or right lean, is called `__________`.
@@ -128,9 +118,7 @@ public class TipDetectionDemo extends OpMode {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Use the simulator below to complete the tip-detection helper. The editor starts with incomplete starter code, so fill in the pitch/roll reads and either-axis safety condition before tilting the robot.
 

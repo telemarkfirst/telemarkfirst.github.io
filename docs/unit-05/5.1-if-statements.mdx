@@ -10,19 +10,13 @@ import Unit5Simulator from '@site/src/components/Unit5Simulator';
 
 # Lesson 5.1: Using if Statements to Decide When a Motor Should Run
 
----
-
 ## Technical Context
 
 An `if` statement lets the program send a hardware command only when a condition is true, such as a driver pressing a button or a sensor reporting a safe state. The condition does not make a mechanism safe by itself, but it is the basic tool used to build limits, interlocks, and driver controls.
 
----
-
 ## How if Statements Turn Inputs into Actions
 
 In the Java JVM, an `if` statement evaluates a boolean expression found within the parentheses. If the expression evaluates to `true`, the code block encapsulated by curly braces `{}` is executed. In FTC, this is typically used to poll the state of a gamepad button (e.g., `gamepad1.a`) or a digital sensor. Because the `loop()` method executes approximately 50 times per second, the `if` statement allows the robot to make real-time decisions based on the current state of the hardware registry.
-
----
 
 ## Annotated Code
 
@@ -57,9 +51,7 @@ public class BasicLogic extends OpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. A foundational decision-making structure in Java starts with the `__________` keyword followed by a conditional expression in parentheses.
 2. The code following a conditional statement should be encapsulated in `__________` to prevent logic errors and ensure multiple statements execute together.
@@ -74,11 +66,9 @@ public class BasicLogic extends OpMode {
 
 </details>
 
----
+## Challenge
 
-## Simulator Challenge
-
-**Robot Scenario:** Your team needs a safety switch. The DC Motor named `"flywheel"` should only run at full power if the driver is holding `gamepad1.right_bumper`.
+**Task:** Your team needs a safety switch. The DC Motor named `"flywheel"` should only run at full power if the driver is holding `gamepad1.right_bumper`.
 
 <SimulatorRunGuide />
 

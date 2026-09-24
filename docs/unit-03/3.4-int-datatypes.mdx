@@ -10,19 +10,13 @@ import Unit3Simulator from '@site/src/components/Unit3Simulator';
 
 # Lesson 3.4: Using int Values to Count Cycles and Repetitions
 
----
-
 ## Technical Context
 
 Counting discrete events, such as scored elements or intake cycles, requires whole numbers. An `int` makes that intent clear and prevents fractional results from entering code that expects a count. It does not prevent every logic error, but it gives Java a useful type boundary.
 
----
-
 ## When int Is the Right Tool
 
 An `int` (integer) is a 32-bit primitive used for whole numbers ranging from approximately −2 billion to +2 billion. In robotics, `int` is essential for indexing through arrays of motors or counting the specific number of encoder ticks reported by a `DcMotor`. Unlike `double`, an `int` does not store decimal information; if you divide `5` by `2` using integers, Java will return `2`, completely discarding the remainder.
-
----
 
 ## Annotated Code
 
@@ -51,9 +45,7 @@ public class CycleCounter extends OpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. The datatype used for whole numbers without any decimal places is `__________`.
 2. When dividing two integers, Java performs `__________` division, where any remainder is discarded.
@@ -68,11 +60,9 @@ public class CycleCounter extends OpMode {
 
 </details>
 
----
+## Challenge
 
-## Simulator Challenge
-
-**Robot Scenario:** Your autonomous requires the robot to keep track of how many "laps" it has completed. Declare an `int` variable and increment it every time the `"B"` button is pressed.
+**Task:** Your autonomous requires the robot to keep track of how many "laps" it has completed. Declare an `int` variable and increment it every time the `"B"` button is pressed.
 
 <SimulatorRunGuide />
 

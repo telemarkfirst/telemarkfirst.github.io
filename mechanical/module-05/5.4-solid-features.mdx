@@ -9,15 +9,11 @@ import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
 
 # Lesson 5.4: Extrude, Revolve, Sweep, and Loft
 
----
-
 ## Technical Context
 
 Four features create almost all solid geometry. They differ in one thing: what the sketch does as it travels. Extrude pushes it in a straight line, revolve spins it about an axis, sweep drags it along a path you drew, and loft blends it into a different shape.
 
 Choose the feature that matches the intended geometry and likely revisions. A model can have the correct current shape and still be difficult to update if its feature structure does not reflect the design.
-
----
 
 ## Extrude
 
@@ -40,8 +36,6 @@ The end condition matters more than most people use:
 Extruding symmetrically about a plane keeps the part centred on that plane forever. Extruding 20 mm one way puts the centre 10 mm off, and every downstream mate inherits the error.
 :::
 
----
-
 ## Revolve
 
 **Revolve** spins a sketch about an axis. Anything with rotational symmetry should be revolved rather than extruded and filleted into shape: shafts, spools, pulleys, spacers, wheel hubs.
@@ -52,8 +46,6 @@ Two rules:
 - Sketch the profile as a cross-section through the middle, not as the outside shape.
 
 A stepped shaft with three diameters is one revolve of a stair-shaped profile. Modelled as three stacked extrudes it is three features that can drift apart.
-
----
 
 ## Sweep
 
@@ -67,8 +59,6 @@ In FTC this is how you model anything with a constant cross-section following a 
 
 The profile should sit perpendicular to the start of the path. If it does not, the sweep either fails or produces a twisted solid.
 
----
-
 ## Loft
 
 **Loft** blends between two or more different profiles. Use it when a shape genuinely changes along its length: a transition from a round bore to a square mount, a funnel, a tapered intake guide.
@@ -78,8 +68,6 @@ Loft is the least predictable of the four because it interpolates between profil
 :::warning Do not loft what you can extrude
 Loft is where over-modelling starts. If the shape is a straight taper, a draft on an extrude is simpler, faster, and easier to change. Reach for loft when the shape really does change from one cross-section to another.
 :::
-
----
 
 ## Choosing Between Them
 
@@ -92,9 +80,7 @@ Ask what the cross-section does along the length of the part.
 | Stays the same, along a curve you drew | Sweep |
 | Changes from one shape to another | Loft |
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. An extrude end condition of `__________` `__________` follows the geometry it stops at when that geometry moves.
 2. A revolve sketch must lie entirely on one side of the `__________`.
@@ -110,8 +96,6 @@ Ask what the cross-section does along the length of the part.
 4. **loft**
 
 </details>
-
----
 
 ## Exercise
 

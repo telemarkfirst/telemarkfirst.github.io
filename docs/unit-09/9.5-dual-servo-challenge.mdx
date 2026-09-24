@@ -10,13 +10,9 @@ import Unit9Simulator from '@site/src/components/Unit9Simulator';
 
 # Lesson 9.5: Sync a Dual-Servo Gripper with Offset Tuning
 
----
-
 ## Technical Context
 
 Mechanical misalignment or "slop" in servo splines means two physically identical servos may reach their effective grip position at slightly different software values. Applying **position offsets** to each servo independently compensates for this, ensuring the gripper holds a game element securely without one side stalling against its physical stop while the other is still moving.
-
----
 
 ## How to Tune Two Servos So They Work Together
 
@@ -25,8 +21,6 @@ This lesson combines `setDirection()` from Lesson 9.3 with `else if` chaining fr
 Using `else if` chaining instead of multiple independent `if` blocks is critical here: it prevents **servo jitter**. If two `if` blocks both evaluate to `true` in the same loop cycle (for example, if two buttons are held simultaneously), the servo would receive two conflicting position commands within a single 50Hz update, causing rapid mechanical oscillation that can strip servo gears.
 
 A single `else if` chain guarantees the servo receives **exactly one** position command per loop cycle.
-
----
 
 ## Annotated Code
 
@@ -83,9 +77,7 @@ public class DualServoDemo extends OpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. Using `else if` statements instead of multiple independent `if` statements ensures the servo receives only `__________` position command(s) per loop cycle.
 2. Providing a `__________` state in the `else` clause ensures the servo returns to a predictable position when no buttons are pressed.
@@ -99,8 +91,6 @@ public class DualServoDemo extends OpMode {
 3. **jitter** (rapid mechanical oscillation)
 
 </details>
-
----
 
 ## Simulator Practice
 

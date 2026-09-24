@@ -1,8 +1,4 @@
 {
   "label": "Unit 9: Servo Control",
-  "position": 9,
-  "link": {
-    "type": "doc",
-    "id": "unit-09/overview"
-  }
+  "position": 9
 }

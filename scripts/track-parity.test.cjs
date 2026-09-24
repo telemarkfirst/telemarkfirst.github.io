@@ -154,7 +154,6 @@ for (const bank of banks) {
 // ── Shared components, not per-track copies ─────────────────────────────────
 
 for (const [file, component] of [
-  ['src/components/UnitOverview.tsx', 'UnitOverview'],
   ['src/components/mechanical/ScoredQuiz.tsx', 'ScoredQuiz'],
 ]) {
   assert.ok(fs.existsSync(path.join(root, file)), `${component} is missing`);

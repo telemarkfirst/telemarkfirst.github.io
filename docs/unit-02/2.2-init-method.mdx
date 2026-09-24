@@ -10,21 +10,15 @@ import Unit2Simulator from '@site/src/components/Unit2Simulator';
 
 # Lesson 2.2: Setting Up Hardware in init() Before the Match Starts
 
----
-
 ## Technical Context
 
 The `init()` method is the hardware setup phase. Mapping required motors and sensors here exposes configuration problems before the match begins and gives the program a place to establish safe initial states. `HardwareMap.get(...)` throws if a required device cannot be found; a hardware field that was never assigned can produce a `NullPointerException` when later code tries to use it.
-
----
 
 ## What is the init() Method?
 
 The `init()` method is a callback executed **exactly once** when the driver presses the "INIT" button on the Driver Station. This is the stage where the program accesses the `hardwareMap`, a built-in object that acts as a registry for all configured devices.
 
 By using `hardwareMap.get()`, you associate a Java variable with the specific configuration name assigned in the Robot Controller settings. This is also where you define the initial state of components, such as setting `DcMotors` to `RUN_USING_ENCODER` mode.
-
----
 
 ## Annotated Code
 
@@ -51,9 +45,7 @@ public class InitDemo extends OpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. The `init()` method is executed exactly `__________` time(s) when the driver presses the INIT button.
 2. To link a physical motor to a code variable, you must call the `__________` method from the `hardwareMap` object.
@@ -68,9 +60,7 @@ public class InitDemo extends OpMode {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 You need to prepare a `Servo` named `"claw"` for the match. Use the `init()` method to map it and ensure it is ready to move once the match starts.
 

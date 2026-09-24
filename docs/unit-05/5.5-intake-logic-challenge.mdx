@@ -10,21 +10,15 @@ import Unit5Simulator from '@site/src/components/Unit5Simulator';
 
 # Lesson 5.5: Build Intake Logic for Multi-Stage Game Piece Sorting
 
----
-
 ## Technical Context
 
 A **"Logic Tree"** is a complex arrangement of decisions that allows the robot to handle variable field conditions autonomously. This prevents failures in game element management by creating specific behaviors for different scenarios: such as varying motor power based on whether a Color Sensor detects a friendly or opposing alliance element.
-
----
 
 ## How to Design a Multi-Stage Intake Decision Tree
 
 This lesson uses an `if` / `else if` / `else` chain to manage a hardware subsystem. The goal is to implement a **state-dependent controller**. The final controller maps the same `DcMotor`, `ColorSensor`, and `DistanceSensor` types used by the coding challenge, reads each sensor once per loop, and sends exactly one motor command on every pass.
 
 The FTC SDK color methods are `red()` and `blue()`. A `DistanceSensor` is read with `getDistance(DistanceUnit.CM)`. Store those readings in variables before making decisions so the logic and telemetry describe the same sensor sample.
-
----
 
 ## Annotated Code
 
@@ -81,9 +75,7 @@ public void loop() {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. When one `if` statement is placed inside another `if` statement's block, it is referred to as a/an `__________` conditional.
 2. Building a multi-stage logic tree helps robots handle variable conditions in the `__________` phase of a match.
@@ -98,11 +90,9 @@ public void loop() {
 
 </details>
 
----
-
 ## Simulator Practice
 
-**Robot Scenario:** Finish the red-alliance sorter. Collect red inside 10 cm, eject blue inside 10 cm, and stop for a tie or any sample outside that range.
+**Task:** Finish the red-alliance sorter. Collect red inside 10 cm, eject blue inside 10 cm, and stop for a tie or any sample outside that range.
 
 <SimulatorRunGuide />
 

@@ -12,15 +12,11 @@ import DeflectionCalculator from '@site/src/components/mechanical/DeflectionCalc
 
 # Lesson 3.3: Stiffness, Deflection, and Why Beam Depth Wins
 
----
-
 ## Technical Context
 
 A mechanism can stop working even when no part has fractured. A rail, plate, or shaft may deflect enough under load to move bearings out of alignment or change the geometry at a handoff.
 
 Check deflection during design so the mechanism keeps its required alignment under load. One relationship explains which dimensions matter most.
-
----
 
 ## The Deflection Relationship
 
@@ -40,8 +36,6 @@ Where `F` is the load, `L` is the span, `E` is Young's modulus of the material, 
 
 Three consequences follow immediately, and all three are actionable.
 
----
-
 ## Consequence 1: Span Dominates Everything
 
 Deflection scales with the **cube** of the span. Doubling an unsupported length makes it eight times more flexible.
@@ -49,8 +43,6 @@ Deflection scales with the **cube** of the span. Doubling an unsupported length 
 This is why adding a support in the middle of a long rail is dramatically more effective than making the rail thicker. Halving the span reduces deflection to one eighth, before you have added a single gram of material to the beam itself.
 
 The first question about a flexible part is always: can I shorten the unsupported span or add a support?
-
----
 
 ## Consequence 2: Depth Dominates the Cross Section
 
@@ -72,8 +64,6 @@ Material far from the neutral axis contributes most of the stiffness, so materia
 The lesson is not that hollow is stiffer. It is that when weight is the constraint, a deeper hollow section beats a smaller solid one every time.
 :::
 
----
-
 ## Consequence 3: Material Is the Weakest Lever
 
 Switching from aluminum to steel multiplies `E` by about 2.9, so deflection drops to about a third. That is real, but it also roughly triples the weight of that member.
@@ -88,8 +78,6 @@ The order of operations for a flexible part:
 4. Triangulate
 5. Only then, consider a stiffer material
 
----
-
 ## Triangulation
 
 A rectangular frame with pinned corners has no resistance to racking: it deforms into a parallelogram. A triangle cannot change shape without changing the length of a side, which is why a diagonal brace transforms a flexible frame.
@@ -103,8 +91,6 @@ In practice on an FTC robot:
 Look for the rectangle that can become a parallelogram. That is where the robot flexes.
 
 <TriangulationDiagram />
-
----
 
 ## Try It
 
@@ -123,9 +109,7 @@ Compare a section on edge against the same section lying flat, and watch what ha
 This calculator models an ideal beam. On a real robot, a large share of the total deflection comes from bolted joints: holes are slightly oversized, so parts shift before they load, and a single bolt through a single shear plane lets a joint rotate. Two fasteners spaced apart resist rotation far better than one, even when one is strong enough.
 :::
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. Deflection scales with the span raised to the power of `__________`, which is why adding a mid support is so effective.
 2. In the area moment of inertia for a rectangular section, the dimension that is cubed is the `__________`.
@@ -139,8 +123,6 @@ This calculator models an ideal beam. On a real robot, a large share of the tota
 3. **triangulated** (braced with a diagonal or gusset)
 
 </details>
-
----
 
 ## Exercise
 

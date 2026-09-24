@@ -10,15 +10,11 @@ import Unit13Simulator from '@site/src/components/Unit13Simulator';
 
 # Lesson 13.3: Overriding Behavior with @Override for Custom Implementations
 
----
-
 ## Why the Same Method Name Needs Different Behavior
 
 Inheritance establishes that child classes are specialized versions of their parent. Sometimes that specialization means doing the same thing slightly differently. A `BaseMotorMechanism` parent might have a `stop()` method that calls `motor.setPower(0)`. For most mechanisms, that is sufficient. For a high-reach scoring lift that holds a heavy game element, a bare `setPower(0)` is not safe because it allows gravity to drop the element the instant the driver releases the joystick. That specific mechanism needs a `stop()` that also configures `BRAKE` behavior before cutting power.
 
 The mechanism still needs to be called `stop()` because any other name would be confusing. External code that calls `stop()` on any mechanism should not need to know which specific mechanism it is talking to. The solution is method overriding: the child class redefines the method with the same name and signature, replacing the parent's implementation with its own.
-
----
 
 ## The @Override Annotation
 
@@ -28,15 +24,11 @@ The annotation serves two purposes. First, it tells the compiler to verify that 
 
 Second, it documents intent for every other person who reads the code. When a teammate sees `@Override`, they immediately understand that this method exists in the parent and that this class is deliberately changing its behavior.
 
----
-
 ## Abstract Methods
 
 When a parent class defines a method as `abstract`, it declares that the method exists and specifies its signature, but provides no implementation body. The parent is saying: every child of mine must implement this method, but I cannot provide a meaningful default. Any class that contains at least one `abstract` method must itself be declared `abstract`, and an abstract class cannot be instantiated directly. Only concrete child classes that implement all abstract methods can be instantiated.
 
 In FTC, abstract classes are useful for defining a common interface for a family of mechanisms. An `abstract class Shooter` might declare `abstract void fire()` because different shooter designs require completely different firing logic, but all of them need a `fire()` method that autonomous code can call by name.
-
----
 
 ## Annotated Code
 
@@ -134,9 +126,7 @@ public abstract class BaseShooter {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. The annotation placed immediately above a child class method to signal it is replacing an inherited version is `__________`.
 2. Without the `@Override` annotation, a misspelled method name in a child class would compile silently as a `__________` method rather than reporting an error.
@@ -151,9 +141,7 @@ public abstract class BaseShooter {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 A `GenericSlide` class has a `move(double power)` method that passes power directly to a motor. Write a `SafetySlide` child class that overrides `move()` to enforce a maximum power of 0.5 regardless of what value is passed in. Use `Math.min()` and `Math.abs()` with `Math.signum()` to scale the input while preserving direction.
 

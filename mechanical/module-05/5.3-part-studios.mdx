@@ -9,13 +9,9 @@ import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
 
 # Lesson 5.3: Part Studios, the Feature List, and Reference Geometry
 
----
-
 ## Technical Context
 
 Lesson 5.2 covered sketches. This lesson covers the Part Studio that contains them, the feature list that turns them into geometry, and the datums used as stable references.
-
----
 
 ## Part Studios
 
@@ -35,8 +31,6 @@ Use separate Part Studios when parts share nothing but a bolt. A studio holding 
 If a plate's holes come from a sketch that also positions the motor, moving the motor moves the holes. That is a Part Studio doing the job it exists for. Two separate files would have silently gone out of alignment.
 :::
 
----
-
 ## Parametric Modelling and the Feature List
 
 **Parametric** means the model is a recipe, not a drawing. Each feature records *how* it was made, and the model is rebuilt by replaying that recipe from the top. Change an early number and everything downstream recomputes.
@@ -54,8 +48,6 @@ Two consequences follow, and both matter:
 | Every feature after one point is red | The first red feature lost its reference; fix that one only |
 | The part rebuilds slowly | Long dependency chain, or a pattern of a pattern of a pattern |
 | A dimension change deforms the wrong area | A sketch was attached to a face that moved |
-
----
 
 ## Reference Geometry
 
@@ -81,9 +73,7 @@ Create axes from the intersection of two planes, from a cylindrical face, or thr
 Use datum planes for sketches that should remain stable through later edits. A sketch attached to a model face can lose its reference when that face is filleted, shelled, or removed. Creating one extra plane can prevent downstream features from failing after those changes.
 :::
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. A single Onshape modelling space that can contain several related parts is called a `__________` `__________`.
 2. The ordered recipe that records how a part was built, and replays to rebuild it, is the `__________` `__________`.
@@ -99,8 +89,6 @@ Use datum planes for sketches that should remain stable through later edits. A s
 4. **mid**
 
 </details>
-
----
 
 ## Exercise
 

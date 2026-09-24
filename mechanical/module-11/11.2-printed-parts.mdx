@@ -11,15 +11,11 @@ import {PrintOrientationDiagram} from '@site/src/components/mechanical/Engineeri
 
 # Lesson 11.2: Designing 3D Printed Parts That Survive FTC Loads
 
----
-
 ## Technical Context
 
 3D printing lets a team make a part that fits their exact geometry in an afternoon. It also lets them make a part that looks correct and fails at a fraction of the load an equivalent aluminum bracket would carry.
 
 The difference is almost entirely in how the part is designed for the process.
-
----
 
 ## Printed Parts Are Anisotropic
 
@@ -37,8 +33,6 @@ The practical implication is that print orientation is a design decision that be
 Print two copies of a bracket in different orientations and load them by hand until they fail. The difference is usually obvious and it teaches the principle faster than any explanation.
 :::
 
----
-
 ## Design Rules That Matter
 
 **Fillet every internal corner.** Sharp internal corners concentrate stress and are where printed parts crack. Even a small radius helps substantially, and it costs nothing.
@@ -52,8 +46,6 @@ Print two copies of a bracket in different orientations and load them by hand un
 **Do not print threads for structural use.** Printed threads strip. Use a heat set insert, a captured nut, or a through hole with a nut and washer.
 
 **Never rely on a press fit into printed plastic.** The material creeps under sustained load, so the interference relaxes over weeks. This applies especially to bearings, per Lesson 4.3.
-
----
 
 ## Material Selection
 
@@ -71,8 +63,6 @@ A common and reasonable team pattern is PLA for everything during prototyping an
 PLA loses stiffness at temperatures a robot can reach, particularly for a part mounted against a motor that has been working, and a robot left in a vehicle on a warm day can exceed it easily. If a printed part sits near a heat source, use PETG, ABS, ASA, or nylon.
 :::
 
----
-
 ## When a Printed Part Is the Wrong Answer
 
 Printing is the right choice for complex geometry, for parts you need quickly, and for things that would be difficult to machine. It is the wrong choice when:
@@ -83,8 +73,6 @@ Printing is the right choice for complex geometry, for parts you need quickly, a
 - The part will be near a motor and made from a low temperature material
 - The part is safety critical, since printed parts fail with less warning
 
----
-
 ## Iterating Printed Parts
 
 Printing's real advantage is iteration speed. Use it deliberately:
@@ -93,8 +81,6 @@ Printing's real advantage is iteration speed. Use it deliberately:
 - Keep the failed versions and photograph them for the notebook, since a row of four brackets showing progressive reinforcement is exactly the iteration evidence judges look for.
 - Print a spare of every printed part that is on the competition robot, and put it in the pit box.
 
----
-
 <LessonPhoto
   alt="A 3D printed bracket split cleanly along its layer lines."
   caption="A printed part that failed along its layer lines. The break face is flat and shows the layer boundaries, which is the signature of a load that tried to peel the layers apart rather than pass through solid material."
@@ -102,9 +88,7 @@ Printing's real advantage is iteration speed. Use it deliberately:
   framing="Macro on the break face, raking light so the individual layers are visible as lines."
 />
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. Printed parts are weakest when the load tries to separate the `__________`, so orientation must be chosen deliberately.
 2. Strength in a printed part comes mostly from the `__________` rather than from infill.
@@ -118,8 +102,6 @@ Printing's real advantage is iteration speed. Use it deliberately:
 3. **insert**
 
 </details>
-
----
 
 ## Exercise
 

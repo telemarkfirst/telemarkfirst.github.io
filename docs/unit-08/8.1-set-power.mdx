@@ -10,13 +10,9 @@ import Unit8Simulator from '@site/src/components/Unit8Simulator';
 
 # Lesson 8.1: Using setPower() to Control Motor Speed
 
----
-
 ## Technical Context
 
 The Robot Controller manages motor output by sending **pulse-width modulation (PWM)** signals to the Expansion Hub or Control Hub. Sending power levels allows for variable speed control; however, providing too much power to a stalled mechanism, such as an arm pressed against a hard stop, can lead to motor burnout or stripped gears from sustained high-current draw.
-
----
 
 ## What setPower() Is Really Doing
 
@@ -35,8 +31,6 @@ Important behaviors to understand:
 :::tip Common robot failure: motors hum but do not move
 That is often a stalled mechanism, not a code problem. Stop testing at high power, lift the robot or remove the load, check gear mesh and hard stops, then re-test at low power while watching current draw if your tooling shows it.
 :::
-
----
 
 ## In TeleOp (OpMode)
 
@@ -105,9 +99,7 @@ public class SetPowerAutoDemo extends LinearOpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. The `setPower()` method accepts a `__________` data type as its parameter.
 2. To command a motor to rotate at half-speed in the reverse direction, you would pass the value `__________` to the method.
@@ -122,9 +114,7 @@ public class SetPowerAutoDemo extends LinearOpMode {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Use the simulator below to practice intake power control with lesson-specific starter code and live trigger input.
 

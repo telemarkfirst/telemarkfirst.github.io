@@ -10,13 +10,9 @@ import Unit9Simulator from '@site/src/components/Unit9Simulator';
 
 # Lesson 9.3: Fixing Inverted Servo Setups with Direction Settings
 
----
-
 ## Technical Context
 
 Dual-servo grippers often have servos mounted **mirrored** to each other on opposing sides of the mechanism. Without software inversion, a "close" command would move one servo inward and the other outward, causing the gripper to splay open instead of grip. Correcting this in `init()` allows identical position commands to drive both sides symmetrically.
-
----
 
 ## When Servo Direction Is the Cleaner Fix
 
@@ -30,8 +26,6 @@ This serves the same basic purpose as `DcMotorSimple.Direction.REVERSE`: it lets
 | `Direction.REVERSE` | Physical far-right | Physical far-left |
 
 The default direction for all servos is `Servo.Direction.FORWARD`.
-
----
 
 ## Annotated Code
 
@@ -77,9 +71,7 @@ public class ServoDirectionDemo extends OpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. To flip the orientation of a servo, we use the parameter `Servo.Direction.__________`.
 2. The default direction for all servos in the SDK is `Servo.Direction.__________`.
@@ -94,9 +86,7 @@ public class ServoDirectionDemo extends OpMode {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Use the simulator below to practice reversing the mirrored `"right_gate"` servo so both double-gate flaps open and close symmetrically.
 

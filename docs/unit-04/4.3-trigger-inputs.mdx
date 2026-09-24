@@ -10,19 +10,13 @@ import Unit4Simulator from '@site/src/components/Unit4Simulator';
 
 # Lesson 4.3: Using Triggers for Gradual Braking Control
 
----
-
 ## Technical Context
 
 Unlike buttons, the Triggers on the gamepad are **analog**, allowing for graduated control over hardware. Implementing progressive braking or variable intake speeds using triggers prevents the "shock loading" of gears and chains that occurs during instantaneous full-power activation, significantly extending the life of the robot's mechanical components.
 
----
-
 ## Why Triggers Work Well for Fine Control
 
 Triggers are accessed as `gamepad1.left_trigger` and `gamepad1.right_trigger`. Unlike the joysticks, triggers return a `double` ranging only from `0.0` (not pressed) to `1.0` (fully pressed). Because they provide a resolution of fractional values, they are ideal for use as multipliers in drive logic. For example, multiplying the drivetrain's output power by the inverse of a trigger value allows a driver to "feather" the brakes to perform precise alignment with game elements.
-
----
 
 ## Annotated Code
 
@@ -46,9 +40,7 @@ public class TriggerBrake extends OpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. The minimum value returned by a gamepad trigger is `__________`.
 2. Unlike the joysticks, triggers cannot return `__________` values.
@@ -63,11 +55,9 @@ public class TriggerBrake extends OpMode {
 
 </details>
 
----
+## Challenge
 
-## Simulator Challenge
-
-**Robot Scenario:** The drive team wants to use the Left Trigger to control the robot's "Slow Mode." Create a variable that stores the trigger value and use it to report the current "Speed Limit" to the drivers.
+**Task:** The drive team wants to use the Left Trigger to control the robot's "Slow Mode." Create a variable that stores the trigger value and use it to report the current "Speed Limit" to the drivers.
 
 <SimulatorRunGuide />
 

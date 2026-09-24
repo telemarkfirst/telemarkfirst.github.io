@@ -5,8 +5,8 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
  * Prefixes an app path with the site's configured base URL.
  *
  * Docusaurus Link handles this, but a programmatic history.push does not: it
- * takes the path literally, so pushing "/mechanical/module-12" lands on
- * example.com/mechanical/module-12 while the site is served from
+ * takes the path literally, so pushing "/mechanical/module-12/hole-standards" lands on
+ * example.com/mechanical/module-12/hole-standards while the site is served from
  * example.com/telemark/. That failure is invisible in local development, where
  * the base URL is "/", and breaks every affected link in production.
  *

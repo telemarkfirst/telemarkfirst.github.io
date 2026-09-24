@@ -10,15 +10,11 @@ import Unit10Simulator from '@site/src/components/Unit10Simulator';
 
 # Lesson 10.5: Developing a Precise Drive and Stop System for Linear Navigation
 
----
-
 ## Why Encoder Resets Matter More Than You Think
 
 Suppose an autonomous move ends near 1000 ticks and the next command should advance another 500 ticks. Calling `setTargetPosition(500)` requests the absolute encoder position 500, which is behind the current position. The controller may correctly drive backward toward that absolute target even though the programmer intended a relative move.
 
 `STOP_AND_RESET_ENCODER` establishes a known software zero, but it is not required before every segment. A routine can reset once and use cumulative absolute targets, or compute a relative target such as `drive.getCurrentPosition() + deltaTicks`. Re-zero only at an intentional reference point because resetting the count does not correct the robot's physical field pose.
-
----
 
 ## Putting the Full Sequence Together
 
@@ -34,8 +30,6 @@ A basic encoder-based move after establishing a known zero has six steps:
 The `isBusy()` method reports whether a motor in `RUN_TO_POSITION` is still outside its configured target tolerance. Combining it with `opModeIsActive()` is a useful loop condition. A timeout and multi-motor completion policy may also be needed so a stalled or lagging motor cannot hold autonomous indefinitely.
 
 One thing to remember: after `STOP_AND_RESET_ENCODER`, the motor is stopped. You must switch to a movement mode before calling `setPower()` or nothing will happen. `RUN_TO_POSITION` also remains active after arrival, so cleanup must restore `RUN_USING_ENCODER`. Otherwise the next TeleOp-style power command can continue targeting the old position instead of behaving like a velocity request.
-
----
 
 ## Annotated Code
 
@@ -83,9 +77,7 @@ public class DriveAndStopDemo extends LinearOpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. To zero out accumulated ticks before a new move, you apply the `DcMotor.RunMode.__________` mode.
 2. After a reset, the motor must be switched to a movement mode because the reset command also `__________` the motor shaft.
@@ -99,8 +91,6 @@ public class DriveAndStopDemo extends LinearOpMode {
 3. **`RUN_USING_ENCODER`**
 
 </details>
-
----
 
 ## Simulator Practice
 

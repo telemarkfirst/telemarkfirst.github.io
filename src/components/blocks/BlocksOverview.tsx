@@ -32,7 +32,7 @@ export default function BlocksOverview(): React.JSX.Element {
       {BLOCKS_UNITS.map((unit) => {
         const lessons = BLOCKS_LESSONS.filter((lesson) => lesson.unitSlug === unit.slug);
         const done = lessons.filter((lesson) => isComplete(lesson.id)).length;
-        return <Link key={unit.id} to={unit.overviewPath} className={styles.card}>
+        return <Link key={unit.id} to={unit.startPath} className={styles.card}>
           <span className={styles.cardNum}>{unit.label}</span>
           <span className={styles.cardTitle}>{unit.title}</span>
           <span className={styles.cardDesc}>{unit.desc}</span>

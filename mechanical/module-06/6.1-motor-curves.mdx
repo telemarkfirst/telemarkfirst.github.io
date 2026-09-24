@@ -11,15 +11,11 @@ import MotorCurveExplorer from '@site/src/components/mechanical/MotorCurveExplor
 
 # Lesson 6.1: Reading Motor Curves, Free Speed, and Stall Torque
 
----
-
 ## Technical Context
 
 A motor specification lists free speed and stall torque, but neither value describes normal operation. A mechanism under load runs below free speed and above zero torque.
 
 Estimate the motor's operating point under the expected load before using its speed to predict a cycle time.
-
----
 
 ## The Two Endpoints
 
@@ -34,8 +30,6 @@ Everything useful happens between them, on the line connecting the two:
 ```text
 torque(speed) = stall_torque * (1 - speed / free_speed)
 ```
-
----
 
 ## Where the Power Is
 
@@ -53,8 +47,6 @@ This is a useful design anchor. A mechanism designed to operate near half of fre
 :::tip Design for the loaded speed, not the free speed
 If a mechanism must lift a load requiring half the available stall torque, it will run at roughly half of free speed. Cycle time calculations based on free speed will be about twice as optimistic as reality.
 :::
-
----
 
 ## Current and Heat
 
@@ -74,8 +66,6 @@ Two consequences matter on a robot.
 Published values assume a nominal 12 V. A battery at 11.5 V under load produces lower free speed and lower stall torque proportionally. Late in a tournament day, a mechanism sized with no margin stops working, and the cause looks intermittent because it depends on which battery is in the robot.
 :::
 
----
-
 ## Gearboxes Move the Endpoints
 
 A reduction of ratio R divides speed by R and multiplies torque by R, minus efficiency losses:
@@ -88,8 +78,6 @@ output_stall_torque = motor_stall_torque * R * efficiency
 The shape of the curve does not change; the axes rescale. This is the whole business of power transmission, and Lesson 6.2 covers how to compute R.
 
 Note that vendors often publish the **output** ratings of a geared motor directly, with gearbox efficiency already included. When you use those numbers, set the external reduction to 1 unless you are adding gears or belts after the gearbox.
-
----
 
 ## Try It
 
@@ -104,9 +92,7 @@ Set a load torque and watch where the motor actually runs, what it draws, and ho
   <MotorCurveExplorer />
 </LessonTool>
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. Peak mechanical power occurs at half of free speed and half of `__________` torque.
 2. A motor held against a hard stop draws its full `__________` current and converts that power entirely into heat.
@@ -120,8 +106,6 @@ Set a load torque and watch where the motor actually runs, what it draws, and ho
 3. **efficiency**
 
 </details>
-
----
 
 ## Exercise
 

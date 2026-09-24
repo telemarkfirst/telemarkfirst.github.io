@@ -47,7 +47,6 @@ function AssessmentCard({assessment}: {assessment: CoachAssessment}): React.JSX.
           <p className={styles.unitDescription}>{unit.desc}</p>
         </div>
         <div className={styles.assessmentMeta} aria-label="Assessment details">
-          <span>Advanced</span>
           <span>{assessment.timebox}</span>
           <span>{assessment.format}</span>
         </div>
@@ -61,9 +60,6 @@ function AssessmentCard({assessment}: {assessment: CoachAssessment}): React.JSX.
         <div className={styles.assignActions}>
           <Link to={masteryLesson.path} className={styles.primaryAction}>
             Open student test
-          </Link>
-          <Link to={unit.overviewPath} className={styles.secondaryAction}>
-            Review objectives
           </Link>
         </div>
       </div>

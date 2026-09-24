@@ -13,15 +13,11 @@ import ChainLengthCalculator from '@site/src/components/mechanical/ChainLengthCa
 
 # Lesson 6.3: Sizing Chain and Timing Belt Drives
 
----
-
 ## Technical Context
 
 Gears must touch, which means the center distance is fixed by the gears themselves. Chain and belt transmit torque across a distance you choose, which is why they appear wherever a motor cannot sit next to the thing it drives.
 
 Chain and belt come in discrete lengths, so the chosen center distance still needs to match an available loop or include adjustment.
-
----
 
 ## Chain Versus Belt
 
@@ -36,8 +32,6 @@ Chain and belt come in discrete lengths, so the chosen center distance still nee
 | Debris tolerance | Good | Poor |
 
 For most FTC applications, timing belt is the better default: quieter, lighter, no lubrication, and no stretch. Chain earns its place where the load is high, the environment is dirty, or the exact center distance cannot be controlled well.
-
----
 
 ## The Length Relationship
 
@@ -55,8 +49,6 @@ The first term is the two straight runs. The second accounts for the teeth wrapp
 
 **Belts come in fixed tooth counts**, so the practical workflow is reversed: pick a stock belt, then compute the center distance it needs and put the shafts there.
 
----
-
 ## Try It
 
 <LessonTool
@@ -67,8 +59,6 @@ The first term is the two straight runs. The second accounts for the teeth wrapp
 >
   <ChainLengthCalculator />
 </LessonTool>
-
----
 
 ## Design In Adjustment
 
@@ -84,8 +74,6 @@ Three ways to provide it, in order of preference:
 A chain installed at exactly the right tension is loose within a few hours of running, and a loose chain skips teeth and then throws. If your design has no way to take up slack, it has a scheduled failure.
 :::
 
----
-
 ## Tension and Wrap
 
 **Tension.** Too loose and the chain or belt skips. Too tight and it loads the bearings heavily, wastes power to friction, and shortens the life of everything involved. For chain, a common target is a small amount of visible sag on the slack side, roughly a half inch of deflection on a typical FTC span. For timing belt, tension until the slack side stops fluttering and no further.
@@ -98,15 +86,11 @@ A chain installed at exactly the right tension is loose within a few hours of ru
 Timing belts track sideways slightly. A flange on one pulley keeps the belt located. Flanges on both pulleys of a two pulley drive can fight each other and cause the belt to ride up and wear its edges.
 :::
 
----
-
 ## Alignment
 
 Both chain and belt need the two sprockets or pulleys in the same plane. This is a stack-up problem, covered in Lesson 4.4, and belts are the least forgiving component on the robot in this respect.
 
 The check: lay a straight edge across the faces of both pulleys. Any visible step is worth correcting with a spacer change before running the drive.
-
----
 
 <LessonPhoto
   alt="A timing belt riding up the flange of a pulley because the two pulleys are not coplanar."
@@ -115,9 +99,7 @@ The check: lay a straight edge across the faces of both pulleys. Any visible ste
   framing="Side view along the belt run, straight edge in frame, close enough to see the belt edge contacting the flange."
 />
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. Roller chain must be an `__________` number of links to close without an offset link.
 2. The wrap angle on the small pulley should generally be kept above about `__________` degrees.
@@ -131,8 +113,6 @@ The check: lay a straight edge across the faces of both pulleys. Any visible ste
 3. **relax** (loosen)
 
 </details>
-
----
 
 ## Exercise
 

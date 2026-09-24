@@ -213,18 +213,6 @@
   text-transform: uppercase;
 }
 
-.tagBeginner {
-  color: var(--tm-blue-soft);
-}
-
-.tagIntermediate {
-  color: var(--tm-accent);
-}
-
-.tagAdvanced {
-  color: var(--tm-blue);
-}
-
 .tagProgress {
   color: var(--tm-text-muted);
 }

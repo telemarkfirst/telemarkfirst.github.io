@@ -11,8 +11,6 @@ import {MASTERY_QUESTIONS} from '@site/src/telemark/mechanicalQuizzes';
 
 # Module 6 Mastery Quiz: Power Transmission
 
----
-
 ## I. Conceptual Questions
 
 **1. Free Speed:** A team calculates a cycle time using the motor's published free speed and finds the real mechanism takes nearly twice as long. Explain why, without assuming anything is broken.
@@ -26,8 +24,6 @@ Add transmission efficiency losses, friction, and a battery below nominal voltag
 
 </details>
 
----
-
 **2. Peak Power:** Where on the torque-speed curve does a motor deliver the most mechanical power, and why is this a useful design anchor?
 
 <details>
@@ -38,8 +34,6 @@ At exactly half of free speed and half of stall torque. Power is torque times an
 It is a useful anchor because a mechanism designed to operate near that point extracts close to the maximum work per second the motor can deliver. Operating far below it wastes torque capacity; operating far above it, near stall, produces little motion and a great deal of heat.
 
 </details>
-
----
 
 **3. Series Reductions:** A gearbox has three stages: 4:1, 3:1, and 5:1, each about 95% efficient. Compute the overall ratio and the overall efficiency, and explain why the efficiency figure is not 95%.
 
@@ -54,8 +48,6 @@ The efficiency is not 95% because the second stage is only 95% efficient on the 
 
 </details>
 
----
-
 **4. Backlash and Encoders:** The software team reports that an arm does not stop in the same place twice, even though the encoder readings are consistent. Explain the mechanical cause.
 
 <details>
@@ -67,8 +59,6 @@ The uncertainty is the total backlash referred to the output, which is the sum o
 
 </details>
 
----
-
 **5. Back-Driving:** Give one situation where a non-back-drivable transmission is an advantage and one where it is a liability.
 
 <details>
@@ -79,8 +69,6 @@ Advantage: an arm or lift that must hold a raised position for much of a match. 
 Liability: any mechanism likely to be struck by another robot, or any mechanism that must be repositioned by hand in the pit. A transmission that cannot yield transmits the impact into the gear train and structure, so something breaks instead of moving. It also means an arm stuck in the raised position cannot be lowered without disassembly.
 
 </details>
-
----
 
 ## II. Review the Transmission Design
 
@@ -130,8 +118,6 @@ one.
 
 </details>
 
----
-
 ## III. Scored Check
 
 The questions above are for working something through. These are graded, so you can find out whether it stuck. Everything is scored in your browser.
@@ -143,6 +129,6 @@ The questions above are for working something through. These are graded, so you 
 
 <MarkComplete
   lessonId="module-06/mastery-quiz"
-  nextUnit="/mechanical/module-07"
+  nextUnit="/mechanical/module-07/drivetrain-archetypes"
   nextUnitName="Module 7: Drivetrains"
 />

@@ -10,8 +10,6 @@ import Unit15Simulator from '@site/src/components/Unit15Simulator';
 
 # Lesson 15.5: Coordinating a Pedro 3 Autonomous with Ivy
 
----
-
 ## What This Lesson Assembles
 
 This lesson combines:
@@ -23,8 +21,6 @@ This lesson combines:
 - Ivy commands that coordinate paths and mechanisms without blocking `follower.update()`.
 
 The field and simulator stay on DECODE so new members can concentrate on integration instead of learning a second game's layout.
-
----
 
 ## Why Commands Instead of a New State Machine?
 
@@ -44,8 +40,6 @@ The OpMode still owns the periodic loop. Every cycle calls `follower.update()`, 
 :::note When a state machine is still reasonable
 Keep a mature state machine if the team already has one and has tested its transition and interruption behavior. For new Pedro 3 code, Ivy removes boilerplate and matches the official examples and visualizer output. Another established command framework is also fine; do not run two schedulers in the same OpMode.
 :::
-
----
 
 ## Compose Robot Actions Around Paths
 
@@ -93,8 +87,6 @@ The same composition idea appears in other languages even though FTC robot code 
 />
 
 This Python is a conceptual comparison only; FTC OpModes and the Pedro/Ivy APIs shown in this course use Java.
-
----
 
 ## Complete Pedro 3 + Ivy Structure
 
@@ -227,15 +219,11 @@ This compact correction keeps the example readable; Lesson 15.4 explains the cov
 
 For a production example of keeping AprilTag relocalization behind a reusable localization API, compare Murray Bridge Bunyips' [`AprilTagRelocalizingAccumulator`](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/src/main/java/au/edu/sa/mbhs/studentrobotics/bunyipslib/localization/accumulators/AprilTagRelocalizingAccumulator.java). The lesson's command routine deliberately calls a small correction method rather than mixing estimator details into the Ivy sequence.
 
----
-
 ## Bring Your Earlier Files Forward
 
 Use the simulator's **+** control to bring forward the DECODE project files from the completed-lesson library. Keep them in the same TeamCode package so the autonomous class can reuse them directly. Keep raw motor and servo access inside subsystem files. The autonomous OpMode should express intent through methods such as `robot.intake.eject()` and `robot.launcher.launch(...)`.
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. Ivy runs several commands in order with `__________(...)`.
 2. The three periodic calls are `follower.update()`, `robot.update()`, and `Scheduler.__________()`.
@@ -249,8 +237,6 @@ Use the simulator's **+** control to bring forward the DECODE project files from
 3. **`waitMs`**
 
 </details>
-
----
 
 ## Simulator Practice
 

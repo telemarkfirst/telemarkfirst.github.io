@@ -9,15 +9,11 @@ import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
 
 # Lesson 3.2: Working Inside goBILDA, REV, and Tetrix Build Systems
 
----
-
 ## Technical Context
 
 Commercial FTC build systems are hole patterns. Everything else about them, the extrusion profile, the brackets, the hubs, exists to make parts land on a consistent grid so that pieces bolt together without custom machining.
 
 Design around the grid when possible. Ignoring it creates extra adapter plates, awkward spacing, and more dimensions that the team must manufacture accurately.
-
----
 
 ## What a Build System Gives You
 
@@ -28,8 +24,6 @@ Design around the grid when possible. Ignoring it creates extra adapter plates, 
 
 The value is compounding: a team that stays inside one system can rebuild a subsystem in an evening, because every part already fits every other part.
 
----
-
 ## The Grid Is a Constraint, and That Is Fine
 
 Design your mechanisms so that mounting points fall on the pattern. When a motor needs to sit 47 mm from a shaft and the grid gives you 40 or 48, move the design to 48. The 1 mm rarely matters, and forcing 47 means a custom plate that has to be made accurately.
@@ -39,8 +33,6 @@ When you genuinely cannot land on the grid, the fix is a **custom adapter plate*
 :::tip Slots buy forgiveness
 Where you can, use a slot rather than a hole in a custom plate. A slot lets you adjust position during assembly, which absorbs both your tolerance stack and the fact that the first assembly always reveals something.
 :::
-
----
 
 ## Mixing Systems
 
@@ -56,8 +48,6 @@ The two conflicts to plan for:
 M3 and 6-32 are close enough in diameter to start and different enough in pitch to destroy the threads. This ruins tapped holes in expensive parts and is one of the most common avoidable damages in a mixed-system shop.
 :::
 
----
-
 ## Structural Sections and How to Orient Them
 
 Most systems provide channel and rectangular tube. These are not symmetric: a channel is much stiffer in one direction than the other, and orientation is a design decision, not a packaging convenience.
@@ -65,8 +55,6 @@ Most systems provide channel and rectangular tube. These are not symmetric: a ch
 The rule from Lesson 3.3, stated early: the **depth of the section in the direction of the load** dominates stiffness. A channel lying flat under a vertical load is dramatically more flexible than the same channel standing on edge.
 
 When you mount a rail, ask which way it will be loaded and orient the deep dimension along that load.
-
----
 
 ## When to Leave the System
 
@@ -83,9 +71,7 @@ It is not worth it when the only reason is that a stock part is 3 mm off from id
 - Vendor documentation carries the authoritative hole patterns and dimensions for each system. Check the specific part page for the pattern before designing around it.
 :::
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. When a design needs a spacing the grid does not provide, the preferred solution is one custom `__________` plate rather than custom parts throughout.
 2. Using a `__________` instead of a hole in a custom plate allows adjustment during assembly.
@@ -99,8 +85,6 @@ It is not worth it when the only reason is that a stock part is 3 mm off from id
 3. **load**
 
 </details>
-
----
 
 ## Exercise
 

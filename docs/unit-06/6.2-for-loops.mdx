@@ -10,13 +10,9 @@ import Unit6Simulator from '@site/src/components/Unit6Simulator';
 
 # Lesson 6.2: Using for Loops to Repeat Robot Actions Cleanly
 
----
-
 ## Technical Context
 
 Repetitive mechanical tasks: such as pulsing an intake or cycling a scoring mechanism: are prone to "logic bloat" if written line-by-line. Using a `for` loop ensures code efficiency and allows the programmer to adjust the number of iterations (e.g., 3 gear-clearing pulses) in a single parameter change rather than rewriting blocks of code.
-
----
 
 ## When a for Loop Is Better Than Repeating Code
 
@@ -26,8 +22,6 @@ The three parts of the `for` header do distinct jobs:
 - **Initialization**: runs once before the loop starts, creating the counter (e.g., `int i = 0`)
 - **Condition**: checked before every iteration; the loop stops when this is `false` (e.g., `i < 5`)
 - **Update**: runs at the end of every iteration, advancing the counter (e.g., `i++`)
-
----
 
 ## Annotated Code
 
@@ -61,9 +55,7 @@ public class PulseDemo extends LinearOpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. In the `for` loop header, the `__________` section is executed exactly once before the loop begins.
 2. To repeat a block of code exactly 10 times starting at `i = 0`, the condition should be written as `i < __________`.
@@ -78,9 +70,7 @@ public class PulseDemo extends LinearOpMode {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Use the simulator below to practice writing a `for` loop that repeats a fixed robot action exactly three times.
 

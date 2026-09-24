@@ -10,23 +10,17 @@ import Unit14Simulator from '@site/src/components/Unit14Simulator';
 
 # Lesson 14.1: Configuring VisionPortal and Opening Webcam Streams
 
----
-
 ## Why Vision Requires a Different Initialization Pattern
 
 Every hardware device covered in this curriculum so far, including motors, servos, and sensors, is retrieved from the `hardwareMap` using a single `get()` call and is immediately ready to use. The USB webcam follows a different pattern for an important technical reason: it operates through Android's camera subsystem, which requires asynchronous initialization. The camera does not open instantaneously. It negotiates a stream format, allocates frame buffers, and confirms a stable connection before it begins delivering frames.
 
 The `VisionPortal` class is the SDK's abstraction layer over all of this complexity. It manages the camera lifecycle, delivers frames to processing pipelines on a background thread, and provides methods to pause or resume streaming. Your code never interacts with Android's camera APIs directly. You configure a portal, give it the camera reference and the processors you want to run, and the SDK handles everything underneath.
 
----
-
 ## The WebcamName Object
 
 The first step is retrieving a `WebcamName` object from the `hardwareMap`. This is the SDK's typed reference to a USB camera that has been configured in the Robot Controller app. The configuration name you use in `hardwareMap.get(WebcamName.class, "Webcam 1")` must match the name assigned in the configuration file exactly, following the same case-sensitive rule that applies to every other hardware device.
 
 `WebcamName` by itself does nothing. It is simply a handle. It becomes useful when passed to `VisionPortal`, which uses it to locate and open the physical device.
-
----
 
 ## Building a VisionPortal
 
@@ -37,8 +31,6 @@ A `VisionPortal` is a container. You can attach one or more processor objects to
 :::info Official reference
 Use the FTC SDK Javadocs to confirm current VisionPortal, AprilTagProcessor, and hardware-map APIs: [FTC RobotCore Javadocs](https://javadoc.io/doc/org.firstinspires.ftc/RobotCore/latest/index.html).
 :::
-
----
 
 ## Resource Management: Stopping or Closing the Portal
 
@@ -51,8 +43,6 @@ Call `visionPortal.close()` when camera work is finished for the rest of the OpM
 :::tip Mentor note: camera bugs are usually lifecycle bugs
 If the Driver Station preview is black, check the configured webcam name, USB connection, and whether the stream was stopped before `waitForStart()`. If autonomous drives inconsistently while streaming, stop the stream after the vision decision and compare CPU load behavior.
 :::
-
----
 
 ## Annotated Code
 
@@ -112,9 +102,7 @@ public class VisionPortalDemo extends LinearOpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. The hardware map class used to retrieve a reference to a USB webcam is `__________`.
 2. To create a `VisionPortal` with minimal configuration using a camera and one processor, use the static method `VisionPortal.__________()`.
@@ -131,9 +119,7 @@ public class VisionPortalDemo extends LinearOpMode {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Write the initialization block for an autonomous OpMode that opens a webcam named `"front_cam"`, attaches a default `AprilTagProcessor` to it, and stops streaming the moment the match begins. The camera should be active and visible to the drive team during the `waitForStart()` phase only.
 

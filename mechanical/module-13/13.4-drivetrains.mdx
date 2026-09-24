@@ -11,15 +11,11 @@ import DrivetrainCalculator from '@site/src/components/mechanical/DrivetrainCalc
 
 # Lesson 13.4: Traction, Weight Transfer, and Dead Wheels
 
----
-
 ## Technical Context
 
 Wheel type and wheel count are visible drivetrain choices, but they follow from more basic requirements.
 
 Start with two questions: how must the drivetrain apply force to the floor, and what position information does autonomous need? Traction and localization requirements will narrow the useful wheel and layout options.
-
----
 
 ## Traction is a budget, not a property
 
@@ -34,8 +30,6 @@ That reframes several familiar arguments:
 - **Mecanum wheels trade traction for a degree of freedom.** Their rollers only contact the tile along a line, and only some of the force from each wheel points where you want. You gain strafing and you give up pushing force. Whether that is a good trade is a game question, not a drivetrain question.
 - **More wheels does not mean more traction.** Total normal force is the robot's weight regardless of how many wheels carry it. Six wheels spread the same N further. What extra wheels buy is contact continuity over the field seams and less sensitivity to one wheel unloading.
 - **A pushing robot wants weight, not motors.** Once every wheel is at the slip limit, adding torque only spins the wheels faster.
-
----
 
 ## Weight transfer is why robots tip and slip
 
@@ -59,8 +53,6 @@ This is the argument for keeping heavy things low and the argument for retractin
   <DrivetrainCalculator />
 </LessonTool>
 
----
-
 ## Dead wheels: why odometry stopped being optional
 
 A drive wheel is a bad position sensor. It slips exactly when you most need to know where you are, under acceleration and in contact with another robot, and encoder counts on a slipping wheel report motion that never happened.
@@ -78,8 +70,6 @@ Three pods, or two plus an IMU heading, is enough to track position and rotation
 
 The theory point: **odometry works because it decouples measurement from actuation.** The moment the same wheel does both, the measurement inherits every error of the actuator. That principle generalises well past drivetrains.
 
----
-
 ## Reading a drivetrain choice
 
 - **Does the game reward pushing?** Traction wheels, weight low and centred.
@@ -87,9 +77,7 @@ The theory point: **odometry works because it decouples measurement from actuati
 - **Does it reward precise repeatable placement?** Dead wheels, and design the mounts as carefully as the drivetrain.
 - **Is the robot tall or does it carry mass high?** Widen the wheelbase or lower the mass before touching the motors.
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. The traction available to a wheel is set by μ and the \_\_\_\_\_\_\_\_ on it.
 2. Weight transfer under acceleration grows with the centre of mass \_\_\_\_\_\_\_\_ and shrinks with wheelbase.
@@ -105,8 +93,6 @@ The theory point: **odometry works because it decouples measurement from actuati
 4. actuation
 
 </details>
-
----
 
 ## Exercise
 

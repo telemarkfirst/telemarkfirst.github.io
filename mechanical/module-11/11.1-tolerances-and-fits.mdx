@@ -11,13 +11,9 @@ import FitCalculator from '@site/src/components/mechanical/FitCalculator';
 
 # Lesson 11.1: Tolerances, Clearance Fits, and Press Fits
 
----
-
 ## Technical Context
 
 No part is exactly the dimension on the drawing. A tolerance states how far off it may be and still work, and choosing it is a design decision with real cost: tighter tolerances take longer to make and cost more, and a tolerance tighter than the function requires is money spent on nothing.
-
----
 
 ## A Fit Is a Clearance
 
@@ -35,8 +31,6 @@ Practical fit classes for FTC work:
 | Close running | Small | Rotating shafts where slop must be minimal |
 | Transition | Near zero | Parts that must locate precisely, held by a screw |
 | Press | Negative | Bearings pressed into a bore |
-
----
 
 ## Choose the Fit From the Function
 
@@ -61,8 +55,6 @@ Work from what the joint must do:
 An overly tight rotating fit binds, generates heat, and wears. Interference where a clearance was needed makes the mechanism stiff and can crack the surrounding material. Tolerance is chosen from function, not from a general preference for precision.
 :::
 
----
-
 ## Where the Tolerance Comes From
 
 The process determines what tolerance is achievable, which is why the calculator asks how the hole is made.
@@ -75,15 +67,11 @@ The process determines what tolerance is achievable, which is why the calculator
 
 Knowing the direction each process errs in is what lets you compensate at design time rather than at assembly.
 
----
-
 ## Tolerance Stack-Up, Again
 
 Lesson 4.4 covered stack-ups along a shaft. The same accumulation applies to fits: a shaft that must pass through three plates accumulates the position tolerance of all three, and if the total exceeds the clearance in the fit, the shaft binds even though every individual hole is within tolerance.
 
 Two remedies, both from Lesson 4.4: reduce the number of parts in the chain, and put a deliberate adjustment in one place so the accumulated error is absorbed rather than predicted.
-
----
 
 ## Specifying It On a Drawing
 
@@ -95,9 +83,7 @@ For an FTC drawing, three things are usually enough:
 
 A drawing with no tolerance implicitly says every dimension is equally important, which means whoever makes the part guesses which ones actually are.
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. Negative clearance, where the hole is smaller than the shaft, is called `__________`.
 2. A drilled hole typically comes out `__________` its nominal size, which is why a precision bore should be reamed.
@@ -111,8 +97,6 @@ A drawing with no tolerance implicitly says every dimension is equally important
 3. **undersize** (smaller than)
 
 </details>
-
----
 
 ## Exercise
 

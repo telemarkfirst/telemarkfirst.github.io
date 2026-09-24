@@ -10,19 +10,13 @@ import Unit4Simulator from '@site/src/components/Unit4Simulator';
 
 # Lesson 4.1: Mapping gamepad Buttons to Simple Mechanism Toggles
 
----
-
 ## Technical Context
 
 Binary inputs from the gamepad buttons provide repeatable, discrete commands for mechanisms that only require two states, such as a Servo-driven claw or a DC Motor intake toggle. Utilizing these "digital" gamepad states prevents the imprecise positioning common with analog stick manipulation, ensuring the hardware reaches its physical limit without straining the internal gears.
 
----
-
 ## Why Button Toggles Feel So Natural for Drivers
 
 The `gamepad1` and `gamepad2` objects are automatically instantiated by the SDK and represent the human interface devices connected to the Driver Station. These objects contain `boolean` member variables for every physical button (e.g., `a`, `b`, `x`, `y`, `left_bumper`). In the Java JVM, these variables are updated with current hardware states precisely between each execution of the `loop()` method. Accessing these members via dot notation (e.g., `gamepad1.a`) allows the programmer to execute conditional logic based on human interaction.
-
----
 
 ## Annotated Code
 
@@ -54,9 +48,7 @@ public class ButtonLogicTest extends OpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. Buttons on the gamepad, such as `gamepad1.x`, return a/an `__________` datatype indicating if they are pressed.
 2. To have the Driver Station recognize a specific controller as `gamepad2`, the driver must simultaneously press Start and `__________`.
@@ -71,11 +63,9 @@ public class ButtonLogicTest extends OpMode {
 
 </details>
 
----
+## Challenge
 
-## Simulator Challenge
-
-**Robot Scenario:** Your team needs to verify if the Driver Station is receiving signals from the bumpers. Create an OpMode that displays `"Left Bumper Pressed"` on the screen only when that physical button is active.
+**Task:** Your team needs to verify if the Driver Station is receiving signals from the bumpers. Create an OpMode that displays `"Left Bumper Pressed"` on the screen only when that physical button is active.
 
 <SimulatorRunGuide />
 

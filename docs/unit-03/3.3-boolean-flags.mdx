@@ -10,19 +10,13 @@ import Unit3Simulator from '@site/src/components/Unit3Simulator';
 
 # Lesson 3.3: Using boolean Values for On-or-Off Robot State
 
----
-
 ## Technical Context
 
 Sensors like Touch Sensors or Limit Switches only have two states: pressed or not pressed. Using `boolean` flags to store these states allows the robot to make binary decisions, such as stopping a lift before it hits a physical hard-stop and causes mechanical failure.
 
----
-
 ## How boolean Values Simplify Robot Decisions
 
 A `boolean` is a primitive datatype that can only hold one of two values: `true` or `false`. In the FTC environment, digital sensors and gamepad buttons are inherently boolean. When you call `getState()` on a `DigitalChannel` (like a touch sensor), the SDK returns a `boolean`. Storing this result in a variable allows you to **"capture"** the state at a specific moment in the `loop()` cycle and use it for logic comparisons.
-
----
 
 ## Annotated Code
 
@@ -50,9 +44,7 @@ public class BooleanLogic extends OpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. A variable type that can only represent two possible states is a/an `__________`.
 2. The default value of a `boolean` variable in Java, if not assigned, is `__________`.
@@ -67,11 +59,9 @@ public class BooleanLogic extends OpMode {
 
 </details>
 
----
+## Challenge
 
-## Simulator Challenge
-
-**Robot Scenario:** Capture the state of the `"A"` button on `gamepad1` into a `boolean` variable and send that variable to the Driver Station via telemetry.
+**Task:** Capture the state of the `"A"` button on `gamepad1` into a `boolean` variable and send that variable to the Driver Station via telemetry.
 
 <SimulatorRunGuide />
 

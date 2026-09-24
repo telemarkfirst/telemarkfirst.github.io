@@ -10,15 +10,11 @@ import Unit14Simulator from '@site/src/components/Unit14Simulator';
 
 # Lesson 14.5: Multi-Zone Vision Processing for Autonomous Scoring Selection
 
----
-
 ## The Autonomous Scoring Selection Problem
 
 One of the highest-value autonomous tasks in recent FTC seasons requires the robot to identify which of three possible spike mark locations contains the team's scoring element before the match begins. The robot then commits to a path that scores in the correct location. A team that solves this reliably earns those points every match; a team that hard-codes a single location scores them only one-third of the time.
 
 This lesson combines every technique from the unit: a `VisionPortal` to open the camera stream, a custom `VisionProcessor` to analyze the frame, `Rect` zone boundaries to isolate the three candidate locations, and a result that the OpMode reads to select the correct autonomous path.
-
----
 
 ## Using the HSV Color Space
 
@@ -34,8 +30,6 @@ Imgproc.cvtColor(frame, hsvMat, Imgproc.COLOR_RGB2HSV);
 
 After conversion, calling `Core.mean(submat).val[1]` extracts the average Saturation value from a zone. The zone with the highest average saturation is the one containing the colored game element.
 
----
-
 ## Passing the Result to the OpMode
 
 The `VisionProcessor` runs on a background camera thread. The OpMode runs on the main thread. The result of the vision analysis needs to cross that thread boundary safely. The standard pattern is to store the result in a `public` member variable of the processor class and read it from the OpMode using the processor object reference. Because the processor updates the variable atomically (assigning a single reference or enum value), this pattern is safe without explicit synchronization in the FTC context.
@@ -49,8 +43,6 @@ SpikeLocation result = spikeProcessor.detectedLocation;
 ```
 
 Using `volatile` gives writes to this shared reference visibility across the processor and OpMode threads. It does not make a multi-step update atomic, so share one enum or immutable result rather than mutating several related fields independently.
-
----
 
 ## Annotated Code
 
@@ -178,9 +170,7 @@ public class SpikeSelectionAuto extends LinearOpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. To convert a camera frame from the RGB color space to HSV, use `Imgproc.__________()` with the constant `Imgproc.COLOR_RGB2HSV`.
 2. In the HSV color space, index `__________` of the array returned by `Core.mean()` corresponds to the Saturation channel.
@@ -194,8 +184,6 @@ public class SpikeSelectionAuto extends LinearOpMode {
 3. **`volatile`**
 
 </details>
-
----
 
 ## Simulator Practice
 

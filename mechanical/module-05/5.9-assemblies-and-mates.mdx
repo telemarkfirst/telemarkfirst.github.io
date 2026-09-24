@@ -9,13 +9,9 @@ import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
 
 # Lesson 5.9: Assemblies, Mates, and Checking Range of Motion
 
----
-
 ## Technical Context
 
 An assembly checks how individually modeled parts fit and move together. Drive the mechanism through its full range to find interference, missing clearance, and incorrect constraints before fabrication.
-
----
 
 ## Mates Define How Parts Move
 
@@ -36,8 +32,6 @@ Choose the mate that matches the real joint. A pivot modeled as fastened will no
 If a shaft is free to slide axially because nothing constrains it, model it as cylindrical rather than revolute. The model will then show you the wheel moving out of plane, which is exactly the problem you want to find in CAD instead of on the field.
 :::
 
----
-
 ## Driving Through the Full Range
 
 Once mates are in place, drag the mechanism through its complete travel and look for three things.
@@ -49,8 +43,6 @@ Once mates are in place, drag the mechanism through its complete travel and look
 **Reach.** With the robot placed where it will legally be on the field, does the end effector arrive at the target position and orientation? Orientation matters: an end effector that reaches the right point at the wrong angle does not score.
 
 Most CAD tools have an interference detection command that checks the whole assembly at a given position. Run it at several positions rather than trusting a visual check, because small overlaps are hard to see.
-
----
 
 ## Checking the Starting Envelope
 
@@ -65,8 +57,6 @@ This is a ten minute exercise that has saved many teams a rebuild. Two details:
 CAD renders look best with the mechanism deployed, so that is the state teams leave the model in and the state they check. The envelope problem lives in the retracted state.
 :::
 
----
-
 ## Mass Properties and Center of Gravity
 
 Assign materials to parts and CAD reports total mass and center of gravity location. Both feed directly into earlier lessons.
@@ -75,17 +65,13 @@ The mass number goes into the weight budget from Lesson 3.4. Compare it against 
 
 The center of gravity location predicts tipping. A high center of gravity with an extended arm is the geometry that tips robots. Check it in the worst case position, which is the arm fully extended and loaded, not at rest.
 
----
-
 ## Keeping the Assembly Honest
 
 An assembly drifts out of date the moment someone changes something at the workbench without updating the model. A stale model is worse than no model, because people trust it.
 
 The practical discipline: when a part is modified physically, update the model the same session, or write the change on a list posted next to the robot so it is not lost. In Module 10 this becomes part of the design review.
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. A pivot joint should be modeled with a `__________` mate so the mechanism can be driven through its full travel.
 2. Interference must be checked throughout the range of motion, not only at the `__________`.
@@ -99,8 +85,6 @@ The practical discipline: when a part is modified physically, update the model t
 3. **extended**
 
 </details>
-
----
 
 ## Exercise
 

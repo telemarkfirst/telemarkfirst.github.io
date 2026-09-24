@@ -7,7 +7,6 @@ export interface CurriculumUnit {
   desc: string;
   tier: Tier;
   slug: string;
-  overviewPath: string;
   startPath: string;
   nextPath: string;
   nextLabel: string;
@@ -34,9 +33,8 @@ export const CURRICULUM_UNITS: CurriculumUnit[] = [
     desc: 'Learn the Java keywords, classes, objects, references, composition, and shared members you need before using the FTC SDK.',
     tier: 'Beginner',
     slug: 'unit-00',
-    overviewPath: '/docs/unit-00',
     startPath: '/docs/unit-00/classes-and-objects',
-    nextPath: '/docs/unit-01',
+    nextPath: '/docs/unit-01/prerequisites',
     nextLabel: 'Unit 1: Environment Setup',
     lessonCount: 5,
     overview:
@@ -56,9 +54,8 @@ export const CURRICULUM_UNITS: CurriculumUnit[] = [
     desc: 'Start in the built-in simulator. Use Android Studio later if your team needs to deploy code to a physical robot.',
     tier: 'Beginner',
     slug: 'unit-01',
-    overviewPath: '/docs/unit-01',
     startPath: '/docs/unit-01/prerequisites',
-    nextPath: '/docs/unit-02',
+    nextPath: '/docs/unit-02/registering-programs',
     nextLabel: 'Unit 2: OpMode Structure',
     lessonCount: 10,
     overview:
@@ -77,9 +74,8 @@ export const CURRICULUM_UNITS: CurriculumUnit[] = [
     desc: 'Learn annotations and the FTC OpMode lifecycle.',
     tier: 'Beginner',
     slug: 'unit-02',
-    overviewPath: '/docs/unit-02',
     startPath: '/docs/unit-02/registering-programs',
-    nextPath: '/docs/unit-03',
+    nextPath: '/docs/unit-03/string-literals',
     nextLabel: 'Unit 3: Java Variables',
     lessonCount: 7,
     overview:
@@ -97,9 +93,8 @@ export const CURRICULUM_UNITS: CurriculumUnit[] = [
     desc: 'Use Java variables and datatypes in robot code.',
     tier: 'Beginner',
     slug: 'unit-03',
-    overviewPath: '/docs/unit-03',
     startPath: '/docs/unit-03/string-literals',
-    nextPath: '/docs/unit-04',
+    nextPath: '/docs/unit-04/button-toggles',
     nextLabel: 'Unit 4: Gamepad Input',
     lessonCount: 10,
     overview:
@@ -117,9 +112,8 @@ export const CURRICULUM_UNITS: CurriculumUnit[] = [
     desc: 'Turn buttons, sticks, and triggers into stable controls.',
     tier: 'Beginner',
     slug: 'unit-04',
-    overviewPath: '/docs/unit-04',
     startPath: '/docs/unit-04/button-toggles',
-    nextPath: '/docs/unit-05',
+    nextPath: '/docs/unit-05/if-statements',
     nextLabel: 'Unit 5: Logic & Decisions',
     lessonCount: 6,
     overview:
@@ -137,9 +131,8 @@ export const CURRICULUM_UNITS: CurriculumUnit[] = [
     desc: 'Use conditions and comparisons to control robot behavior safely.',
     tier: 'Beginner',
     slug: 'unit-05',
-    overviewPath: '/docs/unit-05',
     startPath: '/docs/unit-05/if-statements',
-    nextPath: '/docs/unit-06',
+    nextPath: '/docs/unit-06/opmode-active',
     nextLabel: 'Unit 6: Loops & Iteration',
     lessonCount: 6,
     overview:
@@ -157,9 +150,8 @@ export const CURRICULUM_UNITS: CurriculumUnit[] = [
     desc: 'Use loops, arrays, and timers without blocking robot control.',
     tier: 'Intermediate',
     slug: 'unit-06',
-    overviewPath: '/docs/unit-06',
     startPath: '/docs/unit-06/opmode-active',
-    nextPath: '/docs/unit-07',
+    nextPath: '/docs/unit-07/hardware-map-object',
     nextLabel: 'Unit 7: Hardware Mapping',
     lessonCount: 6,
     overview:
@@ -177,9 +169,8 @@ export const CURRICULUM_UNITS: CurriculumUnit[] = [
     desc: 'Map configured hardware and organize reusable mechanism classes.',
     tier: 'Intermediate',
     slug: 'unit-07',
-    overviewPath: '/docs/unit-07',
     startPath: '/docs/unit-07/hardware-map-object',
-    nextPath: '/docs/unit-08',
+    nextPath: '/docs/unit-08/set-power',
     nextLabel: 'Unit 8: DC Motor Control',
     lessonCount: 6,
     overview:
@@ -197,9 +188,8 @@ export const CURRICULUM_UNITS: CurriculumUnit[] = [
     desc: 'Control motor power, direction, braking, and motion limits.',
     tier: 'Intermediate',
     slug: 'unit-08',
-    overviewPath: '/docs/unit-08',
     startPath: '/docs/unit-08/set-power',
-    nextPath: '/docs/unit-09',
+    nextPath: '/docs/unit-09/set-position',
     nextLabel: 'Unit 9: Servo Control',
     lessonCount: 6,
     overview:
@@ -217,9 +207,8 @@ export const CURRICULUM_UNITS: CurriculumUnit[] = [
     desc: 'Control positional and continuous-rotation servos.',
     tier: 'Intermediate',
     slug: 'unit-09',
-    overviewPath: '/docs/unit-09',
     startPath: '/docs/unit-09/set-position',
-    nextPath: '/docs/unit-10',
+    nextPath: '/docs/unit-10/get-current-position',
     nextLabel: 'Unit 10: Encoders & Precision',
     lessonCount: 6,
     overview:
@@ -237,9 +226,8 @@ export const CURRICULUM_UNITS: CurriculumUnit[] = [
     desc: 'Turn encoder ticks into measured autonomous movement.',
     tier: 'Intermediate',
     slug: 'unit-10',
-    overviewPath: '/docs/unit-10',
     startPath: '/docs/unit-10/get-current-position',
-    nextPath: '/docs/unit-11',
+    nextPath: '/docs/unit-11/touch-sensor',
     nextLabel: 'Unit 11: Digital & Analog Sensors',
     lessonCount: 6,
     overview:
@@ -257,9 +245,8 @@ export const CURRICULUM_UNITS: CurriculumUnit[] = [
     desc: 'Read digital, analog, color, and distance sensors.',
     tier: 'Intermediate',
     slug: 'unit-11',
-    overviewPath: '/docs/unit-11',
     startPath: '/docs/unit-11/touch-sensor',
-    nextPath: '/docs/unit-12',
+    nextPath: '/docs/unit-12/imu-initialization',
     nextLabel: 'Unit 12: IMU & Rotation',
     lessonCount: 6,
     overview:
@@ -277,9 +264,8 @@ export const CURRICULUM_UNITS: CurriculumUnit[] = [
     desc: 'Use the IMU for heading, field-centric drive, and turning.',
     tier: 'Intermediate',
     slug: 'unit-12',
-    overviewPath: '/docs/unit-12',
     startPath: '/docs/unit-12/imu-initialization',
-    nextPath: '/docs/unit-13',
+    nextPath: '/docs/unit-13/encapsulation',
     nextLabel: 'Unit 13: OOP & Inheritance',
     lessonCount: 6,
     overview:
@@ -297,9 +283,8 @@ export const CURRICULUM_UNITS: CurriculumUnit[] = [
     desc: 'Organize robot code with classes, inheritance, and composition.',
     tier: 'Advanced',
     slug: 'unit-13',
-    overviewPath: '/docs/unit-13',
     startPath: '/docs/unit-13/encapsulation',
-    nextPath: '/docs/unit-14',
+    nextPath: '/docs/unit-14/vision-portal',
     nextLabel: 'Unit 14: Computer Vision',
     lessonCount: 10,
     overview:
@@ -317,9 +302,8 @@ export const CURRICULUM_UNITS: CurriculumUnit[] = [
     desc: 'Use VisionPortal, AprilTags, and OpenCV analysis zones.',
     tier: 'Advanced',
     slug: 'unit-14',
-    overviewPath: '/docs/unit-14',
     startPath: '/docs/unit-14/vision-portal',
-    nextPath: '/docs/unit-15',
+    nextPath: '/docs/unit-15/limelight',
     nextLabel: 'Unit 15: Advanced Integration',
     lessonCount: 6,
     overview:
@@ -337,7 +321,6 @@ export const CURRICULUM_UNITS: CurriculumUnit[] = [
     desc: 'Combine vision, localization, Pedro 3 pathing, and Ivy command control.',
     tier: 'Advanced',
     slug: 'unit-15',
-    overviewPath: '/docs/unit-15',
     startPath: '/docs/unit-15/limelight',
     nextPath: '/dashboard',
     nextLabel: 'Dashboard',
@@ -1292,8 +1275,7 @@ export const CURRICULUM_LESSONS: CurriculumLesson[] = [
 ];
 
 export const CURRICULUM_UNIT_COUNT = CURRICULUM_UNITS.length;
-// Public course metadata also counts the Unit 2-15 overview lessons.
-export const CURRICULUM_LESSON_COUNT = CURRICULUM_LESSONS.length + 14;
+export const CURRICULUM_LESSON_COUNT = CURRICULUM_LESSONS.length;
 
 export function getUnitBySlug(unitSlug: string): CurriculumUnit | undefined {
   return CURRICULUM_UNITS.find((unit) => unit.slug === unitSlug);

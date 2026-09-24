@@ -10,15 +10,11 @@ import Unit13Simulator from '@site/src/components/Unit13Simulator';
 
 # Lesson 13.2: Extending Parent Classes for Modular Hardware Subsystems
 
----
-
 ## When Encapsulation Alone Is Not Enough
 
 Lesson 13.1 showed how to move a single mechanism into its own class. Many robots use multiple mechanisms that share structural similarity. A robot might have two independent arms, both of which use a `DcMotor` and a `DigitalChannel`, both of which need the same zero-power behavior configured, and both of which expose the same general interface of `move()` and `stop()`. Without inheritance, you write two classes that are nearly identical, maintaining two copies of the same logic. When a bug appears or the configuration changes, you fix it in one place and forget to fix it in the other.
 
 Inheritance provides a formal mechanism for expressing this shared structure. You write a parent class that contains everything common to all mechanisms of a given type, then write child classes that add only what is different. A bug fix in the parent class propagates automatically to every child.
-
----
 
 ## The extends Keyword and the "Is-A" Relationship
 
@@ -28,15 +24,11 @@ The relationship is described as "is-a": an `ArmMechanism` is a `BaseMotorMechan
 
 Two access modifiers are critical here. Variables in the parent class marked `private` are not accessible to child classes. Variables marked `protected` are accessible to child classes but still hidden from all other code. For hardware objects that child classes may need to interact with directly, `protected` is the appropriate choice.
 
----
-
 ## The super() Call
 
 When a child class has a constructor, Java requires that the parent class constructor runs first. This is enforced through the `super()` call, which must be the first statement in the child constructor. If the parent constructor requires arguments, those arguments must be passed through `super()`. If the parent has no constructor (relying on the default), the `super()` call can be omitted and Java inserts it implicitly.
 
 In FTC mechanism classes, where initialization is typically handled by an `init(HardwareMap hwMap)` method rather than a constructor, `super()` calls are less common. The more important inheritance pattern is calling `super.init(hwMap)` at the start of the child's `init()` method to ensure the parent's hardware mapping runs before any child-specific setup.
-
----
 
 ## Annotated Code
 
@@ -146,9 +138,7 @@ public void loop() {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. The Java keyword used to create a child class from a parent is `__________`.
 2. To call a parent class method from within a child class, you use the `__________` keyword followed by a dot and the method name.
@@ -163,9 +153,7 @@ public void loop() {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 You have a `BaseServoMechanism` parent class that maps a `Servo` and provides a `setPosition(double pos)` method. Write a `GrabberMechanism` child class that extends it and adds two constants, `OPEN_POS = 0.1` and `CLOSED_POS = 0.9`, along with `open()` and `close()` methods that call `setPosition()`.
 

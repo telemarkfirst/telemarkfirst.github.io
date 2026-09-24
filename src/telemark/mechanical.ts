@@ -4,7 +4,7 @@ import type {CurriculumLesson, CurriculumUnit, Tier} from './curriculum';
  * Engineering track data.
  *
  * The engineering track mirrors the software curriculum's shape so that the
- * shared UnitOverview, MarkComplete, progress, and dashboard surfaces work for
+ * shared MarkComplete, progress, and dashboard surfaces work for
  * both tracks without branching. Software units live at /docs/unit-NN and
  * engineering modules live at /mechanical/module-NN.
  */
@@ -338,9 +338,8 @@ export const MECHANICAL_UNITS: CurriculumUnit[] = MODULE_SEEDS.map(
       desc: seed.desc,
       tier: seed.tier,
       slug: `module-${seed.number}`,
-      overviewPath: modulePath(seed.number),
       startPath: modulePath(seed.number, seed.lessons[0].slug),
-      nextPath: next ? modulePath(next.number) : MECHANICAL_ROUTE_BASE,
+      nextPath: next ? modulePath(next.number, next.lessons[0].slug) : MECHANICAL_ROUTE_BASE,
       nextLabel: next
         ? `Module ${Number.parseInt(next.number, 10)}: ${next.title}`
         : 'Engineering Track Overview',

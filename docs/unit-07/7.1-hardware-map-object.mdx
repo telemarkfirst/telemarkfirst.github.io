@@ -10,13 +10,9 @@ import Unit7Simulator from '@site/src/components/Unit7Simulator';
 
 # Lesson 7.1: Using hardwareMap to Find the Devices You Configured
 
----
-
 ## Technical Context
 
 The active Robot Controller configuration maps physical ports to user-defined names. `HardwareMap.get(Class, String)` returns a matching configured device, but **throws an exception if no such device is found**. It does not return `null`. For optional hardware, `HardwareMap.tryGet(Class, String)` performs a lookup that returns `null` when no matching device is available. See the [`HardwareMap` SDK Javadoc](https://javadoc.io/doc/org.firstinspires.ftc/RobotCore/latest/com/qualcomm/robotcore/hardware/HardwareMap.html).
-
----
 
 ## How hardwareMap Connects Code to Real Hardware
 
@@ -26,8 +22,6 @@ The `get()` method requires two parameters:
 
 1. **The hardware class**: tells the SDK what type of device to return (e.g., `DcMotor.class`)
 2. **The configuration name string**: must match the name defined in the Robot Controller app exactly, character for character
-
----
 
 ## Annotated Code
 
@@ -68,9 +62,7 @@ if (testMotor != null) {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. The `hardwareMap` object is used to perform a `__________` in the robot's configuration registry.
 2. The `get()` method requires two parameters: the `__________` of the device and the exact string name from the configuration.
@@ -85,9 +77,7 @@ if (testMotor != null) {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Use the simulator below to practice mapping a single motor from the Robot Controller configuration into Java.
 

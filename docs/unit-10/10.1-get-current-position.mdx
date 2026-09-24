@@ -11,8 +11,6 @@ import {EncoderFlowDiagram} from '@site/src/components/DocDiagrams';
 
 # Lesson 10.1: Reading Raw Tick Counts with getCurrentPosition()
 
----
-
 ## Why Encoders Beat Timers
 
 If you have ever written code like "run the motor for 2 seconds then stop," you have already run into the core problem: the robot goes a different distance every single run. Battery charge, carpet friction, and wheel slippage all change how far the robot actually travels in that 2 seconds. Encoders solve this by measuring real physical rotation instead of guessing from time.
@@ -29,8 +27,6 @@ Check the SDK API when you need the exact behavior of `DcMotor`, `DcMotor.RunMod
 That usually means the motor shaft is rotating while the real mechanism is disconnected, slipping, or jammed. Watch the mechanism, mark the shaft with tape, and compare telemetry to physical motion before assuming the code is wrong.
 :::
 
----
-
 ## How the Tick Count Actually Works
 
 Think of the encoder like an odometer that never resets on its own. Every time the motor shaft spins forward, the number goes up. Every time it spins backward, the number goes down. That direction is tied directly to whatever you set with `setDirection()`. Reversing the motor also flips which way the encoder counts.
@@ -38,8 +34,6 @@ Think of the encoder like an odometer that never resets on its own. Every time t
 The number itself is fairly meaningless without knowing your motor's **resolution**, which is how many ticks happen per full revolution of the output shaft. A REV HD Hex Motor at a 20:1 gear ratio has a resolution of 537.7 ticks per revolution. A 40:1 version has 1120. You will use that number in the next lesson to convert ticks into real distances.
 
 One thing to note: `getCurrentPosition()` returns an `int`, and it starts accumulating from the moment the Robot Controller powers on. It does not zero out automatically between OpMode runs, so if you ran a program earlier in the day the count might already be at 3000 when you start. Lesson 10.5 covers how to reset it properly before each move.
-
----
 
 ## Annotated Code
 
@@ -105,9 +99,7 @@ public int getPosition() {
 
 This excerpt is slightly shortened around its velocity estimate. The central idea remains visible: a useful encoder reading may include direction, caching, accumulation, and a software zero, not just one raw integer. Excerpted from [BunyipsLib's `Encoder.java` at a pinned commit](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/src/main/java/au/edu/sa/mbhs/studentrobotics/bunyipslib/logic/Encoder.java) under the [MIT License](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/LICENSE).
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. The `getCurrentPosition()` method returns a value using the `__________` data type.
 2. Ticks accumulate based on the rotation of the motor's internal `__________` sensor.
@@ -122,9 +114,7 @@ This excerpt is slightly shortened around its velocity estimate. The central ide
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Use the simulator below to complete the encoder monitor. Fill in the missing code so the Driver Station shows the raw tick count and current motor power while you move the slide manually.
 

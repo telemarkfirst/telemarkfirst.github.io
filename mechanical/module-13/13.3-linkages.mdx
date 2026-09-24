@@ -9,15 +9,11 @@ import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
 
 # Lesson 13.3: Four-Bars, Virtual Four-Bars, and Keeping Things Level
 
----
-
 ## Technical Context
 
 Put a claw on the end of an arm and swing the arm up. The claw tips over as it goes, because it is rigidly attached to a rotating member. Whatever it was holding is now at an angle, and if the arm swings far enough the element falls out.
 
 A second motor can rotate the claw as the arm rises, but it adds mass, wiring, a controller port, and another control loop. A linkage can produce the required orientation mechanically when its motion matches the task.
-
----
 
 ## The parallelogram result
 
@@ -28,8 +24,6 @@ The result worth memorising: **in a parallelogram linkage, the far member stays 
 So if the fixed member is bolted level to the chassis, the end effector mounted on the opposite member stays level. At every angle. With no sensor, no second motor, and no code.
 
 A parallelogram four-bar keeps the coupler orientation fixed relative to the frame throughout its motion. Teams use it when the end effector must remain level without a second actuator.
-
----
 
 ## What a four-bar costs
 
@@ -43,8 +37,6 @@ It is not free, it is just cheap:
 | A singular position | Fully extended or fully folded, the linkage loses its ability to be driven |
 
 The swept volume catches teams out most. The linkage needs room **behind** the pivot as well as in front of it, and that space usually contains the drivetrain.
-
----
 
 ## The virtual four-bar
 
@@ -65,15 +57,11 @@ That last row is the interesting one. Because the relationship is a ratio rather
 A physical four-bar that is bent still holds its geometry approximately. A virtual four-bar that skips one tooth is wrong by that tooth for the rest of the match, and nothing on the robot will tell you. Tension the belt properly and keep the wrap.
 :::
 
----
-
 ## Dual four-bars and why they stack
 
 One four-bar's reach is limited by its bar length, and a long bar sweeps a large arc through space you may not have. A **dual four-bar** stacks a second linkage on the output of the first. Reach adds; the parallel guarantee still holds through both stages, because each stage independently preserves orientation.
 
 The cost is that backlash now accumulates through eight pivots, and the whole assembly is a cantilever whose deflection grows with the cube of its length. Dual four-bars are a real answer to a real reach problem and a bad answer to "I want it a bit longer".
-
----
 
 ## Choosing
 
@@ -83,9 +71,7 @@ The cost is that backlash now accumulates through eight pivots, and the whole as
 - **Reach exceeds what one bar can sweep.** Dual four-bar, and budget for the deflection.
 - **The element does not care about angle.** A plain arm. Do not pay for a guarantee you do not need.
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. In a parallelogram four-bar, the far member stays \_\_\_\_\_\_\_\_ to the fixed member throughout the motion.
 2. A virtual four-bar replaces the second bar with a \_\_\_\_\_\_\_\_ at a 1:1 ratio.
@@ -101,8 +87,6 @@ The cost is that backlash now accumulates through eight pivots, and the whole as
 4. skipping a tooth
 
 </details>
-
----
 
 ## Exercise
 

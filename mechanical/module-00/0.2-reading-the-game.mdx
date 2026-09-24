@@ -9,15 +9,11 @@ import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
 
 # Lesson 0.2: Reading a Game Manual Like an Engineer
 
----
-
 ## Technical Context
 
 Treat the game manual as the specification for your robot. Its formal wording can be dense, but it defines the scoring rules, penalties, and physical limits that shape the design. A robot can work well in practice and still be a poor competition design if the team missed one of those details.
 
 Reading it as an engineer means extracting three separate things: what earns points, what costs points, and what the robot is physically allowed to be.
-
----
 
 ## Pass One: Find the Points
 
@@ -36,8 +32,6 @@ Cycle time belongs in the comparison because point value alone does not determin
 A two minute match has a fixed number of seconds. Ranking every scoring action by points per second tells you what the robot must be good at. Everything else is optional.
 :::
 
----
-
 ## Pass Two: Find the Penalties
 
 Penalties are negative points that no mechanism can earn back. Read the penalty section specifically looking for things a robot's **shape or behavior** can cause:
@@ -53,8 +47,6 @@ Every one of these is a design constraint. If the rules cap how many elements yo
 Team discussion of the rules drifts within days of kickoff. Someone paraphrases a rule, someone else paraphrases the paraphrase, and by week three the team is designing around a rule that does not exist. When a design decision depends on a rule, open the manual and read the actual text out loud.
 :::
 
----
-
 ## Pass Three: Find the Physical Envelope
 
 The manual defines what the robot is allowed to be. Extract these into hard numbers before any CAD work starts:
@@ -67,8 +59,6 @@ The manual defines what the robot is allowed to be. Extract these into hard numb
 
 Write these on a whiteboard where the build team can see them, in units, with the rule number next to each one. The rule number matters: when someone challenges the constraint in week five, you can find the source in ten seconds.
 
----
-
 ## Team Updates Change Everything
 
 FIRST publishes manual updates throughout the season. An update may change scoring, clarify an ambiguous rule, or affect whether your current strategy is legal.
@@ -79,9 +69,7 @@ Assign one person to read every update the day it is released and report anythin
 - Game manuals, team updates, and Q and A: [FIRST Tech Challenge Game and Season Info](https://www.firstinspires.org/resource-library/ftc/game-and-season-info)
 :::
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. Ranking scoring actions by points divided by the time they take gives you points per `__________`.
 2. Rules that subtract points regardless of how well the robot scores are called `__________`.
@@ -95,8 +83,6 @@ Assign one person to read every update the day it is released and report anythin
 3. **actual** (the manual itself, with the rule number recorded)
 
 </details>
-
----
 
 ## Exercise: Build the Scoring Table
 

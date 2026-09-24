@@ -72,25 +72,6 @@
   cursor: not-allowed;
 }
 
-/* Where it is looking. Shown rather than only used, because a student will
-   not ask "why is this 3.2" until they believe it knows what "this" is. */
-.here {
-  display: flex;
-  align-items: center;
-  gap: var(--tm-sp-2);
-  margin: 0 0 var(--tm-sp-3);
-  color: var(--tm-text-muted);
-  font-size: var(--tm-fs-2xs);
-}
-
-.hereDot {
-  width: 6px;
-  height: 6px;
-  flex: none;
-  border-radius: var(--tm-r-pill);
-  background: var(--tm-success);
-}
-
 .thread {
   display: flex;
   max-height: 22rem;
@@ -199,8 +180,6 @@
   font-size: var(--tm-fs-sm);
 }
 
-/* Stated every time, not once in a footer. A generated answer about a hole
-   size can be wrong in a way a student cannot detect. */
 .limit {
   margin: var(--tm-sp-4) 0 0;
   color: var(--tm-text-faint);
@@ -277,15 +256,6 @@
 
 .historyDelete:hover {
   color: var(--tm-danger);
-}
-
-.limitLink {
-  color: var(--tm-text-muted);
-  text-decoration: underline;
-}
-
-.limitLink:hover {
-  color: var(--tm-accent);
 }
 
 /* The line between what a source supports and what the assistant reasoned.

@@ -11,15 +11,11 @@ import {ImuAxesDiagram} from '@site/src/components/DocDiagrams';
 
 # Lesson 12.1: Initializing the REV Hub Gyro and Setting Robot Orientation
 
----
-
 ## Why Orientation Configuration Matters
 
 The IMU inside the REV Control Hub is a physical chip soldered to the Hub's circuit board. It measures acceleration and rotation along its X, Y, and Z axes using its own internal frame of reference. Those internal axes are fixed to the chip, not to the robot. When the Hub is mounted flat on a robot with its logo facing up, the chip's Z-axis happens to point straight up, which aligns with how FTC defines the "turning" axis. But teams frequently mount the Control Hub on a side panel, at an angle, or upside down to fit their robot's geometry. In every one of those cases, the chip's internal axes no longer align with the field's axes, and without correction, every heading value the IMU reports will be mathematically wrong.
 
 The SDK asks you to declare how the Hub is physically mounted, then performs the corresponding coordinate transformation internally. With the directions configured correctly, yaw represents rotation around the robot's vertical axis without requiring a custom mounting transform.
-
----
 
 ## The RevHubOrientationOnRobot Class
 
@@ -42,8 +38,6 @@ Valid direction values for both enums are: `UP`, `DOWN`, `FORWARD`, `BACKWARD`, 
 :::tip Mentor note: IMU values that look "rotated"
 If yaw changes when you tilt the robot, the Hub orientation is probably declared wrong. Put the robot on blocks, rotate it by hand, and verify yaw, pitch, and roll one axis at a time before tuning autonomous turns.
 :::
-
----
 
 ## Annotated Code
 
@@ -93,9 +87,7 @@ public class ImuInitDemo extends LinearOpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. The class used to declare how the Control Hub is physically mounted on the robot is `__________`.
 2. To provide the mounting configuration to the IMU, you pass an orientation object into `imu.initialize(new IMU.__________(orientation))`.
@@ -110,9 +102,7 @@ public class ImuInitDemo extends LinearOpMode {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Use the simulator below to complete the vertical Control Hub IMU configuration. The editor starts with incomplete starter code, so fill in the orientation object and initialization call before checking the 3D hub view.
 

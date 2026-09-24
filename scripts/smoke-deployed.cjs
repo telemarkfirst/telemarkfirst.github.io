@@ -60,7 +60,7 @@ async function main() {
     '/curriculum',
     '/simulator',
     '/search',
-    '/docs/unit-00',
+    '/docs/unit-00/classes-and-objects',
     '/docs/unit-00/classes-and-objects',
     '/docs/unit-01/prerequisites',
     '/docs/unit-06/opmode-active',

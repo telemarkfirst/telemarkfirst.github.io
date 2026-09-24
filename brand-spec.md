@@ -18,7 +18,7 @@ lesson. Design for phone and laptop viewing, with a calm, practical tone.
 
 ## Existing assets and tokens
 
-- Navbar logo: `static/img/telemark_logo.png`.
+- Navbar logo: `static/img/Telemark_logo.png`.
 - Favicon: `static/img/telemark.png`.
 - Hero reels: `static/video/telemark-hero.mp4` and
   `static/video/telemark-hero-light.mp4`.

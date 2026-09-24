@@ -10,19 +10,13 @@ import Unit3Simulator from '@site/src/components/Unit3Simulator';
 
 # Lesson 3.5: Build Dynamic Power Logic with Multiple Variables
 
----
-
 ## Technical Context
 
 A competitive robot rarely runs at one static speed. Combining inputs, multipliers, and offsets can create adjustable control behavior. For example, a driver-selected multiplier can reduce maximum power for precise alignment. Compensating for battery sag requires a measured voltage model or closed-loop velocity controller; a fixed multiplier alone cannot ensure consistent performance.
 
----
-
 ## How to Think Through Multi-Variable Power Logic
 
 This lesson combines different variable types in a single expression. When an `int` and a `double` are used in the same math operation, Java **"promotes"** the result to a `double` to maintain precision. You must be careful with assignment operators; using `=` updates the variable's value, while using `*=` or `+=` allows you to modify the current value relative to its previous state.
-
----
 
 ## Annotated Code
 
@@ -60,9 +54,7 @@ public class DynamicControl extends OpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. The operator used to assign a new value to a variable is `__________`.
 2. If you multiply an `int` by a `double`, the resulting datatype will be a/an `__________`.
@@ -77,11 +69,9 @@ public class DynamicControl extends OpMode {
 
 </details>
 
----
-
 ## Simulator Practice
 
-**Robot Scenario:** Create a "Precision Mode." If the driver holds the left bumper, the motor power should be exactly half of the joystick input. Use variables for `input`, `scaleFactor`, and `finalPower`.
+**Task:** Create a "Precision Mode." If the driver holds the left bumper, the motor power should be exactly half of the joystick input. Use variables for `input`, `scaleFactor`, and `finalPower`.
 
 <SimulatorRunGuide />
 

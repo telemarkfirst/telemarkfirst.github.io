@@ -10,13 +10,9 @@ import Unit9Simulator from '@site/src/components/Unit9Simulator';
 
 # Lesson 9.4: Using CRServos for Intake-Style Mechanisms
 
----
-
 ## Technical Context
 
 **Continuous Rotation (CR) servos** are used for high-speed intakes or spinning mechanisms where positional precision is not required. They provide a compact, lighter alternative to a full DC motor when you need continuous rotation but don't have a free motor port: or when the mechanism is small enough that a servo's current draw is acceptable.
-
----
 
 ## How CRServos Differ from Standard Servos
 
@@ -29,8 +25,6 @@ Unlike standard positional servos, a `CRServo` does not have a target angle. It 
 Because it uses `setPower()` instead of `setPosition()`, you must also remember that a `CRServo` will **not hold any position** when set to `0.0`: it simply stops spinning. There is no equivalent of `ZeroPowerBehavior.BRAKE` for a CR servo.
 
 Look up the device with `CRServo.class`, not `Servo.class`. The generic `hardwareMap.get()` call may still compile with the wrong requested type, but the Robot Controller cannot return a positional `Servo` interface for hardware configured as a CR servo and will report a runtime configuration or type error.
-
----
 
 ## Annotated Code
 
@@ -70,9 +64,7 @@ public class CRServoDemo extends OpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. A CR Servo is commanded using the `__________` method instead of `setPosition()`.
 2. To stop a CR Servo, the power must be set to `__________`.
@@ -87,9 +79,7 @@ public class CRServoDemo extends OpMode {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Use the simulator below to practice mapping a `CRServo`, running it forward with `B`, reversing with `X`, and stopping it when neither button is held.
 

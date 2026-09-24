@@ -10,19 +10,13 @@ import Unit5Simulator from '@site/src/components/Unit5Simulator';
 
 # Lesson 5.3: Using Comparison Operators to Protect Hardware Limits
 
----
-
 ## Technical Context
 
 Comparison operators let the robot interpret values such as encoder ticks or sensor voltage. A software limit can stop a mechanism before it reaches a hard stop, reducing stalls, heat, and mechanical wear. Software limits should support, not replace, suitable physical design and current protection.
 
----
-
 ## How Comparisons Create Safe Operating Zones
 
 Hardware sensors return numerical values that must be compared against thresholds. Java provides several conditional operators for this purpose: `==` (equal to), `!=` (not equal to), `<` (less than), `>` (greater than), `<=` (less than or equal to), and `>=` (greater than or equal to). In the case of an arm mechanism, the programmer compares the current `DcMotor` encoder position against a maximum "Safe-Zone" integer. If the position exceeds the limit, the logic overrides driver input to force the power to zero.
-
----
 
 ## Annotated Code
 
@@ -43,9 +37,7 @@ public void loop() {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. To test if two numerical hardware values are exactly equal, the `__________` operator must be used.
 2. The `__________` operator is used to check if a sensor value is "not equal" to a specific constant.
@@ -60,11 +52,9 @@ public void loop() {
 
 </details>
 
----
+## Challenge
 
-## Simulator Challenge
-
-**Robot Scenario:** Your team is using a Distance Sensor to prevent the robot from hitting walls. If the distance reading is less than `10.0` cm, the motor power should be set to `0.0` immediately.
+**Task:** Your team is using a Distance Sensor to prevent the robot from hitting walls. If the distance reading is less than `10.0` cm, the motor power should be set to `0.0` immediately.
 
 <SimulatorRunGuide />
 

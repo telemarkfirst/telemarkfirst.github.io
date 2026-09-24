@@ -10,19 +10,13 @@ import Unit4Simulator from '@site/src/components/Unit4Simulator';
 
 # Lesson 4.4: Shaping Joystick Sensitivity with squareInputWithSign()
 
----
-
 ## Technical Context
 
 Standard linear joystick mapping makes it difficult to perform fine adjustments at low power because small physical movements of the stick result in large percentage changes in motor voltage. By implementing a **squared sensitivity curve**, the robot gains higher granularity at lower speeds, improving the precision of scoring maneuvers while maintaining the ability to reach full speed for field navigation.
 
----
-
 ## How Input Shaping Makes Driving Smoother
 
 Squaring a joystick input (e.g., `0.5 * 0.5 = 0.25`) reduces the output power for the majority of the stick's range. However, a standard square operation turns negative inputs positive (e.g., `-0.5 * -0.5 = 0.25`), which would destroy the driver's ability to reverse the robot. Professional FTC code uses a custom method called `squareInputWithSign()`. This method calculates the square but then uses a conditional `if` statement to check if the original input was negative; if so, it multiplies the result by `-1` to preserve the direction of movement.
-
----
 
 ## Annotated Code
 
@@ -55,9 +49,7 @@ public class SensitivityTuning extends OpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. Squaring an input improves the robot's `__________` when the joystick is near the center.
 2. If you square a negative joystick value without a sign check, the robot will move `__________` even when the stick is pushed down.
@@ -72,11 +64,9 @@ public class SensitivityTuning extends OpMode {
 
 </details>
 
----
+## Challenge
 
-## Simulator Challenge
-
-**Robot Scenario:** You need to create a custom scaling method for the drive team. Implement a method that **cubes** the input (`input * input * input`) instead of squaring it to provide an even "softer" feel at low speeds. (Note: Cubing naturally preserves the sign!)
+**Task:** You need to create a custom scaling method for the drive team. Implement a method that **cubes** the input (`input * input * input`) instead of squaring it to provide an even "softer" feel at low speeds. (Note: Cubing naturally preserves the sign!)
 
 <SimulatorRunGuide />
 

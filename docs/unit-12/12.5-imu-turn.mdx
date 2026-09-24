@@ -10,8 +10,6 @@ import Unit12Simulator from '@site/src/components/Unit12Simulator';
 
 # Lesson 12.5: Implementing an IMU-Corrected 90-Degree Autonomous Turn
 
----
-
 ## Why Time-Based Turns Fail at Competition
 
 The simplest autonomous turn is a timed one: apply power to the motors for a fixed number of milliseconds and assume the robot reached the target angle. This works acceptably on a freshly charged battery with a clean, consistent floor surface in your practice space. It fails for three reasons that compound over the course of a competition day.
@@ -19,8 +17,6 @@ The simplest autonomous turn is a timed one: apply power to the motors for a fix
 First, the battery voltage drops with each match, so the same `sleep(500)` call produces a progressively smaller angle as the day goes on. Second, the FTC field tiles have a slight texture variation from panel to panel, and some panels grip the wheels more than others. Third, any contact with another robot or a field element during the turn changes the outcome unpredictably. A time-based turn has no way to detect or correct for any of these factors.
 
 An IMU-corrected turn closes the loop. The robot reads its actual heading each loop cycle, compares it to the target, and adjusts motor power accordingly. It stops when the sensor confirms it has reached the target, not when a timer expires. The result is a turn that is accurate on low batteries, on varying floor surfaces, and after incidental contact.
-
----
 
 ## Proportional Control: Scaling Power to Error
 
@@ -36,8 +32,6 @@ double power = Range.clip(error * kP, -maxPower, maxPower);
 Where `kP` is a small tuning constant called the proportional gain. When the error is large (far from the target), the power is larger. As the error shrinks on approach, the power scales down automatically. The `Range.clip()` call from the FTC SDK ensures the calculated power never exceeds a safe maximum, regardless of the error magnitude.
 
 One additional subtlety: heading error can wrap around. If the robot is at 170 degrees and the target is -170 degrees, the naive calculation gives an error of -340 degrees, causing the robot to turn the long way around. The `AngleUnit.normalizeRadians()` or equivalent degree normalization logic must be applied to the error so the robot always takes the shorter path.
-
----
 
 ## Annotated Code
 
@@ -128,9 +122,7 @@ public class ImuTurnPractice extends LinearOpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. The difference between the target heading and the robot's current heading is called the `__________`.
 2. A control strategy where motor power is proportional to the remaining error, scaling down automatically as the robot approaches its target, is called `__________` control.
@@ -144,8 +136,6 @@ public class ImuTurnPractice extends LinearOpMode {
 3. **normalized**
 
 </details>
-
----
 
 ## Simulator Practice
 

@@ -10,15 +10,11 @@ import Unit14Simulator from '@site/src/components/Unit14Simulator';
 
 # Lesson 14.2: Detecting Field Locations using AprilTagProcessor
 
----
-
 ## What AprilTags Are and Why They Matter
 
 An AprilTag is a two-dimensional fiducial marker, a printed pattern that a camera can reliably detect and uniquely identify even under varying lighting conditions and at an angle. FTC places AprilTags on fixed field structures such as backdrop panels and alliance walls. Because the tags are at known physical locations on the field, a robot that can see a tag can compute its own position and orientation relative to that tag.
 
 This is a fundamentally different capability from any sensor covered so far. Distance sensors and potentiometers tell the robot about the state of its own mechanisms. An AprilTag tells the robot something about where it is on the field. That positional awareness is what makes reliable autonomous scoring possible: the robot can align itself to a specific scoring target using vision feedback rather than relying on dead-reckoning from encoder counts alone.
-
----
 
 ## How the AprilTagProcessor Works
 
@@ -27,8 +23,6 @@ The `AprilTagProcessor` runs as a background task inside the `VisionPortal`. On 
 The method returns a `List<AprilTagDetection>`. The list is empty when no tags are visible. When one or more tags are in the frame, each one appears as a separate entry. The iteration pattern is a standard `for..each` loop over the list, which was covered in Unit 6.
 
 Each `AprilTagDetection` has a `metadata` field. When the detected tag's ID matches one of the tags defined in the SDK's built-in field database, `metadata` is populated with the tag's name, field position, and other reference data. When the tag's ID is not in the database (for example, a custom tag on your practice field), `metadata` is `null`. Always check `detection.metadata != null` before accessing any `metadata` fields to prevent a `NullPointerException`.
-
----
 
 ## Iterating Safely Over Detections
 
@@ -43,8 +37,6 @@ for (AprilTagDetection detection : detections) {
     }
 }
 ```
-
----
 
 ## Annotated Code
 
@@ -104,9 +96,7 @@ public class AprilTagDetectionDemo extends LinearOpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. The `AprilTagProcessor` returns a `List` of `__________` objects containing data about each currently visible tag.
 2. To retrieve the current list of visible tags from the processor, call `aprilTagProcessor.__________()`.
@@ -121,9 +111,7 @@ public class AprilTagDetectionDemo extends LinearOpMode {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Write a method called `scanForTag(int targetId)` that returns `true` if a tag with the specified ID is currently visible and has valid metadata. The method should iterate over the current detection list and return `false` if the target ID is not found. Assume `aprilTagProcessor` is a class member that has already been initialized.
 

@@ -10,19 +10,13 @@ import Unit3Simulator from '@site/src/components/Unit3Simulator';
 
 # Lesson 3.1: Using Strings to Match Hardware Names Exactly
 
----
-
 ## Technical Context
 
 The Control Hub utilizes a registry to link Java objects to physical I/O ports. Using `String` variables to store configuration names prevents **"Device Not Found" errors** caused by typos or case-sensitivity mismatches during the `hardwareMap.get()` call.
 
----
-
 ## Why Strings Matter for Hardware Names
 
 In Java, a `String` is an object used to hold a sequence of characters. While primitive types like `int` or `double` start with lowercase letters, `String` is capitalized because it is a class within the Java library. When you initialize hardware, the SDK requires a string parameter that must match the name defined in the robot's configuration file **exactly**. Storing these names in variables at the top of your class ensures that if a hardware port name changes, you only need to update it in one location rather than searching through hundreds of lines of code.
-
----
 
 ## Annotated Code
 
@@ -69,9 +63,7 @@ public class TestJava {
 
 This is library demonstration code rather than a suggested robot class, but it shows the same Java distinction used by hardware names and telemetry labels. Excerpted from [ByteForce's FTControl `TestJava.java` at a pinned commit](https://github.com/ftcontrol/ftcontrol-old/blob/fc8d96412ccd32ca1a450c3c9bb24fdcb0f7d749/library/TeamCode/src/main/java/org/firstinspires/ftc/teamcode/TestJava.java). **Based on FTControl bylazar.com.** Reuse is noncommercial and subject to the repository's [FTControl License v1.0](https://github.com/ftcontrol/ftcontrol-old/blob/fc8d96412ccd32ca1a450c3c9bb24fdcb0f7d749/LICENSE.md).
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. A group of characters used to store text, such as a hardware name, is known as a/an `__________`.
 2. Because it is defined as a class rather than a primitive, the name of this datatype must begin with a/an `__________` letter.
@@ -86,11 +78,9 @@ This is library demonstration code rather than a suggested robot class, but it s
 
 </details>
 
----
+## Challenge
 
-## Simulator Challenge
-
-**Robot Scenario:** Your team has named a Servo `"claw_servo"` in the configuration app. Create a `String` variable to store this name and use it to map the hardware.
+**Task:** Your team has named a Servo `"claw_servo"` in the configuration app. Create a `String` variable to store this name and use it to map the hardware.
 
 <SimulatorRunGuide />
 

@@ -12,13 +12,9 @@ import SlideCalculator from '@site/src/components/mechanical/SlideCalculator';
 
 # Lesson 8.2: Sizing Linear Slides, Spools, and Extension Speed
 
----
-
 ## Technical Context
 
 Linear slides extend a mechanism beyond the robot's frame. Each added stage also contributes tolerance, friction, and transmission load that must be included in the design.
-
----
 
 ## Cascade Versus Continuous
 
@@ -34,8 +30,6 @@ This is the trade teams forget. A three stage cascading slide extends three time
 If the cycle time requirement is the binding constraint and the load is light, cascade. If the load is heavy and the speed is adequate, use continuous rigging or add reduction. Do not choose the rigging by what is easier to build, since the two have very different force characteristics.
 :::
 
----
-
 ## The Spool
 
 The spool converts motor rotation into string travel:
@@ -49,8 +43,6 @@ A larger spool is faster and weaker. A smaller spool is slower and stronger. The
 
 One detail teams miss: as string wraps onto the spool, the effective diameter grows. A spool with several wraps of thick string can be noticeably larger at the top of travel than at the bottom, which means the slide speeds up and weakens as it extends. Use thin high strength line and a wide spool so the wraps sit side by side rather than stacking.
 
----
-
 ## Try It
 
 <LessonTool
@@ -61,8 +53,6 @@ One detail teams miss: as string wraps onto the spool, the effective diameter gr
 >
   <SlideCalculator />
 </LessonTool>
-
----
 
 ## Friction and Bind
 
@@ -82,8 +72,6 @@ The diagnostic: extend the slide by hand with the string disconnected. It should
 Testing an unloaded slide on a bench is not the same as testing it loaded and cantilevered, where the deflection is largest. Test at the extreme of travel with the real load on it.
 :::
 
----
-
 ## Retraction
 
 Extension is powered. Retraction is often not, or is powered only weakly, which produces two problems.
@@ -92,23 +80,17 @@ Extension is powered. Retraction is often not, or is powered only weakly, which 
 
 **Slack string tangles.** When a slide retracts faster than the spool takes up string, the string goes slack, comes off the spool, and wraps somewhere it should not. Keep the string under tension throughout the travel, with a tensioner or a spring loaded idler.
 
----
-
 ## Deflection at Full Extension
 
 A slide at full extension is a cantilever, and Lesson 3.3 applies directly: deflection scales with the cube of the length. The tip of a fully extended slide with a load on it can droop noticeably, and that droop changes where the end effector actually is.
 
 The scoring geometry must either tolerate the droop or be measured with it included. Droop also loads the stages in a way that increases friction, so a slide that moves freely without a payload can stall when loaded at full extension.
 
----
-
 :::info Connects to the software track
 Once the slide is sized, the code drives it to positions and needs a hard limit it can trust.
 
 See [Lesson 11.1: Touch Sensors](/docs/unit-11/touch-sensor).
 :::
-
----
 
 <LessonPhoto
   alt="A linear slide at full extension visibly drooping under load."
@@ -117,9 +99,7 @@ See [Lesson 11.1: Touch Sensors](/docs/unit-11/touch-sensor).
   framing="Side elevation, straight reference held horizontal in frame, far enough back to see the whole extension."
 />
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. A cascading slide with three moving stages extends three times as fast and lifts `__________` as hard as a continuous rigging with the same spool.
 2. As string wraps onto a spool, the effective spool diameter `__________`, so the slide speeds up and weakens as it extends.
@@ -133,8 +113,6 @@ See [Lesson 11.1: Touch Sensors](/docs/unit-11/touch-sensor).
 3. **bind** (friction, stiffness)
 
 </details>
-
----
 
 ## Exercise
 

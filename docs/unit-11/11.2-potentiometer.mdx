@@ -10,15 +10,11 @@ import Unit11Simulator from '@site/src/components/Unit11Simulator';
 
 # Lesson 11.2: Scaling Analog Voltage from Potentiometers using Range.scale
 
----
-
 ## Why Potentiometers Have an Advantage Over Encoders for Certain Mechanisms
 
 An encoder counts rotation relative to where it was the last time it was reset. If the robot powers off with an arm partially extended, the encoder resets to zero at the next power-on and the code no longer knows where the arm actually is. Before any controlled movement can happen, the robot must perform a "homing" sequence, driving the arm to a known physical stop to re-establish a reference point.
 
 A potentiometer bypasses this problem entirely. It is a variable resistor whose electrical resistance changes as the output shaft rotates. The Control Hub converts that resistance into a measurable voltage, and because the voltage is a direct function of the physical angle, the sensor reports the correct position the instant the robot turns on, with no homing required. For mechanisms like an arm that could be in any position when the drive team picks the robot up between matches, this reliability is highly valuable.
-
----
 
 ## From Voltage to Engineering Units
 
@@ -33,8 +29,6 @@ double angle = Range.scale(armPot.getVoltage(), 0, armPot.getMaxVoltage(), 0, 27
 ```
 
 This maps the raw voltage proportionally onto the 0-to-270 degree range. When the voltage is at zero, the angle reads 0. When the voltage is at the maximum, the angle reads 270. Every voltage in between maps linearly to the corresponding degree value.
-
----
 
 ## Annotated Code
 
@@ -96,9 +90,7 @@ public class PotentiometerDemo extends OpMode {
 }
 ```
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. The method used to retrieve the current voltage from an analog sensor is `pot.__________()`.
 2. The maximum voltage of a Control Hub analog port, retrieved without hardcoding a constant, is found by calling `pot.__________()`.
@@ -113,9 +105,7 @@ public class PotentiometerDemo extends OpMode {
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Use the simulator below to complete the wrist potentiometer safety check. The editor starts with incomplete starter code, so fill in the voltage-to-angle conversion and `isSafe()` logic before testing the wrist movement.
 

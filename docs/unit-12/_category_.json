@@ -1,8 +1,4 @@
 {
   "label": "Unit 12: IMU & Rotation",
-  "position": 12,
-  "link": {
-    "type": "doc",
-    "id": "unit-12/overview"
-  }
+  "position": 12
 }

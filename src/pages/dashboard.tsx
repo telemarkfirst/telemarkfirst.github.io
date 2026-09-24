@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {useRef, useState} from 'react';
 import Layout from '@theme/Layout';
 import Link from '@docusaurus/Link';
 import { signOut } from 'firebase/auth';
@@ -8,149 +8,76 @@ import { useProgress } from '../telemark/useProgress';
 import { getTrack, MAIN_TRACKS, type MainTrackId } from '../telemark/tracks';
 import {parseProgressExport, serializeProgress} from '../telemark/progressStore';
 import {trackEvent} from '../telemark/analytics';
-import {useLearnerProfile} from '../telemark/useLearnerProfile';
-import {BLOCKS_LESSONS, BLOCKS_UNITS} from '../telemark/blocksCurriculum';
-import {FLL_LESSONS, FLL_UNITS} from '../telemark/fllCurriculum';
+import heroStyles from './index.module.css';
 import styles from './dashboard.module.css';
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function DashboardPage(): React.JSX.Element {
-  const { user, loading }          = useAuth();
-  const {profile, status: profileStatus} = useLearnerProfile();
+  const { user, loading } = useAuth();
   const {
     progress,
     loading: progressLoading,
     isComplete,
     isSkipped,
-    isReviewingUnit,
     markManyComplete,
-    markManySkipped,
-    reviewMany,
-    unmarkMany,
     mergeImportedProgress,
   } = useProgress(user);
   const [activeTrack, setActiveTrack] = useState<MainTrackId>('software');
-  const [blocksSectionOpen, setBlocksSectionOpen] = useState(true);
-  const [expandedUnits, setExpandedUnits] = useState<Record<string, boolean>>({});
-  const [openActionMenu, setOpenActionMenu] = useState<string | null>(null);
-  const [savingUnit, setSavingUnit] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [collapsedUnits, setCollapsedUnits] = useState<Record<string, boolean>>({});
+  const [updatingUnit, setUpdatingUnit] = useState<string | null>(null);
   const [transferMessage, setTransferMessage] = useState<string | null>(null);
-  const previousStatusesRef = useRef<Record<string, string>>({});
   const importInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (!user || profileStatus !== 'ready' || !profile) return;
-    const blocksIncomplete = BLOCKS_LESSONS.some((lesson) => !isComplete(lesson.id));
-    if ((profile.blocksPlacement === 'required' && blocksIncomplete)
-      || profile.selectedTracks.includes('software')) {
-      setActiveTrack('software');
-    } else {
-      setActiveTrack('mechanical');
-    }
-  }, [user, profileStatus, profile, isComplete]);
-
-  useEffect(() => {
-    if (!user || profileStatus !== 'ready' || !profile) return;
-    setBlocksSectionOpen(profile.blocksPlacement !== 'auto_completed');
-  }, [user, profileStatus, profile]);
-
   const track = getTrack(activeTrack);
-  const trackLessons = useMemo(() => activeTrack === 'software'
-    ? [...BLOCKS_LESSONS, ...track.lessons]
-    : track.lessons, [activeTrack, track]);
-  const trackUnits = useMemo(() => activeTrack === 'software'
-    ? [...BLOCKS_UNITS, ...track.units]
-    : track.units, [activeTrack, track]);
-
-  const handled    = trackLessons.filter((lesson) => isComplete(lesson.id)).length;
-  const skipped    = trackLessons.filter((lesson) => isSkipped(lesson.id)).length;
-  const completed  = handled - skipped;
-  const total      = trackLessons.length;
-  const percentage = Math.round((handled / total) * 100);
   const lastOpenLesson = progress?.lastLesson
-    ? trackLessons.find(
+    ? track.lessons.find(
         (lesson) => lesson.id === progress.lastLesson && !isComplete(lesson.id),
       )
     : undefined;
   const nextLesson = lastOpenLesson
-    ?? trackLessons.find((lesson) => !isComplete(lesson.id));
-  const fallbackUnit = trackUnits[trackUnits.length - 1];
-  const units = useMemo(() => {
-    return trackUnits.map((unit) => {
-      const lessons = trackLessons.filter((lesson) => lesson.unitSlug === unit.slug);
-      const completedCount = lessons.filter((lesson) => isComplete(lesson.id)).length;
-      const skippedCount = lessons.filter((lesson) => isSkipped(lesson.id)).length;
-      const reviewing = isReviewingUnit(unit.slug);
-      const status =
-        reviewing
-          ? 'reviewing'
-          : skippedCount === lessons.length
-            ? 'skipped'
-            : completedCount === lessons.length
-          ? 'complete'
-          : completedCount === 0
-            ? 'untouched'
-            : 'in-progress';
-      const unitNextLesson = lessons.find((lesson) => !isComplete(lesson.id));
+    ?? track.lessons.find((lesson) => !isComplete(lesson.id));
+  const fallbackUnit = track.units[track.units.length - 1];
+  const unitLessons = track.units.map((unit) =>
+    track.lessons.filter((lesson) => lesson.unitSlug === unit.slug),
+  );
+  const trackButtonClass = activeTrack === 'software'
+    ? heroStyles.btnPrimary
+    : heroStyles.btnTrackAlt;
+  const completedUnits = unitLessons.map((lessons) => lessons.length > 0
+    && lessons.every((lesson) => isComplete(lesson.id) && !isSkipped(lesson.id)));
+  const firstIncompleteUnit = completedUnits.findIndex((complete) => !complete);
+  const currentUnitIndex = firstIncompleteUnit === -1
+    ? Math.max(0, track.units.length - 1)
+    : firstIncompleteUnit;
+  const visibleUnitIndexes = [
+    currentUnitIndex - 1,
+    currentUnitIndex,
+    currentUnitIndex + 1,
+  ].filter((index) => index >= 0 && index < track.units.length);
 
-      return {
-        ...unit,
-        lessons,
-        completedCount,
-        skippedCount,
-        reviewing,
-        status,
-        unitNextLesson,
-      };
-    });
-  }, [isComplete, isSkipped, isReviewingUnit, trackUnits, trackLessons]);
+  function toggleUnit(unitSlug: string): void {
+    setCollapsedUnits((current) => ({
+      ...current,
+      [unitSlug]: !current[unitSlug],
+    }));
+  }
 
-  useEffect(() => {
-    if (!openActionMenu) return undefined;
-
-    function closeMenu(event: PointerEvent) {
-      const target = event.target;
-      if (target instanceof Element && !target.closest('[data-progress-action-menu]')) {
-        setOpenActionMenu(null);
-      }
+  async function handleMarkUnitDone(
+    unitLabel: string,
+    unitSlug: string,
+    lessonIds: string[],
+  ): Promise<void> {
+    setUpdatingUnit(unitSlug);
+    try {
+      await markManyComplete(lessonIds);
+      setTransferMessage(`${unitLabel} marked done.`);
+    } catch (error) {
+      setTransferMessage(error instanceof Error ? error.message : `Could not update ${unitLabel}.`);
+    } finally {
+      setUpdatingUnit(null);
     }
-
-    function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape') setOpenActionMenu(null);
-    }
-
-    document.addEventListener('pointerdown', closeMenu);
-    document.addEventListener('keydown', closeOnEscape);
-    return () => {
-      document.removeEventListener('pointerdown', closeMenu);
-      document.removeEventListener('keydown', closeOnEscape);
-    };
-  }, [openActionMenu]);
-
-  useEffect(() => {
-    setExpandedUnits((prev) => {
-      const next = {...prev};
-
-      units.forEach((unit) => {
-        const previousStatus = previousStatusesRef.current[unit.slug];
-        if (
-          previousStatus
-          && previousStatus !== unit.status
-          && next[unit.slug] !== true
-        ) {
-          delete next[unit.slug];
-        }
-      });
-
-      previousStatusesRef.current = Object.fromEntries(
-        units.map((unit) => [unit.slug, unit.status]),
-      );
-
-      return next;
-    });
-  }, [units]);
+  }
 
   async function handleSignOut() {
     await signOut(auth);
@@ -195,47 +122,11 @@ export default function DashboardPage(): React.JSX.Element {
     }
   }
 
-  function toggleUnit(unitSlug: string, nextValue: boolean) {
-    setExpandedUnits((prev) => ({
-      ...prev,
-      [unitSlug]: nextValue,
-    }));
-  }
-
-  async function handleUnitAction(
-    unit: (typeof units)[number],
-    action: 'complete' | 'skip' | 'review' | 'unmark',
-  ) {
-    const lessonIds = unit.lessons.map((lesson) => lesson.id);
-    setSavingUnit(unit.slug);
-    setActionError(null);
-
-    try {
-      if (action === 'complete') await markManyComplete(lessonIds);
-      if (action === 'skip') await markManySkipped(lessonIds);
-      if (action === 'review') await reviewMany(lessonIds);
-      if (action === 'unmark') await unmarkMany(lessonIds);
-      setOpenActionMenu(null);
-      setExpandedUnits((prev) => ({...prev, [unit.slug]: action === 'review' || action === 'unmark'}));
-    } catch (error) {
-      console.error(`Telemark ${action} action failed:`, error);
-      setActionError(`Could not update ${unit.label}. Please try again.`);
-    } finally {
-      setSavingUnit(null);
-    }
-  }
-
-  if (
-    loading
-    || (user && profileStatus === 'loading')
-    || progressLoading
-  ) {
+  if (loading || progressLoading) {
     return (
       <Layout title="Dashboard · Telemark" noFooter>
         <main className={styles.page}>
-          <div className={styles.loading}>
-            <span className={styles.loadingText}>Loading your curriculum progress...</span>
-          </div>
+          <div className={styles.loading}>Loading your curriculum progress...</div>
         </main>
       </Layout>
     );
@@ -264,7 +155,10 @@ export default function DashboardPage(): React.JSX.Element {
               </p>
             </div>
             <div className={styles.headerActions}>
-              <Link to={nextLesson?.path ?? fallbackUnit.overviewPath} className={styles.resumeBtn}>
+              <Link
+                to={nextLesson?.path ?? fallbackUnit.startPath}
+                className={[trackButtonClass, styles.resumeBtn].join(' ')}
+              >
                 {nextLesson ? `Resume → ${nextLesson.label}` : `Review ${fallbackUnit.label} ✓`}
               </Link>
               <input
@@ -289,11 +183,6 @@ export default function DashboardPage(): React.JSX.Element {
                   Import
                 </button>
                 {user && (
-                  <Link to="/personalize" className={styles.signOutBtn}>
-                    Edit learning path
-                  </Link>
-                )}
-                {user && (
                   <button type="button" className={styles.signOutBtn} onClick={handleSignOut}>
                     Sign out
                   </button>
@@ -305,277 +194,119 @@ export default function DashboardPage(): React.JSX.Element {
             <p className={styles.transferMessage} role="status">{transferMessage}</p>
           )}
 
-          {/* ── Track switcher ── */}
           <div className={styles.trackSwitcher} role="group" aria-label="Choose a track">
-            {MAIN_TRACKS.map((option) => {
-              const optionLessons = option.id === 'software'
-                ? [...BLOCKS_LESSONS, ...option.lessons]
-                : option.lessons;
-              const optionHandled = optionLessons.filter((lesson) =>
-                isComplete(lesson.id),
-              ).length;
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  className={`${styles.trackTab} ${
-                    activeTrack === option.id ? styles.trackTabActive : ''
-                  }`}
-                  aria-pressed={activeTrack === option.id}
-                  onClick={() => setActiveTrack(option.id)}
-                >
-                  <span className={styles.trackTabName}>{option.shortLabel}</span>
-                  <span className={styles.trackTabMeta}>
-                    {optionHandled} / {optionLessons.length}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* ── Progress overview ── */}
-          <div className={styles.overviewGrid}>
-            <div className={styles.statCard}>
-              <span className={styles.statNum}>{completed}</span>
-              <span className={styles.statLabel}>Lessons Complete</span>
-            </div>
-            <div className={styles.statCard}>
-              <span className={styles.statNum}>{skipped}</span>
-              <span className={styles.statLabel}>Skipped</span>
-            </div>
-            <div className={styles.statCard}>
-              <span className={styles.statNum}>{total - handled}</span>
-              <span className={styles.statLabel}>Remaining</span>
-            </div>
-            <div className={styles.statCard}>
-              <span className={styles.statNum}>{percentage}%</span>
-              <span className={styles.statLabel}>Overall Progress</span>
-            </div>
-          </div>
-
-          {/* ── Progress bar ── */}
-          <div className={styles.progressSection}>
-            <div className={styles.progressHeader}>
-              <span className={styles.progressLabel}>
-                {trackUnits.length}{' '}
-                {activeTrack === 'mechanical' ? 'modules' : 'units'} ·{' '}
-                {total} lessons
-              </span>
-              <span className={styles.progressPct}>{percentage}%</span>
-            </div>
-            <div className={styles.progressTrack}>
-              <div
-                className={styles.progressFill}
-                style={{ width: `${percentage}%` }}
-              />
-            </div>
-          </div>
-
-          {/* ── Lesson list ── */}
-          <div className={styles.lessonList}>
-            <p className={styles.listLabel}>// progress.byUnit</p>
-            {actionError && <p className={styles.actionError} role="alert">{actionError}</p>}
-            {activeTrack === 'software' && (
+            {MAIN_TRACKS.map((option) => (
               <button
+                key={option.id}
                 type="button"
-                className={styles.blocksSectionToggle}
-                aria-expanded={blocksSectionOpen}
-                onClick={() => setBlocksSectionOpen((current) => !current)}
+                className={[
+                  option.id === 'software' ? heroStyles.btnPrimary : heroStyles.btnTrackAlt,
+                  styles.trackTab,
+                  activeTrack === option.id ? styles.trackTabActive : '',
+                ].join(' ')}
+                aria-pressed={activeTrack === option.id}
+                onClick={() => setActiveTrack(option.id)}
               >
-                <span aria-hidden="true">{blocksSectionOpen ? '▾' : '▸'}</span>
-                <span>
-                  <strong>Blocks Foundations</strong>
-                  <small>
-                    {BLOCKS_LESSONS.filter((lesson) => isComplete(lesson.id)).length}
-                    {' / '}{BLOCKS_LESSONS.length} lessons complete
-                  </small>
-                </span>
+                {option.shortLabel}
               </button>
-            )}
-            {units.map((unit) => {
-              if (unit.slug.startsWith('blocks-unit-') && !blocksSectionOpen) return null;
-              const isExpanded = expandedUnits[unit.slug]
-                ?? (unit.status === 'in-progress' || unit.status === 'reviewing');
-              const statusLabel =
-                unit.status === 'reviewing'
-                  ? 'Reviewing'
-                  : unit.status === 'skipped'
-                    ? 'Skipped'
-                    : unit.status === 'complete'
-                  ? 'Unit Complete'
-                  : unit.status === 'untouched'
-                    ? 'Not Started'
-                    : 'In Progress';
-              const unitBusy = savingUnit === unit.slug;
+            ))}
+          </div>
 
-              return (
-                <section
-                  key={unit.slug}
-                  className={`${styles.unitGroup} ${unit.status === 'skipped' ? styles.unitSkipped : ''} ${unit.status === 'reviewing' ? styles.unitReviewing : ''}`}
-                >
-                  <div className={styles.unitHeader}>
+          <div className={styles.unitMap} data-track={activeTrack}>
+            <ol
+              className={`${styles.unitGrid} ${visibleUnitIndexes.length === 2 ? styles.unitGridTwo : ''}`}
+              aria-label={track.shortLabel + ' units'}
+            >
+              {visibleUnitIndexes.map((unitIndex) => {
+                const unit = track.units[unitIndex];
+                const lessons = unitLessons[unitIndex];
+                const expanded = !collapsedUnits[unit.slug];
+                const current = unitIndex === currentUnitIndex;
+                const unitComplete = completedUnits[unitIndex];
+                const completedLessonCount = lessons.filter(
+                  (lesson) => isComplete(lesson.id) && !isSkipped(lesson.id),
+                ).length;
+                const completionPercentage = lessons.length > 0
+                  ? Math.round((completedLessonCount / lessons.length) * 100)
+                  : 0;
+                return (
+                  <li key={unit.slug} className={styles.unitStep}>
                     <button
                       type="button"
-                      className={styles.unitToggle}
-                      onClick={() => toggleUnit(unit.slug, !isExpanded)}
+                      className={[
+                        trackButtonClass,
+                        styles.unitTile,
+                        unitComplete ? styles.unitDone : '',
+                        current ? styles.unitCurrent : '',
+                      ].join(' ')}
+                      aria-expanded={expanded}
+                      aria-controls={`${unit.slug}-lessons`}
+                      aria-label={`${unit.label}: ${unit.title}. ${completedLessonCount} of ${lessons.length} lessons complete. ${expanded ? 'Hide lessons' : 'Show lessons'}`}
+                      onClick={() => toggleUnit(unit.slug)}
                     >
-                      <span className={styles.unitToggleIcon} aria-hidden="true">
-                        {isExpanded ? '▾' : '▸'}
+                      <span className={styles.unitHeading}>
+                        <span className={styles.unitLabel}>{unit.label}</span>
+                        <span className={styles.unitTitle}>{unit.title}</span>
                       </span>
-                      <span className={styles.unitHeaderInfo}>
-                        <span className={styles.unitHeaderTitle}>
-                          {unit.label}: {unit.title}
+                      <span className={styles.unitProgress} aria-hidden="true">
+                        <span className={styles.unitProgressMeta}>
+                          <span>{completedLessonCount} / {lessons.length} lessons</span>
+                          <span>{completionPercentage}%</span>
                         </span>
-                        <span className={styles.unitHeaderMeta}>
-                          {unit.completedCount}/{unit.lessons.length} handled
-                          {unit.skippedCount > 0 && ` · ${unit.skippedCount} skipped`}
-                          {' · '}
-                          <span className={styles.unitState}>{statusLabel}</span>
+                        <span className={styles.unitProgressTrack}>
+                          <span
+                            className={styles.unitProgressFill}
+                            style={{width: `${completionPercentage}%`}}
+                          />
                         </span>
+                      </span>
+                      <span className={styles.unitToggleHint}>
+                        {expanded ? 'Hide lessons' : 'Show lessons'}
                       </span>
                     </button>
 
-                    <div className={styles.unitHeaderActions}>
-                      <Link to={unit.overviewPath} className={styles.unitHeaderLink}>
-                        Overview
-                      </Link>
-                      <Link
-                        to={unit.unitNextLesson?.path ?? unit.startPath}
-                        className={styles.unitHeaderLink}
-                      >
-                        {unit.status === 'reviewing'
-                          ? 'Resume review'
-                          : unit.unitNextLesson
-                            ? 'Resume'
-                            : 'Open'}
-                      </Link>
-                      <div className={styles.actionMenu} data-progress-action-menu>
-                        <button
-                          type="button"
-                          className={styles.actionMenuTrigger}
-                          aria-haspopup="menu"
-                          aria-expanded={openActionMenu === unit.slug}
-                          aria-label={`Progress options for ${unit.label}`}
-                          onClick={() => setOpenActionMenu((current) => current === unit.slug ? null : unit.slug)}
-                          disabled={unitBusy}
-                        >
-                          <span aria-hidden="true">•••</span>
-                          <span>{unitBusy ? 'Saving' : 'Options'}</span>
-                        </button>
-                        {openActionMenu === unit.slug && (
-                          <div className={styles.actionMenuPopover} role="menu">
-                            <p className={styles.actionMenuLabel}>{unit.label} progress</p>
-                            {(unit.completedCount < unit.lessons.length || unit.skippedCount > 0) && (
-                              <button
-                                type="button"
-                                role="menuitem"
-                                className={styles.actionMenuItem}
-                                onClick={() => handleUnitAction(unit, 'complete')}
-                                disabled={unitBusy}
-                              >
-                                <span className={styles.actionMenuIcon} aria-hidden="true">✓</span>
-                                <span><strong>Mark done</strong><small>Count every lesson as completed.</small></span>
-                              </button>
-                            )}
-                            {unit.status !== 'skipped' && (
-                              <button
-                                type="button"
-                                role="menuitem"
-                                className={styles.actionMenuItem}
-                                onClick={() => handleUnitAction(unit, 'skip')}
-                                disabled={unitBusy}
-                              >
-                                <span className={`${styles.actionMenuIcon} ${styles.skipIcon}`} aria-hidden="true">→</span>
-                                <span><strong>Skip unit</strong><small>Treat it as done, with a skipped indicator.</small></span>
-                              </button>
-                            )}
-                            {(unit.completedCount > 0 || unit.reviewing) && (
-                              <button
-                                type="button"
-                                role="menuitem"
-                                className={styles.actionMenuItem}
-                                onClick={() => handleUnitAction(unit, 'review')}
-                                disabled={unitBusy}
-                              >
-                                <span className={`${styles.actionMenuIcon} ${styles.reviewIcon}`} aria-hidden="true">↺</span>
-                                <span><strong>{unit.reviewing ? 'Restart review' : 'Review unit'}</strong><small>Reopen it while remembering it was done before.</small></span>
-                              </button>
-                            )}
-                            {(unit.completedCount > 0 || unit.reviewing) && (
-                              <button
-                                type="button"
-                                role="menuitem"
-                                className={`${styles.actionMenuItem} ${styles.unmarkItem}`}
-                                onClick={() => handleUnitAction(unit, 'unmark')}
-                                disabled={unitBusy}
-                              >
-                                <span className={styles.actionMenuIcon} aria-hidden="true">○</span>
-                                <span><strong>Unmark unit</strong><small>Clear its progress and make it current.</small></span>
-                              </button>
-                            )}
-                          </div>
+                    <div className={styles.unitActions}>
+                      <button
+                        type="button"
+                        className={`${styles.signOutBtn} ${styles.unitCompleteButton}`}
+                        disabled={unitComplete || updatingUnit === unit.slug || lessons.length === 0}
+                        onClick={() => void handleMarkUnitDone(
+                          unit.label,
+                          unit.slug,
+                          lessons.map((lesson) => lesson.id),
                         )}
-                      </div>
+                      >
+                        {unitComplete
+                          ? 'Unit done'
+                          : updatingUnit === unit.slug
+                            ? 'Saving...'
+                            : 'Mark unit done'}
+                      </button>
                     </div>
-                  </div>
 
-                  <div className={styles.unitProgressTrack} aria-hidden="true">
-                    <div
-                      className={styles.unitProgressFill}
-                      data-skipped={unit.status === 'skipped' ? 'true' : undefined}
-                      style={{width: `${Math.round((unit.completedCount / unit.lessons.length) * 100)}%`}}
-                    />
-                  </div>
-
-                  {isExpanded && (
-                    <div className={styles.unitLessonRows}>
-                      {unit.lessons.map((lesson) => {
-                        const done = isComplete(lesson.id);
-                        const lessonSkipped = isSkipped(lesson.id);
-                        return (
-                          <Link
-                            key={lesson.id}
-                            to={lesson.path}
-                            className={`${styles.lessonRow} ${done ? styles.lessonDone : ''} ${lessonSkipped ? styles.lessonSkipped : ''} ${unit.reviewing && !done ? styles.lessonReviewing : ''}`}
-                          >
-                            <div className={styles.lessonCheck} aria-hidden="true">
-                              {lessonSkipped ? '→' : done ? '✓' : unit.reviewing ? '↺' : '○'}
-                            </div>
-                            <div className={styles.lessonInfo}>
-                              <span className={styles.lessonLabel}>{lesson.label}</span>
-                              <span className={styles.lessonUnit}>{lesson.title}</span>
-                            </div>
-                            <span className={styles.lessonStatus}>
-                              {lessonSkipped ? 'Skipped' : done ? 'Complete' : unit.reviewing ? 'Review' : 'Incomplete'}
-                            </span>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
-                </section>
-              );
-            })}
-            {activeTrack === 'software' && (
-              <section className={styles.unitGroup}>
-                <div className={styles.unitHeader}>
-                  <div className={styles.unitHeaderInfo}>
-                    <span className={styles.unitHeaderTitle}>Optional: FLL Challenge Extension</span>
-                    <span className={styles.unitHeaderMeta}>
-                      {FLL_LESSONS.filter((lesson) => isComplete(lesson.id)).length}/{FLL_LESSONS.length} complete · excluded from Software percentage
-                    </span>
-                  </div>
-                  <div className={styles.unitHeaderActions}><Link to="/blocks/fll" className={styles.unitHeaderLink}>Overview</Link></div>
-                </div>
-                <div className={styles.unitLessonRows}>
-                  {FLL_UNITS.map((unit) => {
-                    const lessons = FLL_LESSONS.filter((lesson) => lesson.unitSlug === unit.slug);
-                    const done = lessons.filter((lesson) => isComplete(lesson.id)).length;
-                    return <Link key={unit.id} to={unit.overviewPath} className={styles.lessonRow}><div className={styles.lessonCheck} aria-hidden="true">{done === lessons.length ? '✓' : '○'}</div><div className={styles.lessonInfo}><span className={styles.lessonLabel}>{unit.label}: {unit.title}</span><span className={styles.lessonUnit}>{done} of {lessons.length} complete</span></div><span className={styles.lessonStatus}>Open</span></Link>;
-                  })}
-                </div>
-              </section>
-            )}
+                    {expanded && (
+                      <ul id={`${unit.slug}-lessons`} className={styles.lessonRequirements}>
+                        {lessons.map((lesson) => {
+                          const done = isComplete(lesson.id) && !isSkipped(lesson.id);
+                          return (
+                            <li key={lesson.id}>
+                              <Link
+                                to={lesson.path}
+                                className={`${styles.lessonRequirement} ${done ? styles.lessonRequirementDone : ''}`}
+                                aria-label={`${lesson.label}, ${done ? 'complete' : 'incomplete'}`}
+                              >
+                                <span className={styles.lessonMarker} aria-hidden="true" />
+                                <span>{lesson.label}</span>
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
           </div>
 
         </div>

@@ -11,8 +11,6 @@ import {MASTERY_QUESTIONS} from '@site/src/telemark/mechanicalQuizzes';
 
 # Module 11 Mastery Quiz: Fabrication and Competition Readiness
 
----
-
 ## I. Conceptual Questions
 
 **1. Tolerance Cost:** A student specifies every dimension on a bracket to plus or minus 0.001 in, reasoning that tighter is safer. Explain why this is a poor decision.
@@ -26,8 +24,6 @@ Tolerance should follow function. The bore that locates a bearing may genuinely 
 
 </details>
 
----
-
 **2. Process Bias:** Explain why a drilled hole and an FDM printed hole of the same nominal size need different design compensation.
 
 <details>
@@ -38,8 +34,6 @@ They err in opposite directions. A drill bit cuts oversize, typically by a few t
 So a drilled hole intended as a close fit should be drilled undersize and reamed to final dimension, while a printed hole should be modeled oversize or drilled after printing. Designing both to nominal produces a drilled hole that is too loose and a printed hole the shaft will not enter.
 
 </details>
-
----
 
 **3. Print Orientation:** A printed bracket fails at a load well below what the same geometry in aluminum would carry, and the plastic itself is not obviously inadequate. Explain the likely cause.
 
@@ -52,8 +46,6 @@ The fix is orientation: print the part so the load runs across layers rather tha
 
 </details>
 
----
-
 **4. Sizing Failures:** Why do teams that measured their robot in the shop still fail sizing at inspection?
 
 <details>
@@ -65,8 +57,6 @@ The preventions are a sizing fixture built to the current season's dimensions, m
 
 </details>
 
----
-
 **5. Triage:** A mechanism breaks with two matches until yours. Explain why attempting the proper repair immediately is usually the wrong choice.
 
 <details>
@@ -77,8 +67,6 @@ A proper repair takes longer than the window between matches, and a half complet
 The correct sequence is to ask whether the robot can play safely without the mechanism, in which case disable it in software and play; then whether a spare exists, in which case swap rather than repair; then whether a temporary fix will last one match, which zip ties and tape often will if it is safe and legal. The proper repair happens later, in a longer gap, and gets recorded in the notebook. In every case the robot must be run through the affected mechanism's range before returning to the field, since incorrect reassembly is common.
 
 </details>
-
----
 
 ## II. Review the Competition Preparation
 
@@ -127,15 +115,11 @@ of each printed part on the robot.
 
 </details>
 
----
-
 ## Finishing the Track
 
 That is the end of the mechanical track. You have gone from reading a game manual to sizing a transmission to running a pit, which is the same path a real engineering organization follows from requirements to delivery.
 
 Two things are worth doing now. Go back to the requirements you wrote in Module 0 and check whether the robot you built satisfies them, honestly, with measurements. And read the software track if you have not, because the robot you designed is only half of the machine.
-
----
 
 ## III. Scored Check
 
@@ -148,6 +132,6 @@ The questions above are for working something through. These are graded, so you 
 
 <MarkComplete
   lessonId="module-11/mastery-quiz"
-  nextUnit="/mechanical/module-12"
+  nextUnit="/mechanical/module-12/hole-standards"
   nextUnitName="Module 12"
 />

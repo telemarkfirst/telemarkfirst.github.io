@@ -10,8 +10,6 @@ const backend = read('functions/src/classroomFunctions.ts');
 const backendIndex = read('functions/src/index.ts');
 const rules = read('firestore.rules');
 const rootTheme = read('src/theme/Root.tsx');
-const gate = read('src/components/PersonalizationGate.tsx');
-const personalize = read('src/pages/personalize.tsx');
 const dashboard = read('src/pages/dashboard.tsx');
 const classroomUi = read('src/components/classroom/ClassroomDashboard.tsx');
 
@@ -56,9 +54,6 @@ for (const collection of ['accounts', 'usernames', 'classrooms', 'userInvites', 
 }
 
 assert.doesNotMatch(rootTheme, /TelemarkAccountProvider/, 'unfinished accounts must not initialize globally');
-assert.doesNotMatch(gate, /useTelemarkAccount|accountStatus|setupError/);
-assert.doesNotMatch(gate, /<aside|Continue to public lessons|Sign out/);
-assert.doesNotMatch(personalize, /useTelemarkAccount|Who is using this account\?|Coaches invite this username/);
 assert.doesNotMatch(dashboard, /useTelemarkAccount|<CoachDashboard|<StudentClassroomPanel/);
 assert.match(dashboard, /useProgress\(user\)/, 'the standard dashboard keeps cloud progress enabled');
 assert.match(classroomUi, /inviteStudentToClassroom/);

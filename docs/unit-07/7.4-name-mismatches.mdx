@@ -10,13 +10,9 @@ import Unit7Simulator from '@site/src/components/Unit7Simulator';
 
 # Lesson 7.4: Debugging Name Mismatches and Configuration Problems
 
----
-
 ## Technical Context
 
 The string literal used in `hardwareMap.get()` must match the configuration name on the Hub **character-for-character**. A single typo, including a capitalization difference such as `"LeftMotor"` versus `"left_motor"`, causes `get()` to throw during initialization. If the error is not corrected before Start, the OpMode cannot run.
-
----
 
 ## How to Track Down Mapping Errors Quickly
 
@@ -29,8 +25,6 @@ Common mismatch causes to watch for:
 - Spaces vs underscores (`"left drive"` vs `"left_drive"`)
 - Trailing spaces that are easy to overlook in the configuration app
 - Using the Java variable name instead of the Hub config name
-
----
 
 ## Annotated Code
 
@@ -83,9 +77,7 @@ return hardwareDevice
 
 That `null` result is behavior created by this wrapper, not by `HardwareMap.get(...)`. In ordinary SDK code, use `tryGet(...)` when a missing device should return `null`, or let `get(...)` fail during initialization for hardware the robot requires. Excerpted from [BunyipsLib's `RobotConfig.kt` at a pinned commit](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/src/main/java/au/edu/sa/mbhs/studentrobotics/bunyipslib/RobotConfig.kt) under the [MIT License](https://github.com/Murray-Bridge-Bunyips/BunyipsLib/blob/8e2e23df19e9f797923e3904a21fcb981e542b9f/LICENSE).
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. Hardware lookup strings in the `get()` method are `__________`-sensitive, meaning `"Motor"` and `"motor"` are different configuration names.
 2. If `HardwareMap.get(...)` cannot find the requested device, it throws an `__________`.
@@ -100,9 +92,7 @@ That `null` result is behavior created by this wrapper, not by `HardwareMap.get(
 
 </details>
 
----
-
-## Simulator Challenge
+## Challenge
 
 Use the simulator below to track down a name mismatch, then refactor the correct hardware name into a shared constant.
 

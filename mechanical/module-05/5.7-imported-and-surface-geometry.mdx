@@ -9,15 +9,11 @@ import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
 
 # Lesson 5.7: Direct Editing, Imported Geometry, Surfaces, and Mesh
 
----
-
 ## Technical Context
 
 Everything so far assumed you built the geometry and can edit the sketch that made it. Much of what enters an FTC design does not work that way. A vendor STEP file, a scanned mesh, or a downloaded model arrives as finished shape with no recipe behind it.
 
 This lesson is about working with geometry you did not author.
-
----
 
 ## Imported Geometry
 
@@ -40,8 +36,6 @@ Imported files fall into two categories, and the difference decides what you can
 Use the [CAD file check](/simulator#cad-check) to compare a STEP or STL export with the intended dimensions.
 :::
 
----
-
 ## Direct Editing
 
 Imported geometry has no feature list, so parametric editing has nothing to grip. **Direct editing** works on the geometry itself: move a face, delete a face, replace a face, change a hole size.
@@ -56,8 +50,6 @@ The rule from Lesson 5.6 holds: direct editing is for geometry whose dimensions 
 
 **Simplify aggressively.** A vendor motor model can carry thousands of faces of detail that no one will ever see. Delete the fine detail and keep the mounting interface and the envelope. Assemblies rebuild far faster, and nothing you care about was in those faces.
 
----
-
 ## Surface Modelling
 
 A **surface** has area but no thickness. Solid modelling is the right default and surfaces are the specialist tool, but three FTC situations genuinely want them.
@@ -69,8 +61,6 @@ A **surface** has area but no thickness. Solid modelling is the right default an
 **Repairing imports.** When a STEP file arrives with a gap, patching the gap with a surface and knitting the result back into a solid is often the only way to recover it.
 
 The workflow is always the same: build surfaces, join them into a closed skin, then thicken or enclose to get a solid back. Anything you intend to manufacture must end as a solid.
-
----
 
 ## Mesh and Complex Geometry Workflows
 
@@ -87,9 +77,7 @@ The practical FTC workflow:
 Converting an STL gives you a solid made of triangles. It will import, it will look right, and it will make every subsequent operation slow and every fillet fail. Treat a mesh as reference, and model the real part yourself.
 :::
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. `__________` files carry exact geometry, while `__________` files carry only triangles.
 2. Editing geometry that has no feature history, by pushing faces directly, is called `__________` editing.
@@ -107,8 +95,6 @@ Converting an STL gives you a solid made of triangles. It will import, it will l
 5. **small** (under)
 
 </details>
-
----
 
 ## Exercise
 

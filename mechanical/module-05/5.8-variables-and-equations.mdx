@@ -9,15 +9,11 @@ import MarkComplete from '@site/src/components/HomepageFeatures/MarkComplete';
 
 # Lesson 5.8: Variables, Expressions, and Equations
 
----
-
 ## Technical Context
 
 An isolated dimension records a value but not the relationship that produced it. The model also has no way to know which other dimensions should change with that value.
 
 Variables and equations record those relationships so one intentional change can update the dependent geometry.
-
----
 
 ## Variables
 
@@ -36,8 +32,6 @@ The variables worth defining in nearly every FTC part:
 | `#railPitch` | 15 mm on 15 mm extrusion; drives every pattern spacing |
 | `#motorBoltCircle` | Vendor-defined; a variable stops it being remembered wrongly |
 
----
-
 ## Expressions
 
 An **expression** is a calculation in a dimension field rather than a typed result.
@@ -50,8 +44,6 @@ Units are part of the value. `#railPitch` is `15 mm`, not `15`. Onshape will ref
 If you find yourself doing arithmetic on paper before typing a dimension, type the arithmetic instead. The number is the same today and it stays correct tomorrow.
 :::
 
----
-
 ## Equations Between Dimensions
 
 An **equation** links dimensions so one drives another. This is where a model starts encoding design rules rather than a single design.
@@ -63,8 +55,6 @@ Useful relationships in FTC:
 - Pattern instance count `= floor(#railLength / #railPitch)`, so the hole count follows the length automatically
 
 The last one is worth dwelling on. A rail that gets 60 mm longer should gain four holes. With an equation it does. With a typed count of 12 it does not, and nobody notices until the rail is cut.
-
----
 
 ## A Worked Example
 
@@ -88,9 +78,7 @@ Change the motor and you change `#boltCircle`. The pattern moves, the outline gr
 If changing one number requires visiting eleven features, the model has recorded a single design rather than the rule that produced it. That is fine for a part that will never change, and no FTC part never changes.
 :::
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. A named value defined once and reused throughout a model is a `__________`.
 2. Entering `#plateThickness - 1 mm` in a depth field rather than a typed number records the `__________` between the two dimensions.
@@ -106,8 +94,6 @@ If changing one number requires visiting eleven features, the model has recorded
 4. **equation**
 
 </details>
-
----
 
 ## Exercise
 

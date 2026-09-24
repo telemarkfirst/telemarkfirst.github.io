@@ -11,15 +11,11 @@ import WireGaugeCalculator from '@site/src/components/mechanical/WireGaugeCalcul
 
 # Lesson 9.2: Wire Gauge, Current Capacity, and Voltage Drop
 
----
-
 ## Technical Context
 
 Wire has resistance. Current through resistance produces heat and loses voltage, and both matter on a robot running motors near their limits from a battery that is already sagging.
 
 Two separate checks decide the gauge, and a wire can pass one and fail the other.
-
----
 
 ## Check One: Can It Carry the Current
 
@@ -42,8 +38,6 @@ This check protects performance. Voltage lost in the wire is voltage the motor d
 A wire can pass the current check and fail the voltage drop check on a long run, and it can pass the drop check on a short run while being too thin to carry the current. Run both.
 :::
 
----
-
 ## Try It
 
 <LessonTool
@@ -56,8 +50,6 @@ A wire can pass the current check and fail the voltage drop check on a long run,
 </LessonTool>
 
 Enter the current the circuit actually draws in sustained operation, not the stall current, and measure the run length along the route the wire takes rather than the straight line distance.
-
----
 
 ## Where the Big Currents Are
 
@@ -75,8 +67,6 @@ The battery run carries everything and deserves the most attention. Motor runs m
 Required gauges, connector types, and fusing between the battery, main switch, and power distribution are defined in the game manual and are checked at inspection. Read the current manual before choosing anything for the main power path. The calculator above is an engineering tool, not a legality check.
 :::
 
----
-
 ## Battery Voltage Sag
 
 An FTC battery has internal resistance, so its terminal voltage falls under load. Add wiring drop on top and the voltage reaching a motor during a hard push can be noticeably below nominal.
@@ -89,8 +79,6 @@ Consequences:
 
 Mitigations: keep the battery run short and thick, keep connections tight and clean, charge and rotate batteries through the day, and design mechanisms with torque margin so they do not need full voltage to function.
 
----
-
 ## Connections Are the Usual Culprit
 
 More FTC electrical failures come from connections than from wire.
@@ -102,9 +90,7 @@ More FTC electrical failures come from connections than from wire.
 
 Test every crimp with a firm pull when it is made. It takes one second and it prevents a category of failure that is very hard to diagnose later.
 
----
-
-## Fill-in-the-Blank Practice
+## Practice
 
 1. Voltage drop must be calculated using `__________` times the one way run length, because current flows out and back.
 2. A common target for acceptable voltage drop is under about `__________` percent of system voltage.
@@ -118,8 +104,6 @@ Test every crimp with a firm pull when it is made. It takes one second and it pr
 3. **connections** (crimps and connectors)
 
 </details>
-
----
 
 ## Exercise
 
