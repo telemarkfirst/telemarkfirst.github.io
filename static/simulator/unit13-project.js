@@ -134,7 +134,7 @@ public class CompetitionTeleOp extends OpMode {
       checks: [
         ['Extend MotorMechanism', /class\s+Lift\s+extends\s+MotorMechanism/],
         ['Reset and enable the encoder', /STOP_AND_RESET_ENCODER/, /RUN_USING_ENCODER/],
-        ['Start a non-blocking RUN_TO_POSITION move', /setTargetPosition\s*\(/, /RUN_TO_POSITION/, /setPower\s*\(/],
+        ['Start a non-blocking RUN_TO_POSITION move toward the score height', /setTargetPosition\s*\(\s*RobotConfig\.LIFT_SCORE_TICKS\s*\)/, /RUN_TO_POSITION/, /setPower\s*\(/],
         ['Expose target status and update methods', /boolean\s+isAtTarget\s*\(/, /void\s+update\s*\(/],
         ['Override stop', /@Override[\s\S]*void\s+stop\s*\(/],
       ],
@@ -210,10 +210,15 @@ public class CompetitionTeleOp extends OpMode {
     liftHeight: 0,
     liftTarget: 0,
     sceneRoot: null,
+    baseFallback: null,
     roller: null,
     rollerMaterial: null,
+    intakeFallback: null,
+    cadIntake: null,
     carriage: null,
     carriageMaterial: null,
+    liftFallback: null,
+    cadLift: null,
     gamePiece: null,
     animationId: null,
   };
@@ -272,6 +277,8 @@ public class CompetitionTeleOp extends OpMode {
     const root = new THREE.Group();
     root.name = 'unit13_project_robot';
     visual.sceneRoot = root;
+    visual.cadIntake = null;
+    visual.cadLift = null;
     global.scene.add(root);
     if (typeof setFieldVisible === 'function') setFieldVisible(false);
     if (typeof setCameraOrbit === 'function') {
@@ -289,18 +296,26 @@ public class CompetitionTeleOp extends OpMode {
     const robot = new THREE.Group();
     robot.position.z = 0.25;
     root.add(robot);
-    addBox(robot, [3.4, 0.58, 3.0], [0, 0.62, 0], 0x33414a);
-    addBox(robot, [3.05, 0.14, 2.65], [0, 0.98, 0], 0x73838d, {metalness: 0.5});
+
+    visual.baseFallback = new THREE.Group();
+    visual.baseFallback.name = 'unit-13-project-procedural-base-fallback';
+    robot.add(visual.baseFallback);
+    addBox(visual.baseFallback, [3.4, 0.58, 3.0], [0, 0.62, 0], 0x33414a);
+    addBox(visual.baseFallback, [3.05, 0.14, 2.65], [0, 0.98, 0], 0x73838d, {metalness: 0.5});
 
     const wheelMaterial = new THREE.MeshStandardMaterial({color: 0x111318, roughness: 0.82});
     [[-1.7, -1], [1.7, -1], [-1.7, 1], [1.7, 1]].forEach(function (point) {
       const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.32, 24), wheelMaterial);
       wheel.rotation.z = Math.PI / 2;
       wheel.position.set(point[0], 0.42, point[1]);
-      robot.add(wheel);
+      visual.baseFallback.add(wheel);
     });
 
     const intakeFocused = lesson === 'intake' || lesson === 'hardware' || lesson === 'teleop';
+    visual.intakeFallback = new THREE.Group();
+    visual.intakeFallback.name = 'unit-13-project-procedural-intake-fallback';
+    robot.add(visual.intakeFallback);
+    visual.intakeFallback.visible = lesson !== 'lift';
     visual.rollerMaterial = new THREE.MeshStandardMaterial({
       color: intakeFocused ? 0xff8a34 : 0x42515a,
       roughness: 0.48,
@@ -310,7 +325,7 @@ public class CompetitionTeleOp extends OpMode {
     const rollerMount = new THREE.Group();
     rollerMount.rotation.z = Math.PI / 2;
     rollerMount.position.set(0, 0.54, -1.72);
-    robot.add(rollerMount);
+    visual.intakeFallback.add(rollerMount);
     visual.roller = new THREE.Group();
     rollerMount.add(visual.roller);
     const rollerCore = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 3.0, 28), visual.rollerMaterial);
@@ -323,7 +338,21 @@ public class CompetitionTeleOp extends OpMode {
       strip.rotation.y = -angle;
       visual.roller.add(strip);
     }
-    addBox(robot, [3.25, 0.12, 0.42], [0, 0.3, -1.64], intakeFocused ? 0xbd5c23 : 0x34414a);
+    addBox(visual.intakeFallback, [3.25, 0.12, 0.42], [0, 0.3, -1.64], intakeFocused ? 0xbd5c23 : 0x34414a);
+
+    if (lesson === 'intake' && global.TelemarkCadParts) {
+      global.TelemarkCadParts.mount('decode-intake', {
+        THREE: THREE,
+        parent: robot,
+        position: [0, 0.12, -1.68],
+        rotation: [0, Math.PI, 0],
+        fit: 2.2,
+        fallback: [visual.baseFallback, visual.intakeFallback],
+      }).then(function (rig) {
+        visual.cadIntake = rig;
+        visual.cadIntake.setPower(visual.intakePower);
+      }).catch(function () {});
+    }
 
     const ballMaterial = new THREE.MeshStandardMaterial({color: 0x8b5cf6, roughness: 0.4});
     visual.gamePiece = new THREE.Mesh(new THREE.SphereGeometry(0.3, 24, 24), ballMaterial);
@@ -332,10 +361,28 @@ public class CompetitionTeleOp extends OpMode {
 
     const liftFocused = lesson === 'lift' || lesson === 'hardware' || lesson === 'teleop';
     const railColor = liftFocused ? 0x38bdf8 : 0x42515a;
-    addBox(robot, [0.17, 3.25, 0.17], [-0.66, 2.18, 0.72], railColor, {metalness: 0.5});
-    addBox(robot, [0.17, 3.25, 0.17], [0.66, 2.18, 0.72], railColor, {metalness: 0.5});
-    visual.carriage = addBox(robot, [1.62, 0.34, 0.7], [0, 0.92, 0.72], liftFocused ? 0xe7b84c : 0x4a555c, {metalness: 0.3});
+    visual.liftFallback = new THREE.Group();
+    visual.liftFallback.name = 'unit-13-project-procedural-lift-fallback';
+    robot.add(visual.liftFallback);
+    visual.liftFallback.visible = lesson !== 'intake';
+    addBox(visual.liftFallback, [0.17, 3.25, 0.17], [-0.66, 2.18, 0.72], railColor, {metalness: 0.5});
+    addBox(visual.liftFallback, [0.17, 3.25, 0.17], [0.66, 2.18, 0.72], railColor, {metalness: 0.5});
+    visual.carriage = addBox(visual.liftFallback, [1.62, 0.34, 0.7], [0, 0.92, 0.72], liftFocused ? 0xe7b84c : 0x4a555c, {metalness: 0.3});
     visual.carriageMaterial = visual.carriage.material;
+
+    if (lesson === 'lift' && global.TelemarkCadParts) {
+      global.TelemarkCadParts.mount('skystone-lift', {
+        THREE: THREE,
+        parent: robot,
+        position: [0, 1.0, 0.7],
+        rotation: [0, 0, 0],
+        fit: 1.9,
+        fallback: [visual.baseFallback, visual.liftFallback],
+      }).then(function (rig) {
+        visual.cadLift = rig;
+        visual.cadLift.setProgress(visual.liftHeight);
+      }).catch(function () {});
+    }
 
     const configMarker = addBox(robot, [0.72, 0.36, 0.58], [-1.03, 1.24, 0.45], lesson === 'intake' ? 0x22d3ee : 0x315b69);
     configMarker.name = 'RobotConfig';
@@ -370,12 +417,17 @@ public class CompetitionTeleOp extends OpMode {
 
   function updateStageVisual() {
     if (visual.roller) visual.roller.rotation.y += visual.intakePower * 0.18;
+    if (visual.cadIntake) {
+      visual.cadIntake.setPower(visual.intakePower);
+      visual.cadIntake.update(1 / 60);
+    }
     if (visual.rollerMaterial) {
       const glow = visual.intakePower > 0.02 ? 0x173a22 : visual.intakePower < -0.02 ? 0x421616 : 0x000000;
       visual.rollerMaterial.emissive.setHex(glow);
     }
     visual.liftHeight += (visual.liftTarget - visual.liftHeight) * 0.055;
     if (visual.carriage) visual.carriage.position.y = 0.92 + visual.liftHeight * 2.32;
+    if (visual.cadLift) visual.cadLift.setProgress(visual.liftHeight);
     if (visual.carriageMaterial) visual.carriageMaterial.emissive.setHex(visual.liftTarget > 0.05 ? 0x332407 : 0x000000);
     if (visual.gamePiece) {
       if (visual.intakePower > 0.02) visual.gamePiece.position.z += Math.min(0.035, Math.max(0, -1.86 - visual.gamePiece.position.z) * 0.08);

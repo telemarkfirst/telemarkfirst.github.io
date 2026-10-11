@@ -393,7 +393,7 @@ public class FullAutonomous extends LinearOpMode {
     },
     8: {
       title: "Unit 8 Coding Challenge: Team 11115 Limit-Safe Lift",
-      scenario: "Control Team 11115 Gluten Free's SKYSTONE double-reverse four-bar with one lift motor and two limits. Correct its direction, select braking, accept proportional driver power, and always stop at a limit.",
+      scenario: "Control Team 11115 Gluten Free's Rover Ruckus telescoping lift with one lift motor and two limits. Correct its direction, select braking, accept proportional driver power, and always stop at a limit.",
       starter: shell([
         "import com.qualcomm.robotcore.eventloop.opmode.OpMode;",
         "import com.qualcomm.robotcore.eventloop.opmode.TeleOp;",
@@ -811,7 +811,7 @@ public class FullAutonomous extends LinearOpMode {
       inputs: [],
       checks: [
         ["Map Webcam 1 inside Vision", /class\s+Vision[\s\S]*?hardwareMap\s*\.\s*get\s*\(\s*WebcamName\.class\s*,\s*"Webcam 1"\s*\)/],
-        ["Build an AprilTag processor and VisionPortal", /class\s+Vision[\s\S]*?AprilTagProcessor[\s\S]*?VisionPortal/],
+        ["Build an AprilTag processor and keep VisionPortal open", /class\s+Vision[\s\S]*?AprilTagProcessor[\s\S]*?VisionPortal/],
         ["Inspect current detections safely", /getDetections\s*\(\s*\)/, /for\s*\(\s*AprilTagDetection\s+\w+\s*:/, /metadata\s*!=\s*null/],
         ["Classify left, center, and right zones", /(?:LEFT|CENTER|RIGHT)[\s\S]*?(?:LEFT|CENTER|RIGHT)[\s\S]*?(?:LEFT|CENTER|RIGHT)/],
         ["Initialize and update Vision through RobotHardware", /class\s+RobotHardware[\s\S]*?vision\s*\.\s*init\s*\(\s*hardwareMap\s*\)[\s\S]*?vision\s*\.\s*update\s*\(/],
@@ -951,22 +951,39 @@ public class FullAutonomous extends LinearOpMode {
       sourceLabel: "FTC Team 17438 Input/Output, FTC17438 Input/Output Robot Model 29.03.2024, Charleston Dragon Robotics · CC BY 4.0 · Modified from the original",
       sourceUrl: "https://charlestondragonrobotics.org/ftc/"
     },
-    7: {name: "Reusable subsystem robot", detail: "Mapped motor, limit switch, and analog sensor module", accent: 0x2dd4bf},
+    7: {
+      name: "Reusable subsystem · real arm CAD",
+      detail: "A bounded Team 17438 arm paired with the lesson's limit and analog sensors",
+      accent: 0x2dd4bf,
+      sourceLabel: "FTC Team 17438 Input/Output, FTC17438 Input/Output Robot Model 29.03.2024, Charleston Dragon Robotics · CC BY 4.0 · isolated from the original",
+      sourceUrl: "https://charlestondragonrobotics.org/ftc/"
+    },
     8: {
-      name: "FTC 11115 Gluten Free · SKYSTONE robot",
-      detail: "One-motor DR4B lift · real rollers, linkage bars, and scoring assembly",
+      name: "FTC 11115 Gluten Free · Rover Ruckus robot",
+      detail: "One-motor telescoping lift · three real moving stages and carriage",
       accent: 0xfb7185,
       driveYaw: Math.PI / 2,
       wheelAxis: "z",
       wheelSpinSign: 1,
       // CAD left/right labels face the opposite direction to our driving frame.
       wheelMotionOrder: [2, 3, 0, 1],
-      sourceLabel: "FTC Team 11115 Gluten Free CAD · used with explicit team permission · Modified from the original; simplified lift motion",
+      sourceLabel: "FTC Team 11115 Gluten Free Rover Ruckus CAD · used with explicit team permission · Modified from the original; isolated telescoping lift motion",
       sourceUrl: "https://www.youtube.com/watch?v=i2g_b54MEFI"
     },
-    9: {name: "Servo gripper robot", detail: "Mirrored fingers with a continuous-rotation intake roller", accent: 0xf472b6},
+    9: {
+      name: "Quixilver 8404 · real servo claw CAD",
+      detail: "Mirrored fingers rotate around their physical shafts within measured limits",
+      accent: 0xf472b6,
+      sourceLabel: "Open Vault FTC · ITD 2024–2025 Robot — By Quixilver · claw isolated from the original",
+      sourceUrl: "https://www.open-vault-ftc.org/cad/robots"
+    },
     10: {name: "Encoder distance robot", detail: "Marked drive wheels for measured RUN_TO_POSITION travel", accent: 0x4ade80},
-    11: {name: "Multi-sensor intake robot", detail: "Touch, potentiometer, color, and distance sensing around the intake", accent: 0xfbbf24},
+    11: {
+      name: "Multi-sensor intake · real DECODE CAD",
+      detail: "Three physical intake rows paired with touch, potentiometer, color, and distance sensing",
+      accent: 0xfbbf24,
+      ...TEAM_30450_CAD_CREDIT
+    },
     12: {name: "Field-centric mecanum robot", detail: "Four-wheel drive with a visible Control Hub IMU and orientation axes", accent: 0x818cf8},
     // The imported DECODE assembly is on the simulator's drive axes but faces the
     // opposite direction. A half-turn preserves forward/strafe axes while
@@ -1063,7 +1080,7 @@ public class FullAutonomous extends LinearOpMode {
   const FTC_2025_ROBOT_MODEL_URL = "./models/2025-ftc-robot-manning-telemark.glb";
   const FTC_2024_ROBOT_MODEL_URL = "./models/2024-centerstage-manning-telemark.glb";
   const FTC_17438_ROBOT_MODEL_URL = "./models/ftc17438-inputoutput-telemark.glb";
-  const FTC_11115_ROBOT_MODEL_URL = "./models/11115-gluten-free-skystone-telemark.glb";
+  const FTC_11115_ROBOT_MODEL_URL = "./models/11115-gluten-free-rover-ruckus-telemark.glb";
   const GLTF_LOADER_URL = "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js";
 
   function setImportedRobotStatus(message) {
@@ -1273,13 +1290,13 @@ public class FullAutonomous extends LinearOpMode {
 
   function load11115Robot(THREE, robot, onLoad) {
     loadImportedRobot(THREE, robot, {
-      name: "FTC 11115 Gluten Free SKYSTONE robot",
+      name: "FTC 11115 Gluten Free Rover Ruckus robot",
       url: FTC_11115_ROBOT_MODEL_URL,
       footprint: 2.2,
       rotation: [-Math.PI / 2, 0, 0],
       groundClearance: 0,
       castShadow: false,
-      loadedMessage: "Team 11115 CAD · one-motor DR4B linkage driven by student code",
+      loadedMessage: "Team 11115 Rover Ruckus CAD · telescoping lift driven by student code",
       onLoad: onLoad
     });
   }
@@ -1333,7 +1350,6 @@ public class FullAutonomous extends LinearOpMode {
 
     const frameMat = material(0xb8c4cc, {shininess: 85});
     const darkMat = material(0x18232d, {shininess: 35});
-    const tireMat = material(0x111318, {shininess: 10});
     const accentMat = material(profile.accent, {emissive: profile.accent, emissiveIntensity: 0.08});
     const warningMat = material(0xfbbf24, {emissive: 0x6b4500, emissiveIntensity: 0.22});
     const sensorMat = material(0x0f172a, {shininess: 95});
@@ -1411,109 +1427,77 @@ public class FullAutonomous extends LinearOpMode {
       return pivot;
     }
 
-    function rigCadTranslation(model) {
-      const part = model.getObjectByName && model.getObjectByName("telemark-cad-mechanism");
-      if (!part) {
-        setImportedRobotStatus("The optimized CAD is missing its movable mechanism node.");
-        return null;
+    function mountQuixilverScissorSlide(model, onReady) {
+      const oldMechanism = model.getObjectByName && model.getObjectByName("telemark-cad-mechanism");
+      if (!oldMechanism || !global.TelemarkCadParts) {
+        setImportedRobotStatus("The isolated Quixilver scissor slide is unavailable.");
+        return;
       }
-      const travel = new THREE.Group();
-      travel.name = "telemark-cad-mechanism-travel";
-      robot.add(travel);
-      robot.updateMatrixWorld(true);
-      travel.attach(part);
-      return travel;
+      model.updateWorldMatrix(true, true);
+      robot.updateWorldMatrix(true, false);
+      const worldBounds = new THREE.Box3().setFromObject(oldMechanism);
+      const localBounds = new THREE.Box3().makeEmpty();
+      [worldBounds.min.x, worldBounds.max.x].forEach(function (x) {
+        [worldBounds.min.y, worldBounds.max.y].forEach(function (y) {
+          [worldBounds.min.z, worldBounds.max.z].forEach(function (z) {
+            localBounds.expandByPoint(robot.worldToLocal(new THREE.Vector3(x, y, z)));
+          });
+        });
+      });
+      const center = localBounds.getCenter(new THREE.Vector3());
+      const size = localBounds.getSize(new THREE.Vector3());
+      global.TelemarkCadParts.mount("quixilver-slide", {
+        THREE: THREE,
+        parent: robot,
+        position: [center.x, localBounds.min.y, center.z],
+        fit: Math.max(size.x, size.y, size.z),
+        fallback: oldMechanism
+      }).then(function (rig) {
+        if (typeof onReady === "function") onReady(rig);
+      }).catch(function () {});
     }
 
-    function rig11115Lift(model, modelScale) {
+    function rig11115RoverLift(model, modelScale) {
       function part(name) {
         return model.getObjectByName && model.getObjectByName(name);
-      }
-
-      function pivotPart(name) {
-        const movingPart = part(name);
-        const rawPivot = movingPart && movingPart.userData && movingPart.userData.telemarkCadPivot;
-        if (!movingPart || !Array.isArray(rawPivot)) return null;
-        model.updateWorldMatrix(true, false);
-        const pivotWorld = model.localToWorld(new THREE.Vector3(rawPivot[0], rawPivot[1], rawPivot[2]));
-        const pivot = new THREE.Group();
-        pivot.name = name + "-pivot";
-        robot.add(pivot);
-        pivot.position.copy(robot.worldToLocal(pivotWorld.clone()));
-        robot.updateMatrixWorld(true);
-        pivot.attach(movingPart);
-        pivot.userData.restPosition = pivot.position.clone();
-        return pivot;
       }
 
       function travelPart(name) {
         const movingPart = part(name);
         if (!movingPart) return null;
+        const maximum = Number(movingPart.userData && movingPart.userData.telemarkCadMax);
+        if (!Number.isFinite(maximum)) return null;
         const travel = new THREE.Group();
         travel.name = name + "-travel";
         robot.add(travel);
         robot.updateMatrixWorld(true);
         travel.attach(movingPart);
-        travel.userData.restPosition = travel.position.clone();
-        return travel;
+        return {
+          object: travel,
+          restPosition: travel.position.clone(),
+          maximum: maximum * modelScale
+        };
       }
 
       const rig = {
-        lowerLow: pivotPart("telemark-cad-lift-lower-low"),
-        lowerHigh: pivotPart("telemark-cad-lift-lower-high"),
-        upperLow: pivotPart("telemark-cad-lift-upper-low"),
-        upperHigh: pivotPart("telemark-cad-lift-upper-high"),
-        middle: travelPart("telemark-cad-lift-middle"),
-        carriage: travelPart("telemark-cad-lift-carriage"),
-        scale: modelScale
+        stages: [1, 2, 3].map(function (stage) {
+          return travelPart("telemark-cad-rover-lift-stage-" + stage);
+        }),
+        carriage: travelPart("telemark-cad-rover-lift-carriage")
       };
-      if (Object.values(rig).some(function (value) { return value == null; })) {
-        setImportedRobotStatus("The optimized Team 11115 CAD is missing a lift linkage group.");
+      if (rig.stages.some(function (stage) { return !stage; }) || !rig.carriage) {
+        setImportedRobotStatus("The optimized Team 11115 Rover Ruckus CAD is missing a telescoping lift stage.");
         return null;
       }
       return rig;
     }
 
-    function animate11115Lift(rig) {
+    function animate11115RoverLift(rig) {
       const progress = THREE.MathUtils.clamp((motion.state.slidePosition - 0.72) / 1.10, 0, 1);
-      const restingAngle = 0.322;
-      const deployedAngle = 1.32;
-      const angle = THREE.MathUtils.lerp(restingAngle, deployedAngle, progress);
-      const deltaAngle = angle - restingAngle;
-      const linkLength = 0.441;
-      const baseMidpoint = {x: -0.2, z: 0.2685};
-      const middleRest = {x: 0.2195, z: 0.408};
-      const middleNow = {
-        x: baseMidpoint.x + linkLength * Math.cos(angle),
-        z: baseMidpoint.z + linkLength * Math.sin(angle)
-      };
-      const middleDelta = {
-        x: middleNow.x - middleRest.x,
-        z: middleNow.z - middleRest.z
-      };
-      const upperAnchorRest = {x: 0.2195, z: 0.306};
-      const topRest = {x: -0.2, z: 0.4455};
-      const upperAngle = Math.PI - angle;
-      const topNow = {
-        x: upperAnchorRest.x + middleDelta.x + linkLength * Math.cos(upperAngle),
-        z: upperAnchorRest.z + middleDelta.z + linkLength * Math.sin(upperAngle)
-      };
-      const topDelta = {x: topNow.x - topRest.x, z: topNow.z - topRest.z};
-
-      rig.lowerLow.rotation.z = deltaAngle;
-      rig.lowerHigh.rotation.z = deltaAngle;
-      [rig.upperLow, rig.upperHigh].forEach(function (pivot) {
-        pivot.rotation.z = -deltaAngle;
-        pivot.position.copy(pivot.userData.restPosition);
-        pivot.position.x += middleDelta.x * rig.scale;
-        pivot.position.y += middleDelta.z * rig.scale;
+      rig.stages.concat([rig.carriage]).forEach(function (stage) {
+        stage.object.position.copy(stage.restPosition);
+        stage.object.position.y += stage.maximum * progress;
       });
-      rig.middle.position.copy(rig.middle.userData.restPosition);
-      rig.middle.position.x += middleDelta.x * rig.scale;
-      rig.middle.position.y += middleDelta.z * rig.scale;
-      rig.carriage.position.copy(rig.carriage.userData.restPosition);
-      rig.carriage.position.x += topDelta.x * rig.scale;
-      rig.carriage.position.y += topDelta.z * rig.scale;
     }
 
     function rigCadChassis(model) {
@@ -1577,21 +1561,36 @@ public class FullAutonomous extends LinearOpMode {
     }
 
     const wheels = [];
-    if (!cadSourceUnit) {
-      // The generated challenge robots share a competition-scale chassis.
-      // Units 2–6 use imported full-robot CAD models instead.
-      box([1.85, 0.22, 1.35], [0, 0.34, 0], darkMat);
-      box([1.72, 0.10, 1.18], [0, 0.49, 0], accentMat);
-      [-0.78, 0.78].forEach(function (x) {
-        box([0.09, 0.15, 1.3], [x, 0.59, 0], frameMat);
-      });
-      [-1, 1].forEach(function (side) {
-        [-0.48, 0.48].forEach(function (z) {
-          wheels.push(cylinder(0.27, 0.20, [side * 1.0, 0.29, z], tireMat, [0, 0, Math.PI / 2]));
-        });
-      });
-      box([0.68, 0.23, 0.48], [0, 0.67, 0.12], sensorMat);
-      box([0.48, 0.025, 0.34], [0, 0.795, 0.12], accentMat);
+    const isolatedDrivetrainKey = {
+      7: "inputoutput-drivetrain",
+      9: "quixilver-drivetrain",
+      11: "decode-drivetrain"
+    }[unit] || null;
+    let isolatedDrivetrain = null;
+    let isolatedMechanism = null;
+
+    function alignIsolatedMechanism() {
+      if (!isolatedDrivetrain || !isolatedMechanism) return;
+      if (!global.TelemarkCadParts || typeof global.TelemarkCadParts.dock !== "function") return;
+      global.TelemarkCadParts.dock(
+        isolatedDrivetrain,
+        unit === 11 ? "front" : "mechanism_mount",
+        isolatedMechanism,
+        "mount",
+        {THREE: THREE}
+      );
+    }
+
+    if (isolatedDrivetrainKey && global.TelemarkCadParts) {
+      global.TelemarkCadParts.mount(isolatedDrivetrainKey, {
+        THREE: THREE,
+        parent: robot,
+        position: [0, 0, 0],
+        fit: 2.1
+      }).then(function (rig) {
+        isolatedDrivetrain = rig;
+        alignIsolatedMechanism();
+      }).catch(function () {});
     }
 
     let animation = null;
@@ -1621,45 +1620,111 @@ public class FullAutonomous extends LinearOpMode {
       robot.position.x = cosYaw * motion.state.x + sinYaw * motion.state.z;
       robot.position.z = -sinYaw * motion.state.x + cosYaw * motion.state.z;
       robot.rotation.y = (profile.modelYaw || 0) - motion.state.heading;
-      wheels.forEach(function (wheel, index) {
-        const object = wheel.object || wheel;
-        const axis = wheel.axis || "x";
-        const motionIndex = profile.wheelMotionOrder ? profile.wheelMotionOrder[index] : index;
-        // Match each CAD axle and physical side to the simulator's driving frame.
-        object.rotation[axis] = wheelSpinSign * motion.state.wheelAngles[motionIndex];
-      });
+      if (typeof isolatedDrivetrain !== "undefined" && isolatedDrivetrain) {
+        isolatedDrivetrain.setWheelAngles([0, 1, 2, 3].map(function (index) {
+          const motionIndex = profile.wheelMotionOrder ? profile.wheelMotionOrder[index] : index;
+          return wheelSpinSign * motion.state.wheelAngles[motionIndex];
+        }));
+      } else {
+        wheels.forEach(function (wheel, index) {
+          const object = wheel.object || wheel;
+          const axis = wheel.axis || "x";
+          const motionIndex = profile.wheelMotionOrder ? profile.wheelMotionOrder[index] : index;
+          // Match each CAD axle and physical side to the simulator's driving frame.
+          object.rotation[axis] = wheelSpinSign * motion.state.wheelAngles[motionIndex];
+        });
+      }
     }
 
     let decodeMechanisms = null;
 
+    let visionCameraMount = null;
     let visionCameraHead = null;
+    let limelightMount = null;
     let limelightIndicator = null;
     let autonomousPath = null;
+    let autonomousPathLine = null;
+    let shownPathRevision = 0;
+
+    function showAuthoredAutonomousPath() {
+      if (unit !== 15 || !autonomousPathLine || !motion.pathSegments) return;
+      if (motion.state.pathRevision === shownPathRevision) return;
+      shownPathRevision = motion.state.pathRevision;
+      autonomousPathLine.visible = false;
+      autonomousPath = null;
+      const route = new THREE.CurvePath();
+      function fieldPoint(pose) {
+        return new THREE.Vector3(
+          THREE.MathUtils.clamp((pose.x / 72) * 5.2 - 2.6, -2.7, 2.7),
+          0.04,
+          THREE.MathUtils.clamp(2.6 - (pose.y / 72) * 5.2, -2.7, 2.7)
+        );
+      }
+      motion.pathSegments().forEach(function (segment) {
+        const points = segment.points.map(fieldPoint);
+        if (points.length === 2) route.add(new THREE.LineCurve3(points[0], points[1]));
+        else if (points.length === 3) route.add(new THREE.QuadraticBezierCurve3(points[0], points[1], points[2]));
+        else if (points.length >= 4) route.add(new THREE.CubicBezierCurve3(points[0], points[1], points[2], points[3]));
+      });
+      if (!route.curves.length) return;
+      autonomousPath = route;
+      autonomousPathLine.geometry.dispose();
+      autonomousPathLine.geometry = new THREE.BufferGeometry().setFromPoints(route.getPoints(48));
+      autonomousPathLine.visible = true;
+    }
+
+    function alignAccessoryToCadFront(model, mount, inset) {
+      if (!model || !mount) return;
+      model.updateWorldMatrix(true, true);
+      robot.updateWorldMatrix(true, false);
+      const worldBounds = new THREE.Box3().setFromObject(model);
+      const localBounds = new THREE.Box3().makeEmpty();
+      [worldBounds.min.x, worldBounds.max.x].forEach(function (x) {
+        [worldBounds.min.y, worldBounds.max.y].forEach(function (y) {
+          [worldBounds.min.z, worldBounds.max.z].forEach(function (z) {
+            localBounds.expandByPoint(robot.worldToLocal(new THREE.Vector3(x, y, z)));
+          });
+        });
+      });
+      const center = localBounds.getCenter(new THREE.Vector3());
+      mount.position.set(center.x, localBounds.max.y, localBounds.min.z + (inset || 0));
+      mount.visible = true;
+    }
+
     if (unit === 14) {
-      box([0.1, 0.92, 0.1], [0, 1.08, -0.12], frameMat);
+      visionCameraMount = new THREE.Group();
+      visionCameraMount.name = "telemark-cad-vision-camera-mount";
+      visionCameraMount.visible = false;
+      robot.add(visionCameraMount);
+      box([0.1, 0.92, 0.1], [0, 0.46, 0], frameMat, visionCameraMount);
       visionCameraHead = new THREE.Group();
       visionCameraHead.name = "telemark-cad-vision-camera";
-      visionCameraHead.position.set(0, 1.55, -0.12);
-      robot.add(visionCameraHead);
+      visionCameraHead.position.set(0, 0.92, 0);
+      visionCameraMount.add(visionCameraHead);
       box([0.52, 0.28, 0.3], [0, 0, 0], darkMat, visionCameraHead);
       cylinder(0.1, 0.08, [0, 0, -0.19], blueMat, [Math.PI / 2, 0, 0], visionCameraHead);
       [-1.45, 0, 1.45].forEach(function (x, index) {
         const zoneMat = index === 0 ? redMat : index === 1 ? warningMat : greenMat;
-        const zone = box([0.9, 0.025, 0.9], [x, 0.025, -2.05], zoneMat, visual);
+        const zone = box([0.9, 0.025, 0.9], [x, 0.025, 2.05], zoneMat, visual);
         zone.name = "telemark-vision-zone-" + ["left", "center", "right"][index];
-        box([0.42, 0.65, 0.06], [x, 0.34, -2.47], sensorMat, visual);
-        box([0.24, 0.24, 0.025], [x, 0.38, -2.51], zoneMat, visual);
+        box([0.42, 0.65, 0.06], [x, 0.34, 2.47], sensorMat, visual);
+        box([0.24, 0.24, 0.025], [x, 0.38, 2.51], zoneMat, visual);
       });
     }
     if (unit === 15) {
-      box([0.1, 0.72, 0.1], [-0.45, 1.0, -0.02], frameMat);
+      limelightMount = new THREE.Group();
+      limelightMount.name = "telemark-cad-limelight-mount";
+      limelightMount.visible = false;
+      robot.add(limelightMount);
+      box([0.1, 0.72, 0.1], [0, 0.36, 0], frameMat, limelightMount);
       limelightIndicator = box(
         [0.42, 0.25, 0.28],
-        [-0.45, 1.4, -0.02],
-        material(0x18232d, {emissive: 0x064e3b, emissiveIntensity: 0.18})
+        [0, 0.72, 0],
+        material(0x18232d, {emissive: 0x064e3b, emissiveIntensity: 0.18}),
+        limelightMount
       );
       limelightIndicator.name = "telemark-cad-limelight";
-      cylinder(0.09, 0.08, [-0.45, 1.4, -0.2], greenMat, [Math.PI / 2, 0, 0]);
+      cylinder(0.09, 0.08, [0, 0.72, -0.18], greenMat, [Math.PI / 2, 0, 0], limelightMount);
       autonomousPath = new THREE.QuadraticBezierCurve3(
         new THREE.Vector3(-2.55, 0.04, 2.1),
         new THREE.Vector3(2.6, 0.04, 1.4),
@@ -1670,7 +1735,9 @@ public class FullAutonomous extends LinearOpMode {
         new THREE.LineBasicMaterial({color: profile.accent, transparent: true, opacity: 0.75})
       );
       pathLine.name = "telemark-autonomous-path";
+      pathLine.visible = false;
       visual.add(pathLine);
+      autonomousPathLine = pathLine;
     }
 
     function animateDecodeMechanisms() {
@@ -1685,31 +1752,39 @@ public class FullAutonomous extends LinearOpMode {
 
     if (cadSourceUnit) {
       let cadMechanism = null;
-      let glutenFreeLift = null;
+      let roverRuckusLift = null;
       loadCadRobotForUnit(cadSourceUnit, THREE, robot, function (model, modelScale) {
         rigCadChassis(model);
+        if (unit === 14) alignAccessoryToCadFront(model, visionCameraMount, 0.16);
+        if (unit === 15) alignAccessoryToCadFront(model, limelightMount, 0.16);
         if (unit >= 13) decodeMechanisms = rigDecodeMechanisms(model);
         if (unit >= 13 && !decodeMechanisms) return;
-        if (cadSourceUnit === 8) glutenFreeLift = rig11115Lift(model, modelScale);
-        if (cadSourceUnit === 8 && !glutenFreeLift) return;
+        if (cadSourceUnit === 8) roverRuckusLift = rig11115RoverLift(model, modelScale);
+        if (cadSourceUnit === 8 && !roverRuckusLift) return;
         modelReady = true;
         const button = document.getElementById('sim-btn-run');
         if (button) { button.disabled = false; button.textContent = 'Init'; }
         if (unit >= 13) {
-          setImportedRobotStatus("Optimized team CAD · real wheels, three-stage intake, anti-jam transfer, flywheel, and trigger driven by student code");
+          setImportedRobotStatus("Robot ready · responding to code");
+        }
+        if (cadSourceUnit === 3) {
+          mountQuixilverScissorSlide(model, function (rig) {
+            cadMechanism = rig;
+          });
         }
         if (model.getObjectByName && model.getObjectByName("telemark-cad-mechanism")) {
-          if (cadSourceUnit === 3) cadMechanism = rigCadTranslation(model);
           if (cadSourceUnit === 5) cadMechanism = rigCadMechanism(model, [0.46, 0.505, 0.5]);
           if (cadSourceUnit === 6) cadMechanism = rigCadMechanism(model, [0.5, 0.455, 0.356]);
         }
       }, unit);
       animation = function () {
+        showAuthoredAutonomousPath();
+        applyDriveState();
         if (unit === 15 && autonomousPath && (motion.state.pathProgress > 0 || motion.state.followerActive)) {
           const point = autonomousPath.getPoint(motion.state.pathProgress);
           robot.position.set(point.x, 0, point.z);
-        } else {
-          applyDriveState();
+          const tangent = autonomousPath.getTangent(motion.state.pathProgress);
+          robot.rotation.y = (profile.modelYaw || 0) - Math.atan2(tangent.x, -tangent.z);
         }
         if (unit >= 13) {
           animateDecodeMechanisms();
@@ -1720,7 +1795,7 @@ public class FullAutonomous extends LinearOpMode {
           return;
         }
         if (cadSourceUnit === 8) {
-          if (glutenFreeLift) animate11115Lift(glutenFreeLift);
+          if (roverRuckusLift) animate11115RoverLift(roverRuckusLift);
           return;
         }
         if (!cadMechanism) return;
@@ -1728,7 +1803,7 @@ public class FullAutonomous extends LinearOpMode {
           let extension = motion.state.primaryPosition;
           if (unit === 8) extension = motion.state.slidePosition - 1.25;
           if (unit === 13) extension = motion.state.armAngle;
-          cadMechanism.position.x = extension * 0.62;
+          cadMechanism.setProgress(THREE.MathUtils.clamp(extension / 0.72, 0, 1));
           return;
         }
         if (cadSourceUnit === 5) {
@@ -1743,20 +1818,41 @@ public class FullAutonomous extends LinearOpMode {
         }
       };
     } else if (unit === 7) {
-      box([0.48, 0.58, 0.48], [-0.45, 0.92, 0.12], accentMat);
-      const subsystemMotor = visibleRoller(0.18, 0.42, [0.42, 0.87, 0.14], warningMat, [Math.PI / 2, 0, 0]);
-      box([0.18, 0.18, 0.18], [0.66, 0.68, -0.18], warningMat);
-      sphere(0.12, [0.52, 1.16, -0.12], sensorMat);
-      box([0.08, 0.65, 0.08], [0.08, 0.96, 0.12], frameMat);
+      const generatedArm = new THREE.Group();
+      generatedArm.name = "unit-7-procedural-arm-fallback";
+      robot.add(generatedArm);
+      box([0.48, 0.58, 0.48], [-0.45, 0.92, 0.12], accentMat, generatedArm);
+      const subsystemMotor = visibleRoller(0.18, 0.42, [0.42, 0.87, 0.14], warningMat, [Math.PI / 2, 0, 0], generatedArm);
+      box([0.18, 0.18, 0.18], [0.66, 0.68, -0.18], warningMat, generatedArm);
+      sphere(0.12, [0.52, 1.16, -0.12], sensorMat, generatedArm);
+      box([0.08, 0.65, 0.08], [0.08, 0.96, 0.12], frameMat, generatedArm);
       const mechanismLever = new THREE.Group();
       mechanismLever.position.set(0.42, 0.88, 0.14);
-      robot.add(mechanismLever);
+      generatedArm.add(mechanismLever);
       box([0.09, 0.78, 0.09], [0, 0.36, 0], accentMat, mechanismLever);
       sphere(0.11, [0, 0.78, 0], warningMat, mechanismLever);
+      let cadArm = null;
+      if (global.TelemarkCadParts) {
+        global.TelemarkCadParts.mount("inputoutput-arm", {
+          THREE: THREE,
+          parent: robot,
+          position: [-0.05, 0.48, 0.08],
+          rotation: [0, -Math.PI / 2, 0],
+          fit: 1.42,
+          fallback: generatedArm
+        }).then(function (rig) {
+          cadArm = rig;
+          isolatedMechanism = rig;
+          alignIsolatedMechanism();
+        }).catch(function () {});
+      }
       animation = function () {
         applyDriveState();
-        subsystemMotor.rotation.y = motion.state.primaryAngle;
-        mechanismLever.rotation.z = motion.state.primaryPosition;
+        if (cadArm) cadArm.setProgress(THREE.MathUtils.clamp((motion.state.primaryPosition + 0.62) / 1.24, 0, 1));
+        else {
+          subsystemMotor.rotation.y = motion.state.primaryAngle;
+          mechanismLever.rotation.z = THREE.MathUtils.clamp(motion.state.primaryPosition, -0.62, 0.62);
+        }
       };
     } else if (unit === 8) {
       [-0.34, 0.34].forEach(function (x) {
@@ -1770,25 +1866,49 @@ public class FullAutonomous extends LinearOpMode {
         carriage.position.y = motion.state.slidePosition;
       };
     } else if (unit === 9) {
+      const generatedClaw = new THREE.Group();
+      generatedClaw.name = "unit-9-procedural-claw-fallback";
+      robot.add(generatedClaw);
       const leftFinger = new THREE.Group();
       const rightFinger = new THREE.Group();
       leftFinger.position.set(-0.35, 0.76, -0.72);
       rightFinger.position.set(0.35, 0.76, -0.72);
-      robot.add(leftFinger);
-      robot.add(rightFinger);
+      generatedClaw.add(leftFinger);
+      generatedClaw.add(rightFinger);
       box([0.28, 0.25, 0.28], [0, 0, 0], accentMat, leftFinger);
       box([0.13, 0.64, 0.16], [0, -0.28, -0.18], frameMat, leftFinger, [0.22, 0, 0]);
       box([0.28, 0.25, 0.28], [0, 0, 0], accentMat, rightFinger);
       box([0.13, 0.64, 0.16], [0, -0.28, -0.18], frameMat, rightFinger, [0.22, 0, 0]);
       const intake = visibleRoller(0.15, 0.9, [0, 0.38, -0.82], warningMat, [0, 0, Math.PI / 2]);
       const intakeSample = sphere(0.16, [0, 0.22, -1.38], blueMat);
+      let cadClaw = null;
+      if (global.TelemarkCadParts) {
+        global.TelemarkCadParts.mount("quixilver-claw", {
+          THREE: THREE,
+          parent: robot,
+          position: [0, 0.48, -0.78],
+          rotation: [0, Math.PI, 0],
+          fit: 1.02,
+          fallback: generatedClaw
+        }).then(function (rig) {
+          cadClaw = rig;
+          isolatedMechanism = rig;
+          alignIsolatedMechanism();
+        }).catch(function () {});
+      }
       animation = function (_time, dt) {
         applyDriveState();
         const positions = motion.servoValues();
         const left = positions[0] == null ? 0 : positions[0];
         const right = positions[1] == null ? left : positions[1];
-        leftFinger.rotation.z = -(0.08 + left * 0.44);
-        rightFinger.rotation.z = 0.08 + right * 0.44;
+        if (cadClaw) cadClaw.setFingerProgress(
+          THREE.MathUtils.clamp(left, 0, 1),
+          THREE.MathUtils.clamp(right, 0, 1)
+        );
+        else {
+          leftFinger.rotation.z = -(0.08 + THREE.MathUtils.clamp(left, 0, 1) * 0.44);
+          rightFinger.rotation.z = 0.08 + THREE.MathUtils.clamp(right, 0, 1) * 0.44;
+        }
         intake.rotation.y = motion.state.primaryAngle;
         intakeSample.position.z = THREE.MathUtils.clamp(
           intakeSample.position.z + motion.state.primaryPower * dt * 0.95,
@@ -1804,7 +1924,10 @@ public class FullAutonomous extends LinearOpMode {
       box([0.08, 0.42, 0.08], [0, 0.74, -0.45], warningMat, null, [Math.PI / 4, 0, 0]);
       animation = applyDriveState;
     } else if (unit === 11) {
-      const intake = visibleRoller(0.18, 1.25, [0, 0.35, -0.86], warningMat, [0, 0, Math.PI / 2]);
+      const generatedIntake = new THREE.Group();
+      generatedIntake.name = "unit-11-procedural-intake-fallback";
+      robot.add(generatedIntake);
+      const intake = visibleRoller(0.18, 1.25, [0, 0.35, -0.86], warningMat, [0, 0, Math.PI / 2], generatedIntake);
       box([0.15, 0.15, 0.15], [-0.56, 0.62, -0.64], redMat);
       box([0.15, 0.15, 0.15], [-0.2, 0.62, -0.64], greenMat);
       box([0.15, 0.15, 0.15], [0.2, 0.62, -0.64], blueMat);
@@ -1812,9 +1935,29 @@ public class FullAutonomous extends LinearOpMode {
       cylinder(0.09, 0.38, [0.72, 0.82, 0.12], accentMat, [Math.PI / 2, 0, 0]);
       const sensedSampleMaterial = material(0xef4444, {emissive: 0x5f1111, emissiveIntensity: 0.2});
       const sensedSample = sphere(0.18, [0, 0.22, -1.52], sensedSampleMaterial);
+      let cadIntake = null;
+      if (global.TelemarkCadParts) {
+        global.TelemarkCadParts.mount("decode-intake", {
+          THREE: THREE,
+          parent: robot,
+          position: [0, 0.2, -0.88],
+          rotation: [0, 0, 0],
+          fit: 1.2,
+          fallback: generatedIntake
+        }).then(function (rig) {
+          cadIntake = rig;
+          isolatedMechanism = rig;
+          alignIsolatedMechanism();
+        }).catch(function () {});
+      }
       animation = function (_time, dt) {
         applyDriveState();
-        intake.rotation.y = motion.state.primaryAngle;
+        if (cadIntake) {
+          cadIntake.setPower(motion.state.primaryPower);
+          cadIntake.update(dt);
+        } else {
+          intake.rotation.y = motion.state.primaryAngle;
+        }
         sensedSample.position.z = THREE.MathUtils.clamp(
           sensedSample.position.z + motion.state.primaryPower * dt * 0.95,
           -1.58,
@@ -1842,7 +1985,14 @@ public class FullAutonomous extends LinearOpMode {
       const label = document.createElement("div");
       label.id = "mastery-robot-label";
       label.className = "mastery-robot-label";
-      label.textContent = profile.name;
+      const name = document.createElement("strong");
+      name.className = "mastery-robot-name";
+      name.textContent = {
+        13: "DECODE robot",
+        14: "DECODE vision robot",
+        15: "DECODE autonomous robot"
+      }[unit] || profile.name;
+      label.appendChild(name);
       const detail = document.createElement("span");
       detail.className = "mastery-robot-status";
       detail.textContent = profile.detail;
@@ -1859,7 +2009,7 @@ public class FullAutonomous extends LinearOpMode {
         source.href = profile.sourceUrl;
         source.target = "_blank";
         source.rel = "noopener noreferrer";
-        source.textContent = "Source: " + profile.sourceLabel;
+        source.textContent = "CAD source ↗";
         source.setAttribute("aria-label", profile.sourceLabel + " (opens in a new tab)");
         label.appendChild(source);
       }
@@ -1956,6 +2106,31 @@ public class FullAutonomous extends LinearOpMode {
       if (depth === 0) return code.slice(openBrace + 1, index);
     }
     return "";
+  }
+
+  function namedMethodBody(classBody, methodName) {
+    const methodPattern = new RegExp("\\b(?:void|boolean|int|double|String)\\s+" + methodName + "\\s*\\([^)]*\\)\\s*\\{");
+    const match = methodPattern.exec(classBody);
+    if (!match) return "";
+    const openBrace = match.index + match[0].length - 1;
+    let depth = 1;
+    for (let index = openBrace + 1; index < classBody.length; index += 1) {
+      if (classBody[index] === "{") depth += 1;
+      if (classBody[index] === "}") depth -= 1;
+      if (depth === 0) return classBody.slice(openBrace + 1, index);
+    }
+    return "";
+  }
+
+  function closesNewVisionPortalDuringInit(code) {
+    const initBody = namedMethodBody(namedClassBody(code, "Vision"), "init");
+    const build = /\.\s*build\s*\(\s*\)/g;
+    const close = /\.\s*close\s*\(\s*\)/g;
+    let lastBuild = -1;
+    let lastClose = -1;
+    for (const match of initBody.matchAll(build)) lastBuild = match.index;
+    for (const match of initBody.matchAll(close)) lastClose = match.index;
+    return lastBuild >= 0 && lastClose > lastBuild;
   }
 
   function hasNoRawMechanismAccess(opModeBody) {
@@ -2143,6 +2318,10 @@ public class FullAutonomous extends LinearOpMode {
       results[results.length - 1].automatic = passed;
       if (!passed) results[results.length - 1].evidence = "CompetitionTeleOp must coordinate RobotHardware without declaring or mapping raw mechanisms.";
     }
+    if (unit === 14 && closesNewVisionPortalDuringInit(code)) {
+      results[1].automatic = false;
+      results[1].evidence = "Vision.init closes the new portal before the OpMode can use it. Keep it streaming until Vision.close() during shutdown.";
+    }
     if (unit === 15) {
       const passed = hasNoRawMechanismAccess(namedClassBody(code, "FullAutonomous"));
       results[results.length - 1].automatic = passed;
@@ -2170,14 +2349,18 @@ public class FullAutonomous extends LinearOpMode {
       + ".mastery-sensor-tests{display:flex;align-items:center;gap:4px;margin-left:auto;padding-left:8px;border-left:1px solid var(--border)}"
       + ".mastery-sensor-tests button{padding:3px 7px;border:1px solid var(--border);border-radius:5px;background:var(--code-bg);color:var(--text-secondary);font:600 .65rem/1.25 var(--font-ui);cursor:pointer}"
       + ".mastery-sensor-tests button[aria-pressed='true']{border-color:var(--active);color:var(--active)}"
-      + ".mastery-robot-label{position:absolute;left:12px;bottom:12px;z-index:3;max-width:calc(100% - 24px);padding:7px 10px;border:1px solid rgba(34,211,238,.35);border-radius:7px;background:rgba(5,8,13,.82);color:#effbff;font:600 .72rem/1.3 var(--font-code);letter-spacing:.03em;pointer-events:none;backdrop-filter:blur(7px)}"
+      + ".mastery-robot-label{position:absolute;left:12px;top:12px;z-index:3;max-width:min(300px,calc(100% - 24px));padding:7px 10px;border:1px solid rgba(34,211,238,.35);border-radius:7px;background:rgba(5,8,13,.9);color:#effbff;font:600 .72rem/1.3 var(--font-code);letter-spacing:.03em;pointer-events:none}"
+      + ".mastery-robot-name{display:block;font:inherit}"
       + ".mastery-robot-label span{display:block;margin-top:2px;color:rgba(221,241,249,.68);font-family:var(--font-ui);font-weight:400;letter-spacing:0}"
       + ".mastery-robot-label .mastery-motion-readout{margin-top:5px;color:#fde68a;font-family:var(--font-code);font-weight:700}"
       + ".mastery-robot-label a{display:block;margin-top:3px;color:#67e8f9;font-family:var(--font-ui);font-weight:500;letter-spacing:0;pointer-events:auto;text-decoration:none}"
       + ".mastery-robot-label a:hover,.mastery-robot-label a:focus{text-decoration:underline}"
       + ":root[data-theme='light'] .mastery-robot-label,:root[data-telemark-theme='light'] .mastery-robot-label{background:rgba(255,255,255,.86);color:#102a36}"
+      + ":root[data-theme='light'] .mastery-robot-label span,:root[data-telemark-theme='light'] .mastery-robot-label span{color:#365265}"
+      + ":root[data-theme='light'] .mastery-robot-label a,:root[data-telemark-theme='light'] .mastery-robot-label a{color:#07556b}"
       + "#sim-scene-container{min-height:260px}"
-      + "@media(max-width:1000px){body{flex-direction:column!important}#sim-left-panel{width:100%!important;height:58%!important;min-height:0!important;border-right:0!important;border-bottom:1px solid var(--border)!important}#sim-resizer{display:none!important}.sim-challenge-card{flex:0 0 auto!important}#sim-right-panel{flex:1 1 auto!important;width:100%!important;height:42%!important;min-width:0!important;min-height:290px!important}#sim-right-panel #sim-scene-container{flex:1 1 auto!important;width:calc(100% - 16px)!important;min-height:230px!important;margin:8px!important;aspect-ratio:auto!important}.sim-gamepad-card{width:min(310px,calc(100vw - 16px))!important;right:8px!important;bottom:8px!important}}";
+      + "@media(max-width:1000px){body{flex-direction:column!important}#sim-left-panel{width:100%!important;height:58%!important;min-height:0!important;border-right:0!important;border-bottom:1px solid var(--border)!important}#sim-resizer{display:none!important}.sim-challenge-card{flex:0 0 auto!important}#sim-right-panel{flex:1 1 auto!important;width:100%!important;height:42%!important;min-width:0!important;min-height:290px!important}#sim-right-panel #sim-scene-container{flex:1 1 auto!important;width:calc(100% - 16px)!important;min-height:230px!important;margin:8px!important;aspect-ratio:auto!important}.sim-gamepad-card{width:min(310px,calc(100vw - 16px))!important;right:8px!important;bottom:8px!important}}"
+      + "@media(max-width:640px){html[data-sim-workspace='true'][data-sim-mastery] .sim-widget-coding:has(#sim-challenge-body.open){min-height:840px}.mastery-robot-label{top:58px;max-width:min(180px,calc(100% - 24px));padding:5px 7px}.mastery-robot-name,.mastery-robot-status{display:none!important}.mastery-robot-label a{margin-top:0}.mastery-robot-label .mastery-motion-readout{margin-top:0}}";
     document.head.appendChild(style);
   }
 
@@ -2276,6 +2459,7 @@ public class FullAutonomous extends LinearOpMode {
     const projectOptions = decodeProjectOptions(unit, config);
 
     global.onSimulatorReady = function () {
+      document.documentElement.setAttribute("data-sim-mastery", String(unit));
       if (!global.TelemarkMasteryMotion) {
         throw new Error("The coding challenge motion runtime is unavailable");
       }
@@ -2297,6 +2481,10 @@ public class FullAutonomous extends LinearOpMode {
         lessonId: projectOptions.stage.id,
         successMessage: "All challenge checks passed. Review the simulator behavior before continuing to the next unit."
       });
+      const checklistTitle = document.getElementById("sim-challenge-title-text");
+      if (checklistTitle) checklistTitle.textContent = "Requirements (" + checks.length + ")";
+      const duplicateScenario = document.getElementById("sim-challenge-desc");
+      if (duplicateScenario) duplicateScenario.hidden = true;
       setBadges([
         {iconClass: "fa-solid fa-file-code", label: "FTC SDK shell", active: true},
         {iconClass: "fa-solid fa-layer-group", label: "Whole unit", active: true},
@@ -2352,6 +2540,8 @@ public class FullAutonomous extends LinearOpMode {
       }
 
       global.onInit = function () {
+        clearHints();
+        checks.forEach(function (_check, index) { setRequirement(index, false); });
         if (challengeVisual && !challengeVisual.userData.isModelReady()) {
           addHint('Wait for the robot model to load before initializing.', 'info');
           return false;
@@ -2359,6 +2549,7 @@ public class FullAutonomous extends LinearOpMode {
         if (challengeVisual && challengeVisual.userData.decodeGameView) {
           challengeVisual.userData.decodeGameView.initialize();
         }
+        if (unit === 15) challengeMotion.resetPose();
         challengeMotion.setLifecyclePhase("initialized");
         return transpileAndRun(
           getCode(),
@@ -2408,6 +2599,15 @@ public class FullAutonomous extends LinearOpMode {
         global.onChallengeComplete = function () {
           cumulativeProject.saveSnapshot(projectOptions.stage);
         };
+      }
+      const editor = document.getElementById("sim-code-editor");
+      if (editor) {
+        const clearPreviousRun = function () {
+          clearHints();
+          checks.forEach(function (_check, index) { setRequirement(index, false); });
+        };
+        editor.addEventListener("input", clearPreviousRun);
+        editor.addEventListener("telemark:editor-view-change", clearPreviousRun);
       }
       clearHints();
       checks.forEach(function (_check, index) { setRequirement(index, false); });

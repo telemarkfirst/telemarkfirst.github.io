@@ -28,9 +28,7 @@
     let spinnerGroup = null;
     let spinnerMesh = null;
     let powerArcMesh = null;
-    let directionSprite = null;
     let scoreBoardEl = null;
-    let statusEl = null;
 
     let spinnerPower = 0;
     let spinnerAngle = 0;
@@ -168,13 +166,6 @@
                 left: 12px;
                 top: 12px;
             }
-            .spinner-state {
-                right: 12px;
-                bottom: 12px;
-            }
-            .spinner-state.forward { color: #22d3ee; border-color: rgba(34,211,238,0.45); }
-            .spinner-state.reverse { color: #8ab4ff; border-color: rgba(80,140,255,0.45); }
-            .spinner-state.stopped { color: #cccccc; border-color: rgba(255,255,255,0.16); }
         `;
         document.head.appendChild(style);
 
@@ -182,30 +173,12 @@
         scoreBoardEl.className = "spinner-scene-overlay spinner-score";
         container.appendChild(scoreBoardEl);
 
-        statusEl = document.createElement("div");
-        statusEl.className = "spinner-scene-overlay spinner-state stopped";
-        container.appendChild(statusEl);
-
         updateScoreBoard();
-        updateStatusOverlay();
     }
 
     function updateScoreBoard() {
         if (scoreBoardEl) {
             scoreBoardEl.innerHTML = '<i class="fa-solid fa-box-open"></i> Scored: ' + scoredCount;
-        }
-    }
-
-    function updateStatusOverlay() {
-        if (!statusEl) return;
-        const direction = signOf(spinnerPower);
-        statusEl.className = "spinner-scene-overlay spinner-state " + (direction > 0 ? "forward" : direction < 0 ? "reverse" : "stopped");
-        if (direction > 0) {
-            statusEl.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Forward · Power ' + spinnerPower.toFixed(2);
-        } else if (direction < 0) {
-            statusEl.innerHTML = '<i class="fa-solid fa-rotate-left"></i> Reverse · Power ' + spinnerPower.toFixed(2);
-        } else {
-            statusEl.innerHTML = '<i class="fa-solid fa-pause"></i> Stopped · Power 0.00';
         }
     }
 
@@ -371,19 +344,6 @@
         powerArcMesh.position.copy(spinnerCenter).add(new THREE.Vector3(0, 0, 0.09));
         scene.add(powerArcMesh);
 
-        directionSprite = makeTextSprite("STOP", {
-            width: 512,
-            height: 128,
-            font: "bold 54px monospace",
-            color: "#f0f0f0",
-            background: "rgba(12,12,18,0.66)",
-            border: "rgba(255,255,255,0.14)",
-            scaleX: 2.3,
-            scaleY: 0.56
-        });
-        directionSprite.position.copy(spinnerCenter).add(new THREE.Vector3(0, 1.05, 0.18));
-        scene.add(directionSprite);
-
         buildScoringContainer(scene);
         buildGameElements(scene);
         updatePowerArc();
@@ -468,36 +428,12 @@
         powerArcMesh.material.color.setHex(spinnerPower >= 0 ? 0x22d3ee : 0x60a5fa);
         powerArcMesh.visible = absPower > 0.001;
 
-        if (!directionSprite) return;
-        if (spinnerPower > 0.001) {
-            updateTextSprite(directionSprite, "CW  \u2192", {
-                color: "#22d3ee",
-                background: "rgba(5,8,13,0.8)",
-                border: "rgba(34,211,238,0.25)",
-                font: "bold 54px monospace"
-            });
-        } else if (spinnerPower < -0.001) {
-            updateTextSprite(directionSprite, "\u2190  CCW", {
-                color: "#8ab4ff",
-                background: "rgba(6,10,18,0.76)",
-                border: "rgba(90,140,255,0.28)",
-                font: "bold 54px monospace"
-            });
-        } else {
-            updateTextSprite(directionSprite, "STOP", {
-                color: "#f0f0f0",
-                background: "rgba(12,12,18,0.66)",
-                border: "rgba(255,255,255,0.14)",
-                font: "bold 54px monospace"
-            });
-        }
     }
 
     function updateSpinnerVisual(name, value) {
         if (name !== "spinner") return;
         spinnerPower = clamp(Number(value) || 0, -1, 1);
         updatePowerArc();
-        updateStatusOverlay();
     }
 
     function resetSphere(index) {
@@ -514,7 +450,6 @@
         if (spinnerGroup) spinnerGroup.rotation.x = 0;
         updatePowerArc();
         updateScoreBoard();
-        updateStatusOverlay();
 
         for (let i = 0; i < sphereMeshes.length; i++) {
             resetSphere(i);
@@ -852,7 +787,6 @@ public class CRServoSpinner extends OpMode {
     window.onStop = function () {
         spinnerPower = 0;
         updatePowerArc();
-        updateStatusOverlay();
         const crServo = window.hardwareMap.get("CRServo", "spinner");
         if (crServo) {
             crServo.setPower(0);

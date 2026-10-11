@@ -1,0 +1,948 @@
+:root {
+  --sim-grid-columns: 24;
+  --sim-grid-row-height: 32px;
+  --sim-grid-gap: 4px;
+  --sim-grid-pitch-y: calc(var(--sim-grid-row-height) + var(--sim-grid-gap));
+  --sim-grid-dot: rgba(155, 220, 236, 0.58);
+}
+
+html[data-sim-workspace="true"],
+html[data-sim-workspace="true"] body {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  overflow: hidden !important;
+}
+
+html[data-sim-workspace="true"] body {
+  display: block !important;
+  margin: 0;
+  background: var(--tm-bg, var(--bg, #05080d));
+  color: var(--tm-text, var(--text-primary, rgba(221, 241, 249, 0.82)));
+}
+
+html[data-sim-workspace="true"] body > #app,
+html[data-sim-workspace="true"] body > #app > #main {
+  display: contents !important;
+}
+
+html[data-sim-workspace="true"] #sim-dashboard-scroll {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 8px 10px 76px;
+  background: var(--tm-bg, var(--bg, #05080d));
+  scrollbar-gutter: stable;
+}
+
+#sim-workspace-lesson-header {
+  position: sticky;
+  top: -8px;
+  z-index: 1900;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 24px;
+  min-height: 48px;
+  margin: 0 0 12px;
+  padding: 8px 4px 10px;
+  border-bottom: 1px solid var(--tm-border-quiet, rgba(156, 175, 194, 0.2));
+  background: var(--tm-bg, var(--bg, #05080d));
+}
+
+.sim-lesson-header-title {
+  margin: 0;
+  color: var(--tm-text-strong, #effbff);
+  font-family: Rajdhani, sans-serif;
+  font-size: clamp(1.15rem, 1.5vw, 1.55rem);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.sim-lesson-header-subtitle {
+  flex: 1 1 auto;
+  margin: 0;
+  color: var(--tm-text-muted, rgba(203, 230, 241, 0.7));
+  font-family: 'Exo 2', sans-serif;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  text-align: right;
+}
+
+.sim-widget-toolbar { display: flex; flex: 0 0 auto; align-items: center; margin-left: auto; }
+.sim-widget-add-label { display: inline; }
+
+.sim-widget-icon-button:focus-visible,
+.sim-tab-button:focus-visible,
+.sim-tab-add:focus-visible,
+.sim-widget-add:focus-visible,
+.sim-widget-palette-option:focus-visible,
+.sim-widget-header:focus-visible,
+.sim-widget-resize:focus-visible {
+  outline: 2px solid var(--tm-accent, var(--active, #22d3ee));
+  outline-offset: 2px;
+}
+
+.sim-dashboard-grid {
+  --sim-grid-pitch-x: 4.166667%;
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: repeat(var(--sim-grid-columns), minmax(0, 1fr));
+  grid-auto-rows: var(--sim-grid-pitch-y);
+  column-gap: var(--sim-grid-gap);
+  row-gap: 0;
+  width: 100%;
+  min-height: calc(24 * var(--sim-grid-row-height) + 23 * var(--sim-grid-gap));
+  align-content: start;
+}
+
+.sim-dashboard-grid::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    var(--sim-grid-dot) 0 1px,
+    transparent 1.25px
+  );
+  background-position: -1px -1px;
+  background-size: var(--sim-grid-pitch-x) var(--sim-grid-pitch-y);
+  content: '';
+  pointer-events: none;
+}
+
+html[data-sim-workspace="true"] :is(
+  #sim-badge-strip,
+  .sim-badge-strip,
+  #badge-strip,
+  .badge-strip
+) {
+  display: none !important;
+}
+
+.sim-widget {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--tm-border, var(--border, rgba(34, 211, 238, 0.18)));
+  border-radius: 8px;
+  background: var(--tm-surface-1, var(--panel, #080d13));
+  margin-block-end: var(--sim-grid-gap);
+}
+
+.sim-widget-moving {
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.38);
+  will-change: transform;
+}
+
+.sim-workspace-dragging .sim-widget-content {
+  pointer-events: none;
+}
+
+.sim-widget-invalid { border-color: var(--tm-danger, var(--danger, #f87171)); }
+
+.sim-widget-header {
+  display: flex;
+  min-height: 42px;
+  flex: 0 0 42px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 7px 0 10px;
+  border-bottom: 1px solid var(--tm-border, var(--border, rgba(34, 211, 238, 0.18)));
+  background: var(--tm-surface-3, var(--panel-header, #0d151e));
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.sim-widget-header:active { cursor: grabbing; }
+
+.sim-widget-grip {
+  display: grid;
+  grid-template-columns: repeat(2, 2px);
+  gap: 3px;
+  width: 7px;
+  flex: 0 0 7px;
+}
+
+.sim-widget-grip i {
+  display: block;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: var(--tm-text-muted, var(--text-secondary, rgba(203, 230, 241, 0.54)));
+}
+
+.sim-widget-heading {
+  min-width: 0;
+  flex: 1;
+  line-height: 1.1;
+}
+
+.sim-widget-title {
+  display: block;
+  overflow: hidden;
+  color: var(--tm-text-strong, var(--text-primary, #effbff));
+  font-family: 'Exo 2', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sim-widget-icon-button,
+.sim-tab-add {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--tm-text-muted, var(--text-secondary, rgba(203, 230, 241, 0.54)));
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease, color 150ms ease;
+}
+
+.sim-widget-icon-button:hover,
+.sim-tab-add:hover {
+  border-color: var(--tm-border-quiet, rgba(156, 175, 194, 0.2));
+  background: var(--tm-surface-1, var(--panel, #080d13));
+  color: var(--tm-text-strong, var(--text-primary, #effbff));
+}
+
+.sim-widget-icon-button svg,
+.sim-tab-add svg,
+.sim-widget-add svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.sim-widget-narrow-moves { display: none; }
+
+.sim-widget-content {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+  container-type: size;
+}
+
+.sim-widget-content > * {
+  min-width: 0;
+  min-height: 0;
+}
+
+html[data-sim-workspace="true"] :is(
+  #sim-left-panel,
+  #left-panel,
+  #editor-container,
+  #sim-right-panel,
+  #right-panel,
+  #ds-container
+) {
+  position: relative !important;
+  inset: auto !important;
+  z-index: auto !important;
+  display: flex !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  flex: 1 1 auto !important;
+  border: 0 !important;
+  transform: none !important;
+}
+
+html[data-sim-workspace="true"] [data-sim-workspace-dormant="true"] {
+  display: none !important;
+}
+
+.sim-lesson-surface-host {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.sim-lesson-surface-host > * {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  flex: 1 1 auto !important;
+  margin: 0 !important;
+  box-sizing: border-box;
+}
+
+.sim-lesson-surface-host:not([data-sim-scene-surface="true"]) > * {
+  position: relative !important;
+  inset: auto !important;
+}
+
+.sim-lesson-surface-host > :is(.sim-unit101-readout, .sim-unit102-readout) {
+  flex: 0 0 auto !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.sim-lesson-surface-host[data-sim-scene-surface="true"] {
+  overflow: hidden;
+}
+
+.sim-lesson-surface-host[data-sim-scene-surface="true"] > * {
+  height: 100% !important;
+  overflow: hidden;
+}
+
+[data-widget-id="pedro_visualizer"] #u153-visualizer-inline {
+  resize: none !important;
+}
+
+html[data-sim-workspace="true"] [data-widget-id="robot_view"] :is(
+  #sim-scene-container,
+  #scene-container,
+  #scene-wrap,
+  .panel-section
+) {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  flex: 1 1 auto !important;
+  margin: 0 !important;
+}
+
+html[data-sim-workspace="true"] [data-widget-id="robot_view"] :is(
+  #robot-canvas,
+  #sim-robot-canvas
+) {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+html[data-sim-workspace="true"] [data-widget-id="pedro_path_inspector"] .u153-visualizer-title,
+html[data-sim-workspace="true"] #u153-vertical-resizer,
+html[data-sim-workspace="true"] #u153-open-visualizer {
+  display: none !important;
+}
+html[data-sim-workspace="true"] :is(#sim-left-panel, #left-panel, #editor-container) {
+  flex-direction: column !important;
+}
+
+html[data-sim-workspace="true"] #sim-challenge-body {
+  max-height: 156px;
+  overflow-y: auto;
+}
+
+html[data-sim-workspace="true"] .sim-workspace-control-instructions {
+  position: static !important;
+  inset: auto !important;
+  display: block;
+  max-width: 100%;
+  margin: 9px 0 12px;
+  padding: 7px 10px;
+  border: 1px solid var(--tm-border-quiet, rgba(156, 175, 194, 0.2));
+  border-radius: 6px;
+  background: var(--tm-surface-2, #0b1118);
+  color: var(--tm-text-muted, rgba(203, 230, 241, 0.7));
+  font-family: 'Exo 2', sans-serif;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  text-align: left;
+  transform: none !important;
+  white-space: normal !important;
+}
+
+html[data-sim-workspace="true"] .sim-code-wrapper {
+  min-height: 180px;
+}
+
+/* Legacy lesson editors use .code-wrapper and an expanded challenge card.
+   Keep source editable while allowing the challenge and diagnostics to scroll. */
+html[data-sim-workspace="true"] #left-panel {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow-y: auto !important;
+}
+
+html[data-sim-workspace="true"] #left-panel .challenge-card {
+  flex-shrink: 0 !important;
+}
+
+html[data-sim-workspace="true"] #left-panel .challenge-body.open {
+  max-height: 156px;
+  overflow-y: auto;
+}
+
+html[data-sim-workspace="true"] #left-panel .code-wrapper {
+  min-height: 180px;
+  flex: 1 0 180px;
+}
+
+html[data-sim-workspace="true"] :is(#sim-right-panel, #right-panel, #ds-container) {
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+html[data-sim-workspace="true"] #ds-scroll {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: auto;
+}
+
+html[data-sim-workspace="true"] :is(#sim-resizer, #resizer, #split-resizer) {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+html[data-sim-workspace="true"] :is(
+  #sim-scene-container,
+  #scene-container,
+  #scene-wrap
+) {
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+}
+/* Mechanism-focused lessons keep their diagnostic DOM alive for existing
+   scripts, but show only the scene. Correctness belongs in grading and values
+   belong in learner-authored telemetry. */
+html[data-sim-workspace="true"] [data-sim-scene-only="true"] > :not([data-sim-scene-core="true"]) {
+  display: none !important;
+}
+
+html[data-sim-workspace="true"] [data-sim-scene-only="true"] > [data-sim-scene-core="true"] {
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  flex: 1 1 auto !important;
+  margin: 8px !important;
+}
+
+html[data-sim-workspace="true"] [data-sim-scene-viewport="true"] > :not(canvas):not(.sim-cad-unavailable) {
+  display: none !important;
+}
+
+
+html[data-sim-workspace="true"] #sim-scene-container {
+  width: auto !important;
+  height: auto !important;
+  flex: 1 1 auto !important;
+  margin: 8px !important;
+  aspect-ratio: auto !important;
+}
+
+html[data-sim-workspace="true"] :is(#robot-canvas, #sim-robot-canvas) {
+  display: block;
+  width: 100% !important;
+  max-width: none !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+html[data-sim-workspace="true"] [data-widget-id="gamepad"] :is(
+  #sim-gamepad-card,
+  #gamepad-float-card,
+  #gamepad-card,
+  .gamepad-float-card,
+  .gamepad-panel
+) {
+  position: relative !important;
+  inset: auto !important;
+  z-index: auto !important;
+  display: flex !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+html[data-sim-workspace="true"] [data-widget-id="gamepad"] :is(
+  #sim-gamepad-titlebar,
+  #gamepad-titlebar,
+  .gamepad-titlebar,
+  .gamepad-heading,
+  #sim-gamepad-resize-handle,
+  #gamepad-resize-handle,
+  .gamepad-resize-handle
+) {
+  display: none !important;
+}
+
+html[data-sim-workspace="true"] [data-widget-id="gamepad"] :is(
+  #sim-gamepad-body,
+  #gamepad-card-body,
+  #gamepad-body,
+  .gamepad-card-body
+) {
+  display: flex !important;
+  min-height: 0 !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px !important;
+  overflow: hidden !important;
+  box-sizing: border-box;
+}
+
+html[data-sim-workspace="true"] [data-widget-id="gamepad"] .telemark-gp-keyboard-legend {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+html[data-sim-workspace="true"] [data-widget-id="gamepad"] :is(
+  #sim-controller-wrap,
+  #controller-wrap,
+  .controller-wrap
+) {
+  width: var(--sim-controller-fit-width, 100%) !important;
+  max-width: 100% !important;
+  height: var(--sim-controller-fit-height, auto) !important;
+  max-height: 100% !important;
+  flex: 0 0 auto !important;
+  aspect-ratio: 768 / 512 !important;
+  margin: auto !important;
+}
+
+html[data-sim-workspace="true"] [data-widget-id="gamepad"] :is(
+  #sim-controller-wrap,
+  #controller-wrap,
+  .sim-controller-wrap,
+  .controller-wrap
+) :is(img, .sim-controller-img, .controller-img) {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+}
+
+html[data-sim-workspace="true"] [data-widget-id="gamepad"] :is(
+  .overlay,
+  .sim-gp-overlay,
+  .btn-overlay,
+  .gp-stick-zone,
+  .stick-zone-left,
+  .stick-zone-right,
+  .button-overlay,
+  .dpad-container,
+  .dpad-overlay
+) {
+  box-sizing: border-box !important;
+}
+
+.sim-widget-resize {
+  position: absolute;
+  z-index: 8;
+  border: 0;
+  touch-action: none;
+}
+
+.sim-widget-resize-right {
+  top: 42px;
+  right: 0;
+  bottom: 13px;
+  width: 11px;
+  cursor: ew-resize;
+}
+
+.sim-widget-resize-bottom {
+  right: 13px;
+  bottom: 0;
+  left: 0;
+  height: 11px;
+  cursor: ns-resize;
+}
+
+.sim-widget-resize-corner {
+  width: 20px;
+  height: 20px;
+}
+
+.sim-widget-resize-top-left,
+.sim-widget-resize-top-right,
+.sim-widget-resize-bottom-left,
+.sim-widget-resize-bottom-right {
+  width: 20px;
+  height: 20px;
+  color: var(--tm-text-muted, var(--text-secondary, rgba(203, 230, 241, 0.54)));
+}
+
+.sim-widget-resize-top-left { top: 0; left: 0; cursor: nwse-resize; }
+.sim-widget-resize-top-right { top: 0; right: 0; cursor: nesw-resize; }
+.sim-widget-resize-bottom-left { bottom: 0; left: 0; cursor: nesw-resize; }
+.sim-widget-resize-bottom-right { bottom: 0; right: 0; cursor: nwse-resize; }
+
+.sim-widget-resize-top-left::after,
+.sim-widget-resize-top-right::after,
+.sim-widget-resize-bottom-left::after,
+.sim-widget-resize-bottom-right::after {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-color: currentColor;
+  border-style: solid;
+  border-width: 0;
+  content: '';
+}
+
+.sim-widget-resize-top-left::after { top: 4px; left: 4px; border-top-width: 1px; border-left-width: 1px; }
+.sim-widget-resize-top-right::after { top: 4px; right: 4px; border-top-width: 1px; border-right-width: 1px; }
+.sim-widget-resize-bottom-left::after { bottom: 4px; left: 4px; border-bottom-width: 1px; border-left-width: 1px; }
+.sim-widget-resize-bottom-right::after { bottom: 4px; right: 4px; border-bottom-width: 1px; border-right-width: 1px; }
+
+.sim-widget-resize:hover,
+.sim-widget-resize:focus-visible { color: var(--tm-accent, #22d3ee); }
+
+.sim-widget-drop-preview {
+  z-index: 1;
+  border: 1px dashed var(--tm-accent, var(--active, #22d3ee));
+  border-radius: 8px;
+  background: rgba(34, 211, 238, 0.08);
+  pointer-events: none;
+  margin-block-end: var(--sim-grid-gap);
+}
+
+.sim-widget-drop-preview.invalid {
+  border-color: var(--tm-danger, var(--danger, #f87171));
+  background: rgba(248, 113, 113, 0.08);
+}
+
+.sim-widget-palette {
+  position: absolute;
+  right: 0;
+  top: calc(100% - 2px);
+  z-index: 1900;
+  display: grid;
+  width: min(300px, calc(100vw - 32px));
+  max-height: min(64vh, 520px);
+  gap: 6px;
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid var(--tm-border, var(--border, rgba(34, 211, 238, 0.34)));
+  border-radius: 8px;
+  background: var(--tm-surface-1, var(--panel, #080d13));
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.42);
+}
+
+.sim-widget-palette[hidden] { display: none !important; }
+
+.sim-widget-palette-title {
+  padding: 2px 4px 3px;
+  color: var(--tm-text-muted, var(--text-secondary, rgba(203, 230, 241, 0.54)));
+  font-family: 'Share Tech Mono', 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sim-widget-palette-option {
+  display: flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Exo 2', sans-serif;
+  text-align: left;
+  transition: border-color 150ms ease, background 150ms ease, color 150ms ease;
+}
+
+.sim-widget-palette-option strong { font-size: 0.82rem; }
+.sim-widget-palette-option span { color: var(--tm-text-muted, rgba(203, 230, 241, 0.54)); font-size: 0.7rem; }
+
+.sim-widget-palette-software {
+  border: 1px solid rgba(96, 165, 250, 0.32);
+  background: rgba(96, 165, 250, 0.1);
+  color: #93c5fd;
+}
+
+.sim-widget-palette-hardware {
+  border: 1px solid rgba(34, 211, 238, 0.35);
+  background: rgba(34, 211, 238, 0.08);
+  color: var(--tm-accent, var(--active, #22d3ee));
+}
+
+.sim-widget-palette-option:hover { border-color: currentColor; }
+
+.sim-widget-palette-empty {
+  margin: 4px;
+  color: var(--tm-text-muted, rgba(203, 230, 241, 0.54));
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.sim-widget-add {
+  position: relative;
+  z-index: 1901;
+  display: inline-flex;
+  width: auto;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid rgba(34, 211, 238, 0.55);
+  border-radius: 6px;
+  background: rgba(34, 211, 238, 0.12);
+  color: var(--tm-accent, var(--active, #22d3ee));
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.32);
+  transition: border-color 150ms ease, background 150ms ease, color 150ms ease;
+}
+
+.sim-widget-add:hover {
+  border-color: var(--tm-accent, var(--active, #22d3ee));
+  background: rgba(34, 211, 238, 0.18);
+  color: var(--tm-text-strong, #effbff);
+}
+
+.sim-workspace-empty {
+  grid-column: 1 / -1;
+  grid-row: 1 / span 3;
+  display: grid;
+  place-content: center;
+  gap: 6px;
+  min-height: 190px;
+  border: 1px dashed var(--tm-border-quiet, rgba(156, 175, 194, 0.2));
+  border-radius: 8px;
+  color: var(--tm-text-muted, rgba(203, 230, 241, 0.54));
+  text-align: center;
+}
+
+.sim-workspace-empty[hidden] { display: none; }
+.sim-workspace-empty strong { color: var(--tm-text-strong, #effbff); font-size: 0.9rem; }
+.sim-workspace-empty span { font-size: 0.76rem; }
+
+.sim-workspace-live {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.sim-cad-unavailable {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 12;
+  max-width: calc(100% - 24px);
+  padding: 8px 10px;
+  border: 1px solid var(--tm-danger, #f87171);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--tm-surface-1, #080d13) 92%, transparent);
+  color: var(--tm-text-strong, #effbff);
+  font-family: 'Exo 2', sans-serif;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.sim-tab-controller {
+  display: flex;
+  width: 100%;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  background: var(--tm-bg, #05080d);
+}
+
+.sim-tab-list {
+  display: flex;
+  min-height: 42px;
+  align-items: end;
+  gap: 4px;
+  padding: 7px 8px 0;
+  border-bottom: 1px solid var(--tm-border-quiet, rgba(156, 175, 194, 0.2));
+}
+
+.sim-tab-button {
+  min-height: 34px;
+  padding: 6px 11px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+  background: transparent;
+  color: var(--tm-text-muted, rgba(203, 230, 241, 0.54));
+  cursor: pointer;
+  font-family: 'Exo 2', sans-serif;
+  font-size: 0.72rem;
+}
+
+.sim-tab-button[aria-selected="true"] {
+  border-color: var(--tm-border-quiet, rgba(156, 175, 194, 0.2));
+  background: var(--tm-surface-2, #0b1118);
+  color: var(--tm-text-strong, #effbff);
+}
+
+.sim-tab-panes { position: relative; min-height: 0; flex: 1; overflow: hidden; }
+
+.sim-tab-pane {
+  box-sizing: border-box;
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  padding: 8px;
+}
+
+.sim-tab-pane[hidden] { display: none; }
+
+.sim-tab-grid {
+  min-height: 100%;
+  grid-auto-rows: var(--sim-grid-pitch-y);
+}
+
+.sim-tab-empty {
+  grid-column: 1 / -1;
+  grid-row: 1 / span 4;
+  align-self: start;
+  margin: 14px 8px;
+  color: var(--tm-text-muted, rgba(203, 230, 241, 0.7));
+  font-family: 'Exo 2', sans-serif;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+:root:is([data-theme="light"], [data-telemark-theme="light"]) .sim-widget-palette {
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+}
+
+:root:is([data-theme="light"], [data-telemark-theme="light"]) .sim-widget-drop-preview {
+  background: rgba(8, 127, 156, 0.08);
+}
+
+:root:is([data-theme="light"], [data-telemark-theme="light"]) {
+  --sim-grid-dot: rgba(16, 91, 112, 0.38);
+}
+
+@media (max-width: 640px) {
+  html[data-sim-workspace="true"] #sim-dashboard-scroll { padding: 8px; }
+  #sim-workspace-lesson-header { flex-direction: column; align-items: flex-start; gap: 2px; }
+
+  .sim-widget-toolbar {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    margin-block-end: 8px;
+  }
+
+  .sim-lesson-header-subtitle { text-align: left; }
+
+  .sim-widget-add {
+    position: static;
+    display: inline-flex;
+    width: auto;
+    min-width: 44px;
+    height: 44px;
+    gap: 8px;
+    padding-inline: 12px;
+    box-shadow: none;
+  }
+
+  .sim-widget-add-label {
+    display: inline;
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+
+  .sim-widget-palette {
+    position: static;
+    order: 2;
+    width: 100%;
+    max-height: min(48vh, 440px);
+  }
+
+  .sim-dashboard-grid,
+  .sim-tab-grid {
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+  }
+
+  .sim-dashboard-grid::before { display: none; }
+
+  .sim-widget {
+    width: 100%;
+    min-height: 320px;
+    flex: 0 0 auto;
+    margin-block-end: 0;
+  }
+
+  .sim-widget-coding { min-height: 760px; }
+  html[data-sim-workspace="true"] #sim-challenge-body { max-height: 130px; }
+  .sim-widget-robot_view,
+  .sim-widget-lesson_output { min-height: 420px; }
+  .sim-widget-gamepad { min-height: 300px; }
+  .sim-widget-slide_monitor,
+  .sim-widget-winch_conversion { min-height: 260px; }
+  .sim-widget-tab_group { min-height: 440px; }
+  .sim-widget-header { min-height: 48px; flex-basis: 48px; cursor: default; touch-action: pan-y; }
+  .sim-widget-title { font-size: 0.82rem; }
+  .sim-widget-icon-button,
+  .sim-tab-add { width: 44px; height: 44px; flex-basis: 44px; }
+  .sim-tab-list { min-height: 52px; }
+  .sim-tab-button { min-height: 44px; }
+  .sim-widget-grip { opacity: 0.35; }
+  .sim-widget-resize { display: none; }
+  .sim-widget-narrow-moves { display: inline-flex; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sim-widget-icon-button,
+  .sim-widget-palette-option,
+  .sim-widget-add {
+    transition-duration: 0.01ms !important;
+  }
+}

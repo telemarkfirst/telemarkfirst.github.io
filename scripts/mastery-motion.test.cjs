@@ -233,6 +233,7 @@ function testMotorDrivenMechanisms() {
 function testResetPoseReturnsRobotToFieldCenter() {
   const motion = MasteryMotion.create(15);
   motion.setPose(2.2, -1.7, 1.25);
+  motion.setLifecyclePhase('running');
   motion.startFollower();
   motion.step(0.5);
 
@@ -378,6 +379,7 @@ function testServosVisionAndPaths() {
   assert.notEqual(vision.snapshot().cameraAngle, 0, 'Unit 14 camera should scan while vision is active');
 
   const pathing = MasteryMotion.create(15);
+  pathing.setLifecyclePhase('running');
   pathing.startFollower();
   pathing.step(0.1);
   assert.ok(pathing.snapshot().pathProgress > 0, 'Unit 15 robot should advance when the follower runs');
@@ -525,6 +527,7 @@ function testChallengeSdkMocks() {
     pathSdk.curve(poses.of(1, 1, 45), poses.of(2, 1, 0), poses.of(3, 2, 45)),
   );
   follower.setPose(poses.of(0, 0, 0));
+  pathMotion.setLifecyclePhase('running');
   follower.follow(route);
   follower.update();
   pathMotion.step(0.1);
@@ -543,6 +546,62 @@ function testConnectedMotionUsesMeasuredMotorVelocity() {
   velocityCallback('flywheel', 1400, 0.6, 0.46);
   motion.step(0.1);
   assert.ok(Math.abs(motion.outputs().primary - 0.46) < 1e-9, 'flywheel animation follows measured motor velocity');
+}
+
+function testIvySchedulerUsesAuthoredPath() {
+  const motion = MasteryMotion.create(15);
+  motion.setLifecyclePhase('running');
+  const sdk = {Scheduler: function NativeBrowserScheduler() {}};
+  MasteryMotion.installSdkMocks(sdk, motion);
+  assert.equal(typeof sdk.Scheduler.reset, 'function', 'FTC Ivy must replace the browser Scheduler API');
+  const poses = sdk.PoseFactory.degrees();
+  const start = poses.of(12, 12, 0);
+  const end = poses.of(72, 72, 90);
+  const route = sdk.path(sdk.line(start, end));
+  const follower = sdk.Constants.create({});
+  let completed = false;
+  sdk.Scheduler.reset();
+  sdk.schedule(sdk.sequential(
+    sdk.follow(follower, route),
+    sdk.waitMs(0),
+    sdk.instant(() => { completed = true; }),
+  ));
+  sdk.Scheduler.execute();
+  assert.equal(motion.pathSegments()[0].points[0].x, 12);
+  assert.equal(motion.pathSegments()[0].points[1].x, 72);
+  motion.step(0.1);
+  sdk.Scheduler.execute();
+  assert.ok(motion.snapshot().pathProgress > 0, 'Scheduler.execute must not restart the same path every frame');
+  assert.ok(motion.snapshot().wheelAngles.every(angle => angle > 0), 'follower motion should turn the wheels');
+  for (let index = 0; index < 100; index += 1) {
+    motion.step(0.1);
+    follower.update();
+    sdk.Scheduler.execute();
+  }
+  assert.equal(motion.snapshot().pathProgress, 1);
+  assert.equal(completed, true, 'the next Ivy command should run after the follower finishes');
+  follower.follow(sdk.path(sdk.line(end, start)));
+  assert.equal(motion.pathSegments()[0].points[0].x, 72, 'reversing source should reverse the route');
+}
+
+function testAutonomousStopAndResetClearStaleRoute() {
+  const motion = MasteryMotion.create(15);
+  const sdk = {};
+  MasteryMotion.installSdkMocks(sdk, motion);
+  const poses = sdk.PoseFactory.degrees();
+  const follower = sdk.Constants.create({});
+  motion.setLifecyclePhase('running');
+  follower.follow(sdk.path(sdk.line(poses.of(0, 0, 0), poses.of(72, 72, 0))));
+  motion.step(0.5);
+  const progressBeforeStop = motion.snapshot().pathProgress;
+  assert.ok(progressBeforeStop > 0);
+  motion.setLifecyclePhase('stopped');
+  motion.step(0.5);
+  assert.equal(motion.snapshot().pathProgress, progressBeforeStop, 'Stop must halt the autonomous route');
+  assert.equal(motion.snapshot().followerActive, false, 'Stop must release the follower');
+  motion.resetPose();
+  assert.equal(motion.pathSegments().length, 0, 'a fresh Init must not display an old route');
+  assert.equal(motion.snapshot().pathProgress, 0);
 }
 
 testUnit2KgDrivetrain();
@@ -566,4 +625,6 @@ testFieldCentricStrafeAfterTurn();
 testMecanumPhysicsBeginsAfterUnitEightLesson();
 testChallengeSdkMocks();
 testConnectedMotionUsesMeasuredMotorVelocity();
+testIvySchedulerUsesAuthoredPath();
+testAutonomousStopAndResetClearStaleRoute();
 console.log('Mastery challenge motion tests passed');

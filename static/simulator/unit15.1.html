@@ -219,8 +219,7 @@ public class LimelightAutoLock extends OpMode {
         // TODO: Rotate right when Tx > 3.0, left when Tx < -3.0
         // TODO: Stop both motors when locked or when no target is visible
 
-        telemetry.addData("AutoLock", "Searching with joystick");
-        telemetry.addData("Tx",       "Add Limelight code");
+        // TODO: Report the actual steering state and Tx with telemetry.
 
         telemetry.update();
     }

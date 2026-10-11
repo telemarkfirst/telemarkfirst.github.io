@@ -5,7 +5,7 @@ const THREE = require('three');
 const repoRoot = path.resolve(__dirname, '..');
 const modelFile = path.join(repoRoot, 'static/simulator/models/30450-decode-robot-telemark.glb');
 const intakeStageNames = ['intake-stage-1', 'intake-stage-2', 'intake-stage-3'];
-const mechanismNames = [...intakeStageNames, 'transfer', 'flywheel', 'trigger'];
+const mechanismNames = ['intake-plate', ...intakeStageNames, 'transfer', 'flywheel', 'trigger'];
 
 function align4(value) {
   return (value + 3) & ~3;
@@ -40,6 +40,15 @@ function encodeGlb(json, binary) {
   output.writeUInt32LE(0x004e4942, binaryHeader + 4);
   binaryChunk.copy(output, binaryHeader + 8);
   return output;
+}
+
+function mergeModification(value, addition) {
+  const seen = new Set();
+  return `${value || ''} ${addition || ''}`
+    .match(/[^.]+(?:\.|$)/g)
+    .map((sentence) => sentence.trim())
+    .filter((sentence) => sentence && !seen.has(sentence) && seen.add(sentence))
+    .join(' ');
 }
 
 function applyAttribution(json) {
@@ -223,6 +232,17 @@ function classifyComponent(component, matrix) {
   const bounds = componentWorldBounds(component, matrix);
   const center = bounds.getCenter(new THREE.Vector3());
   const size = bounds.getSize(new THREE.Vector3());
+
+  // Preserve the real sloped SFR floor immediately underneath the three
+  // intake rows. It gives the isolated rollers an obvious mounting surface
+  // without bringing the rest of the robot into beginner motor lessons.
+  if (Math.abs(center.x + 0.001) <= 0.015
+      && Math.abs(center.y + 0.020) <= 0.015
+      && Math.abs(center.z - 0.086) <= 0.015
+      && Math.abs(size.x - 0.239) <= 0.020
+      && Math.abs(size.y - 0.233) <= 0.020
+      && Math.abs(size.z - 0.233) <= 0.020) return 'intake-plate';
+
   for (const name of [...intakeStageNames, 'flywheel']) {
     for (const axle of axleSpecs[name]) {
       const radialDistance = Math.hypot(center.y - axle.y, center.z - axle.z);
@@ -288,7 +308,7 @@ function unrigExistingMechanisms() {
   const {json, bin} = parseGlb(modelFile);
   const chassisNode = json.nodes.find((node) => node.name === 'telemark-cad-chassis');
   const entries = json.nodes.map((node, index) => ({node, index})).filter(({node}) => {
-    return /^telemark-cad-(?:intake(?:-stage-[123])?|transfer|flywheel|trigger)$/.test(node.name || '');
+    return /^telemark-cad-(?:intake(?:-(?:plate|stage-[123]))?|transfer|flywheel|trigger)$/.test(node.name || '');
   });
   if (!chassisNode || !entries.length) return false;
 
@@ -478,6 +498,7 @@ function rig(dryRun, rebuild) {
   });
 
   const minimumTriangles = {
+    'intake-plate': 500,
     'intake-stage-1': 1000,
     'intake-stage-2': 1000,
     'intake-stage-3': 1000,
@@ -503,9 +524,11 @@ function rig(dryRun, rebuild) {
       ...copyTransform(chassisNode),
       mesh: meshIndex,
       extras: {
-        telemarkDecodeMechanism: name.startsWith('intake-stage-') ? 'intake' : name,
+        telemarkDecodeMechanism: name.startsWith('intake-stage-') || name === 'intake-plate' ? 'intake' : name,
         ...(name.startsWith('intake-stage-') ? {intakeStage: Number(name.at(-1))} : {}),
-        spinAxis: name === 'transfer' ? 'z' : 'x',
+        ...(name === 'intake-plate' ? {telemarkCadRole: 'intake-mount'} : {
+          spinAxis: name === 'transfer' ? 'z' : 'x',
+        }),
         telemarkCadCenter: center,
         ...(name === 'trigger' ? {telemarkCadPivot: triggerPivot} : {}),
         telemarkCadBounds: bounds,
@@ -519,7 +542,10 @@ function rig(dryRun, rebuild) {
   json.extras = {
     ...(json.extras || {}),
     telemarkCadMechanisms: mechanismNames,
-    modification: `${json.extras && json.extras.modification || ''} Existing DECODE intake rows partitioned around three independent axles; anti-jam transfer spinner, flywheel, and servo trigger partitioned into independently animated nodes.`.trim(),
+    modification: mergeModification(
+      json.extras && json.extras.modification,
+      'Existing DECODE intake floor and intake rows partitioned around three independent axles; anti-jam transfer spinner, flywheel, and servo trigger partitioned into independently animated nodes.',
+    ),
   };
   applyAttribution(json);
   writeModel(json, finalBin);

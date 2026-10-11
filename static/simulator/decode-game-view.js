@@ -9,19 +9,24 @@
     const style = document.createElement("style");
     style.id = "decode-game-styles";
     style.textContent = ""
-      + ".decode-game-hud{position:absolute;z-index:4;top:48px;right:10px;width:min(310px,calc(100% - 20px));padding:8px;border:1px solid rgba(148,163,184,.3);border-radius:9px;background:rgba(5,8,13,.82);color:#e5eef5;font:600 .69rem/1.3 var(--font-ui);backdrop-filter:blur(8px);box-shadow:0 6px 20px rgba(0,0,0,.18)}"
-      + ".decode-mode-row{display:flex;align-items:center;gap:5px}.decode-mode-row strong{margin-right:auto;font-size:.73rem;letter-spacing:.04em}.decode-mode-button{padding:3px 8px;border:1px solid rgba(148,163,184,.35);border-radius:6px;background:rgba(15,23,42,.75);color:#cbd5e1;font:700 .65rem/1.35 var(--font-ui);cursor:pointer}.decode-mode-button[aria-pressed='true']{border-color:#22d3ee;color:#a5f3fc;background:rgba(8,145,178,.18)}"
+      + ".decode-game-hud{position:absolute;z-index:4;top:48px;right:10px;width:min(270px,calc(100% - 20px));max-height:min(220px,calc(100% - 60px));overflow:auto;padding:8px;border:1px solid rgba(148,163,184,.3);border-radius:9px;background:rgba(5,8,13,.94);color:#e5eef5;font:600 .69rem/1.3 var(--font-ui)}"
+      + ".decode-mode-row{display:flex;align-items:center;gap:5px}.decode-mode-row strong{margin-right:auto;font-size:.73rem;letter-spacing:.04em}.decode-mode-button{min-height:34px;padding:3px 8px;border:1px solid rgba(148,163,184,.35);border-radius:6px;background:rgba(15,23,42,.75);color:#cbd5e1;font:700 .65rem/1.35 var(--font-ui);cursor:pointer}.decode-mode-button[aria-pressed='true']{border-color:#22d3ee;color:#a5f3fc;background:rgba(8,145,178,.18)}"
+      + ".decode-game-details{margin-top:5px}.decode-game-details>summary{min-height:34px;display:flex;align-items:center;gap:5px;cursor:pointer;color:#cbd5e1;font-weight:600}.decode-game-details>summary b{color:#f8fafc;font-family:var(--font-code)}.decode-game-details>summary:focus-visible{outline:2px solid #22d3ee;outline-offset:2px}"
       + ".decode-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:7px}.decode-stat{padding:4px 5px;border-radius:5px;background:rgba(148,163,184,.1);font-weight:500;color:#9fb2c2}.decode-stat b{display:block;color:#f8fafc;font:700 .72rem/1.25 var(--font-code)}"
       + ".decode-velocity{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:6px;color:#aab9c6;font:500 .64rem/1.3 var(--font-code)}.decode-velocity b{color:#fde68a}"
       + ".decode-shot-recipe{margin:7px 0 0;padding:6px 7px;border:1px solid rgba(103,232,249,.22);border-radius:5px;background:rgba(8,145,178,.09);color:#cbd5e1;font:500 .63rem/1.42 var(--font-ui)}.decode-shot-recipe b{color:#67e8f9}"
       + ".decode-controls{margin-top:6px;color:#9fb2c2;font-weight:500}.decode-controls summary{cursor:pointer;color:#cbd5e1;font-weight:700}.decode-controls p{margin:5px 0 0;font-size:.62rem;line-height:1.45}"
       + ":root[data-theme='light'] .decode-game-hud,:root[data-telemark-theme='light'] .decode-game-hud{background:rgba(255,255,255,.9);color:#163047;border-color:rgba(71,100,119,.28)}"
       + ":root[data-theme='light'] .decode-mode-button,:root[data-telemark-theme='light'] .decode-mode-button{background:#edf3f6;color:#365265}"
+      + ":root[data-theme='light'] .decode-mode-button[aria-pressed='true'],:root[data-telemark-theme='light'] .decode-mode-button[aria-pressed='true']{background:#d6f3f8;border-color:#0e7490;color:#07556b}"
+      + ":root[data-theme='light'] .decode-game-details>summary,:root[data-telemark-theme='light'] .decode-game-details>summary,:root[data-theme='light'] .decode-controls,:root[data-telemark-theme='light'] .decode-controls,:root[data-theme='light'] .decode-controls summary,:root[data-telemark-theme='light'] .decode-controls summary{color:#365265}"
+      + ":root[data-theme='light'] .decode-game-details>summary b,:root[data-telemark-theme='light'] .decode-game-details>summary b{color:#163047}"
       + ":root[data-theme='light'] .decode-stat,:root[data-telemark-theme='light'] .decode-stat{background:rgba(40,73,91,.08);color:#536b7a}"
       + ":root[data-theme='light'] .decode-stat b,:root[data-telemark-theme='light'] .decode-stat b{color:#17384b}"
+      + ":root[data-theme='light'] .decode-velocity,:root[data-telemark-theme='light'] .decode-velocity{color:#426174}"
       + ":root[data-theme='light'] .decode-velocity b,:root[data-telemark-theme='light'] .decode-velocity b{color:#925300}"
       + ":root[data-theme='light'] .decode-shot-recipe,:root[data-telemark-theme='light'] .decode-shot-recipe{background:rgba(8,145,178,.07);color:#365265}:root[data-theme='light'] .decode-shot-recipe b,:root[data-telemark-theme='light'] .decode-shot-recipe b{color:#087f95}"
-      + "@media(max-width:620px){.decode-game-hud{width:245px}.decode-controls p{font-size:.59rem}.decode-stats{grid-template-columns:repeat(3,1fr)}}";
+      + "@media(max-width:620px){.decode-game-hud{top:auto;bottom:5px;right:10px;width:calc(100% - 20px);max-height:min(220px,calc(100% - 10px));display:flex;align-items:center;gap:7px;padding:5px 7px}.decode-mode-row{flex:0 0 auto}.decode-mode-row strong{display:none}.decode-mode-button{min-height:44px;font-size:.72rem}.decode-game-details{flex:1 1 auto;min-width:0;margin-top:0}.decode-game-details>summary{min-height:44px;white-space:nowrap;font-size:.7rem}.decode-game-hud.is-expanded{display:block;padding:8px}.decode-game-hud.is-expanded .decode-mode-row strong{display:block}.decode-game-hud.is-expanded .decode-game-details{margin-top:5px}.decode-shot-recipe,.decode-controls p,.decode-stat{font-size:.7rem}.decode-velocity{font-size:.68rem}.decode-stats{grid-template-columns:repeat(2,1fr)}}";
     document.head.appendChild(style);
   }
 
@@ -30,14 +35,13 @@
     hud.className = "decode-game-hud";
     hud.setAttribute("aria-label", "DECODE TeleOp match status");
     hud.innerHTML = ""
-      + "<div class=\"decode-mode-row\"><strong>DECODE · Competition robot</strong>"
+      + "<div class=\"decode-mode-row\"><strong>Match status</strong>"
       + "<button class=\"decode-mode-button\" type=\"button\" data-decode-mode=\"practice\">Practice</button>"
       + "<button class=\"decode-mode-button\" type=\"button\" data-decode-mode=\"match\">Match</button></div>"
+      + "<details class=\"decode-game-details\"><summary>Score <b data-decode-stat=\"score\">0 / 0</b> · Stored <b data-decode-stat=\"capacity\">0 / 3</b></summary>"
       + "<div class=\"decode-stats\">"
       + "<span class=\"decode-stat\">Time<b data-decode-stat=\"time\">Practice</b></span>"
-      + "<span class=\"decode-stat\">Hits / misses<b data-decode-stat=\"score\">0 / 0</b></span>"
       + "<span class=\"decode-stat\">Accuracy<b data-decode-stat=\"accuracy\">0%</b></span>"
-      + "<span class=\"decode-stat\">On robot<b data-decode-stat=\"capacity\">0 / 3</b></span>"
       + "<span class=\"decode-stat\">Field supply<b data-decode-stat=\"supply\">9</b></span>"
       + "<span class=\"decode-stat\">Trajectory<b data-decode-stat=\"trajectory\">Shown</b></span>"
       + "</div>"
@@ -46,8 +50,14 @@
       + "<span>trigger <b data-decode-stat=\"trigger\">0.00</b></span>"
       + "<span>flow <b data-decode-stat=\"flow\">field</b></span></div>"
       + "<p class=\"decode-shot-recipe\"><b>Successful hardware sequence:</b> Run the intake forward for about 1 s at full power; its three roller stages automatically carry the artifact into storage. Hold the launcher near 1900 ticks/s, then move the <code>launcher_trigger</code> servo from its configured rest position to its fire position for at least 0.10 s before returning it to rest. The transfer drives only the small anti-jam spinner near the flywheel and is not required for a normal shot. Servo positions are 0–1; 1900 is the flywheel motor velocity.</p>"
-      + "<details class=\"decode-controls\"><summary>Aiming and code notes</summary><p>Your code chooses the gamepad bindings. Both goals count in Practice. A shot scores when it enters an opening, reaches a goal back wall from above, or crosses the forgiving triangular catch region immediately in front of either goal. Resolved Practice artifacts replenish on their original field side. FTC stick up is −1; convert it to positive forward once in your Java drive code.</p></details>";
-    container.appendChild(hud);
+      + "<details class=\"decode-controls\"><summary>Aiming and code notes</summary><p>Your code chooses the gamepad bindings. Both goals count in Practice. A shot scores when it enters an opening, reaches a goal back wall from above, or crosses the forgiving triangular catch region immediately in front of either goal. Resolved Practice artifacts replenish on their original field side. FTC stick up is −1; convert it to positive forward once in your Java drive code.</p></details></details>";
+    const workspaceContent = container.closest(".sim-widget-content");
+    (workspaceContent || container).appendChild(hud);
+
+    const details = hud.querySelector(".decode-game-details");
+    details.addEventListener("toggle", function () {
+      hud.classList.toggle("is-expanded", details.open);
+    });
 
     function selectMode(mode) {
       hud.querySelectorAll("[data-decode-mode]").forEach(function (button) {

@@ -90,6 +90,21 @@ assert.equal(
   false,
   'Vision must release its portal',
 );
+const prematurelyClosedVision = vision.replace(
+  'portal = new VisionPortal.Builder().setCamera(camera).addProcessor(tags).build();',
+  'portal = new VisionPortal.Builder().setCamera(camera).addProcessor(tags).build();\n    portal.close();',
+);
+const prematurelyClosedProject = java.serializeProject(
+  unit14Files.map(file => file.name === 'Vision.java' ? {...file, source: prematurelyClosedVision} : file),
+  'org.firstinspires.ftc.teamcode.CompetitionTeleOp',
+);
+const prematurelyClosedCompilation = java.compile(prematurelyClosedProject);
+assert.equal(prematurelyClosedCompilation.ok, true, prematurelyClosedCompilation.diagnostics?.[0]?.message);
+assert.equal(
+  mastery.evaluate(14, prematurelyClosedProject, prematurelyClosedCompilation)[1],
+  false,
+  'a portal closed in Vision.init cannot satisfy the live camera requirement',
+);
 assert.ok(!mastery.evaluate(14, `/* ${unit14Source} */`).every(Boolean), 'comments cannot satisfy Unit 14');
 
 const fullAutonomous = `package org.firstinspires.ftc.teamcode;

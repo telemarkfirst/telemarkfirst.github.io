@@ -24,55 +24,6 @@
     min-height: 340px;
   }
 
-  #sim-scene-container .u135-scene-badge,
-  #sim-scene-container .u135-call-badge,
-  #sim-scene-container .u135-label {
-    position: absolute;
-    z-index: 5;
-    pointer-events: none;
-    border: 1px solid #2a2a3a;
-    border-radius: 8px;
-    background: rgba(7, 7, 10, 0.88);
-    color: #f3ead7;
-    font-weight: 700;
-  }
-
-  #sim-scene-container .u135-scene-badge {
-    top: 12px;
-    left: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 9px 12px;
-  }
-
-  #sim-scene-container .u135-call-badge {
-    right: 12px;
-    bottom: 12px;
-    display: none;
-    padding: 9px 12px;
-    color: #c4b5fd;
-    border-color: #6d5aa8;
-  }
-
-  #sim-scene-container .u135-label {
-    padding: 6px 9px;
-    color: #22d3ee;
-    font-size: 0.76rem;
-    transform: translate(-50%, -115%);
-    white-space: nowrap;
-    box-shadow: 0 5px 16px rgba(0, 0, 0, 0.42);
-  }
-
-  #sim-scene-container #u135-claw-label {
-    border-color: #22d3ee;
-  }
-
-  #sim-scene-container #u135-wrist-label {
-    color: #fde68a;
-    border-color: #a87818;
-  }
-
   #sim-right-panel .u135-title {
     display: flex;
     align-items: center;
@@ -117,9 +68,8 @@
   }
 
   @keyframes u135-pulse {
-    0% { box-shadow: 0 0 0 rgba(34, 204, 102, 0); }
-    50% { box-shadow: 0 0 18px rgba(34, 204, 102, 0.45); }
-    100% { box-shadow: 0 0 0 rgba(34, 204, 102, 0); }
+    0%, 100% { border-color: #2a2a3a; }
+    50% { border-color: #22cc66; }
   }
 
   #sim-right-panel .u135-class-header {
@@ -164,8 +114,7 @@
     gap: 8px;
   }
 
-  #sim-right-panel .u135-step,
-  #sim-right-panel .u135-status {
+  #sim-right-panel .u135-step {
     border: 1px solid #2a2a3a;
     border-radius: 8px;
     background: #09090d;
@@ -174,17 +123,9 @@
     font-size: 0.8rem;
   }
 
-  #sim-right-panel .u135-step.active,
-  #sim-right-panel .u135-status.good {
+  #sim-right-panel .u135-step.active {
     color: #bbf7d0;
     border-color: #22cc66;
-    box-shadow: 0 0 12px rgba(34, 204, 102, 0.18);
-  }
-
-  #sim-right-panel .u135-status-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
   }
 
   #sim-right-panel .u135-callout {
@@ -268,6 +209,7 @@
   }
 </style>
 <script src="./simulator_base.js"></script>
+<script src="./cad-parts.js"></script>
   <script src="./telemark-java.js"></script>
   <script src="./telemark-editor.js"></script>
   <script src="./gamepad-controls.js"></script>
@@ -400,6 +342,7 @@ public class RobotComposition extends OpMode {
   let wristDevice;
   let sceneRoot;
   let wristGroup;
+  let wristFallback;
   let clawGroup;
   let leftFinger;
   let rightFinger;
@@ -408,6 +351,9 @@ public class RobotComposition extends OpMode {
   let wristMaterial;
   let robotMaterial;
   let sphereMaterial;
+  let cadWristArm;
+  let cadClaw;
+  let cadClawAttached = false;
   let animationRegistered = false;
   let aButtonWired = false;
   let subsystemBehavior = { clawOpen: 0.1, clawClose: 0.9 };
@@ -536,30 +482,6 @@ public class RobotComposition extends OpMode {
       if (old) old.remove();
     });
 
-    const stateBadge = document.createElement("div");
-    stateBadge.id = "u135-scene-state";
-    stateBadge.className = "u135-scene-badge";
-    stateBadge.innerHTML = '<i class="fa-solid fa-circle-pause"></i> NOT INITIALIZED';
-    sceneContainer.appendChild(stateBadge);
-
-    const callBadge = document.createElement("div");
-    callBadge.id = "u135-call-badge";
-    callBadge.className = "u135-call-badge";
-    callBadge.innerHTML = 'OpMode <i class="fa-solid fa-arrow-right"></i> robot <i class="fa-solid fa-arrow-right"></i> claw <i class="fa-solid fa-arrow-right"></i> open()';
-    sceneContainer.appendChild(callBadge);
-
-    const clawLabel = document.createElement("div");
-    clawLabel.id = "u135-claw-label";
-    clawLabel.className = "u135-label";
-    clawLabel.textContent = "ClawMechanism";
-    sceneContainer.appendChild(clawLabel);
-
-    const wristLabel = document.createElement("div");
-    wristLabel.id = "u135-wrist-label";
-    wristLabel.className = "u135-label";
-    wristLabel.textContent = "WristMechanism";
-    sceneContainer.appendChild(wristLabel);
-
     const panel = document.createElement("div");
     panel.id = "u135-panel";
     panel.className = "u135-panel";
@@ -632,11 +554,6 @@ public class RobotComposition extends OpMode {
         <div class="u135-step" id="u135-stop-3">wrist.stop()</div>
       </div>
 
-      <div class="u135-title"><i class="fa-solid fa-table-cells"></i> Subsystem Status</div>
-      <div class="u135-status-grid">
-        <div class="u135-status" id="u135-claw-status">ClawMechanism: not initialized</div>
-        <div class="u135-status" id="u135-wrist-status">WristMechanism: not initialized</div>
-      </div>
       <div class="u135-callout">
         <i class="fa-solid fa-lightbulb"></i>
         OpMode only needs to call robot.init() and robot.stopAll() - it does not manage individual subsystems directly.
@@ -653,6 +570,9 @@ public class RobotComposition extends OpMode {
   function setupScene() {
     if (!window.THREE || !window.scene) return;
     if (sceneRoot) window.scene.remove(sceneRoot);
+    cadWristArm = null;
+    cadClaw = null;
+    cadClawAttached = false;
 
     sceneRoot = new THREE.Group();
     sceneRoot.name = "unit13_5_scene";
@@ -696,13 +616,17 @@ public class RobotComposition extends OpMode {
     wristGroup.position.set(0, 0.78, -1.35);
     sceneRoot.add(wristGroup);
 
+    wristFallback = new THREE.Group();
+    wristFallback.name = "unit-13-5-procedural-wrist-fallback";
+    wristGroup.add(wristFallback);
+
     const wristJoint = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.6, 32), wristMaterial);
     wristJoint.rotation.z = Math.PI / 2;
-    wristGroup.add(wristJoint);
+    wristFallback.add(wristJoint);
 
     const arm = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.26, 1.55), wristMaterial);
     arm.position.z = -0.78;
-    wristGroup.add(arm);
+    wristFallback.add(arm);
 
     clawGroup = new THREE.Group();
     clawGroup.position.set(0, 0, -1.58);
@@ -718,6 +642,55 @@ public class RobotComposition extends OpMode {
     sphere = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 24), sphereMaterial);
     sphere.position.set(0, 0, -0.64);
     clawGroup.add(sphere);
+
+    if (window.TelemarkCadParts) {
+      window.TelemarkCadParts.mount("quixilver-arm", {
+        THREE: THREE,
+        parent: sceneRoot,
+        position: [0, 0.78, -1.35],
+        rotation: [0, Math.PI / 2, Math.PI / 2],
+        fit: 3.2,
+        fallback: [body, wristFallback]
+      }).then(function (rig) {
+        cadWristArm = rig;
+        attachCadClawToArm();
+        syncCadMechanisms();
+      }).catch(function () {});
+
+      window.TelemarkCadParts.mount("quixilver-claw", {
+        THREE: THREE,
+        parent: sceneRoot,
+        position: [0, 0.6, -2.5],
+        rotation: [0, Math.PI / 2, Math.PI / 2],
+        fit: 1.4,
+        fallback: [leftFinger, rightFinger]
+      }).then(function (rig) {
+        cadClaw = rig;
+        attachCadClawToArm();
+        syncCadMechanisms();
+      }).catch(function () {});
+    }
+  }
+
+  function attachCadClawToArm() {
+    if (!cadWristArm || !cadClaw || cadClawAttached) return;
+    cadClawAttached = window.TelemarkCadParts.dock(
+      cadWristArm,
+      "tool_mount",
+      cadClaw,
+      "mount"
+    );
+    if (cadClawAttached && sphere && !state.sphereFree && !sphere.userData.telemarkCadFollow) {
+      cadClaw.follow(sphere, "grip", { offset: [0, 0, 0] });
+      sphere.userData.telemarkCadFollow = true;
+    }
+  }
+
+  function syncCadMechanisms() {
+    if (cadWristArm) {
+      cadWristArm.setAngle(THREE.MathUtils.clamp(wristGroup ? wristGroup.rotation.x : 0, -0.65, 0.65));
+    }
+    if (cadClaw) cadClaw.setProgress(state.clawState === "OPEN" ? 0 : 1);
   }
 
   function tick() {
@@ -731,6 +704,7 @@ public class RobotComposition extends OpMode {
 
     const targetAngle = state.wristPower * 0.8;
     if (wristGroup) wristGroup.rotation.x += (targetAngle - wristGroup.rotation.x) * 0.14;
+    syncCadMechanisms();
 
     const openAmount = state.clawState === "OPEN" ? 1 : 0;
     const spread = 0.32 + openAmount * 0.34;
@@ -742,46 +716,30 @@ public class RobotComposition extends OpMode {
     }
 
     if (sphere) {
+      if (cadClaw && state.sphereFree && sphere.userData.telemarkCadFollow) {
+        sceneRoot.attach(sphere);
+        sphere.userData.telemarkCadFollow = false;
+      } else if (cadClaw && !state.sphereFree && !sphere.userData.telemarkCadFollow) {
+        cadClaw.follow(sphere, "grip", { offset: [0, 0, 0] });
+        sphere.userData.telemarkCadFollow = true;
+      }
       if (state.sphereFree) {
         sphere.position.z += (-1.05 - sphere.position.z) * 0.08;
         sphere.position.y = 0.06 + Math.sin(Date.now() * 0.004) * 0.04;
+      } else if (sphere.userData.telemarkCadFollow) {
+        sphere.position.z += (0 - sphere.position.z) * 0.12;
+        sphere.position.y += (0 - sphere.position.y) * 0.12;
       } else {
         sphere.position.z += (-0.64 - sphere.position.z) * 0.12;
         sphere.position.y += (0 - sphere.position.y) * 0.12;
       }
     }
 
-    positionMechanismLabels();
-
     if (robotMaterial) robotMaterial.emissive.setHex(state.pulse.robot > 0 ? 0x0b3d1d : state.pulse.stop > 0 ? 0x222222 : 0x000000);
     if (clawMaterial) clawMaterial.emissive.setHex(state.pulse.claw > 0 ? 0x0b3d1d : state.pulse.stop > 0 ? 0x222222 : 0x000000);
     if (wristMaterial) wristMaterial.emissive.setHex(state.pulse.wrist > 0 ? 0x0b3d1d : state.pulse.stop > 0 ? 0x222222 : 0x000000);
 
     updatePanel();
-  }
-
-  function positionMechanismLabels() {
-    if (!window.THREE || !window.camera || !window.scene) return;
-    const container = el("sim-scene-container");
-    if (!container) return;
-    window.scene.updateMatrixWorld(true);
-    placeMechanismLabel("u135-claw-label", clawGroup, 0, -18);
-    placeMechanismLabel("u135-wrist-label", wristGroup, -38, 22);
-  }
-
-  function placeMechanismLabel(id, object, offsetX, offsetY) {
-    const label = el(id);
-    if (!label || !object) return;
-    const point = new THREE.Vector3();
-    object.getWorldPosition(point);
-    point.project(window.camera);
-    const width = Math.max(1, el("sim-scene-container").clientWidth);
-    const height = Math.max(1, el("sim-scene-container").clientHeight);
-    const x = (point.x * 0.5 + 0.5) * width + offsetX;
-    const y = (-point.y * 0.5 + 0.5) * height + offsetY;
-    label.style.left = Math.max(78, Math.min(width - 78, x)) + "px";
-    label.style.top = Math.max(46, Math.min(height - 24, y)) + "px";
-    label.style.display = point.z >= -1 && point.z <= 1 ? "block" : "none";
   }
 
   function handleGamepadEdge() {
@@ -926,36 +884,6 @@ public class RobotComposition extends OpMode {
   }
 
   function updatePanel() {
-    const clawLabel = el("u135-claw-label");
-    if (clawLabel) clawLabel.textContent = "ClawMechanism · " + state.clawState;
-    const wristLabel = el("u135-wrist-label");
-    if (wristLabel) wristLabel.textContent = "WristMechanism · " + (Math.abs(state.wristPower) > 0.01 ? state.wristPower.toFixed(2) : "stopped");
-
-    const sceneBadge = el("u135-scene-state");
-    if (sceneBadge) {
-      const icon = state.readyText === "READY" ? "fa-circle-check" : state.readyText === "ALL STOPPED" ? "fa-circle-stop" : "fa-circle-pause";
-      sceneBadge.innerHTML = '<i class="fa-solid ' + icon + '"></i> ' + state.readyText;
-      sceneBadge.style.color = state.readyText === "READY" ? "#22cc66" : state.readyText === "ALL STOPPED" ? "#cbd5e1" : "#f3ead7";
-    }
-
-    const callBadge = el("u135-call-badge");
-    if (callBadge) {
-      callBadge.style.display = state.chainTimer > 0 && /open/.test(state.lastChain) ? "block" : "none";
-    }
-
-    const clawStatus = el("u135-claw-status");
-    if (clawStatus) {
-      clawStatus.classList.toggle("good", state.clawInitialized);
-      clawStatus.textContent = "ClawMechanism: " + (state.clawInitialized ? "initialized" : "not initialized") + ", " + state.clawState;
-    }
-
-    const wristStatus = el("u135-wrist-status");
-    if (wristStatus) {
-      wristStatus.classList.toggle("good", state.wristInitialized);
-      const wristText = Math.abs(state.wristPower) > 0.01 ? "POWER: " + state.wristPower.toFixed(2) : "STOPPED";
-      wristStatus.textContent = "WristMechanism: " + (state.wristInitialized ? "initialized" : "not initialized") + ", " + wristText;
-    }
-
     const chain = el("u135-last-chain");
     if (chain) chain.innerHTML = '<i class="fa-solid fa-code-branch"></i> Last call chain: ' + escapeHTML(state.lastChain);
 

@@ -114,7 +114,10 @@ assert.match(unit13Simulator, /CompetitionTeleOp delegates to RobotHardware/);
 assert.match(read('static/simulator/simulator_base.js'), /prepareSimulatorValidationSource/);
 assert.match(unit13Simulator, /sim-gp-collapse-btn/);
 assert.match(read('static/simulator/unit13.project.html'), /@media \(max-width: 1100px\)[\s\S]*?flex-direction: column !important/);
-assert.match(read('static/simulator/unit13.5.html'), /point\.project\(window\.camera\)/, 'Unit 13.5 labels must follow their 3D mechanisms');
+const unit135Simulator = read('static/simulator/unit13.5.html');
+assert.doesNotMatch(unit135Simulator, /point\.project\(window\.camera\)/, 'Unit 13.5 must not render redundant mechanism-state labels');
+assert.match(unit135Simulator, /TelemarkCadParts\.mount\("quixilver-arm"/);
+assert.match(unit135Simulator, /TelemarkCadParts\.mount\("quixilver-claw"/);
 for (const stage of ['intake', 'lift', 'hardware', 'teleop']) {
   assert.match(unit13Simulator, new RegExp(`${stage}: \\{[\\s\\S]*?heading:`), `Unit 13 ${stage} stage needs matched visual guidance`);
 }

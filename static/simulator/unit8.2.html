@@ -122,7 +122,7 @@ code{font-family:"Consolas","Courier New",monospace}
 <script src="telemark-project-checks.js"></script>
 <link rel="stylesheet" href="./telemark-project.css"/>
   <script src="./gamepad-controls.js"></script>
-  <script src="./simulator_base.js" data-telemark-mode="legacy"></script>
+  <script src="./simulator_base.js" data-telemark-mode="embedded"></script>
 <link href="telemark-sim.css" rel="stylesheet"/>
 </head>
 <body>
@@ -256,7 +256,7 @@ public class MecanumDirections extends OpMode {
   </div>
   <div class="gamepad-card-body" id="gamepad-card-body">
     <div class="controller-wrap" id="controller-wrap">
-      <img class="controller-img" alt="controller" src="https://resource.logitechg.com/w_776,h_437,ar_16:9,c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/gaming/en/products/f310/f310-feature-3.png">
+      <img class="controller-img" alt="FTC-style gamepad" src="./gamepad-controller-original.jpg">
       <div class="gp-instruction">Left stick: drive/strafe &nbsp; | &nbsp; Right stick X: rotate</div>
       
       <div class="overlay bumper-btn left-bumper-btn" id="btn-lb"></div><div class="overlay bumper-btn right-bumper-btn" id="btn-rb"></div>
@@ -788,7 +788,7 @@ window.addEventListener('load',function(){
   }
   setCameraFollowRobot(false);
 });
-window.TelemarkSimulatorBase.installLegacy({
+window.TelemarkSimulatorBase.installEmbedded({
   state: gamepad,
   onInput: updateAxisReadout,
   onThemeChange: applySimulatorTheme

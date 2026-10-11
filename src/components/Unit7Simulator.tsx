@@ -196,6 +196,7 @@ export default function Unit7Simulator({lesson}: Unit7SimulatorProps): React.JSX
   const project = LESSON_PROJECT[lesson];
   const params = new URLSearchParams({
     code: LESSON_CODE[lesson],
+    lesson,
   });
   if (project) params.set('project', JSON.stringify(project));
   const simulatorSrc = `${useBaseUrl('/simulator/unit7.html')}?${params.toString()}`;

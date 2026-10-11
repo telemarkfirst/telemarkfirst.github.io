@@ -140,6 +140,7 @@ type Unit2SimulatorProps = {
 export default function Unit2Simulator({lesson}: Unit2SimulatorProps): React.JSX.Element {
   const params = new URLSearchParams({
     code: LESSON_STARTER_CODE[lesson],
+    lesson,
   });
   const simulatorSrc = `${useBaseUrl('/simulator/unit2.html')}?${params.toString()}`;
   const simulatorTitle = 'Telemark Unit 2 Simulator';

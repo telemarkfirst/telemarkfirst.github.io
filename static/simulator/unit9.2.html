@@ -26,6 +26,8 @@
     let scaleMax = 1.0;
     const pivotY = 2.35;
     const pivotZ = 0.05;
+    const HARD_STOP_MIN_POS = 0.3;
+    const HARD_STOP_MAX_POS = 0.9;
     let currentAngle = 0.5 * Math.PI;
     let targetAngle = 0.5 * Math.PI;
     let collisionTriggered = false;
@@ -120,7 +122,6 @@
                 font-weight: 800;
                 font-size: 1.1rem;
                 white-space: nowrap;
-                box-shadow: 0 0 30px rgba(255,0,0,.6);
                 opacity: 0;
                 visibility: hidden;
                 pointer-events: none;
@@ -131,11 +132,6 @@
                 opacity: 1;
                 visibility: visible;
                 transform: translateX(-50%) scale(1);
-                animation: simCollisionPulse .35s alternate infinite;
-            }
-            @keyframes simCollisionPulse {
-                from { transform: translateX(-50%) scale(1); }
-                to { transform: translateX(-50%) scale(1.08); }
             }
         `;
         document.head.appendChild(style);
@@ -191,7 +187,7 @@
     }
 
     function triggerCollision(rawPos) {
-        const hitLowerBar = rawPos < 0.295;
+        const hitLowerBar = rawPos < HARD_STOP_MIN_POS;
         const zone = hitLowerBar ? "lower" : "upper";
         if (zone === lastCollisionZone) return;
 
@@ -248,10 +244,15 @@
         const rawPos = typeof physicalPos === "number"
             ? physicalPos
             : scaleMin + logicalPos * (scaleMax - scaleMin);
-        targetAngle = rawPos * Math.PI;
+        // Keep reporting the unsafe command below, but let the rendered arm
+        // stop where the real metal bars would stop it.
+        targetAngle = THREE.MathUtils.clamp(rawPos, HARD_STOP_MIN_POS, HARD_STOP_MAX_POS) * Math.PI;
 
         // Physical collision check: raw travel past the hard stops causes damage.
-        if (rawPos < 0.295 || rawPos > 0.905) {
+        // scaleRange(0.3, 0.9) can compute 0.9000000000000001 at its endpoint.
+        // Treat that floating-point rounding as a safe command.
+        const tolerance = 1e-6;
+        if (rawPos < HARD_STOP_MIN_POS - tolerance || rawPos > HARD_STOP_MAX_POS + tolerance) {
             triggerCollision(rawPos);
         } else if (lastCollisionZone) {
             lastCollisionZone = null;

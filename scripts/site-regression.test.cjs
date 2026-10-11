@@ -42,8 +42,22 @@ const markCompleteCss = read('src/components/HomepageFeatures/MarkComplete.modul
 const simulatorFrame = read('src/components/SimulatorFrame.tsx');
 assert.match(simulatorFrame, /event\.key === PROGRESS_STORAGE_KEY/, 'simulator frames must ignore code-library storage changes');
 assert.match(simulatorFrame, /telemark:simulator-fullscreen-state/, 'simulators must receive host fullscreen state');
-assert.match(customCss, /simulator-fullscreen-shell:fullscreen \.simulator-wrapper\s*\{[\s\S]*height:\s*calc\(100vh - 4rem\)/);
-assert.match(customCss, /simulator-fullscreen-shell:fullscreen \.telemark-simulator\s*\{[\s\S]*height:\s*100%[\s\S]*max-height:\s*none/);
+assert.match(
+  customCss,
+  /\.simulator-fullscreen-shell:fullscreen\s*\{[\s\S]*display:\s*grid[\s\S]*height:\s*100dvh[\s\S]*overflow:\s*hidden/,
+  'the full-screen shell must expose one stable dynamic-viewport grid instead of animating iframe height',
+);
+assert.match(
+  customCss,
+  /simulator-fullscreen-shell:fullscreen \.simulator-wrapper\s*\{[\s\S]*height:\s*auto[\s\S]*min-height:\s*0/,
+  'the full-screen wrapper must consume the remaining grid row without viewport-height arithmetic',
+);
+assert.match(
+  customCss,
+  /simulator-fullscreen-shell:fullscreen \.telemark-simulator\s*\{[\s\S]*height:\s*100%\s*!important[\s\S]*min-height:\s*0\s*!important[\s\S]*max-height:\s*none/,
+  'the full-screen iframe must fit its stable wrapper without inherited minimum-height conflicts',
+);
+assert.doesNotMatch(customCss, /\.telemark-simulator\s*\{[\s\S]{0,240}transition:\s*height/, 'iframe height must not animate during full-screen entry');
 const authenticatedNavigator = read('src/components/AuthenticatedSimulatorNavigator.tsx');
 const askPanel = read('src/components/ui/AskPanel.tsx');
 const adminPage = read('src/pages/admin.tsx');

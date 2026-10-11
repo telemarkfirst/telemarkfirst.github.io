@@ -7,6 +7,7 @@
 <title>Telemark Unit 10.5 Simulator</title>
 
 <script src="simulator_base.js"></script>
+<script src="./cad-parts.js"></script>
 
 <style>
     :root{
@@ -158,12 +159,10 @@
 
     .step.active .step-dot{
         background:#3b82f6;
-        box-shadow:0 0 16px #3b82f6;
     }
 
     .step.complete .step-dot{
         background:#22c55e;
-        box-shadow:0 0 16px #22c55e;
     }
 
     .overlay{
@@ -344,6 +343,8 @@ let stepElements = [];
 let sliderInner;
 let gearRack;
 let gameSphere;
+let generatedSlide;
+let cadSlide;
 
 let startResolver = null;
 let executionToken = 0;
@@ -772,6 +773,14 @@ function buildScene(){
 
         scene.add(floor);
 
+        generatedSlide =
+            new THREE.Group();
+
+        generatedSlide.name =
+            "unit-10-5-procedural-slide-fallback";
+
+        scene.add(generatedSlide);
+
         const robot =
             new THREE.Mesh(
                 new THREE.BoxGeometry(
@@ -838,7 +847,7 @@ function buildScene(){
             0
         );
 
-        scene.add(sliderInner);
+        generatedSlide.add(sliderInner);
 
         gearRack =
             new THREE.Group();
@@ -875,7 +884,24 @@ function buildScene(){
             0
         );
 
-        scene.add(gearRack);
+        generatedSlide.add(gearRack);
+
+        if(window.TelemarkCadParts){
+            window.TelemarkCadParts.mount(
+                "quixilver-slide",
+                {
+                    THREE:THREE,
+                    parent:scene,
+                    position:[3.3,.15,0],
+                    rotation:[0,0,0],
+                    fit:2.8,
+                    fallback:[robot,outerTube,generatedSlide]
+                }
+            ).then(rig=>{
+                cadSlide = rig;
+                updateSliderVisual();
+            }).catch(()=>{});
+        }
 
         gameSphere =
             new THREE.Mesh(
@@ -953,6 +979,10 @@ function updateSliderVisual(){
 
     const extension =
         ratio * 3.6;
+
+    if(cadSlide){
+        cadSlide.setProgress(ratio);
+    }
 
     sliderInner.position.x =
         2.9 + extension;
@@ -1526,6 +1556,7 @@ window.onStart = function(){
 	
 	window.onStop = function(){
 
+    const wasRunning = sim.running;
     executionToken++;
     sim.running = false;
     sim.active = false;
@@ -1549,7 +1580,11 @@ window.onStart = function(){
     sim.startRequested = false;
     compiledProgram = null;
 
-    pushSliderTelemetry("Stopped");
+    // Keep a compile/runtime diagnostic visible when the Driver Station
+    // performs its stop cleanup after a failed run.
+    if(wasRunning && !document.querySelector("#sim-telemetry-log .sim-telemetry-error")){
+        pushSliderTelemetry("Stopped");
+    }
     updatePanel();
 };
 

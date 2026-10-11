@@ -124,6 +124,7 @@ function createPageHarness(relativeFile) {
     },
     createRuntime: (...args) => context.TelemarkJava.createRuntime(...args),
     installLegacy() {},
+    installEmbedded() {},
   };
   vm.runInContext(fs.readFileSync(path.join(repoRoot, 'static/simulator/telemark-project.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(repoRoot, 'static/simulator/telemark-project-checks.js'), 'utf8'), context);

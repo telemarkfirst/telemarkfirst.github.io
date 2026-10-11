@@ -188,7 +188,7 @@
     }
     button:active { transform: translateY(1px); }
 
-    #btn-main { flex: 1; background: var(--accent); color: white; }
+    #btn-main { flex: 1; background: var(--accent); color: #071019; }
     #btn-main:hover { background: var(--accent-2); }
     #btn-main:disabled {
       background: #444;
@@ -197,7 +197,7 @@
       transform: none;
     }
 
-    #btn-stop { flex: 1; background: var(--danger); color: white; }
+    #btn-stop { flex: 1; background: #b4232c; color: white; }
     #btn-stop:hover { filter: brightness(1.1); }
 
     .gamepad-panel {
@@ -374,7 +374,7 @@
     .hint {
       display: none;
       background: rgba(255,204,0,0.12);
-      border-left: 4px solid var(--warn);
+      border: 1px solid var(--warn);
       padding: 10px 12px;
       color: var(--warn);
       border-radius: 6px;
@@ -383,9 +383,21 @@
 
     .hint.warning {
       background: rgba(204,0,0,0.12);
-      border-left-color: var(--danger);
+      border-color: var(--danger);
       color: #ff6666;
     }
+
+  @media (max-width: 640px) {
+    html[data-sim-workspace="true"] .sim-widget-coding #editor-container {
+      position: absolute !important;
+      inset: 0 !important;
+      height: 100% !important;
+      min-height: 100% !important;
+    }
+    html[data-sim-workspace="true"] .sim-widget-coding .code-wrapper {
+      min-height: 280px;
+    }
+  }
   </style>
   <script src="./telemark-java.js"></script>
   <script src="./telemark-editor.js"></script>
@@ -403,7 +415,6 @@
       <div class="editor-title">Telemark Unit 2 Simulator</div>
       <div class="editor-subtitle">OpMode Structure · Full gamepad · Smart editing · Live telemetry</div>
     </div>
-    <div class="editor-subtitle">Single-file build</div>
   </div>
 
   <div class="code-wrapper">
@@ -453,7 +464,7 @@ public class TeleOpTest extends OpMode {
 
     <div class="controller-wrap" id="controller-wrap">
       <img class="controller-img" alt="FTC controller"
-        src="https://resource.logitechg.com/w_776,h_437,ar_16:9,c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/gaming/en/products/f310/f310-feature-3.png">
+        src="./gamepad-controller-original.jpg">
 
       <!-- Left Stick -->
       <div class="overlay stick-zone-left" id="stick-zone-left"></div>
@@ -481,7 +492,7 @@ public class TeleOpTest extends OpMode {
   </div>
 
   <div class="telemetry-panel" id="telemetry-log">
-    <div style="color:#666; font-style:italic;">Telemetry will appear here...</div>
+    <div style="color:#9aa7b5; font-style:italic;">Telemetry will appear here...</div>
   </div>
 
   <div id="hint-container">

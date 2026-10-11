@@ -42,6 +42,7 @@ code{font-family:"JetBrains Mono","Fira Code","Consolas",monospace}
 .bottom-bar{background:#071019;border-top:1px solid #243746;padding:10px;display:flex;flex-direction:column;gap:8px;flex-shrink:0}
 .controls-row{display:flex;gap:8px}
 .controls-row button{flex:1;padding:10px;border-radius:6px;border:none;font-size:.9rem;font-weight:700;cursor:pointer;color:#fff}
+.controls-row .btn-init{color:#031019}
 .ds-status{display:flex;justify-content:space-between;align-items:center;font-family:monospace;font-size:.85rem}
 .ds-state{font-weight:700}.ds-timer{color:#569cd6}
 /* power bar */
@@ -55,6 +56,8 @@ code{font-family:"JetBrains Mono","Fira Code","Consolas",monospace}
 #editor-header{padding:8px 12px;background:#14141e;border-bottom:1px solid #2a2a3a;font-size:.8rem;font-weight:600;color:#888;display:flex;align-items:center;gap:6px;flex-shrink:0}
 #editor-header span{color:#22d3ee}
 #editor-wrap{flex:1;overflow:hidden}
+#editor-wrap .basic-code-editor{display:block;width:100%;height:100%;min-height:210px;resize:none;padding:12px 14px;border:0;outline:0;background:#071019;color:#eaf8ff;font:13px/1.5 "JetBrains Mono","Fira Code","Consolas",monospace;tab-size:4}
+#editor-wrap .basic-code-editor:focus-visible{outline:2px solid #22d3ee;outline-offset:-2px}
 #right-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
 #scene-wrap{flex:1;min-height:300px;position:relative}
 #scene-container{width:100%;height:100%;overflow:hidden;background:#0a0a10}
@@ -66,7 +69,7 @@ code{font-family:"JetBrains Mono","Fira Code","Consolas",monospace}
 .telem-label{font-weight:700;font-size:.85rem;color:#aaa;text-transform:uppercase;letter-spacing:.5px}
 .telem-body{flex:1;overflow:auto;font-family:"Consolas","Courier New",monospace;font-size:.8rem;line-height:1.6}
 .telem-error{color:#ff4444;padding:8px;background:rgba(255,68,68,.1);border-radius:4px;margin-bottom:8px;border:1px solid rgba(255,68,68,.3)}
-.telem-empty{color:#555;font-style:italic}
+.telem-empty{color:#9fb2c2;font-style:italic}
 .telem-row{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.05)}
 .telem-key{color:#4488ff}.telem-val{color:#88ff88}
 .challenge-panel{background:#0b1118;border:1px solid #243746;border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:12px;overflow:auto;max-height:34vh}
@@ -88,7 +91,7 @@ code{font-family:"JetBrains Mono","Fira Code","Consolas",monospace}
 .hint-warning{background:rgba(255,200,0,.1);border:1px solid rgba(255,200,0,.3);color:#ffcc44}
 #badge-strip{display:flex;gap:8px;padding:10px}
 .hw-badge{padding:6px 12px;border-radius:8px;font-size:.82rem;font-weight:700;display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.04);background:#0f0f14;color:#cfe}
-#gamepad-card{position:fixed;bottom:12px;right:12px;width:380px;min-width:240px;background:#0b1118;border:1px solid #243746;border-radius:12px;z-index:1000;display:flex;flex-direction:column;box-shadow:0 6px 24px rgba(0,0,0,.5);overflow:hidden}
+#gamepad-card{position:fixed;bottom:12px;right:12px;width:380px;min-width:240px;background:#0b1118;border:1px solid #243746;border-radius:12px;z-index:1000;display:flex;flex-direction:column;overflow:hidden}
 #gamepad-titlebar{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#0d1721;border-bottom:1px solid #243746;cursor:grab;user-select:none;flex-shrink:0}
 #gamepad-titlebar-label{font-weight:700;font-size:.9rem;color:#fff;display:flex;align-items:center;gap:6px}
 #gp-collapse-btn{width:24px;height:24px;padding:0;border-radius:4px;background:#101d29;border:1px solid #243746;color:#cbd5e1;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
@@ -96,15 +99,15 @@ code{font-family:"JetBrains Mono","Fira Code","Consolas",monospace}
 .controller-wrap{width:100%;position:relative;aspect-ratio:768/512;border-radius:14px;overflow:hidden;background:#0f0f0f;touch-action:none;user-select:none}
 .controller-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:1}
 .btn-overlay{position:absolute;border-radius:50%;border:2px solid rgba(255,255,255,.08);background:rgba(255,255,255,.01);cursor:pointer;opacity:.4;z-index:4;touch-action:none}
-.btn-overlay.pressed{background:rgba(255,255,255,.18);box-shadow:0 0 0 2px rgba(255,255,255,.25);opacity:1}
+.btn-overlay.pressed{background:rgba(255,255,255,.18);outline:2px solid rgba(255,255,255,.35);opacity:1}
 .gp-stick-zone{position:absolute;border-radius:50%;background:transparent;cursor:grab;z-index:4;touch-action:none}
-.gp-stick-zone.active{background:rgba(255,255,255,.12);box-shadow:0 0 0 2px rgba(255,255,255,.2)}
+.gp-stick-zone.active{background:rgba(255,255,255,.12);outline:2px solid rgba(255,255,255,.3)}
 .gp-stick-knob{position:absolute;left:50%;top:50%;width:52%;height:52%;border-radius:50%;transform:translate(-50%,-50%);background:radial-gradient(circle at 35% 35%,rgba(80,80,80,.75),rgba(12,12,12,.55) 70%);border:1px solid rgba(255,255,255,.14);pointer-events:none;opacity:.55}
 .gp-trigger{position:absolute;top:0;width:10%;height:14%;transform:translate(-50%,0);background:rgba(0,0,0,.38);border:1px solid rgba(255,255,255,.15);border-radius:6px;cursor:pointer;overflow:hidden;z-index:5;touch-action:none}
 .gp-trigger-fill{position:absolute;left:0;right:0;bottom:0;height:0%;background:linear-gradient(to top,#38bdf8,#22d3ee)}
 .dpad-overlay{position:absolute;left:21.5%;top:41%;width:16%;height:24%;transform:translate(-50%,-50%);pointer-events:none;z-index:4}
 .dpad-btn{position:absolute;width:33%;height:33%;background:rgba(255,255,255,.01);border:1px solid rgba(255,255,255,.06);pointer-events:auto;cursor:pointer}
-.dpad-btn.pressed{background:rgba(255,255,255,.18);box-shadow:0 0 0 2px rgba(255,255,255,.18)}
+.dpad-btn.pressed{background:rgba(255,255,255,.18);outline:2px solid rgba(255,255,255,.3)}
 @media (max-width:900px){
   #left-panel{flex:1 1 auto;width:auto;min-width:0;height:100%;border-right:1px solid #2a2a3a;border-bottom:none}
   #right-panel{flex:0 0 clamp(260px,34vw,330px);width:clamp(260px,34vw,330px);min-width:260px;height:100%}
@@ -133,7 +136,7 @@ code{font-family:"JetBrains Mono","Fira Code","Consolas",monospace}
 <script src="telemark-project-checks.js"></script>
 <link rel="stylesheet" href="./telemark-project.css"/>
   <script src="./gamepad-controls.js"></script>
-  <script src='./simulator_base.js' data-telemark-mode='legacy'></script>
+  <script src='./simulator_base.js' data-telemark-mode='embedded'></script>
 <link href="telemark-sim.css" rel="stylesheet"/>
 </head>
 <body>
@@ -176,7 +179,7 @@ code{font-family:"JetBrains Mono","Fira Code","Consolas",monospace}
   </div>
   <div id="gamepad-body">
     <div class="controller-wrap" id="controller-wrap">
-      <img class="controller-img" alt="controller" src="https://resource.logitechg.com/w_776,h_437,ar_16:9,c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/gaming/en/products/f310/f310-feature-3.png">
+      <img class="controller-img" alt="FTC-style gamepad" src="./gamepad-controller-original.jpg">
       <div id="trigger-left" class="gp-trigger" style="left:21%"><div class="gp-trigger-fill"></div></div>
       <div id="trigger-right" class="gp-trigger" style="left:79%"><div class="gp-trigger-fill"></div></div>
       <div id="stick-left" class="gp-stick-zone" style="left:35.5%;top:65.5%;width:17%;height:24%;transform:translate(-50%,-50%)"><div class="gp-stick-knob"></div></div>
@@ -319,7 +322,37 @@ function installCodeMirrorAutocomplete(cm){
   });
   cm.on('keydown',function(_cm,e){e.stopPropagation();});
 }
-function initEditor(){cmEditor=CodeMirror(document.getElementById('editor-wrap'),{value:STARTER_CODE,mode:'text/x-java',theme:'dracula',lineNumbers:true,indentUnit:4,tabSize:4,indentWithTabs:false,extraKeys:{Tab:'indentMore','Shift-Tab':'indentLess'}});installCodeMirrorAutocomplete(cmEditor);cmEditor.on('change',function(){state.code=cmEditor.getValue();state.challengeRequirements=[false,false,false,false];renderChallenge()})}
+function initEditor(){
+  var wrap=document.getElementById('editor-wrap');
+  if(typeof CodeMirror!=='function'){
+    var textarea=document.createElement('textarea');
+    var changeListeners=[];
+    textarea.className='basic-code-editor';
+    textarea.id='unit91-basic-code-editor';
+    textarea.setAttribute('aria-label','Java code editor');
+    textarea.spellcheck=false;
+    textarea.value=STARTER_CODE;
+    function notifyChange(){
+      state.code=textarea.value;
+      state.challengeRequirements=[false,false,false,false];
+      renderChallenge();
+      changeListeners.forEach(function(listener){listener(cmEditor)});
+    }
+    textarea.addEventListener('input',notifyChange);
+    wrap.appendChild(textarea);
+    cmEditor={
+      getValue:function(){return textarea.value},
+      setValue:function(value){textarea.value=String(value);notifyChange()},
+      on:function(event,listener){if(event==='change')changeListeners.push(listener)},
+      refresh:function(){},
+      focus:function(){textarea.focus()}
+    };
+    return;
+  }
+  cmEditor=CodeMirror(wrap,{value:STARTER_CODE,mode:'text/x-java',theme:'dracula',lineNumbers:true,indentUnit:4,tabSize:4,indentWithTabs:false,extraKeys:{Tab:'indentMore','Shift-Tab':'indentLess'}});
+  installCodeMirrorAutocomplete(cmEditor);
+  cmEditor.on('change',function(){state.code=cmEditor.getValue();state.challengeRequirements=[false,false,false,false];renderChallenge()});
+}
 
 // Rendering
 function renderTelemetry(){
@@ -672,7 +705,7 @@ window.addEventListener('resize',function(){var cw=ct.clientWidth,ch=ct.clientHe
 
 function init(){initEditor();renderTelemetry();renderChallenge();renderBadges();buildScene()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
-if (window.TelemarkSimulatorBase) window.TelemarkSimulatorBase.installLegacy({
+if (window.TelemarkSimulatorBase) window.TelemarkSimulatorBase.installEmbedded({
   state: state.gamepad,
   onThemeChange: function(theme) {
     if (ss.scene) window.TelemarkSimulatorBase.themeThreeScene(ss.scene, theme);

@@ -844,9 +844,6 @@ public class ZoneDefinitions extends OpMode {
       message = "Zones should be 60x60 pixels - large enough to capture the spike mark reliably";
     } else if (!/telemetry\s*\.\s*update\s*\(\s*\)/.test(getCodeSafe())) {
       message = "Call telemetry.update() to send data to the Driver Station";
-    } else if (/static\s+final\s+Rect/.test(getCodeSafe())) {
-      message = "Defining zones as fields is fine too - they could also be static final constants in a config class";
-      type = "info";
     }
 
     warning.classList.toggle("error", type === "error");

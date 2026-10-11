@@ -155,6 +155,49 @@ function testHardwareAndTelemetry() {
   assert.deepEqual(telemetry, [['Power', 0.5]]);
 }
 
+function testDigitalChannelFixtureState() {
+  const runtime = TelemarkJava.createRuntime();
+  const channel = runtime.hardwareMap.get('DigitalChannel', 'storage_full');
+  assert.equal(channel.getState(), true, 'an unpressed active-low switch starts high');
+  channel._setState(false);
+  assert.equal(channel.getState(), false, 'the grading fixture can press a digital switch');
+  channel._setState(true);
+  assert.equal(channel.getState(), true, 'the grading fixture can release the switch');
+}
+
+function testInheritedUnqualifiedMembers() {
+  const runtime = TelemarkJava.createRuntime({gamepad1: {a: true}});
+  const program = compile(`
+    public class InheritanceTest extends OpMode {
+      Transfer transfer = new Transfer();
+      public void init() { transfer.init(hardwareMap); }
+      public void loop() {
+        if (gamepad1.a) transfer.collect();
+        else transfer.reverse();
+      }
+    }
+    class PoweredMechanism {
+      protected DcMotor motor;
+      public void init(HardwareMap map) { motor = map.get(DcMotor.class, "transfer"); }
+      public void setPower(double power) { motor.setPower(power); }
+    }
+    class Intake extends PoweredMechanism {
+      public void collect() { setPower(0.5); }
+    }
+    class Transfer extends Intake {
+      public void reverse() { motor.setPower(-0.5); }
+    }
+  `, runtime);
+  program.methods.init();
+  program.methods.loop();
+  assert.equal(runtime.devices.get('DcMotor:transfer').getPower(), 0.5,
+    'a child method should call its inherited method without this.');
+  runtime.gamepad1.a = false;
+  program.methods.loop();
+  assert.equal(runtime.devices.get('DcMotor:transfer').getPower(), -0.5,
+    'a grandchild method should read an inherited field without this.');
+}
+
 function testJavaMathHelpers() {
   const program = compile(`
     import java.lang.Math;
@@ -698,6 +741,8 @@ async function main() {
   testStructuralMetadata();
   testEnumsAndSwitch();
   testHardwareAndTelemetry();
+  testDigitalChannelFixtureState();
+  testInheritedUnqualifiedMembers();
   testJavaMathHelpers();
   testElapsedTimeFieldInitializer();
   testClassFieldInitializersPersistAcrossLoops();

@@ -97,34 +97,6 @@
   #sim-right-panel .u132-node.active {
     color: #93c5fd;
     border-color: #22d3ee;
-    box-shadow: 0 0 12px rgba(34, 211, 238, 0.2);
-  }
-
-  #sim-right-panel .u132-stats {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-    margin-top: 10px;
-  }
-
-  #sim-right-panel .u132-stat {
-    border: 1px solid #2a2a3a;
-    border-radius: 8px;
-    background: #0d0d12;
-    padding: 8px;
-  }
-
-  #sim-right-panel .u132-label {
-    color: #888;
-    font-size: 0.74rem;
-    text-transform: uppercase;
-    letter-spacing: 0;
-  }
-
-  #sim-right-panel .u132-value {
-    color: #fff;
-    font-weight: 700;
-    margin-top: 2px;
   }
 
   #sim-right-panel .u132-warning {
@@ -147,38 +119,6 @@
     font-size: 0.78rem;
   }
 
-  #sim-scene-container .u132-badge {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    z-index: 5;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 9px 12px;
-    border: 1px solid #2a2a3a;
-    border-radius: 8px;
-    background: rgba(7, 7, 10, 0.88);
-    color: #cbd5e1;
-    font-weight: 700;
-    pointer-events: none;
-  }
-
-  #sim-scene-container .u132-origin {
-    position: absolute;
-    left: 12px;
-    bottom: 12px;
-    z-index: 5;
-    max-width: calc(100% - 24px);
-    padding: 9px 12px;
-    border: 1px solid #2a2a3a;
-    border-radius: 8px;
-    background: rgba(7, 7, 10, 0.88);
-    color: #e0e0e0;
-    font-size: 0.82rem;
-    pointer-events: none;
-  }
-
   #sim-scene-container .u132-success {
     position: absolute;
     top: 12px;
@@ -197,6 +137,7 @@
   }
 </style>
 <script src="./simulator_base.js"></script>
+<script src="./cad-parts.js"></script>
   <script src="./telemark-java.js"></script>
   <script src="./telemark-editor.js"></script>
   <script src="./gamepad-controls.js"></script>
@@ -279,7 +220,9 @@ public class GrabberOOP extends OpMode {
   let sceneRoot;
   let leftFinger;
   let rightFinger;
+  let cadClaw;
   let orb;
+  let orbAnchoredToCad = false;
   let leftMaterial;
   let rightMaterial;
   let orbMaterial;
@@ -376,22 +319,10 @@ public class GrabberOOP extends OpMode {
     const sceneContainer = el("sim-scene-container");
     if (!rightPanel || !sceneContainer) return;
 
-    ["u132-panel", "u132-state-badge", "u132-origin", "u132-success"].forEach(function (id) {
+    ["u132-panel", "u132-success"].forEach(function (id) {
       const old = el(id);
       if (old) old.remove();
     });
-
-    const badge = document.createElement("div");
-    badge.id = "u132-state-badge";
-    badge.className = "u132-badge";
-    badge.innerHTML = '<i class="fa-solid fa-lock-open"></i> OPEN';
-    sceneContainer.appendChild(badge);
-
-    const origin = document.createElement("div");
-    origin.id = "u132-origin";
-    origin.className = "u132-origin";
-    origin.innerHTML = 'GrabberMechanism.open() <i class="fa-solid fa-arrow-right"></i> BaseServoMechanism.setPosition(0.1)';
-    sceneContainer.appendChild(origin);
 
     const success = document.createElement("div");
     success.id = "u132-success";
@@ -442,16 +373,6 @@ public class GrabberOOP extends OpMode {
         <div><i class="fa-solid fa-arrow-right"></i></div>
         <div class="u132-node" id="u132-chain-4">servo.setPosition(0.1)</div>
       </div>
-      <div class="u132-stats">
-        <div class="u132-stat">
-          <div class="u132-label">Position</div>
-          <div class="u132-value" id="u132-position">0.10 (OPEN)</div>
-        </div>
-        <div class="u132-stat">
-          <div class="u132-label">Last Method</div>
-          <div class="u132-value" id="u132-method">grabber.open()</div>
-        </div>
-      </div>
       <div class="u132-legend">
         <div><i class="fa-solid fa-plus"></i> public</div>
         <div><i class="fa-solid fa-hashtag"></i> protected</div>
@@ -465,6 +386,7 @@ public class GrabberOOP extends OpMode {
   function setupScene() {
     if (!window.THREE || !window.scene) return;
     if (sceneRoot) window.scene.remove(sceneRoot);
+    cadClaw = null;
 
     sceneRoot = new THREE.Group();
     sceneRoot.name = "unit13_2_scene";
@@ -513,6 +435,24 @@ public class GrabberOOP extends OpMode {
     sceneRoot.add(leftFinger);
     sceneRoot.add(rightFinger);
 
+    if (window.TelemarkCadParts) {
+      window.TelemarkCadParts.mount("quixilver-claw", {
+        THREE: THREE,
+        parent: sceneRoot,
+        position: [0, 0.18, -1.34],
+        rotation: [0, Math.PI, 0],
+        fit: 2.05,
+        fallback: [body, leftFinger, rightFinger]
+      }).then(function (rig) {
+        cadClaw = rig;
+        if (orb) {
+          cadClaw.follow(orb, "grip", { offset: [0, 0, -0.35] });
+          orbAnchoredToCad = true;
+        }
+        cadClaw.setProgress(THREE.MathUtils.clamp((state.position - 0.1) / 0.8, 0, 1));
+      }).catch(function () {});
+    }
+
     orbMaterial = new THREE.MeshStandardMaterial({
       color: 0x9333ea,
       roughness: 0.4,
@@ -544,6 +484,9 @@ public class GrabberOOP extends OpMode {
     if (!window.THREE || !leftFinger || !rightFinger) return;
 
     state.position += (state.targetPosition - state.position) * 0.22;
+    if (cadClaw) {
+      cadClaw.setProgress(THREE.MathUtils.clamp((state.position - 0.1) / 0.8, 0, 1));
+    }
     const openAmount = 1 - state.position;
     const spread = 0.48 + openAmount * 1.25;
     leftFinger.position.set(-spread, 0.55, -1.35);
@@ -561,10 +504,10 @@ public class GrabberOOP extends OpMode {
     if (orbMaterial) {
       if (state.position >= 0.82) {
         orbMaterial.emissive.setHex(0x0b3d1d);
-        orb.position.z = -1.35;
+        orb.position.z = orbAnchoredToCad ? 0 : -1.35;
       } else {
         orbMaterial.emissive.setHex(0x000000);
-        orb.position.z = -1.7;
+        orb.position.z = orbAnchoredToCad ? -0.35 : -1.7;
       }
     }
 
@@ -608,32 +551,6 @@ public class GrabberOOP extends OpMode {
   }
 
   function updatePanel() {
-    const positionText = el("u132-position");
-    const methodText = el("u132-method");
-    const badge = el("u132-state-badge");
-    const origin = el("u132-origin");
-    const label = state.targetPosition <= 0.2 ? "OPEN" : state.targetPosition >= 0.8 ? "CLOSED" : "MOVING";
-
-    if (positionText) positionText.textContent = state.targetPosition.toFixed(2) + " (" + label + ")";
-    if (methodText) methodText.textContent = state.lastMethod;
-
-    if (badge) {
-      const isClosed = state.targetPosition >= 0.8;
-      badge.innerHTML = isClosed
-        ? '<i class="fa-solid fa-lock"></i> GRIPPED'
-        : '<i class="fa-solid fa-lock-open"></i> OPEN';
-      badge.style.color = isClosed ? "#22cc66" : "#cbd5e1";
-      badge.style.borderColor = isClosed ? "#22cc66" : "#2a2a3a";
-    }
-
-    if (origin) {
-      if (state.targetPosition >= 0.8) {
-        origin.innerHTML = 'GrabberMechanism.close() <i class="fa-solid fa-arrow-right"></i> BaseServoMechanism.setPosition(' + grabberBehavior.close.toFixed(2) + ')';
-      } else {
-        origin.innerHTML = 'GrabberMechanism.open() <i class="fa-solid fa-arrow-right"></i> BaseServoMechanism.setPosition(' + grabberBehavior.open.toFixed(2) + ')';
-      }
-    }
-
     for (let i = 1; i <= 4; i++) {
       const node = el("u132-chain-" + i);
       if (node) node.classList.toggle("active", state.chainTimer > 0);

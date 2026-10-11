@@ -90,35 +90,6 @@
   #sim-right-panel .u131-node.active {
     color: #22cc66;
     border-color: #22cc66;
-    box-shadow: 0 0 12px rgba(34, 204, 102, 0.24);
-  }
-
-  #sim-right-panel .u131-stats {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-    margin-top: 10px;
-  }
-
-  #sim-right-panel .u131-stat {
-    border: 1px solid #2a2a3a;
-    border-radius: 8px;
-    background: #0d0d12;
-    padding: 8px;
-    min-width: 0;
-  }
-
-  #sim-right-panel .u131-label {
-    color: #888;
-    font-size: 0.74rem;
-    text-transform: uppercase;
-    letter-spacing: 0;
-  }
-
-  #sim-right-panel .u131-value {
-    color: #fff;
-    font-weight: 700;
-    margin-top: 2px;
   }
 
   #sim-right-panel .u131-warning {
@@ -130,23 +101,6 @@
     background: rgba(255, 204, 102, 0.08);
     color: #ffcc66;
     font-size: 0.82rem;
-  }
-
-  #sim-scene-container .u131-badge {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    z-index: 5;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 9px 12px;
-    border: 1px solid #2a2a3a;
-    border-radius: 8px;
-    background: rgba(7, 7, 10, 0.88);
-    color: #cbd5e1;
-    font-weight: 700;
-    pointer-events: none;
   }
 
   #sim-scene-container .u131-success {
@@ -167,6 +121,7 @@
   }
 </style>
 <script src="./simulator_base.js"></script>
+<script src="./cad-parts.js"></script>
   <script src="./telemark-java.js"></script>
   <script src="./telemark-editor.js"></script>
   <script src="./gamepad-controls.js"></script>
@@ -243,6 +198,7 @@ public class IntakeOOP extends OpMode {
 
   let sceneRoot;
   let roller;
+  let cadIntake;
   let rollerMaterial;
   let servoDevice;
   let animationRegistered = false;
@@ -338,16 +294,8 @@ public class IntakeOOP extends OpMode {
 
     const oldPanel = el("u131-panel");
     if (oldPanel) oldPanel.remove();
-    const oldBadge = el("u131-state-badge");
-    if (oldBadge) oldBadge.remove();
     const oldSuccess = el("u131-success");
     if (oldSuccess) oldSuccess.remove();
-
-    const badge = document.createElement("div");
-    badge.id = "u131-state-badge";
-    badge.className = "u131-badge";
-    badge.innerHTML = '<i class="fa-solid fa-stop"></i> STOPPED';
-    sceneContainer.appendChild(badge);
 
     const success = document.createElement("div");
     success.id = "u131-success";
@@ -389,16 +337,6 @@ public class IntakeOOP extends OpMode {
         <div><i class="fa-solid fa-arrow-right"></i></div>
         <div class="u131-node" id="u131-chain-result"><i class="fa-solid fa-rotate"></i><br>roller</div>
       </div>
-      <div class="u131-stats">
-        <div class="u131-stat">
-          <div class="u131-label">Servo Power</div>
-          <div class="u131-value" id="u131-servo-power">0.00</div>
-        </div>
-        <div class="u131-stat">
-          <div class="u131-label">Current Method</div>
-          <div class="u131-value" id="u131-method">idle</div>
-        </div>
-      </div>
       <div class="u131-warning" id="u131-warning"></div>
     `;
     rightPanel.appendChild(panel);
@@ -407,6 +345,7 @@ public class IntakeOOP extends OpMode {
   function setupScene() {
     if (!window.THREE || !window.scene) return;
     if (sceneRoot) window.scene.remove(sceneRoot);
+    cadIntake = null;
 
     sceneRoot = new THREE.Group();
     sceneRoot.name = "unit13_1_scene";
@@ -460,6 +399,20 @@ public class IntakeOOP extends OpMode {
       roller.add(spoke);
     }
 
+    if (window.TelemarkCadParts) {
+      window.TelemarkCadParts.mount("decode-intake", {
+        THREE: THREE,
+        parent: robot,
+        position: [0, 0.12, -1.72],
+        rotation: [0, Math.PI, 0],
+        fit: 2.25,
+        fallback: [body, roller]
+      }).then(function (rig) {
+        cadIntake = rig;
+        cadIntake.setPower(state.servoPower);
+      }).catch(function () {});
+    }
+
     resetSpheres();
   }
 
@@ -485,9 +438,13 @@ public class IntakeOOP extends OpMode {
     state.spheres.push(sphere);
   }
 
-  function tick() {
+  function tick(_time, dt) {
     if (!window.THREE || !roller) return;
     roller.rotation.x += state.servoPower * 0.22;
+    if (cadIntake) {
+      cadIntake.setPower(state.servoPower);
+      cadIntake.update(Number.isFinite(dt) ? dt : 1 / 60);
+    }
     state.pulse = Math.max(0, state.pulse - 0.016);
     state.chainTimer = Math.max(0, state.chainTimer - 0.016);
 
@@ -555,29 +512,10 @@ public class IntakeOOP extends OpMode {
   }
 
   function updatePanel() {
-    const powerText = el("u131-servo-power");
-    const methodText = el("u131-method");
-    const badge = el("u131-state-badge");
-    if (powerText) powerText.textContent = state.servoPower.toFixed(2);
-    if (methodText) methodText.textContent = state.method;
-    if (badge) {
-      const info = methodInfo();
-      badge.innerHTML = '<i class="fa-solid ' + info.icon + '"></i> ' + info.label;
-      badge.style.color = info.color;
-      badge.style.borderColor = info.color;
-    }
-
     ["gamepad", "method", "servo", "result"].forEach(function (name) {
       const node = el("u131-chain-" + name);
       if (node) node.classList.toggle("active", state.chainTimer > 0);
     });
-  }
-
-  function methodInfo() {
-    if (state.method === "collect") return { icon: "fa-arrow-down", label: "COLLECTING", color: "#22cc66" };
-    if (state.method === "eject") return { icon: "fa-arrow-up", label: "EJECTING", color: "#ef4444" };
-    if (state.method === "stop") return { icon: "fa-stop", label: "STOPPED", color: "#cbd5e1" };
-    return { icon: "fa-pause", label: "IDLE", color: "#cbd5e1" };
   }
 
   function compileMechanismBehavior() {
@@ -724,13 +662,15 @@ public class IntakeOOP extends OpMode {
     const warning = el("u131-warning");
     if (!warning) return;
     let message = "";
+    const collectPower = /setPower\s*\(\s*([-+]?\d+(?:\.\d+)?)\s*\)/.exec(extractMethodBody(classBody, "collect"));
+    const ejectPower = /setPower\s*\(\s*([-+]?\d+(?:\.\d+)?)\s*\)/.exec(extractMethodBody(classBody, "eject"));
     if (/public\s+CRServo\s+intake_servo/.test(code)) {
       message = "Make intake_servo private. Encapsulation means hiding mechanism details inside the class.";
-    } else if (/public\s+void\s+init\s*\(\s*\)/.test(code)) {
+    } else if (/public\s+void\s+init\s*\(\s*\)/.test(classBody)) {
       message = "init() needs a HardwareMap parameter: public void init(HardwareMap hwMap).";
-    } else if (/collect\s*\(\s*\)[\s\S]*?setPower\s*\(\s*(?!0\.8\b)([-+]?\d+(?:\.\d+)?)\s*\)/.test(classBody)) {
+    } else if (collectPower && Number(collectPower[1]) !== 0.8) {
       message = "collect() should set power to 0.8.";
-    } else if (/eject\s*\(\s*\)[\s\S]*?setPower\s*\(\s*0\.8\s*\)/.test(classBody)) {
+    } else if (ejectPower && Number(ejectPower[1]) !== -0.8) {
       message = "eject() should use negative power, -0.8, to run in reverse.";
     } else if (directServoAccessOutsideClass(code)) {
       message = "Bypass detected. Use intake.collect(), intake.eject(), or intake.stop() instead of controlling intake_servo directly from the OpMode.";

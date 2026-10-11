@@ -42,7 +42,7 @@
     left: 12px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     padding: 8px 11px;
     font-weight: 700;
   }
@@ -69,7 +69,7 @@
   #sim-right-panel .u141-title {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     font-weight: 800;
   }
 
@@ -78,7 +78,7 @@
   }
 
   #sim-right-panel .u141-title {
-    margin: 12px 0 8px;
+    margin: 20px 0 6px;
   }
 
   #sim-right-panel .u141-title:first-child {
@@ -104,13 +104,12 @@
   #sim-right-panel .u141-status.good {
     border-color: #22cc66;
     color: #bbf7d0;
-    box-shadow: 0 0 12px rgba(34, 204, 102, 0.16);
   }
 
   #sim-right-panel .u141-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    gap: 10px;
   }
 
   #sim-right-panel .u141-status {
@@ -133,11 +132,11 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
   }
 
   #sim-right-panel .u141-step {
-    padding: 8px;
+    padding: 10px;
     font-size: 0.8rem;
   }
 
@@ -183,8 +182,8 @@
   #sim-right-panel .u141-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 10px;
+    gap: 10px;
+    margin-top: 14px;
   }
 
   #sim-right-panel .u141-button {
@@ -192,7 +191,8 @@
     border-radius: 8px;
     background: rgba(59, 130, 246, 0.12);
     color: #bfdbfe;
-    padding: 8px 10px;
+    min-height: 44px;
+    padding: 10px 12px;
     font-weight: 700;
     cursor: pointer;
   }
@@ -200,6 +200,16 @@
   #sim-right-panel .u141-button:disabled {
     opacity: 0.45;
     cursor: default;
+  }
+
+  @media (max-width: 600px) {
+    #sim-scene-container .u141-scene-status {
+      top: 56px;
+    }
+
+    #sim-scene-container .u141-scene-timeline {
+      display: none;
+    }
   }
 </style>
 <script src="./simulator_base.js"></script>
@@ -365,6 +375,7 @@ public class AprilTagInit extends LinearOpMode {
   };
 
   window.onStop = function () {
+    const telemetryError = document.getElementById("sim-telemetry-log")?.textContent.match(/ERROR:\s*(.+)/)?.[1];
     state.stopRequested = true;
     state.active = false;
     state.waitingForStart = false;
@@ -373,6 +384,9 @@ public class AprilTagInit extends LinearOpMode {
     releaseWaitForStart();
     setPortalState("STOPPED");
     updatePanel();
+    if (telemetryError && typeof _simShowTelemetryError === "function") {
+      _simShowTelemetryError(telemetryError);
+    }
   };
 
   window.onReset = function () {
@@ -851,10 +865,10 @@ public class AprilTagInit extends LinearOpMode {
     }
     updatePanel();
 
-    return new Promise(function (resolve) {
+    return new Promise(function (resolve, reject) {
       state._resolveStart = function () {
         if (!state.active || state.stopRequested) {
-          resolve();
+          reject(new Error("OpMode stopped before Start"));
           return;
         }
         state.waitingForStart = false;
@@ -880,6 +894,7 @@ public class AprilTagInit extends LinearOpMode {
   }
 
   function linearTick() {
+    if (!state.active || state.stopRequested) return Promise.resolve();
     validateCode();
     updatePanel();
     publishStreamTelemetry();
@@ -955,7 +970,7 @@ public class AprilTagInit extends LinearOpMode {
       .replace(/\b(?:final\s+)?(?:double|int|boolean|String|float|long|byte|short|char|AprilTagProcessor|VisionPortal|WebcamName)\s+(?=[A-Za-z_$])/g, "let ")
       .replace(/\bwaitForStart\s*\(\s*\)\s*;/g, "await waitForStart(); if (!opModeIsActive()) return;")
       .replace(/\bsleep\s*\(/g, "await sleep(")
-      .replace(/\bwhile\s*\(\s*opModeIsActive\s*\(\s*\)\s*\)\s*\{/g, "while (opModeIsActive()) { await linearTick();");
+      .replace(/\bwhile\s*\(\s*opModeIsActive\s*\(\s*\)\s*\)\s*\{/g, "while (opModeIsActive()) { await linearTick(); if (!opModeIsActive()) break;");
     return js;
   }
 

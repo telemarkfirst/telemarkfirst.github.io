@@ -207,6 +207,7 @@ export default function Unit6Simulator({lesson}: Unit6SimulatorProps): React.JSX
   const config = LESSON_CONFIG[lesson];
   const params = new URLSearchParams({
     code: config.code,
+    lesson,
     mode: config.mode,
   });
   const simulatorSrc = `${useBaseUrl('/simulator/unit6.html')}?${params.toString()}`;

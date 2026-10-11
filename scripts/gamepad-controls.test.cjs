@@ -458,12 +458,12 @@ function testUnit82UsesFtcYAxisExactlyOnce() {
     'utf8',
   );
   const controlsScript = source.indexOf('<script src="./gamepad-controls.js"></script>');
-  const baseScript = source.indexOf('<script src="./simulator_base.js" data-telemark-mode="legacy"></script>');
-  const legacyInstall = source.indexOf('window.TelemarkSimulatorBase.installLegacy({');
+  const baseScript = source.indexOf('<script src="./simulator_base.js" data-telemark-mode="embedded"></script>');
+  const embeddedInstall = source.indexOf('window.TelemarkSimulatorBase.installEmbedded({');
 
-  assert.ok(controlsScript >= 0 && controlsScript < baseScript && baseScript < legacyInstall);
+  assert.ok(controlsScript >= 0 && controlsScript < baseScript && baseScript < embeddedInstall);
   assert.equal(
-    (source.match(/TelemarkSimulatorBase\.installLegacy\(/g) || []).length,
+    (source.match(/TelemarkSimulatorBase\.installEmbedded\(/g) || []).length,
     1,
     'Unit 8.2 must install one shared gamepad owner',
   );

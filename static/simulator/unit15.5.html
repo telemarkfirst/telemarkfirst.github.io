@@ -37,7 +37,6 @@
     color: #f3ead7;
     font-weight: 800;
     pointer-events: none;
-    box-shadow: 0 0 18px rgba(243, 234, 215, 0.08);
   }
 
   #sim-scene-container .u155-badge {
@@ -102,7 +101,6 @@
   #sim-scene-container .u155-state-node.active {
     color: #f3ead7;
     border-color: #f3ead7;
-    box-shadow: 0 0 14px rgba(243, 234, 215, 0.22);
   }
 
   #sim-scene-container .u155-state-node.done,
@@ -114,7 +112,6 @@
   #sim-scene-container .u155-state-node.stuck {
     color: #d8c7a5;
     border-color: #8f8778;
-    box-shadow: 0 0 16px rgba(216, 199, 165, 0.22);
   }
 
   #sim-right-panel .u155-title {
@@ -155,7 +152,6 @@
   #sim-right-panel .u155-step.good {
     border-color: #22cc66;
     color: #bbf7d0;
-    box-shadow: 0 0 12px rgba(34, 204, 102, 0.1);
   }
 
   #sim-right-panel .u155-card.warn,
@@ -487,8 +483,8 @@ public class RobotHardware {
   let clawDevice;
   let sceneRoot;
   let robotGroup;
-  let clawLeft;
-  let clawRight;
+  let intakeRoller;
+  let liftCarriage;
   let gameElement;
   let scoreZone;
   let pathLine;
@@ -520,7 +516,7 @@ public class RobotHardware {
     addMissingInitialFiles: true
   });
   setChallenge(
-    "Telemark Unit 15.5 Simulator",
+    "Pedro 3 + Ivy Autonomous",
     "Pedro 3 + Ivy Autonomous with Robot Subsystems",
     requirements
   );
@@ -848,13 +844,42 @@ public class RobotHardware {
       });
     });
 
-    const clawMat = new THREE.MeshStandardMaterial({ color: 0x8f8778, roughness: 0.65, metalness: 0.08, emissive: 0x000000 });
-    clawLeft = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.08, 0.32), clawMat);
-    clawRight = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.08, 0.32), clawMat);
-    clawLeft.position.set(0.5, 0.24, -0.12);
-    clawRight.position.set(0.5, 0.24, 0.12);
-    group.add(clawLeft);
-    group.add(clawRight);
+    // The lesson commands an intake and a lift, so render those mechanisms
+    // instead of implying that robot.intake.eject() operates a claw.
+    const mechanismMat = new THREE.MeshStandardMaterial({
+      color: 0x8f8778,
+      roughness: 0.65,
+      metalness: 0.08,
+      emissive: 0x000000
+    });
+    const bracketMat = new THREE.MeshStandardMaterial({ color: 0x2a2925, roughness: 0.72, metalness: 0.14 });
+
+    [-0.34, 0.34].forEach(function (z) {
+      const bracket = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.24, 0.08), bracketMat);
+      bracket.position.set(0.48, 0.18, z);
+      group.add(bracket);
+    });
+
+    intakeRoller = new THREE.Group();
+    intakeRoller.position.set(0.5, 0.18, 0);
+    const rollerCore = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.58, 18), mechanismMat);
+    rollerCore.rotation.x = Math.PI / 2;
+    intakeRoller.add(rollerCore);
+    for (let bladeIndex = 0; bladeIndex < 3; bladeIndex += 1) {
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.16, 0.58), mechanismMat);
+      blade.rotation.z = bladeIndex * Math.PI / 3;
+      intakeRoller.add(blade);
+    }
+    group.add(intakeRoller);
+
+    [-0.2, 0.2].forEach(function (z) {
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.78, 0.07), bracketMat);
+      rail.position.set(-0.08, 0.58, z);
+      group.add(rail);
+    });
+    liftCarriage = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.09, 0.5), mechanismMat.clone());
+    liftCarriage.position.set(-0.08, 0.3, 0);
+    group.add(liftCarriage);
     return group;
   }
 
@@ -877,14 +902,19 @@ public class RobotHardware {
       robotGroup.rotation.y = state.pose.heading;
     }
 
-    if (clawLeft && clawRight) {
-      const open = state.clawPosition <= 0.2;
-      const spread = open ? 0.2 : 0.09;
-      clawLeft.position.z += (-spread - clawLeft.position.z) * 0.24;
-      clawRight.position.z += (spread - clawRight.position.z) * 0.24;
-      const emissive = open ? 0x2a261d : 0x000000;
-      clawLeft.material.emissive.setHex(emissive);
-      clawRight.material.emissive.setHex(emissive);
+    if (intakeRoller) {
+      const ejecting = state.clawPosition <= 0.2;
+      if (ejecting) intakeRoller.rotation.z -= 0.18;
+      const emissive = ejecting ? 0x2a261d : 0x000000;
+      intakeRoller.children.forEach(function (part) {
+        if (part.material && part.material.emissive) part.material.emissive.setHex(emissive);
+      });
+    }
+
+    if (liftCarriage) {
+      const liftRaised = state.pathProgress >= 0.98 && (state.currentState === "DELIVER" || state.currentState === "DONE");
+      const targetHeight = liftRaised ? 0.86 : 0.3;
+      liftCarriage.position.y += (targetHeight - liftCarriage.position.y) * 0.16;
     }
 
     const start = fieldToScene(START_POSE.x, START_POSE.y);
@@ -974,12 +1004,16 @@ public class RobotHardware {
   }
 
   function createPoseFactory() {
-    return { of: function (x, y, heading) { return createPose(x, y, heading); } };
+    return { of: function (x, y, heading) { return createPose(x, y, Number(heading) * Math.PI / 180); } };
   }
 
   function createLinePath(start, end) {
     const path = { segments: [{ type: "line", start: start, end: end }] };
-    path.linear = function () { return path; };
+    path.linear = function (startPose, endPose) {
+      path.segments[0].headingStart = Number(startPose && startPose.heading);
+      path.segments[0].headingEnd = Number(endPose && endPose.heading);
+      return path;
+    };
     return path;
   }
 
@@ -1023,7 +1057,7 @@ public class RobotHardware {
       state.scored = true;
     } else if (state.currentState === "DELIVER") {
       state.deliverElapsed = Math.max(0, getSimRuntime() - state.deliverTimer);
-      if (state.deliverElapsed >= 0.5) {
+      if (state.deliverElapsed >= (state.analysis ? state.analysis.waitSeconds : 0.5)) {
         setServoPosition("claw", CLAW_CLOSED);
         setCurrentState("DONE");
         state.phase = "IVY: COMPLETE";
@@ -1040,7 +1074,9 @@ public class RobotHardware {
     const segment = first.segment || first;
     return {
       start: segment.start || fallback.start,
-      end: segment.end || fallback.end
+      end: segment.end || fallback.end,
+      headingStart: segment.headingStart,
+      headingEnd: segment.headingEnd
     };
   }
 
@@ -1052,7 +1088,9 @@ public class RobotHardware {
     const end = state.path.end;
     state.pose.x = start.x + (end.x - start.x) * state.pathProgress;
     state.pose.y = start.y + (end.y - start.y) * state.pathProgress;
-    state.pose.heading = Math.atan2(end.y - start.y, end.x - start.x);
+    state.pose.heading = Number.isFinite(state.path.headingStart) && Number.isFinite(state.path.headingEnd)
+      ? state.path.headingStart + (state.path.headingEnd - state.path.headingStart) * state.pathProgress
+      : Math.atan2(end.y - start.y, end.x - start.x);
     if (state.pathProgress >= 1) {
       state.followerBusy = false;
       state.pose.x = end.x;
@@ -1409,11 +1447,13 @@ public class RobotHardware {
   function analyzeCode(code) {
     const runBody = extractMethodBody(code, "runOpMode") || "";
     const routineBody = extractMethodBody(code, "autoRoutine") || "";
+    const waitMatch = /waitMs\s*\(\s*(\d+)\s*\)/.exec(routineBody);
     return {
       hasSequential: /return\s+sequential\s*\(/.test(routineBody),
       hasFollow: /follow\s*\(\s*follower\s*,\s*scoringPath\s*\)/.test(routineBody),
       hasMechanisms: /robot\s*\.\s*lift\s*\.\s*moveToScore/.test(routineBody) && /robot\s*\.\s*intake\s*\.\s*eject/.test(routineBody),
       hasWait: /waitMs\s*\(\s*500\s*\)/.test(routineBody),
+      waitSeconds: waitMatch ? Number(waitMatch[1]) / 1000 : 0,
       hasIntakeStop: /instant\s*\(\s*\(\s*\)\s*->\s*robot\s*\.\s*intake\s*\.\s*stop\s*\(\s*\)\s*\)/.test(routineBody),
       wrongBusyCondition: false
     };
@@ -1455,9 +1495,11 @@ public class RobotHardware {
     renderCard("u155-pose-card", '<i class="fa-solid fa-location-dot"></i> Robot Position<br><strong>X ' + fmt(state.pose.x) + "  Y " + fmt(state.pose.y) + "</strong><br>Heading " + fmt(state.pose.heading) + " rad", "");
     renderCard("u155-progress-card", '<i class="fa-solid fa-route"></i> Path Progress<br><strong>' + Math.round(state.pathProgress * 100) + '%</strong><div class="u155-bar"><div class="u155-fill" style="width:' + Math.round(state.pathProgress * 100) + '%"></div></div>', state.pathProgress >= 1 ? "good" : "");
     renderCard("u155-busy-card", '<i class="fa-solid fa-code-branch"></i> !follower.isBusy()<br><strong>' + (!isFollowerBusy()) + "</strong><br>follower.isBusy(): " + isFollowerBusy(), !isFollowerBusy() && state.pathProgress >= 1 ? "good" : "");
-    const timerPct = Math.max(0, Math.min(100, state.deliverElapsed / 0.5 * 100));
-    renderCard("u155-timer-card", '<i class="fa-solid fa-clock"></i> Timer Condition<br><strong>' + fmt(state.deliverElapsed) + 's / 0.5s</strong><br>&gt;= 0.5: ' + (state.deliverElapsed >= 0.5), state.deliverElapsed >= 0.5 ? "good" : state.currentState === "DELIVER" ? "warn" : "");
-    renderCard("u155-deliver-bar", '<i class="fa-solid fa-stopwatch"></i> DELIVER TIMER: <strong>' + fmt(state.deliverElapsed) + 's / 0.5s</strong><div class="u155-bar"><div class="u155-fill" style="width:' + timerPct + '%"></div></div>', state.deliverElapsed >= 0.5 ? "good" : state.currentState === "DELIVER" ? "warn" : "");
+    const waitSeconds = state.analysis && Number.isFinite(state.analysis.waitSeconds) ? state.analysis.waitSeconds : 0.5;
+    const waitComplete = state.deliverElapsed >= waitSeconds;
+    const timerPct = Math.max(0, Math.min(100, state.deliverElapsed / Math.max(waitSeconds, 0.001) * 100));
+    renderCard("u155-timer-card", '<i class="fa-solid fa-clock"></i> Timer Condition<br><strong>' + fmt(state.deliverElapsed) + 's / ' + fmt(waitSeconds) + 's</strong><br>&gt;= ' + fmt(waitSeconds) + ': ' + waitComplete, waitComplete ? "good" : state.currentState === "DELIVER" ? "warn" : "");
+    renderCard("u155-deliver-bar", '<i class="fa-solid fa-stopwatch"></i> DELIVER TIMER: <strong>' + fmt(state.deliverElapsed) + 's / ' + fmt(waitSeconds) + 's</strong><div class="u155-bar"><div class="u155-fill" style="width:' + timerPct + '%"></div></div>', waitComplete ? "good" : state.currentState === "DELIVER" ? "warn" : "");
 
     const history = el("u155-history");
     if (history) {
@@ -1515,7 +1557,7 @@ public class RobotHardware {
 
   function extractMethodBody(code, name) {
     if (!code) return "";
-    const re = new RegExp("\\b(?:public\\s+|private\\s+|protected\\s+)?(?:void|boolean|double|int|String)\\s+" + name + "\\s*\\([^)]*\\)\\s*\\{");
+    const re = new RegExp("\\b(?:public\\s+|private\\s+|protected\\s+)?(?:void|boolean|double|int|String|Command)\\s+" + name + "\\s*\\([^)]*\\)\\s*\\{");
     const match = re.exec(code);
     if (!match) return "";
     let index = match.index + match[0].length;

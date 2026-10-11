@@ -35,6 +35,11 @@ const teamAttributionFiles = new Set([
   'scripts/rig-decode-mechanisms.cjs',
   'static/simulator/mastery_challenge.js',
   'static/simulator/models/30450-decode-robot-telemark.glb',
+  'static/simulator/models/parts/decode-drivetrain.glb',
+  'static/simulator/models/parts/decode-flywheel.glb',
+  'static/simulator/models/parts/decode-intake.glb',
+  'static/simulator/models/parts/decode-transfer.glb',
+  'static/simulator/models/parts/decode-trigger.glb',
 ]);
 const forbiddenFilename = new RegExp([
   schoolAcronym,

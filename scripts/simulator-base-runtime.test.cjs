@@ -17,6 +17,7 @@ const simulatorBaseSource = fs.readFileSync(
 function createBaseHarness() {
   const elements = new Map();
   const intervals = new Map();
+  const windowListeners = new Map();
   const errors = [];
   let nextInterval = 1;
 
@@ -67,7 +68,10 @@ function createBaseHarness() {
       return id;
     },
     clearInterval(id) { intervals.delete(id); },
-    addEventListener() {},
+    addEventListener(type, listener) {
+      if (!windowListeners.has(type)) windowListeners.set(type, []);
+      windowListeners.get(type).push(listener);
+    },
   };
   context.window = context;
 
@@ -81,6 +85,9 @@ function createBaseHarness() {
     errors,
     runIntervals() {
       for (const callback of [...intervals.values()]) callback();
+    },
+    dispatchWindow(type, event) {
+      for (const listener of windowListeners.get(type) || []) listener(event);
     },
   };
 }
@@ -385,6 +392,25 @@ function testResetUsesAnInSimulatorConfirmationDialog() {
   assert.doesNotMatch(simulatorBaseSource, /fa-rotate-left/);
 }
 
+function testResizeObserverWarningsDoNotPolluteTelemetry() {
+  const page = createBaseHarness();
+  page.context.document.getElementById('sim-telemetry-log');
+  let prevented = 0;
+  page.dispatchWindow('error', {
+    message: 'ResizeObserver loop completed with undelivered notifications.',
+    preventDefault() { prevented += 1; },
+  });
+  assert.equal(prevented, 1, 'the browser-only ResizeObserver warning should be consumed');
+  assert.equal(telemetryText(page).trim(), '', 'ResizeObserver delivery warnings must stay out of student telemetry');
+
+  page.dispatchWindow('error', {
+    message: 'Student mechanism exploded',
+    lineno: 42,
+    preventDefault() { prevented += 1; },
+  });
+  assert.match(telemetryText(page), /Student mechanism exploded \(line 42\)/);
+}
+
 testCompileErrorGatesInit();
 testMissingCompilerFailsClosed();
 testStudentOnlyTelemetryRoutesDiagnosticsToHints();
@@ -399,4 +425,5 @@ testLifecycleTelemetryFramesFlushAutomatically();
 testLoopRuntimeErrorStopsExecution();
 testStarterCodeCanAlwaysBeRecovered();
 testResetUsesAnInSimulatorConfirmationDialog();
+testResizeObserverWarningsDoNotPolluteTelemetry();
 console.log('Shared simulator lifecycle regression tests passed.');

@@ -25,6 +25,7 @@
     const motorVelocities = new Map();
     const servos = new Map();
     const crServos = new Map();
+    let authoredPathSegments = [];
     const state = {
       x: 0,
       z: unit === 14 ? 0.65 : 0,
@@ -36,6 +37,7 @@
       armAngle: unit === 13 ? -0.55 : 0,
       cameraAngle: 0,
       pathProgress: 0,
+      pathRevision: 0,
       visionActive: false,
       followerActive: false,
       elapsed: 0,
@@ -273,8 +275,9 @@
       if (unit === 14 && state.visionActive) {
         state.cameraAngle = Math.sin(state.elapsed * 1.8) * 0.58;
       }
-      if (unit === 15 && state.followerActive) {
+      if (unit === 15 && state.followerActive && state.lifecyclePhase === "running") {
         state.pathProgress = clamp(state.pathProgress + dt * 0.12, 0, 1);
+        state.wheelAngles = state.wheelAngles.map(function (angle) { return angle + dt * 4.5; });
         if (state.pathProgress >= 1) state.followerActive = false;
       }
       return state;
@@ -306,6 +309,8 @@
       state.heading = 0;
       state.pathProgress = 0;
       state.followerActive = false;
+      authoredPathSegments = [];
+      state.pathRevision += 1;
       state.driveLeftPower = 0;
       state.driveRightPower = 0;
       state.velocityX = 0;
@@ -316,14 +321,31 @@
     }
 
     return {
+      unit,
       state,
       setMotorPower,
       setMotorVelocity,
       setServoPosition,
       setCRServoPower,
       setVisionActive(active) { state.visionActive = Boolean(active); },
-      startFollower() { state.pathProgress = 0; state.followerActive = true; },
+      startFollower(path) {
+        authoredPathSegments = (path && Array.isArray(path.segments) ? path.segments : [])
+          .map(function (segment) {
+            return {
+              type: segment.type,
+              points: (segment.points || []).map(function (pose) {
+                return {x: Number(pose.x()), y: Number(pose.y())};
+              })
+            };
+          })
+          .filter(function (segment) { return segment.points.length >= 2; });
+        state.pathRevision += 1;
+        state.pathProgress = 0;
+        state.followerActive = true;
+      },
+      pathSegments() { return authoredPathSegments; },
       pulseFollowerUpdate() {
+        if (state.lifecyclePhase !== "running") return;
         if (state.followerActive) return;
         if (state.pathProgress > 0 && state.pathProgress < 1) state.followerActive = true;
       },
@@ -336,7 +358,10 @@
       step,
       servoValues,
       connectHardwareMap,
-      setLifecyclePhase(phase) { state.lifecyclePhase = String(phase || "stopped"); },
+      setLifecyclePhase(phase) {
+        state.lifecyclePhase = String(phase || "stopped");
+        if (unit === 15 && state.lifecyclePhase === "stopped") state.followerActive = false;
+      },
       outputs() {
         return {
           motors: Object.fromEntries(motorEntries()),
@@ -410,10 +435,18 @@
       constructor() { this._pose = new Pose(0, 0, 0); this.busy = false; this.activePath = null; }
       setPose(pose) {
         this._pose = pose || this._pose;
-        motion.setPose(this._pose.x(), this._pose.y(), this._pose.heading());
+        if (motion.unit === 15) {
+          motion.setPose(
+            (this._pose.x() / 72) * 5.2 - 2.6,
+            2.6 - (this._pose.y() / 72) * 5.2,
+            this._pose.heading()
+          );
+        } else {
+          motion.setPose(this._pose.x(), this._pose.y(), this._pose.heading());
+        }
       }
       pose() { return this._pose; }
-      follow(value) { this.activePath = value; this.busy = true; motion.startFollower(); }
+      follow(value) { this.activePath = value; this.busy = true; motion.startFollower(value); }
       update() { motion.pulseFollowerUpdate(); this.busy = motion.state.followerActive; }
       isBusy() { return this.busy; }
       mode() { return this.busy ? "FOLLOWING" : "IDLE"; }
@@ -431,15 +464,49 @@
 
     const scheduled = [];
     target.instant = target.instant || (action => ({run: action}));
-    target.waitMs = target.waitMs || (milliseconds => ({waitMs: Number(milliseconds) || 0}));
+    target.waitMs = target.waitMs || (milliseconds => ({waitMs: Math.max(0, Number(milliseconds) || 0)}));
     target.waitUntil = target.waitUntil || (condition => ({condition}));
-    target.follow = target.follow || ((follower, value) => ({run() { follower.follow(value); }}));
+    target.follow = target.follow || ((follower, value) => ({
+      run() { follower.follow(value); },
+      isDone() { return !follower.isBusy(); }
+    }));
     target.sequential = target.sequential || ((...commands) => ({commands}));
-    target.schedule = target.schedule || (command => { scheduled.push(command); return command; });
-    target.Scheduler = target.Scheduler || {
+    target.schedule = target.schedule || (command => {
+      scheduled.push({command, index: 0, started: false, startedAt: 0});
+      return command;
+    });
+    const ivyScheduler = {
       reset() { scheduled.length = 0; },
-      execute() { scheduled.forEach(command => { if (command && typeof command.run === "function") command.run(); }); }
+      execute() {
+        const now = Date.now();
+        for (let index = scheduled.length - 1; index >= 0; index -= 1) {
+          const task = scheduled[index];
+          const commands = Array.isArray(task.command && task.command.commands)
+            ? task.command.commands : [task.command];
+          const current = commands[task.index];
+          if (!current) { scheduled.splice(index, 1); continue; }
+          if (!task.started) {
+            task.started = true;
+            task.startedAt = now;
+            if (typeof current.run === "function") current.run();
+          }
+          const finished = typeof current.isDone === "function" ? current.isDone()
+            : typeof current.condition === "function" ? Boolean(current.condition())
+              : current.waitMs != null ? now - task.startedAt >= current.waitMs : true;
+          if (finished) {
+            task.index += 1;
+            task.started = false;
+            if (task.index >= commands.length) scheduled.splice(index, 1);
+          }
+        }
+      }
     };
+    // Chrome exposes a native window.Scheduler. The FTC Ivy mock must replace
+    // it so student Scheduler.reset()/execute() calls use the lesson runtime.
+    if (!target.Scheduler || typeof target.Scheduler.reset !== "function"
+        || typeof target.Scheduler.execute !== "function") {
+      target.Scheduler = ivyScheduler;
+    }
 
     class Rect { constructor(x, y, width, height) { Object.assign(this, {x, y, width, height}); } }
     class AprilTagProcessor {

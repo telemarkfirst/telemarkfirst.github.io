@@ -114,7 +114,8 @@ body{display:flex;height:100vh;overflow:hidden;background:var(--bg);color:var(--
 <script src="telemark-project-checks.js"></script>
 <link rel="stylesheet" href="./telemark-project.css"/>
   <script src="./gamepad-controls.js"></script>
-  <script src='./simulator_base.js' data-telemark-mode='legacy'></script>
+  <script src='./simulator_base.js' data-telemark-mode='embedded'></script>
+  <script src="./cad-parts.js"></script>
 <link href="telemark-sim.css" rel="stylesheet"/>
 </head>
 <body>
@@ -192,7 +193,7 @@ public class IntakeControl extends OpMode {
   </div>
   <div class="gamepad-card-body" id="gamepad-card-body">
     <div class="controller-wrap" id="controller-wrap">
-      <img class="controller-img" alt="controller" src="https://resource.logitechg.com/w_776,h_437,ar_16:9,c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/gaming/en/products/f310/f310-feature-3.png">
+      <img class="controller-img" alt="FTC-style gamepad" src="./gamepad-controller-original.jpg">
       <div class="trigger-slider left-trigger-slider" id="left-trigger-slider"><div class="trigger-slider-fill" id="left-trigger-fill"></div></div>
       <div class="trigger-slider right-trigger-slider" id="right-trigger-slider"><div class="trigger-slider-fill" id="right-trigger-fill"></div></div>
       <div class="trigger-label lt-label">left_trigger</div>
@@ -229,8 +230,7 @@ var activeHints=[];
 // ── Sample ball state ──
 var samples=[]; // {mesh, vx, vz, state:'idle'|'collecting'|'ejecting', scale}
 var sampleCount=0;
-var ROLLER_POS={x:0,y:0.22,z:-0.72};      // front of robot is -Z
-var ROBOT_BODY_Z=-0.6;                     // approximate front face of body
+var ROLLER_POS={x:0,y:0.28,z:-0.85};       // DECODE intake mouth faces -Z
 var COLLECT_RADIUS=0.28;                   // distance to trigger collection
 var ATTRACT_RADIUS=1.6;                    // pull range for intake
 var BALL_RADIUS=0.11;
@@ -362,8 +362,8 @@ function setReq(id,pass){
 }
 
 // ── Three.js Scene ──
-var scene,camera,renderer,intakeRoller,robotGroup;
-var orbit={theta:0,phi:0.85,radius:4.5,target:{x:0,y:0.2,z:0},dragging:false,panning:false,prevX:0,prevY:0};
+var scene,camera,renderer,intakeRoller,robotGroup,cadIntake;
+var orbit={theta:Math.PI,phi:0.95,radius:3.2,target:{x:0,y:0.42,z:-0.55},dragging:false,panning:false,prevX:0,prevY:0};
 function updateCameraOrbit(){
   if(!camera)return;
   var o=orbit;
@@ -550,23 +550,16 @@ function initScene(){
     var w1=new THREE.Mesh(wallGeo,wallMat);w1.position.set(0,0.3,s*4);scene.add(w1);
     var w2=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.6,8),wallMat);w2.position.set(s*4,0.3,0);scene.add(w2);
   });
-  var bodyGeo=new THREE.BoxGeometry(1.4,0.35,1.2);
-  var bodyMat=new THREE.MeshPhongMaterial({color:0x2a2a2a});
-  var body=new THREE.Mesh(bodyGeo,bodyMat);body.position.y=0.4;body.castShadow=true;
-  scene.add(body);
-  var wheelGeo=new THREE.CylinderGeometry(0.16,0.16,0.1,16);
-  var wheelMat=new THREE.MeshPhongMaterial({color:0x222222});
-  [[-0.75,0.16,-0.5],[0.75,0.16,-0.5],[-0.75,0.16,0.5],[0.75,0.16,0.5]].forEach(function(p){
-    var w=new THREE.Mesh(wheelGeo,wheelMat);w.rotation.z=Math.PI/2;
-    w.position.set(p[0],p[1],p[2]);w.castShadow=true;scene.add(w);
-  });
+  var generatedRobot=new THREE.Group();
+  generatedRobot.name='unit-8-1-intake-fallback';
+  scene.add(generatedRobot);
   var rollerGeo=new THREE.CylinderGeometry(0.12,0.12,1.6,20);
   var rollerMat=new THREE.MeshPhongMaterial({color:0xff6600,emissive:0x331100});
   intakeRoller=new THREE.Mesh(rollerGeo,rollerMat);
   intakeRoller.rotation.z=Math.PI/2;
   intakeRoller.position.set(ROLLER_POS.x,ROLLER_POS.y,ROLLER_POS.z);
   intakeRoller.castShadow=true;
-  scene.add(intakeRoller);
+  generatedRobot.add(intakeRoller);
   for(var i=0;i<8;i++){
     var gripGeo=new THREE.BoxGeometry(0.05,1.58,0.02);
     var gripMat=new THREE.MeshPhongMaterial({color:0xcc4400});
@@ -575,11 +568,20 @@ function initScene(){
     grip.position.set(Math.cos(angle)*0.12,0,Math.sin(angle)*0.12);
     intakeRoller.add(grip);
   }
-  var mountGeo=new THREE.BoxGeometry(0.08,0.2,0.15);
-  var mountMat=new THREE.MeshPhongMaterial({color:0x333333});
-  [-0.82,0.82].forEach(function(x){
-    var m=new THREE.Mesh(mountGeo,mountMat);m.position.set(x,0.3,-0.72);scene.add(m);
-  });
+  if(window.TelemarkCadParts){
+    window.TelemarkCadParts.mount('decode-intake',{
+      THREE:THREE,
+      parent:scene,
+      position:[0,0.06,-0.45],
+      rotation:[0,Math.PI,0],
+      fit:2.3,
+      fallback:generatedRobot
+    }).then(function(rig){
+      cadIntake=rig;
+    }).catch(function(error){
+      console.error('DECODE intake CAD failed to load',error);
+    });
+  }
   
   // Spawn the sample balls
   spawnInitialSamples();
@@ -625,7 +627,10 @@ function initScene(){
 }
 function animateScene(){
   requestAnimationFrame(animateScene);
-  if(intakeRoller){
+  if(cadIntake){
+    cadIntake.setPower(intakePower);
+    cadIntake.update(1/60);
+  }else if(intakeRoller){
     intakeRoller.rotation.x-=intakePower*0.15;
   }
   updateSamplePhysics();
@@ -748,7 +753,7 @@ window.addEventListener('load',function(){
   animateScene();
   updatePowerBar();
 });
-if (window.TelemarkSimulatorBase) window.TelemarkSimulatorBase.installLegacy({
+if (window.TelemarkSimulatorBase) window.TelemarkSimulatorBase.installEmbedded({
   state: gamepad,
   onThemeChange: function(theme) {
     if (scene) window.TelemarkSimulatorBase.themeThreeScene(scene, theme);

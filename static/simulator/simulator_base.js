@@ -32,18 +32,115 @@
   "use strict";
 
   const THEME_MESSAGE_TYPE = "telemark:simulator-theme-state";
-  const scriptMode = document.currentScript && document.currentScript.dataset
-    ? document.currentScript.dataset.telemarkMode
+  const LESSON_MESSAGE_TYPE = "telemark:project-lesson";
+  const baseScriptElement = document.currentScript || null;
+  const scriptMode = baseScriptElement && baseScriptElement.dataset
+    ? baseScriptElement.dataset.telemarkMode
     : "";
   const documentMode = document.documentElement && document.documentElement.dataset
     ? document.documentElement.dataset.telemarkMode
     : "";
   const simulatorMode = String(scriptMode || documentMode || "full").toLowerCase();
   const isLegacyMode = simulatorMode === "legacy";
+  const isEmbeddedMode = simulatorMode === "embedded";
+  const usesPrebuiltDOM = isLegacyMode || isEmbeddedMode;
   const themeListeners = new Set();
   let activeTheme = "";
   let legacyInstallation = null;
+  let simulatorWorkspace = null;
+  let workspaceAssetsPromise = null;
+  let workspaceLessonId = (window.location && window.location.pathname) || "simulator";
+  let workspaceSceneActive = true;
+  let workspaceHeaderTitle = document.title || "Simulator";
+  let workspaceHeaderSubtitle = "";
+  let workspaceHeaderExplicit = false;
   const wiredGamepadCards = new WeakSet();
+  const GAMEPAD_ARTWORK = "gamepad-controller-original.jpg";
+
+  function simulatorAssetUrl(filename) {
+    const source = baseScriptElement && baseScriptElement.src || "";
+    const separator = source.lastIndexOf("/");
+    return separator >= 0 ? source.slice(0, separator + 1) + filename : "./" + filename;
+  }
+
+  function loadWorkspaceAssets() {
+    if (workspaceAssetsPromise) return workspaceAssetsPromise;
+    workspaceAssetsPromise = new Promise(function (resolve) {
+      if (!document.createElement) {
+        resolve(window.TelemarkSimulatorWorkspace || null);
+        return;
+      }
+      const host = document.head || document.documentElement;
+      if (!host || !host.appendChild) {
+        resolve(window.TelemarkSimulatorWorkspace || null);
+        return;
+      }
+
+      function waitForElement(element, isReady, warning) {
+        return new Promise(function (done) {
+          if (isReady()) {
+            done();
+            return;
+          }
+          let settled = false;
+          const timeout = window.setTimeout(finish, 4000);
+          function finish() {
+            if (settled) return;
+            settled = true;
+            window.clearTimeout(timeout);
+            done();
+          }
+          element.addEventListener("load", finish, {once: true});
+          element.addEventListener("error", function () {
+            if (warning) console.warn(warning);
+            finish();
+          }, {once: true});
+        });
+      }
+
+      let stylesheet = document.getElementById("telemark-simulator-workspace-css");
+      if (!stylesheet) {
+        stylesheet = document.createElement("link");
+        stylesheet.id = "telemark-simulator-workspace-css";
+        stylesheet.rel = "stylesheet";
+        stylesheet.href = simulatorAssetUrl("simulator-workspace.css");
+        host.appendChild(stylesheet);
+      }
+      const stylesheetReady = waitForElement(
+        stylesheet,
+        function () { return Boolean(stylesheet.sheet); },
+        "[Simulator workspace] The layout stylesheet could not be loaded."
+      );
+
+      let script = document.getElementById("telemark-simulator-workspace-js");
+      if (!script && !window.TelemarkSimulatorWorkspace) {
+        script = document.createElement("script");
+        script.id = "telemark-simulator-workspace-js";
+        script.src = simulatorAssetUrl("simulator-workspace.js");
+        script.async = false;
+        host.appendChild(script);
+      }
+      const scriptReady = window.TelemarkSimulatorWorkspace
+        ? Promise.resolve()
+        : waitForElement(
+          script,
+          function () { return Boolean(window.TelemarkSimulatorWorkspace); },
+          "[Simulator workspace] The layout engine could not be loaded."
+        );
+
+      Promise.all([stylesheetReady, scriptReady]).then(function () {
+        resolve(window.TelemarkSimulatorWorkspace || null);
+      });
+    });
+    return workspaceAssetsPromise;
+  }
+
+  function callWorkspace(method, args, fallback) {
+    if (!simulatorWorkspace || typeof simulatorWorkspace[method] !== "function") {
+      return fallback;
+    }
+    return simulatorWorkspace[method].apply(simulatorWorkspace, args || []);
+  }
 
   function normalizeTheme(theme) {
     return theme === "light" ? "light" : "dark";
@@ -148,10 +245,20 @@
 
   function preventNativeControllerDrag(root) {
     if (!root || !root.querySelectorAll) return;
+    const artworkUrl = simulatorAssetUrl(GAMEPAD_ARTWORK);
     const images = root.querySelectorAll(
       ".controller-img, .sim-controller-img, #controller-wrap img, #sim-controller-wrap img"
     );
     Array.prototype.forEach.call(images, function (image) {
+      // Keep the original Logitech controller photo and established hit-area
+      // geometry, but serve that same image locally so every lesson measures
+      // and resizes it reliably before the card enters the workspace.
+      const currentSource = image.getAttribute ? image.getAttribute("src") : image.src;
+      if (currentSource !== artworkUrl && image.src !== artworkUrl) image.src = artworkUrl;
+      if (image.setAttribute) {
+        image.setAttribute("data-telemark-gamepad-artwork", "true");
+        image.setAttribute("alt", "FTC-style gamepad");
+      }
       image.draggable = false;
       if (image.setAttribute) image.setAttribute("draggable", "false");
       if (image.dataset && image.dataset.telemarkDragGuard === "true") return;
@@ -357,6 +464,7 @@
 
   window.TelemarkSimulatorBase = Object.freeze({
     installLegacy: installLegacy,
+    installEmbedded: installLegacy,
     compileStudentSource: compileStudentSource,
     createRuntime: createRuntime,
     applyTheme: applyTheme,
@@ -364,14 +472,59 @@
     themeThreeScene: function (scene, theme) {
       return applyThreeTheme(normalizeTheme(theme || activeTheme || detectInitialTheme()), scene);
     },
+    registerWidget: function (definition) {
+      return callWorkspace("registerWidget", [definition], null);
+    },
+    setWidgetAvailability: function (identifiers) {
+      return callWorkspace("setWidgetAvailability", [identifiers], null);
+    },
+    getLayout: function () {
+      return callWorkspace("getLayout", [], []);
+    },
+    setLayout: function (records) {
+      return callWorkspace("setLayout", [records], false);
+    },
+    exportLayout: function () {
+      return callWorkspace("exportLayout", [], "[]");
+    },
+    importLayout: function (payload) {
+      return callWorkspace("importLayout", [payload], false);
+    },
+    resetLayout: function () {
+      return callWorkspace("resetLayout", [], false);
+    },
+    registerWidgetLifecycle: function (identifier, hooks) {
+      return callWorkspace("registerWidgetLifecycle", [identifier, hooks], null);
+    },
+    isWidgetActive: function (identifier) {
+      return callWorkspace("isWidgetActive", [identifier], true);
+    },
     mode: simulatorMode,
   });
 
+  function isTrustedSimulatorMessage(event) {
+    if (!event) return false;
+    if (event.source && event.source !== window && event.source !== window.parent) return false;
+    const localOrigin = window.location && window.location.origin;
+    if (event.origin && event.origin !== "null"
+        && localOrigin && localOrigin !== "null"
+        && event.origin !== localOrigin) return false;
+    return true;
+  }
+
   window.addEventListener("message", function (event) {
+    if (!isTrustedSimulatorMessage(event)) return;
     const data = event && event.data;
-    if (!data || data.type !== THEME_MESSAGE_TYPE) return;
-    if (data.theme !== "light" && data.theme !== "dark") return;
-    applyTheme(data.theme);
+    if (!data) return;
+    if (data.type === THEME_MESSAGE_TYPE) {
+      if (data.theme !== "light" && data.theme !== "dark") return;
+      applyTheme(data.theme);
+      return;
+    }
+    if (data.type === LESSON_MESSAGE_TYPE && data.lesson && data.lesson.id) {
+      workspaceLessonId = String(data.lesson.id);
+      callWorkspace("setLessonId", [workspaceLessonId], null);
+    }
   });
 
   // ========================================================================
@@ -498,6 +651,8 @@
       overflow: hidden;
     }
     .sim-challenge-header {
+      width: 100%;
+      border: 0;
       padding: 8px 12px;
       cursor: pointer;
       display: flex;
@@ -508,7 +663,12 @@
       font-size: 0.9rem;
       color: var(--active);
       font-family: var(--font-ui);
+      text-align: left;
       user-select: none;
+    }
+    .sim-challenge-header:focus-visible {
+      outline: 2px solid var(--active);
+      outline-offset: -2px;
     }
     .sim-challenge-header .sim-chevron {
       color: var(--text-secondary);
@@ -856,36 +1016,6 @@
       overflow: hidden;
     }
 
-    /* ── Badge Strip ── */
-    .sim-badge-strip {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      padding: 10px 10px 0;
-    }
-    .sim-hw-badge {
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      border: 1px solid var(--border);
-      font-family: var(--font-ui);
-      transition: all 0.2s;
-    }
-    .sim-hw-badge.active {
-      border-color: var(--active);
-      color: var(--active);
-      background: rgba(34, 211, 238, 0.1);
-    }
-    .sim-hw-badge.inactive {
-      background: #111;
-      color: #444;
-      border-color: #222;
-    }
-
     /* ── Scene Container ── */
     #sim-scene-container {
       flex: 1;
@@ -1198,9 +1328,12 @@
       bottom: 0;
       left: 0;
       right: 0;
+      height: 100%;
       background: linear-gradient(to top, #2563eb, var(--active));
       border-radius: 0 0 5px 5px;
-      transition: height 0.05s;
+      transform: scaleY(0);
+      transform-origin: center bottom;
+      transition: transform 0.05s;
     }
     .sim-trigger-value {
       font-size: 0.6rem;
@@ -1420,7 +1553,7 @@
       bottom: 0;
       left: 0;
       right: 0;
-      height: 0%;
+      height: 100%;
       background: linear-gradient(to top, #38bdf8, #22d3ee);
     }
     .sim-dpad-overlay { left:21.5%; top:41%; width:16%; height:24%; transform:translate(-50%,-50%); pointer-events:none; }
@@ -1449,21 +1582,21 @@
     }
     .sim-hint {
       background: rgba(255,204,0,0.12);
-      border-left: 3px solid #ffcc00;
+      border: 1px solid rgba(255,204,0,0.44);
       padding: 6px 8px;
       color: #ffcc00;
-      border-radius: 3px;
+      border-radius: 6px;
       font-size: 0.82rem;
       font-family: var(--font-ui);
     }
     .sim-hint.error {
       background: rgba(204,0,0,0.12);
-      border-left-color: var(--danger);
+      border-color: var(--danger);
       color: #ff6666;
     }
     .sim-hint.info {
       background: rgba(0,122,204,0.12);
-      border-left-color: #38bdf8;
+      border-color: #38bdf8;
       color: #6db3f2;
     }
 
@@ -1541,6 +1674,10 @@
       background: rgba(255, 255, 255, 0.92);
       border-color: var(--border);
     }
+    :root[data-theme="light"] .sim-scene-reset-btn,
+    :root[data-telemark-theme="light"] .sim-scene-reset-btn {
+      color: #365265;
+    }
     :root[data-theme="light"] .sim-scene-reset-btn:hover,
     :root[data-telemark-theme="light"] .sim-scene-reset-btn:hover {
       background: rgba(12, 126, 145, 0.08);
@@ -1593,11 +1730,6 @@
       }
       .sim-telemetry-panel {
         max-height: 96px;
-      }
-      .sim-badge-strip {
-        padding: 6px 8px;
-        gap: 6px;
-        flex-wrap: wrap;
       }
       #sim-scene-container {
         margin: 8px;
@@ -1677,14 +1809,18 @@
       id: "sim-challenge-card",
     });
 
-    const challengeHeader = el("div", {
+    const challengeHeader = el("button", {
       className: "sim-challenge-header open",
       id: "sim-challenge-header",
     });
+    challengeHeader.type = "button";
+    challengeHeader.setAttribute("aria-controls", "sim-challenge-body");
+    challengeHeader.setAttribute("aria-expanded", "true");
     challengeHeader.innerHTML = `<span id="sim-challenge-title-text"></span><span class="sim-chevron">&#9654;</span>`;
     challengeHeader.addEventListener("click", function () {
-      this.classList.toggle("open");
-      document.getElementById("sim-challenge-body").classList.toggle("open");
+      const expanded = this.classList.toggle("open");
+      this.setAttribute("aria-expanded", String(expanded));
+      document.getElementById("sim-challenge-body").classList.toggle("open", expanded);
     });
     challengeCard.appendChild(challengeHeader);
 
@@ -1692,6 +1828,9 @@
       className: "sim-challenge-body open",
       id: "sim-challenge-body",
     });
+    challengeBody.setAttribute("role", "region");
+    challengeBody.setAttribute("aria-labelledby", "sim-challenge-header");
+    challengeBody.setAttribute("tabindex", "0");
     challengeBody.innerHTML = `
       <div class="sim-challenge-desc" id="sim-challenge-desc"></div>
       <div class="sim-fault-control" id="sim-fault-control">
@@ -1769,12 +1908,6 @@
 
     // ── Right Panel ──
     const rightPanel = el("div", { id: "sim-right-panel" });
-
-    const badgeStrip = el("div", {
-      className: "sim-badge-strip",
-      id: "sim-badge-strip",
-    });
-    rightPanel.appendChild(badgeStrip);
 
     const sceneContainer = el("div", { id: "sim-scene-container" });
     const canvas = el("canvas", { id: "sim-robot-canvas" });
@@ -2404,9 +2537,12 @@
     const img = el("img", {
       className: "sim-controller-img",
     });
-    img.alt = "Logitech gamepad";
-    img.src =
-      "https://resource.logitechg.com/w_776,h_437,ar_16:9,c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/gaming/en/products/f310/f310-feature-3.png";
+    img.alt = "FTC-style gamepad";
+    img.decoding = "async";
+    img.loading = "eager";
+    img.draggable = false;
+    img.src = simulatorAssetUrl(GAMEPAD_ARTWORK);
+    img.setAttribute("data-telemark-gamepad-artwork", "true");
     wrap.appendChild(img);
 
     wrap.appendChild(createImageTrigger("left_trigger", "left"));
@@ -2478,12 +2614,12 @@
       const rect = trigger.getBoundingClientRect();
       const pct = 1 - Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
       window.gamepad[prop] = pct;
-      fill.style.height = pct * 100 + "%";
+      fill.style.transform = "scaleY(" + pct + ")";
     }
     function reset() {
       dragging = false;
       window.gamepad[prop] = 0;
-      fill.style.height = "0%";
+      fill.style.transform = "scaleY(0)";
     }
     trigger.addEventListener("pointerdown", function (e) {
       e.preventDefault();
@@ -2631,7 +2767,7 @@
     slider.id = "sim-trigger-" + prop;
     const fill = el("div", { className: "sim-trigger-fill" });
     fill.id = "sim-trigger-fill-" + prop;
-    fill.style.height = "0%";
+    fill.style.transform = "scaleY(0)";
     slider.appendChild(fill);
     container.appendChild(slider);
 
@@ -2647,7 +2783,7 @@
       const rect = slider.getBoundingClientRect();
       const pct = 1 - Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
       window.gamepad[prop] = pct;
-      fill.style.height = pct * 100 + "%";
+      fill.style.transform = "scaleY(" + pct + ")";
       valueLabel.textContent = pct.toFixed(2);
     }
 
@@ -2662,13 +2798,13 @@
     slider.addEventListener("pointerup", function () {
       dragging = false;
       window.gamepad[prop] = 0;
-      fill.style.height = "0%";
+      fill.style.transform = "scaleY(0)";
       valueLabel.textContent = "0.00";
     });
     slider.addEventListener("pointercancel", function () {
       dragging = false;
       window.gamepad[prop] = 0;
-      fill.style.height = "0%";
+      fill.style.transform = "scaleY(0)";
       valueLabel.textContent = "0.00";
     });
 
@@ -4566,30 +4702,9 @@
   // SECTION 10: HARDWARE BADGE STRIP
   // ========================================================================
 
-  /**
-   * setBadges(array) — sets the hardware badge strip.
-   * Each item: { iconClass: "fa-solid fa-gear", label: "DcMotor", active: true/false }
-   */
-  window.setBadges = function (badges) {
-    const strip = document.getElementById("sim-badge-strip");
-    if (!strip) return;
-
-    strip.innerHTML = "";
-    badges.forEach(function (badge) {
-      const div = el("div", {
-        className: "sim-hw-badge " + (badge.active ? "active" : "inactive"),
-      });
-      const iconHtml = badge.iconClass
-        ? '<i class="' + escHTML(badge.iconClass) + '"></i>'
-        : '<span style="font-size:0.9rem">' + escHTML(badge.icon || "") + "</span>";
-      div.innerHTML = iconHtml + " " + escHTML(badge.label);
-
-      // Allow an ID for dynamic updates
-      if (badge.id) div.id = badge.id;
-
-      strip.appendChild(div);
-    });
-  };
+  // Kept as a compatibility no-op for lesson scripts written before the
+  // dashboard was distilled. Hardware state belongs in student telemetry.
+  window.setBadges = function () {};
 
   // ========================================================================
   // SECTION 11: CHALLENGE INSTRUCTIONS PANEL
@@ -4765,6 +4880,16 @@
     else dialog.setAttribute("open", "");
   }
 
+  function updateWorkspaceHeader() {
+    const title = document.getElementById("sim-workspace-lesson-title");
+    const subtitle = document.getElementById("sim-workspace-lesson-subtitle");
+    if (title) title.textContent = workspaceHeaderTitle || document.title || "Simulator";
+    if (subtitle) {
+      subtitle.textContent = workspaceHeaderSubtitle;
+      subtitle.hidden = !workspaceHeaderSubtitle;
+    }
+  }
+
   /**
    * setChallenge(title, description, requirements)
    * setChallenge({title, scenario, requirements, successMessage, hints, faultModes, onComplete})
@@ -4784,6 +4909,11 @@
     const desc = document.getElementById("sim-challenge-desc");
     const reqList = document.getElementById("sim-requirements-list");
     const banner = document.getElementById("sim-success-banner");
+
+    if (!workspaceHeaderExplicit) {
+      workspaceHeaderSubtitle = String(config.title || "");
+      updateWorkspaceHeader();
+    }
 
     if (headerTitle) headerTitle.textContent = config.title || "Challenge";
     if (headerSub) headerSub.textContent = config.scenario || config.description || "";
@@ -5301,6 +5431,8 @@
     function animate() {
       animationFrameId = requestAnimationFrame(animate);
 
+      if (document.hidden) return;
+
       // Run any registered animation callbacks
       for (let i = 0; i < animationCallbacks.length; i++) {
         try {
@@ -5310,7 +5442,10 @@
         }
       }
 
-      if (threeRenderer && threeScene && threeCamera) {
+      // Hidden/deleted robot-view widgets retain their DOM and dimensions.
+      // Physics callbacks continue so student code and sensor state stay in
+      // sync, while the expensive WebGL render is frozen.
+      if (workspaceSceneActive && threeRenderer && threeScene && threeCamera) {
         threeRenderer.render(threeScene, threeCamera);
       }
     }
@@ -5378,8 +5513,16 @@
   // ========================================================================
 
   window.addEventListener("error", function (event) {
+    const message = event.message || "Unknown error";
+    if (/^ResizeObserver loop (?:limit exceeded|completed with undelivered notifications)\.?$/.test(message)) {
+      // Browsers report this delivery-cycle warning through window.onerror even
+      // when the observer settles correctly on the next frame. It is not a
+      // student-code failure and should never pollute Driver Station telemetry.
+      event.preventDefault();
+      return;
+    }
     showTelemetryError(
-      (event.message || "Unknown error") +
+      message +
         (event.lineno ? " (line " + event.lineno + ")" : "")
     );
     // Prevent default browser error handling
@@ -5402,6 +5545,10 @@
    * Set the panel header title and subtitle.
    */
   window.setHeader = function (title, subtitle) {
+    workspaceHeaderTitle = String(title || document.title || "Simulator");
+    workspaceHeaderSubtitle = String(subtitle || "");
+    workspaceHeaderExplicit = true;
+    updateWorkspaceHeader();
     const t = document.getElementById("sim-header-title");
     const s = document.getElementById("sim-header-sub");
     if (t) t.textContent = title;
@@ -5470,6 +5617,572 @@
   // call window.onSimulatorReady() so the challenge can configure itself.
   // ========================================================================
 
+  function firstWorkspaceNode(selectors) {
+    for (let index = 0; index < selectors.length; index += 1) {
+      const node = document.querySelector(selectors[index]);
+      if (node) return node;
+    }
+    return null;
+  }
+
+  const WORKSPACE_SURFACES = {
+    "3": [
+      {selector: ".inspector-panel", identifier: "variable_inspector", title: "Variable Inspector", category: "software"},
+      {selector: "#motor-visual", identifier: "motor_output", title: "Motor Output"},
+    ],
+    "4": [
+      {selector: ".input-monitor-panel", identifier: "input_monitor", title: "Live Input Monitor"},
+      {selector: "#curve-panel", identifier: "sensitivity_curve", title: "Sensitivity Curve", category: "software"},
+      {selector: "#motor-visual", identifier: "motor_output", title: "Motor Output"},
+    ],
+    "5": [
+      {selector: "#flowchart-container", closest: ".panel-section", identifier: "logic_flow", title: "Logic Flow Visualizer", category: "software"},
+      {selector: "#condition-inspector", closest: ".panel-section", identifier: "condition_inspector", title: "Condition Inspector", category: "software"},
+      {selector: "#truth-table-section", identifier: "truth_table", title: "Truth Table", category: "software", initiallyVisible: false},
+      {selector: "#sensor-panel", identifier: "sensor_inputs", title: "Mock Sensor Inputs", initiallyVisible: false},
+      {selector: "#motor-visual", identifier: "motor_output", title: "Motor Output"},
+    ],
+    "6": [
+      {selector: "#loop-step-panel", identifier: "loop_step", title: "Loop Step Visualizer", category: "software"},
+    ],
+    "7": [
+      {selector: "#hw-map-list", closest: ".panel-section", identifier: "hardware_map", title: "Hardware Map"},
+      {selector: "#config-panel", closest: ".panel-section", identifier: "robot_config", title: "Robot Controller Config"},
+    ],
+    "8.2": [
+      {selector: ".motor-bars-panel", identifier: "drive_power", title: "Motor Power"},
+      {selector: ".direction-panel", identifier: "direction_config", title: "Direction Configuration"},
+    ],
+    "9.5": [
+      {selector: ".sim-unit95-overlay-panel", identifier: "servo_offset", title: "Offset Visualizer", initiallyVisible: false},
+    ],
+    "10.1": [
+      {selector: ".sim-unit101-readout", identifier: "slide_monitor", title: "Linear Slide Monitor", height: 7},
+    ],
+    "10.2": [
+      {selector: ".sim-unit102-readout", identifier: "winch_conversion", title: "Winch Conversion", height: 7},
+    ],
+    "10.3": [
+      {selector: ".lift-panel", identifier: "lift_encoder", title: "Autonomous Lift Encoder"},
+    ],
+    "10.4": [
+      {selector: ".encoder-panel", identifier: "mecanum_encoder", title: "Encoder Mecanum"},
+    ],
+    "10.5": [
+      {selector: ".slider-panel", identifier: "encoder_position", title: "Encoder Position"},
+    ],
+    "11.1": [
+      {selector: ".sensor-panel", identifier: "touch_sensor", title: "Touch Sensor and Lift"},
+    ],
+    "11.2": [
+      {selector: "#wrist-panel", identifier: "wrist_safety", title: "Analog Wrist Safety"},
+    ],
+    "11.3": [
+      {selector: "#panel", identifier: "color_sensor", title: "Color Sensor Inspector"},
+    ],
+    "11.4": [
+      {selector: "#hud", identifier: "distance_sensor", title: "Distance Sensor Inspector"},
+    ],
+    "11.5": [
+      {selector: "#hud", identifier: "smart_intake", title: "Smart Intake Logic"},
+    ],
+    "12.1": [
+      {selector: "#imu-panel", identifier: "imu_orientation", title: "IMU Orientation"},
+    ],
+    "12.2": [
+      {selector: "#hud", identifier: "heading_alignment", title: "Heading Alignment"},
+    ],
+    "12.3": [
+      {selector: "#strafe-panel", identifier: "field_relative_strafe", title: "Field-Relative Strafe"},
+    ],
+    "12.4": [
+      {selector: "#ui-panel", identifier: "tipping_inspector", title: "IMU Stability"},
+    ],
+    "12.5": [
+      {selector: "#u125-panel", identifier: "proportional_control", title: "Proportional Control"},
+    ],
+    "13.1": [
+      {selector: "#u131-panel", identifier: "intake_uml", title: "IntakeMechanism UML", category: "software"},
+    ],
+    "13.2": [
+      {selector: "#u132-panel", identifier: "inheritance_diagram", title: "Inheritance and Delegation", category: "software"},
+    ],
+    "13.3": [
+      {selector: "#uml-panel", identifier: "override_uml", title: "Override Relationship", category: "software"},
+      {selector: "#bottom-panel .panel-section:first-child", identifier: "power_clamping", title: "Power Clamping", category: "software"},
+      {selector: "#bottom-panel .panel-section:last-child", identifier: "override_chain", title: "Override Delegation Chain", category: "software"},
+    ],
+    "13.4": [
+      {selector: "#constants-table", closest: ".panel", identifier: "constants_registry", title: "Constants Registry", category: "software"},
+      {selector: "#rename-input", closest: ".panel", identifier: "single_source_truth", title: "Single Source of Truth", category: "software"},
+    ],
+    "13.5": [
+      {selector: "#u135-panel", identifier: "robot_composition", title: "Robot Composition", category: "software"},
+    ],
+    "13.project": [
+      {selector: ".u13-project-flow", identifier: "subsystem_call_flow", title: "Subsystem Call Flow", category: "software"},
+    ],
+    "14.1": [
+      {selector: "#u141-panel", identifier: "vision_lifecycle", title: "Vision Portal Lifecycle"},
+    ],
+    "14.2": [
+      {selector: "#u142-panel", identifier: "apriltag_scanner", title: "AprilTag Scanner"},
+    ],
+    "14.3": [
+      {selector: "#u143-panel", identifier: "tag_distance", title: "AprilTag Distance"},
+    ],
+    "14.4": [
+      {selector: "#u144-panel", identifier: "vision_zone_editor", title: "Vision Zone Editor"},
+    ],
+    "14.5": [
+      {selector: "#u145-panel", identifier: "saturation_analyzer", title: "Saturation and Spike Position"},
+    ],
+    "15.1": [
+      {selector: "#u151-panel", identifier: "limelight_autolock", title: "Limelight Auto-Lock"},
+    ],
+    "15.2": [
+      {selector: "#u152-panel", identifier: "pedro_follower", title: "Pedro Follower Lifecycle", category: "software"},
+    ],
+    "15.3": [
+      {selector: "#u153-visualizer-inline", identifier: "pedro_visualizer", title: "Pedro Pathing Visualizer", category: "software", width: 24, height: 14},
+      {selector: "#u153-panel", identifier: "pedro_path_inspector", title: "Pedro Path Inspector", category: "software", height: 14},
+    ],
+    "15.4": [
+      {selector: "#u154-panel", identifier: "pose_fusion", title: "Pose Fusion", category: "software"},
+    ],
+    "15.5": [
+      {selector: "#u155-diagram", identifier: "ivy_sequence", title: "Ivy Command Sequence", category: "software"},
+      {selector: "#u155-panel", identifier: "command_runtime", title: "Command Runtime", category: "software"},
+    ],
+  };
+
+  const COMMON_WORKSPACE_SURFACES = [
+    {selector: "#mastery-hardware-map", identifier: "hardware_configuration", title: "Hardware Configuration"},
+  ];
+
+  let workspaceScopedStylesMirrored = false;
+
+  function currentWorkspaceLessonKey() {
+    const candidates = [
+      window.location && window.location.pathname,
+      workspaceLessonId,
+      document.title,
+    ];
+    for (let index = 0; index < candidates.length; index += 1) {
+      const match = String(candidates[index] || "").match(
+        /unit[-_ ]*(\d+(?:\.\d+)?)(?:[._ -]*(mastery|project))?/i
+      );
+      if (!match) continue;
+      return match[1] + (match[2] ? "." + match[2].toLowerCase() : "");
+    }
+    return "";
+  }
+
+  function mirrorWorkspaceScopedStyles() {
+    if (workspaceScopedStylesMirrored || !document.styleSheets) return;
+    workspaceScopedStylesMirrored = true;
+    const scopedIds = /#(?:sim-right-panel|right-panel|ds-container)\b/g;
+
+    function mirrorRules(container) {
+      let rules;
+      try {
+        rules = Array.from(container.cssRules || []);
+      } catch (_) {
+        return;
+      }
+      rules.forEach(function (rule) {
+        if (rule.selectorText && rule.style && scopedIds.test(rule.selectorText)) {
+          scopedIds.lastIndex = 0;
+          const selector = rule.selectorText.replace(
+            scopedIds,
+            '[data-sim-lesson-surface-host="true"]'
+          );
+          try {
+            container.insertRule(selector + "{" + rule.style.cssText + "}", container.cssRules.length);
+          } catch (_) {}
+        }
+        scopedIds.lastIndex = 0;
+        // Modern CSSStyleRule objects also expose cssRules for nesting. Mirror
+        // the style itself first, then recurse into any actual nested rules.
+        if (rule.cssRules && rule.cssRules.length && typeof rule.insertRule === "function") {
+          mirrorRules(rule);
+        }
+      });
+    }
+
+    Array.from(document.styleSheets).forEach(mirrorRules);
+  }
+
+  function workspaceNodeDepth(node) {
+    let depth = 0;
+    let cursor = node;
+    while (cursor && cursor.parentElement) {
+      depth += 1;
+      cursor = cursor.parentElement;
+    }
+    return depth;
+  }
+
+  function wrapWorkspaceSurface(node, identifier, type) {
+    if (!node || !node.parentNode) return null;
+    const existing = node.parentElement
+      && node.parentElement.getAttribute("data-sim-lesson-surface-host") === "true"
+      ? node.parentElement
+      : null;
+    if (existing) return existing;
+    const host = document.createElement("div");
+    host.className = "sim-lesson-surface-host";
+    host.setAttribute("data-sim-lesson-surface-host", "true");
+    host.setAttribute("data-sim-surface-id", identifier);
+    if (type === "scene") host.setAttribute("data-sim-scene-surface", "true");
+    node.parentNode.insertBefore(host, node);
+    host.appendChild(node);
+    return host;
+  }
+
+  function resolveWorkspaceSceneSurface(output, sceneNode) {
+    if (!output || !sceneNode) return sceneNode;
+    const wrappedScene = sceneNode.closest && sceneNode.closest("#scene-wrap");
+    if (wrappedScene && output.contains(wrappedScene)) return wrappedScene;
+    const panel = sceneNode.closest && sceneNode.closest(".panel-section");
+    if (panel && output.contains(panel)) return panel;
+    return sceneNode;
+  }
+
+  function collectIndependentWorkspaceWidgets(output) {
+    if (!output || !output.querySelector) return [];
+    const lessonKey = currentWorkspaceLessonKey();
+    const specs = (WORKSPACE_SURFACES[lessonKey] || []).concat(COMMON_WORKSPACE_SURFACES);
+    const seen = new Set();
+    const found = [];
+
+    specs.forEach(function (spec) {
+      const match = output.querySelector(spec.selector);
+      let node = match;
+      if (node && spec.closest && node.closest) node = node.closest(spec.closest);
+      if (!node || !output.contains(node) || seen.has(node)) return;
+      seen.add(node);
+      found.push({node: node, spec: spec, depth: workspaceNodeDepth(node)});
+    });
+
+    found.sort(function (first, second) { return second.depth - first.depth; });
+    return found.map(function (item) {
+      const spec = item.spec;
+      const host = wrapWorkspaceSurface(item.node, spec.identifier, "tool");
+      if (!host) return null;
+      const width = Number(spec.width) || 12;
+      const height = Number(spec.height) || 10;
+      return {
+        identifier: spec.identifier,
+        title: spec.title,
+        node: host,
+        category: spec.category === "software" ? "software" : "hardware",
+        bounds: {minWidth: 6, minHeight: 6, maxWidth: 24, maxHeight: 40},
+        position: {position_x: 0, position_y: 20, width: width, height: height, tab_group: null},
+        initiallyVisible: spec.initiallyVisible !== false,
+      };
+    }).filter(Boolean);
+  }
+
+  function registerWorkspaceResourceLifecycle(workspace, definition) {
+    if (!workspace || !workspace.registerWidgetLifecycle || !definition || !definition.node) return;
+    const frames = Array.from(definition.node.querySelectorAll("iframe"));
+    if (!frames.length) return;
+    workspace.registerWidgetLifecycle(definition.identifier, {
+      pause: function () {
+        frames.forEach(function (frame) {
+          const source = frame.getAttribute("src");
+          if (source) frame.dataset.simPausedSource = source;
+          frame.removeAttribute("src");
+        });
+      },
+      resume: function () {
+        frames.forEach(function (frame) {
+          if (!frame.getAttribute("src") && frame.dataset.simPausedSource) {
+            frame.setAttribute("src", frame.dataset.simPausedSource);
+          }
+        });
+      },
+    });
+  }
+
+  // Keep legacy overlays out of the scene tile. Retained teaching tools are
+  // extracted into their own widgets before this scene-only rule runs.
+  const SCENE_ONLY_LESSONS = new Set([
+    "8.1", "8.2", "8.3", "8.4", "8.5",
+    "9.1", "9.3", "9.4", "9.5",
+    "10.1", "10.2", "10.3", "10.4", "10.5",
+    "11.1", "11.2",
+  ]);
+
+  function currentWorkspaceLessonNumber() {
+    const candidates = [
+      workspaceLessonId,
+      window.location && window.location.pathname,
+      document.title,
+    ];
+    for (let index = 0; index < candidates.length; index += 1) {
+      const match = String(candidates[index] || "").match(/(?:unit[-_ ]*|^)(\d+(?:\.\d+)?)/i);
+      if (match) return match[1];
+    }
+    return "";
+  }
+
+  function markSceneOnlySurface(output, sceneNode) {
+    if (!output || !sceneNode || !SCENE_ONLY_LESSONS.has(currentWorkspaceLessonNumber())) return;
+    sceneNode.dataset.simSceneViewport = "true";
+    let sceneBranch = sceneNode;
+    while (sceneBranch.parentElement && sceneBranch.parentElement !== output) {
+      sceneBranch = sceneBranch.parentElement;
+    }
+    if (sceneBranch.parentElement !== output) return;
+    output.dataset.simSceneOnly = "true";
+    sceneBranch.dataset.simSceneCore = "true";
+  }
+
+  function prepareWorkspaceLessonContent(coding) {
+    const headerNode = document.createElement("header");
+    headerNode.id = "sim-workspace-lesson-header";
+    headerNode.className = "sim-lesson-header";
+    const titleNode = document.createElement("h1");
+    titleNode.id = "sim-workspace-lesson-title";
+    titleNode.className = "sim-lesson-header-title";
+    const subtitleNode = document.createElement("p");
+    subtitleNode.id = "sim-workspace-lesson-subtitle";
+    subtitleNode.className = "sim-lesson-header-subtitle";
+    headerNode.appendChild(titleNode);
+    headerNode.appendChild(subtitleNode);
+
+    if (!coding) {
+      titleNode.textContent = workspaceHeaderTitle || document.title || "Simulator";
+      subtitleNode.hidden = true;
+      return {headerNode: headerNode, requirementsNode: null, executionNode: null};
+    }
+
+    const sourceHeader = Array.from(coding.children).find(function (node) {
+      return node.matches && node.matches(".sim-panel-header, .panel-header, .editor-header");
+    });
+    if (sourceHeader && usesPrebuiltDOM) {
+      const sourceTitle = sourceHeader.querySelector(".sim-panel-header-title, #sim-header-title, .panel-header-title, .editor-title");
+      const sourceSubtitle = sourceHeader.querySelector(".sim-panel-header-sub, #sim-header-sub, .panel-header-sub, .editor-subtitle");
+      if (sourceTitle && sourceTitle.textContent.trim()) {
+        workspaceHeaderTitle = sourceTitle.textContent.trim();
+      }
+      if (sourceSubtitle) workspaceHeaderSubtitle = sourceSubtitle.textContent.trim();
+    }
+    if (sourceHeader) sourceHeader.remove();
+
+    // Some older lessons add a second label directly above the code editor.
+    // The workspace frame already labels that surface, so keep only the editor.
+    const oldEditorLabel = Array.from(coding.children).find(function (node) {
+      return node.id === "editor-header";
+    });
+    if (oldEditorLabel) oldEditorLabel.remove();
+
+    const challenge = Array.from(coding.children).find(function (node) {
+      return node.matches && node.matches("#sim-challenge-card, .challenge-card, #challenge-wrap");
+    });
+    let requirementsNode = null;
+    if (challenge) {
+      requirementsNode = document.createElement("div");
+      requirementsNode.id = "sim-workspace-requirements";
+      requirementsNode.className = "sim-workspace-requirements";
+      requirementsNode.appendChild(challenge);
+      coding.parentNode.insertBefore(requirementsNode, coding.nextSibling);
+    }
+
+    const bottomBar = Array.from(coding.children).find(function (node) {
+      return node.matches && node.matches(".sim-bottom-bar, .bottom-bar");
+    });
+    let executionNode = null;
+    if (bottomBar) {
+      executionNode = document.createElement("div");
+      executionNode.id = "sim-workspace-execution";
+      executionNode.className = "sim-workspace-execution";
+      executionNode.appendChild(bottomBar);
+      coding.parentNode.insertBefore(executionNode, coding.nextSibling);
+    }
+
+    const lessonSlug = new URLSearchParams(window.location.search).get("lesson");
+    if (lessonSlug && /^[a-z0-9-]{2,80}$/.test(lessonSlug)) {
+      const readableLesson = lessonSlug.split("-").map(function (word) {
+        if (word === "dcmotor") return "DC Motor";
+        if (word === "opmode") return "OpMode";
+        if (word === "imu") return "IMU";
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      }).join(" ");
+      workspaceHeaderSubtitle = "Lesson: " + readableLesson;
+    }
+    titleNode.textContent = workspaceHeaderTitle || document.title || "Simulator";
+    subtitleNode.textContent = workspaceHeaderSubtitle;
+    subtitleNode.hidden = !workspaceHeaderSubtitle;
+    return {
+      headerNode: headerNode,
+      requirementsNode: requirementsNode,
+      executionNode: executionNode,
+    };
+  }
+
+  function mountSimulatorWorkspace() {
+    if (!window.TelemarkSimulatorWorkspace || !document.body) return null;
+    mirrorWorkspaceScopedStyles();
+
+    const coding = firstWorkspaceNode([
+      "#sim-left-panel",
+      "#left-panel",
+      "#editor-container",
+    ]);
+    const output = firstWorkspaceNode([
+      "#sim-right-panel",
+      "#right-panel",
+      "#ds-container",
+    ]);
+    const gamepadCard = firstWorkspaceNode([
+      "#sim-gamepad-card",
+      "#gamepad-float-card",
+      "#gamepad-card",
+      ".gamepad-float-card",
+      ".gamepad-panel",
+    ]);
+
+    const lessonContent = prepareWorkspaceLessonContent(coding);
+    const gamepadInstruction = gamepadCard && gamepadCard.querySelector(".gp-instruction");
+    const requirementsBody = lessonContent.requirementsNode
+      && lessonContent.requirementsNode.querySelector(".challenge-body, .sim-challenge-body");
+    if (gamepadInstruction && requirementsBody) {
+      gamepadInstruction.classList.add("sim-workspace-control-instructions");
+      const task = requirementsBody.querySelector(".task, .sim-challenge-desc");
+      if (task) task.insertAdjacentElement("afterend", gamepadInstruction);
+      else requirementsBody.insertBefore(gamepadInstruction, requirementsBody.firstChild);
+    }
+
+    const widgets = [];
+    const independentWidgets = collectIndependentWorkspaceWidgets(output);
+    let sceneNode = null;
+    let hasThreeView = false;
+
+    if (coding) {
+      widgets.push({
+        identifier: "coding",
+        title: "Code editor",
+        node: coding,
+        category: "software",
+        bounds: {minWidth: 5, minHeight: 5, maxWidth: 24, maxHeight: 48},
+        position: {position_x: 0, position_y: 0, width: 14,
+          height: lessonContent.requirementsNode ? 13 : 20, tab_group: null},
+      });
+    }
+
+    if (lessonContent.requirementsNode) {
+      widgets.push({
+        identifier: "requirements",
+        title: "Requirements and grading",
+        node: lessonContent.requirementsNode,
+        category: "software",
+        bounds: {minWidth: 5, minHeight: 5, maxWidth: 24, maxHeight: 48},
+        position: {position_x: 0, position_y: 13, width: 14, height: 7, tab_group: null},
+      });
+    }
+
+    if (lessonContent.executionNode) {
+      widgets.push({
+        identifier: "execution",
+        title: "Run and telemetry",
+        node: lessonContent.executionNode,
+        category: "software",
+        bounds: {minWidth: 5, minHeight: 5, maxWidth: 24, maxHeight: 48},
+        position: {position_x: 14, position_y: 0, width: 10, height: 5, tab_group: null},
+      });
+    }
+
+    if (output) {
+      sceneNode = output.querySelector("#sim-scene-container")
+        || output.querySelector("#scene-container")
+        || output.querySelector("#scene-wrap")
+        || output.querySelector("#robot-canvas")
+        || output.querySelector("#sim-robot-canvas");
+      hasThreeView = Boolean(sceneNode);
+      if (hasThreeView) {
+        markSceneOnlySurface(output, sceneNode);
+        const sceneSurface = resolveWorkspaceSceneSurface(output, sceneNode);
+        const sceneHost = wrapWorkspaceSurface(sceneSurface, "robot_view", "scene");
+        widgets.push({
+          identifier: "robot_view",
+          title: "3D view",
+          node: sceneHost,
+          category: "hardware",
+          bounds: {minWidth: 5, minHeight: 5, maxWidth: 24, maxHeight: 48},
+          position: {position_x: 14, position_y: lessonContent.executionNode ? 5 : 0,
+            width: 10, height: lessonContent.executionNode ? 8 : 12, tab_group: null},
+        });
+      }
+    }
+
+    independentWidgets.forEach(function (definition) { widgets.push(definition); });
+
+    if (gamepadCard && gamepadCard !== coding && gamepadCard !== output) {
+      widgets.push({
+        identifier: "gamepad",
+        title: "Gamepad",
+        node: gamepadCard,
+        category: "hardware",
+        bounds: {minWidth: 5, minHeight: 5, maxWidth: 24, maxHeight: 48},
+        position: {position_x: 14, position_y: lessonContent.executionNode ? 13 : 12,
+          width: 10, height: lessonContent.executionNode ? 7 : 8, tab_group: null},
+      });
+    }
+
+    // Non-3D legacy lessons still need their run controls and telemetry. When
+    // a 3D scene exists, those lesson-specific teaching surfaces are already
+    // registered above and the old wrapper becomes a hidden compatibility host.
+    if (output && !hasThreeView) {
+      widgets.push({
+        identifier: "lesson_output",
+        title: "Run and telemetry",
+        node: output,
+        category: "hardware",
+        bounds: {minWidth: 5, minHeight: 5, maxWidth: 24, maxHeight: 48},
+        position: {position_x: 14, position_y: 0, width: 10, height: 12, tab_group: null},
+      });
+    }
+
+    if (!widgets.length) return null;
+
+    try {
+      simulatorWorkspace = window.TelemarkSimulatorWorkspace.mount({
+        root: document.body,
+        lessonId: workspaceLessonId,
+        widgets: widgets,
+        dormantNodes: hasThreeView && output ? [output] : [],
+        collision: "overlap",
+      });
+      if (simulatorWorkspace.scroll && simulatorWorkspace.grid) {
+        simulatorWorkspace.scroll.insertBefore(lessonContent.headerNode, simulatorWorkspace.grid);
+        if (simulatorWorkspace.toolbar) lessonContent.headerNode.appendChild(simulatorWorkspace.toolbar);
+      }
+      if (hasThreeView && simulatorWorkspace.registerWidgetLifecycle) {
+        simulatorWorkspace.registerWidgetLifecycle("robot_view", {
+          pause: function () { workspaceSceneActive = false; },
+          resume: function () {
+            workspaceSceneActive = true;
+            window.dispatchEvent(new Event("resize"));
+          },
+          unmount: function () { workspaceSceneActive = false; },
+          mount: function () { workspaceSceneActive = true; },
+        });
+      }
+      independentWidgets.forEach(function (definition) {
+        registerWorkspaceResourceLifecycle(simulatorWorkspace, definition);
+      });
+      return simulatorWorkspace;
+    } catch (error) {
+      console.error("[Simulator workspace error]", error);
+      simulatorWorkspace = null;
+      workspaceSceneActive = true;
+      return null;
+    }
+  }
+
   function initialize() {
     applyTheme(activeTheme || detectInitialTheme());
 
@@ -5482,9 +6195,12 @@
     // 3. Load dependencies and then init scene + editor highlighting
     let prismReady = false;
     let threeReady = false;
+    let workspaceReady = false;
+    let simulatorStarted = false;
 
     function checkReady() {
-      if (prismReady && threeReady) {
+      if (prismReady && threeReady && workspaceReady && !simulatorStarted) {
+        simulatorStarted = true;
         // Initialize Three.js scene
         try {
           if (!window.THREE) {
@@ -5533,6 +6249,10 @@
           }
         }
 
+        // Lesson callbacks build their visualizers synchronously. Mount after
+        // that work so every semantic surface is a first-class saved tile.
+        mountSimulatorWorkspace();
+
         // Most lessons set a starter through setCode(), which restores their
         // matching draft there. This fallback covers generated lessons that
         // deliberately leave the editor content in the base template.
@@ -5558,15 +6278,23 @@
       threeReady = true;
       checkReady();
     });
+
+    loadWorkspaceAssets().then(function () {
+      workspaceReady = true;
+      checkReady();
+    });
   }
 
-  function initializeLegacy() {
+  function initializePrebuilt() {
     applyTheme(activeTheme || detectInitialTheme());
     preventNativeControllerDrag(document);
+    loadWorkspaceAssets().then(function () {
+      mountSimulatorWorkspace();
+    });
   }
 
   // Wait for DOMContentLoaded
-  const initializeForMode = isLegacyMode ? initializeLegacy : initialize;
+  const initializeForMode = usesPrebuiltDOM ? initializePrebuilt : initialize;
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initializeForMode);
   } else {

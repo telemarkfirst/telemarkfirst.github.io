@@ -18,6 +18,8 @@ const legacyLessonFiles = new Set([
   'unit4.html',
   'unit5.html',
   'unit6.html',
+]);
+const embeddedLessonFiles = new Set([
   'unit7.html',
   'unit8.1.html',
   'unit8.2.html',
@@ -92,7 +94,7 @@ for (const name of htmlFiles) {
 
   if (/^unit\d/.test(name)) {
     assert.match(source, /telemark-editor\.js/, `${name} must load the shared editor behavior`);
-    const supportsProjects = legacyLessonFiles.has(name) || masteryFiles.has(name) || cumulativeProjectFiles.has(name) || /^unit(?:9\.[2-5]|10\.[1-5]|12\.[24])\.html$/.test(name);
+    const supportsProjects = legacyLessonFiles.has(name) || embeddedLessonFiles.has(name) || masteryFiles.has(name) || cumulativeProjectFiles.has(name) || /^unit(?:9\.[2-5]|10\.[1-5]|12\.[24])\.html$/.test(name);
     assert.equal(/telemark-project\.js/.test(source), supportsProjects, `${name} project controls must match its runtime capability`);
     const usesSharedBase = /<script\b[^>]*\bsrc\s*=\s*["'][^"']*simulator_base\.js["']/i.test(source);
     assert.equal(usesSharedBase, true, `${name} must load simulator_base.js`);
@@ -122,6 +124,7 @@ for (const name of htmlFiles) {
     );
 
     const usesLegacyBase = /<script\b(?=[^>]*\bsrc\s*=\s*["'][^"']*simulator_base\.js["'])(?=[^>]*\bdata-telemark-mode\s*=\s*["']legacy["'])[^>]*>/i.test(source);
+    const usesEmbeddedBase = /<script\b(?=[^>]*\bsrc\s*=\s*["'][^"']*simulator_base\.js["'])(?=[^>]*\bdata-telemark-mode\s*=\s*["']embedded["'])[^>]*>/i.test(source);
     if (legacyLessonFiles.has(name)) {
       assert.equal(
         usesLegacyBase,
@@ -129,16 +132,33 @@ for (const name of htmlFiles) {
         `${name} must mark simulator_base.js as legacy mode`,
       );
     }
+    if (embeddedLessonFiles.has(name)) {
+      assert.equal(
+        usesEmbeddedBase,
+        true,
+        `${name} must use shared embedded mode for its prebuilt 3D viewer`,
+      );
+      assert.equal(usesLegacyBase, false, `${name} must not label a 3D simulator as legacy`);
+    }
     if (usesLegacyBase) {
       assert.match(
         source,
         /TelemarkSimulatorBase\s*\.\s*installLegacy\s*\(\s*\{\s*state\s*:/,
-        `${name} legacy controller must install through simulator_base.js`,
+        `${name} no-3D legacy controller must install through simulator_base.js`,
       );
+    }
+    if (usesEmbeddedBase) {
+      assert.match(
+        source,
+        /TelemarkSimulatorBase\s*\.\s*installEmbedded\s*\(\s*\{\s*state\s*:/,
+        `${name} prebuilt 3D controller must install through embedded simulator_base mode`,
+      );
+    }
+    if (usesLegacyBase || usesEmbeddedBase) {
       assert.match(
         source,
         /TelemarkSimulatorBase\s*\.\s*compileStudentSource\s*\(/,
-        `${name} legacy Java validation must use the shared base compiler wrapper`,
+        `${name} prebuilt Java validation must use the shared base compiler wrapper`,
       );
       assert.doesNotMatch(
         source,
@@ -485,7 +505,7 @@ assert.match(
 );
 assert.match(
   unit85Source,
-  /installLegacy\s*\(\s*\{[\s\S]{0,160}onInput\s*:\s*updateAxisReadout/,
+  /installEmbedded\s*\(\s*\{[\s\S]{0,160}onInput\s*:\s*updateAxisReadout/,
   'unit8.5.html must update its readout through simulator_base input ownership',
 );
 assert.doesNotMatch(

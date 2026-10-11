@@ -1,0 +1,18 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "clipped-overflow-container",
+        "value": "*",
+        "files": [
+          "static/simulator/unit4.html",
+          "static/simulator/unit5.html"
+        ],
+        "createdAt": "2026-10-10T21:09:24.157Z",
+        "reason": "Agent: full-screen editor and gamepad image intentionally clip in-bounds code and input overlays. No DOM tooltip, menu, or popover needs to escape those containers; the detector has no extractable value for individual elements."
+      }
+    ]
+  }
+}

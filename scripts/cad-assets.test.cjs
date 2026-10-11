@@ -274,6 +274,7 @@ assert.match(decodeRobot.json.asset?.extras?.modification || '', /modified|parti
 const decodeChassis = decodeRobot.json.nodes.find((node) => node.name === 'telemark-cad-chassis');
 const decodeChassisSignatures = triangleSignatures(decodeRobot, decodeChassis);
 const decodeMinimumTriangles = {
+  'intake-plate': 500,
   'intake-stage-1': 1000,
   'intake-stage-2': 1000,
   'intake-stage-3': 1000,
@@ -281,17 +282,22 @@ const decodeMinimumTriangles = {
   flywheel: 1000,
   trigger: 200,
 };
-for (const name of ['intake-stage-1', 'intake-stage-2', 'intake-stage-3', 'transfer', 'flywheel', 'trigger']) {
+for (const name of ['intake-plate', 'intake-stage-1', 'intake-stage-2', 'intake-stage-3', 'transfer', 'flywheel', 'trigger']) {
   const node = decodeRobot.json.nodes.find((candidate) => candidate.name === `telemark-cad-${name}`);
   assert.ok(node, `DECODE competition robot must expose its real ${name} CAD as a stable animation node`);
-  assert.equal(node.extras?.telemarkDecodeMechanism, name.startsWith('intake-stage-') ? 'intake' : name);
+  assert.equal(node.extras?.telemarkDecodeMechanism, name === 'intake-plate' || name.startsWith('intake-stage-') ? 'intake' : name);
   if (name.startsWith('intake-stage-')) assert.equal(node.extras?.intakeStage, Number(name.at(-1)));
   const triangles = decodeRobot.json.meshes[node.mesh].primitives.reduce(
     (sum, primitive) => sum + decodeRobot.json.accessors[primitive.indices].count / 3,
     0,
   );
   assert.ok(triangles >= decodeMinimumTriangles[name], `DECODE ${name} must contain real CAD geometry`);
-  assert.equal(node.extras?.spinAxis, name === 'transfer' ? 'z' : 'x');
+  if (name === 'intake-plate') {
+    assert.equal(node.extras?.telemarkCadRole, 'intake-mount');
+    assert.equal(node.extras?.spinAxis, undefined, 'the real intake floor must remain fixed');
+  } else {
+    assert.equal(node.extras?.spinAxis, name === 'transfer' ? 'z' : 'x');
+  }
   if (name === 'trigger') {
     assert.equal(node.extras?.telemarkCadPivot?.length, 3, 'DECODE trigger must pivot on its real servo axis');
   }
@@ -368,17 +374,21 @@ assert.doesNotMatch(
   'Imported CAD robots must not receive fabricated teaching mechanisms',
 );
 assert.match(challengeSource, /getObjectByName\("telemark-cad-mechanism"\)/);
-assert.match(challengeSource, /rigCadTranslation\(model\)/);
+assert.match(challengeSource, /mountQuixilverScissorSlide\(model/);
+assert.match(challengeSource, /TelemarkCadParts\.mount\("quixilver-slide"/);
+assert.match(challengeSource, /cadMechanism\.setProgress\s*\(/);
 assert.match(challengeSource, /rigCadMechanism\(model, \[0\.46, 0\.505, 0\.5\]\)/);
 assert.match(challengeSource, /rigCadMechanism\(model, \[0\.5, 0\.455, 0\.356\]\)/);
 assert.match(challengeSource, /cadMechanism\.rotation\.z = deployment \* 2\.0/);
 assert.match(challengeSource, /cadMechanism\.rotation\.x = -motion\.state\.armAngle/);
-assert.match(challengeSource, /function animate11115Lift\(rig\)/);
+assert.match(challengeSource, /function rig11115RoverLift\(model, modelScale\)/);
+assert.match(challengeSource, /telemark-cad-rover-lift-stage-/);
+assert.match(challengeSource, /maximum:\s*maximum \* modelScale/);
+assert.match(challengeSource, /function animate11115RoverLift\(rig\)/);
 assert.match(challengeSource, /radius:\s*unit === 8 \? 8\.0/);
 assert.match(challengeSource, /y:\s*unit === 8 \? 1\.5/);
-assert.match(challengeSource, /rig\.lowerLow\.rotation\.z = deltaAngle/);
-assert.match(challengeSource, /pivot\.rotation\.z = -deltaAngle/);
-assert.match(challengeSource, /rig\.carriage\.position\.y \+= topDelta\.z \* rig\.scale/);
+assert.match(challengeSource, /rig\.stages\.concat\(\[rig\.carriage\]\)/);
+assert.match(challengeSource, /stage\.object\.position\.y \+= stage\.maximum \* progress/);
 assert.doesNotMatch(challengeSource, /cadMechanism\.position\.z = -deployment/);
 assert.doesNotMatch(
   challengeSource,
