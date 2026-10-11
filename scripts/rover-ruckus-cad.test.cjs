@@ -34,8 +34,13 @@ function triangleCount(json) {
 
 const sourceGlb = path.join(repoRoot, 'robot-cad-sources/11115_Gluten_Free_RoverRuckus_Robot_GLB.glb');
 const sourceStep = path.join(repoRoot, 'robot-cad-sources/11115_Gluten_Free_RoverRuckus_Robot_STEP.step');
-assert.ok(fs.statSync(sourceGlb).size > 250 * 1024 * 1024, 'the original Rover Ruckus GLB must remain available for provenance');
-assert.ok(fs.statSync(sourceStep).size > 100 * 1024 * 1024, 'the original Rover Ruckus STEP must remain available for provenance');
+// Original CAD is kept outside Git; CI still checks the committed browser assets below.
+if (fs.existsSync(sourceGlb)) {
+  assert.ok(fs.statSync(sourceGlb).size > 250 * 1024 * 1024, 'the original Rover Ruckus GLB must remain intact');
+}
+if (fs.existsSync(sourceStep)) {
+  assert.ok(fs.statSync(sourceStep).size > 100 * 1024 * 1024, 'the original Rover Ruckus STEP must remain intact');
+}
 
 const fullFile = 'static/simulator/models/11115-gluten-free-rover-ruckus-telemark.glb';
 const parts = {
