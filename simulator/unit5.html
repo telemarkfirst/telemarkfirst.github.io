@@ -126,6 +126,8 @@
     }
     .condition-result.true { background: rgba(0,204,0,0.2); color: var(--good); }
     .condition-result.false { background: rgba(204,0,0,0.2); color: var(--danger); }
+    .condition-empty { color: #9aa7b5; font-style: italic; font-size: 0.85rem; }
+    :root:is([data-theme='light'], [data-telemark-theme='light']) .condition-empty { color: #526c78; }
 
     /* Truth Table */
     .truth-table {
@@ -202,10 +204,10 @@
     .controls { display: flex; gap: 8px; }
     .controls button { flex: 1; padding: 10px; border-radius: 6px; border: none; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: 0.1s ease; user-select: none; }
     .controls button:active { transform: translateY(1px); }
-    #btn-main { background: var(--accent); color: white; }
+    #btn-main { background: var(--accent); color: #071019; }
     #btn-main:hover { background: var(--accent-2); }
-    #btn-main:disabled { background: #444; color: #888; cursor: not-allowed; transform: none; }
-    #btn-stop { background: var(--danger); color: white; }
+    #btn-main:disabled { background: #444; color: #d6e0e9; cursor: not-allowed; transform: none; }
+    #btn-stop { background: #b4232c; color: white; }
     #btn-stop:hover { filter: brightness(1.1); }
 
     .motor-visual {
@@ -242,7 +244,7 @@
     }
     .rotor-notch {
       position: absolute; top: -2px; left: 50%; transform: translateX(-50%);
-      width: 5px; height: 5px; background: #00cc00; border-radius: 50%; box-shadow: 0 0 6px #00cc0088;
+      width: 5px; height: 5px; background: #00cc00; border-radius: 50%;
     }
     .motor-power-label { margin-top: 5px; font-family: monospace; font-size: 0.85rem; display: flex; align-items: center; gap: 4px; }
     .motor-power-label .label-text { color: #aaa; }
@@ -257,11 +259,11 @@
 
     #hint-container { display: flex; flex-direction: column; gap: 6px; }
     .hint {
-      display: block; background: rgba(255, 204, 0, 0.12); border-left: 4px solid var(--warn);
+      display: block; background: rgba(255, 204, 0, 0.12); border: 1px solid var(--warn);
       padding: 8px 10px; color: var(--warn); border-radius: 4px; font-size: 0.88rem;
     }
-    .hint.error { background: rgba(204, 0, 0, 0.12); border-left-color: var(--danger); color: #ff6666; }
-    .hint.info { background: rgba(0, 122, 204, 0.12); border-left-color: var(--accent); color: #6db3f2; }
+    .hint.error { background: rgba(204, 0, 0, 0.12); border-color: var(--danger); color: #ff6666; }
+    .hint.info { background: rgba(0, 122, 204, 0.12); border-color: var(--accent); color: #6db3f2; }
 
     /* Floating Gamepad Card */
     .gamepad-float-card {
@@ -329,7 +331,7 @@
     .right-bumper-btn { left: 80%; top: 12%; transform: translate(-50%, -50%); }
 
     .trigger-slider { position: absolute; width: 10%; height: 14%; background: rgba(0,0,0,0.4); border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); cursor: pointer; overflow: hidden; }
-    .trigger-slider-fill { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, var(--accent-2), var(--accent)); transition: height 0.05s; }
+    .trigger-slider-fill { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, var(--accent-2), var(--accent)); }
     .left-trigger-slider { left: 21%; top: 0%; transform: translate(-50%, 0); }
     .right-trigger-slider { left: 79%; top: 0%; transform: translate(-50%, 0); }
 
@@ -344,6 +346,18 @@
     .dpad-left { left: 0; top: 33%; border-radius: 4px 0 0 4px; }
     .dpad-right { right: 0; top: 33%; border-radius: 0 4px 4px 0; }
     .dpad-center { position: absolute; left: 33%; top: 33%; width: 34%; height: 34%; background: rgba(30,30,30,0.9); border-radius: 2px; pointer-events: none; }
+
+  @media (max-width: 640px) {
+    html[data-sim-workspace="true"] .sim-widget-coding #editor-container {
+      position: absolute !important;
+      inset: 0 !important;
+      height: 100% !important;
+      min-height: 100% !important;
+    }
+    html[data-sim-workspace="true"] .sim-widget-coding .code-wrapper {
+      min-height: 280px;
+    }
+  }
   </style>
   <script src="./telemark-java.js"></script>
   <script src="./telemark-editor.js"></script>
@@ -468,7 +482,7 @@ public class TeleOpTest extends OpMode {
       </div>
     </div>
     <div class="telemetry-panel" id="telemetry-log" style="flex:2;">
-      <div style="color:#666; font-style:italic;">Telemetry output...</div>
+      <div style="color:#9aa7b5; font-style:italic;">Telemetry output...</div>
     </div>
   </div>
 
@@ -483,7 +497,7 @@ public class TeleOpTest extends OpMode {
   </div>
   <div class="gamepad-card-body" id="gamepad-card-body">
     <div class="controller-wrap" id="controller-wrap">
-      <img class="controller-img" alt="FTC controller" src="https://resource.logitechg.com/w_776,h_437,ar_16:9,c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/gaming/en/products/f310/f310-feature-3.png">
+      <img class="controller-img" alt="FTC-style gamepad" src="./gamepad-controller-original.jpg">
       <div class="trigger-slider left-trigger-slider" id="left-trigger-slider"><div class="trigger-slider-fill" id="left-trigger-fill"></div></div>
       <div class="trigger-slider right-trigger-slider" id="right-trigger-slider"><div class="trigger-slider-fill" id="right-trigger-fill"></div></div>
       <div class="overlay bumper-btn left-bumper-btn" id="btn-lb" title="Left Bumper"></div>
@@ -907,7 +921,7 @@ function drawFlowchart() {
   if (chains.length === 0) {
     canvas.width = container.clientWidth;
     canvas.height = 60;
-    ctx.fillStyle = '#666';
+    ctx.fillStyle = document.documentElement.dataset.theme === 'light' ? '#526c78' : '#9aa7b5';
     ctx.font = '14px monospace';
     ctx.textAlign = 'center';
     ctx.fillText('No if/else chains found in loop()', canvas.width / 2, 35);
@@ -1030,7 +1044,7 @@ function drawFlowchart() {
 function renderConditionInspector() {
   var container = document.getElementById('condition-inspector');
   if (allConditions.length === 0) {
-    container.innerHTML = '<div style="color:#666;font-style:italic;font-size:0.85rem;">No conditions found...</div>';
+    container.innerHTML = '<div class="condition-empty">No conditions found...</div>';
     return;
   }
   
@@ -1118,7 +1132,7 @@ function renderTruthTable() {
   });
   
   html += '</tbody></table>';
-  html += '<div style="font-size:0.75rem;color:#666;margin-top:6px;">Condition: ' + escapeHtml(targetCond) + '</div>';
+  html += '<div style="font-size:0.75rem;color:#9aa7b5;margin-top:6px;">Condition: ' + escapeHtml(targetCond) + '</div>';
   
   container.innerHTML = html;
 }
@@ -1883,6 +1897,7 @@ window.addEventListener('load', function() {
   loadInitialConfig();
   updateCode(codeEditor.value);
   updateSensorDisplays();
+  runStaticAnalysis();
 });
 
 // Live update on gamepad changes
@@ -1893,7 +1908,7 @@ setInterval(function() {
     renderTruthTable();
   }
 }, 100);
-if (window.TelemarkSimulatorBase) window.TelemarkSimulatorBase.installLegacy({state: gamepad});
+if (window.TelemarkSimulatorBase) window.TelemarkSimulatorBase.installLegacy({state: gamepad, onThemeChange: drawFlowchart});
 </script>
 </body>
 </html>

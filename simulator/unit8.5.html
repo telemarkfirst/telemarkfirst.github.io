@@ -136,7 +136,8 @@ code{font-family:"Consolas","Courier New",monospace}
 <script src="telemark-project-checks.js"></script>
 <link rel="stylesheet" href="./telemark-project.css"/>
   <script src="./gamepad-controls.js"></script>
-  <script src='./simulator_base.js' data-telemark-mode='legacy'></script>
+  <script src='./simulator_base.js' data-telemark-mode='embedded'></script>
+  <script src="./cad-parts.js"></script>
 <link href="telemark-sim.css" rel="stylesheet"/>
 </head>
 <body>
@@ -286,7 +287,7 @@ public class TwoWaySlide extends OpMode {
   </div>
   <div class="gamepad-card-body" id="gamepad-card-body">
     <div class="controller-wrap" id="controller-wrap">
-      <img class="controller-img" alt="controller" src="https://resource.logitechg.com/w_776,h_437,ar_16:9,c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/gaming/en/products/f310/f310-feature-3.png">
+      <img class="controller-img" alt="FTC-style gamepad" src="./gamepad-controller-original.jpg">
       <div class="trigger-slider left-trigger-slider" id="left-trigger-slider"><div class="trigger-slider-fill" id="left-trigger-fill"></div></div>
       <div class="trigger-slider right-trigger-slider" id="right-trigger-slider"><div class="trigger-slider-fill" id="right-trigger-fill"></div></div>
       <div class="trigger-label lt-label">LT</div>
@@ -322,7 +323,7 @@ public class TwoWaySlide extends OpMode {
 // =============== 8.5 — TWO-WAY SLIDE WITH TWO LIMITS ===============
 'use strict';
 
-let scene, camera, renderer, robotGroup, liftCarriage, liftRails;
+let scene, camera, renderer, robotGroup, liftCarriage, liftRails, cadLift;
 let lowerLimitSensor, lowerLimitLight, upperLimitSensor, upperLimitLight;
 let liftHeight = 0.35;
 let liftVelocity = 0;
@@ -670,9 +671,10 @@ function initScene() {
   dirLight.shadow.camera.bottom = -5;
   scene.add(dirLight);
   
-  // FIX: Rename this variable to 'bluePointLight' so it doesn't overwrite your camera focus
+  // Three.js add() returns the parent, so position the light before attaching it.
   var bluePointLight = new THREE.PointLight(0x88ddff, 0.6, 15);
-  scene.add(bluePointLight).position.set(-6, 12, -8);
+  bluePointLight.position.set(-6, 12, -8);
+  scene.add(bluePointLight);
 
   // Reflective ground with professional lines
   var groundMat = new THREE.MeshPhongMaterial({
@@ -765,13 +767,28 @@ function initScene() {
   upperLimitSensor = upperVisual.sensor;
   upperLimitLight = upperVisual.light;
 
+  if (window.TelemarkCadParts) {
+    window.TelemarkCadParts.mount('roverruckus-lift', {
+      THREE: THREE,
+      parent: scene,
+      position: [0, 0, 0],
+      fallback: robotGroup,
+      fit: 2.25,
+    }).then(function (rig) {
+      cadLift = rig;
+      cadLift.setProgress(Math.max(0, Math.min(1, liftHeight)));
+    }).catch(function (error) {
+      console.error('Rover Ruckus lift CAD failed to load', error);
+    });
+  }
+
   updateLiftVisuals();
 
   // Camera - safe centered view
   var orbitAngle = 0.9;
-  var orbitPitch = 0.35;
-  var orbitDist = 6.0;
-  var lookTarget = new THREE.Vector3(-6, 12, -8);
+  var orbitPitch = 0.42;
+  var orbitDist = 5.15;
+  var lookTarget = new THREE.Vector3(0, 1.85, 0);
 
   function updateCameraOrbit() {
     camera.position.x = lookTarget.x + Math.sin(orbitAngle) * Math.cos(orbitPitch) * orbitDist;
@@ -823,6 +840,7 @@ function updateLiftVisuals() {
 
   const h = Math.max(0, Math.min(1, liftHeight));
   liftCarriage.position.y = 0.4 + h * 3.6;
+  if (cadLift) cadLift.setProgress(h);
 
   lowerLimitPressed = h < 0.03;
   upperLimitPressed = h > 0.97;
@@ -1017,7 +1035,7 @@ window.addEventListener('load', () => {
   initScene();
   updateLiftVisuals();
 });
-if (window.TelemarkSimulatorBase) window.TelemarkSimulatorBase.installLegacy({
+if (window.TelemarkSimulatorBase) window.TelemarkSimulatorBase.installEmbedded({
   state: gamepadState,
   onInput: updateAxisReadout,
   onThemeChange: function(theme) {

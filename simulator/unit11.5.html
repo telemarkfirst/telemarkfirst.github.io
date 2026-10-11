@@ -7,6 +7,7 @@
 <title>Telemark Unit 11.5 Simulator</title>
 
 <script src="simulator_base.js"></script>
+<script src="./cad-parts.js"></script>
 
 <link rel="stylesheet"
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
@@ -393,6 +394,7 @@ let renderer;
 
 let robot;
 let intakeRoller;
+let cadIntake;
 let storageGroup;
 let beam;
 let sceneRoot;
@@ -761,6 +763,22 @@ function buildRobot(){
 
     robot.add(intakeRoller);
 
+    if(window.TelemarkCadParts){
+        window.TelemarkCadParts.mount(
+            "decode-intake",
+            {
+                THREE:THREE,
+                parent:robot,
+                position:[7,.25,0],
+                rotation:[0,-Math.PI/2,0],
+                fit:11,
+                fallback:[body,intakeRoller]
+            }
+        ).then(rig=>{
+            cadIntake = rig;
+        }).catch(()=>{});
+    }
+
     beam =
         new THREE.Mesh(
             new THREE.BoxGeometry(20,.15,.15),
@@ -921,7 +939,15 @@ function updateSimulation(){
     if(!sim.running)
         return;
 
-    if(intakeRoller){
+    if(cadIntake){
+
+        cadIntake.setPower(
+            sim.intakePower
+        );
+
+        cadIntake.update(1/60);
+
+    }else if(intakeRoller){
 
         intakeRoller.rotation.z +=
             sim.intakePower * .2;

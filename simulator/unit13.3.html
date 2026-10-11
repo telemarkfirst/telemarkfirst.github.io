@@ -292,7 +292,6 @@
 
     .fill{
         height:100%;
-        transition:width .1s linear;
     }
 
     .green{
@@ -575,11 +574,6 @@ safePower = 0.00
                     <strong id="metric-safe">0.00</strong>
                 </div>
 
-                <div class="metric">
-                    <span>Current Method</span>
-                    <strong id="metric-method">SafetySlide.move()</strong>
-                </div>
-
                 <div class="delegation">
                     <div class="delegation-step">
                         slide.move(input)
@@ -621,6 +615,7 @@ FINAL SAFE POWER: 0.00
 </div>
 
 <script src="./simulator_base.js"></script>
+<script src="./cad-parts.js"></script>
 
 <script>
 window.onSimulatorReady = () => {
@@ -682,8 +677,8 @@ public class SafetySlideOp extends OpMode {
         "Implement move(double power) in GenericSlide",
         "Create SafetySlide extends GenericSlide",
         "Add @Override annotation",
-        "Clamp with Math.min(0.5, Math.abs(power))",
-        "Preserve direction with Math.signum(power)",
+        "Clamp power to the range -0.5 to 0.5",
+        "Preserve the input direction",
         "Never exceed 0.5 magnitude",
         "Preserve negative direction",
         "Initialize slide motor in OpMode",
@@ -710,7 +705,7 @@ public class SafetySlideOp extends OpMode {
     const slideDevice = hardwareMap.registerMotor("slide");
 
     let sceneRoot;
-    let robot, slideOuter, slideInner;
+    let robot, slideOuter, slideInner, cadSlide;
     let rawInput = 0;
     let safePower = 0;
     let currentExtension = 0;
@@ -721,6 +716,9 @@ public class SafetySlideOp extends OpMode {
     let compiledInitFn = null;
     let compiledLoopFn = null;
     let compiledSource = "";
+    const SLIDE_MIN_EXTENSION = 0;
+    const SLIDE_MAX_EXTENSION = 2.8;
+    const SLIDE_STEP_PER_FRAME = 0.06;
 
     const motorState = {
         slide:0
@@ -803,7 +801,6 @@ safePower = 0.00</div>
                         <div class="panel-title"><i class="fa-solid fa-code-branch"></i><span>Override Delegation Chain</span></div>
                         <div class="metric"><span>Raw Input</span><strong id="metric-raw">0.00</strong></div>
                         <div class="metric"><span>Safe Power</span><strong id="metric-safe">0.00</strong></div>
-                        <div class="metric"><span>Current Method</span><strong id="metric-method">SafetySlide.move()</strong></div>
                         <div class="delegation">
                             <div class="delegation-step">slide.move(input)</div>
                             <div class="arrow"><i class="fa-solid fa-arrow-right"></i></div>
@@ -845,6 +842,7 @@ FINAL SAFE POWER: 0.00</div>
 
     function initThreeScene(){
         if(!window.THREE || !window.scene) return;
+        cadSlide = null;
         if(sceneRoot) window.scene.remove(sceneRoot);
 
         sceneRoot = new THREE.Group();
@@ -919,6 +917,26 @@ FINAL SAFE POWER: 0.00</div>
         slideInner.position.set(3.2,1,0);
         robot.add(slideInner);
 
+        if(window.TelemarkCadParts){
+            window.TelemarkCadParts.mount(
+                "quixilver-slide",
+                {
+                    THREE:THREE,
+                    parent:robot,
+                    position:[3.3,0.15,0],
+                    rotation:[0,0,0],
+                    fit:2.8,
+                    fallback:[body,slideOuter,slideInner]
+                }
+            ).then(rig=>{
+                cadSlide = rig;
+                cadSlide.setProgress(
+                    (currentExtension - SLIDE_MIN_EXTENSION) /
+                    (SLIDE_MAX_EXTENSION - SLIDE_MIN_EXTENSION)
+                );
+            }).catch(()=>{});
+        }
+
         const unsafeZone = new THREE.Mesh(
             new THREE.BoxGeometry(0.15,2,2),
             new THREE.MeshBasicMaterial({
@@ -940,10 +958,23 @@ FINAL SAFE POWER: 0.00</div>
     function animate(){
         if(!slideInner) return;
 
-        const target = safePower * 5;
-        currentExtension += (target - currentExtension) * 0.08;
+        // Motor power changes velocity; it is not an absolute slide position.
+        // Integrate it, then enforce the carriage's retracted/extended stops.
+        const boundedPower = THREE.MathUtils.clamp(safePower, -1, 1);
+        currentExtension = THREE.MathUtils.clamp(
+            currentExtension + boundedPower * SLIDE_STEP_PER_FRAME,
+            SLIDE_MIN_EXTENSION,
+            SLIDE_MAX_EXTENSION
+        );
 
         slideInner.position.x = 3.2 + currentExtension;
+
+        if(cadSlide){
+            cadSlide.setProgress(
+                (currentExtension - SLIDE_MIN_EXTENSION) /
+                (SLIDE_MAX_EXTENSION - SLIDE_MIN_EXTENSION)
+            );
+        }
 
         if(Math.abs(rawInput) > 0.5){
             slideInner.material.emissive.setHex(0x441111);
@@ -1061,6 +1092,12 @@ FINAL SAFE POWER: ${safePower.toFixed(2)}`;
         const safetyMove = extractMethodBody(safetyBody, "move");
         const opInit = extractMethodBody(opBody, "init");
         const opLoop = extractMethodBody(opBody, "loop");
+        const magnitudeClamp = /Math\.min\s*\(\s*0\.5\s*,\s*Math\.abs\s*\(\s*power\s*\)\s*\)/.test(safetyMove);
+        const signedClamp = /Math\.signum\s*\(\s*power\s*\)/.test(safetyMove);
+        const boundedClamp = /Math\.max\s*\(\s*-0\.5\s*,\s*Math\.min\s*\(\s*0\.5\s*,\s*power\s*\)\s*\)/.test(safetyMove);
+        const preservesDirection = (magnitudeClamp && signedClamp) || boundedClamp;
+        const warning = document.getElementById("warning-banner");
+        if (warning) warning.hidden = true;
 
         const checks = [
             /class\s+GenericSlide\b/.test(code),
@@ -1068,10 +1105,10 @@ FINAL SAFE POWER: ${safePower.toFixed(2)}`;
             /void\s+move\s*\(\s*double\s+power\s*\)/.test(genericBody),
             /class\s+SafetySlide\s+extends\s+GenericSlide/.test(code),
             /@Override[\s\S]*?void\s+move\s*\(\s*double\s+power\s*\)/.test(safetyBody),
-            /Math\.min\s*\(\s*0\.5\s*,\s*Math\.abs\s*\(\s*power\s*\)\s*\)/.test(safetyMove),
-            /Math\.signum\s*\(\s*power\s*\)/.test(safetyMove),
+            magnitudeClamp || boundedClamp,
+            preservesDirection,
             /motor\s*\.\s*setPower\s*\(\s*safePower\s*\)|super\s*\.\s*move\s*\(\s*safePower\s*\)/.test(safetyMove),
-            /Math\.signum\s*\(\s*power\s*\)/.test(safetyMove),
+            preservesDirection,
             /slide\s*\.\s*init\s*\(\s*hardwareMap\s*,\s*"slide"\s*\)/.test(opInit),
             /slide\s*\.\s*move\s*\(/.test(opLoop)
         ];
@@ -1113,14 +1150,14 @@ FINAL SAFE POWER: ${safePower.toFixed(2)}`;
             );
         }
 
-        if(!/Math\.signum\s*\(\s*power\s*\)/.test(code)){
+        if(!preservesDirection){
             showHint(
-                "Without Math.signum() negative inputs become positive — direction is lost",
+                "Preserve input direction when you clamp power: positive commands extend and negative commands retract",
                 "red"
             );
         }
 
-        if(/class\s+SafetySlide(?!\s+extends\s+GenericSlide)/.test(code)){
+        if(/class\s+SafetySlide\b(?!\s+extends\s+GenericSlide)/.test(code)){
             showHint(
                 "Add extends GenericSlide to SafetySlide — without it there is no override relationship",
                 "red"
@@ -1140,6 +1177,7 @@ FINAL SAFE POWER: ${safePower.toFixed(2)}`;
         const banner = document.getElementById("warning-banner");
         const text = document.getElementById("banner-text");
         if(!banner || !text) return;
+        banner.hidden = false;
 
         banner.className = type === "red"
             ? "danger"
@@ -1374,7 +1412,8 @@ FINAL SAFE POWER: ${safePower.toFixed(2)}`;
         rawInput = 0;
         safePower = 0;
         refreshPanels();
-        publishTelemetry();
+        const telemetry = document.getElementById("sim-telemetry-log");
+        if (!telemetry || !/ERROR:/.test(telemetry.textContent)) publishTelemetry();
     };
 
     window.onReset = () => {
@@ -1382,6 +1421,8 @@ FINAL SAFE POWER: ${safePower.toFixed(2)}`;
         rawInput = 0;
         safePower = 0;
         currentExtension = 0;
+        if(slideInner) slideInner.position.x = 3.2;
+        if(cadSlide) cadSlide.setProgress(0);
         refreshPanels();
         publishTelemetry();
     };

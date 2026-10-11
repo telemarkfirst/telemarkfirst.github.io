@@ -523,7 +523,7 @@
         downloadProject(currentSnapshot(), 'telemark-project.json');
       });
       utility.appendChild(download);
-      const note = document.createElement('p'); note.className = 'telemark-project-note'; note.textContent = 'Saved on this browser \u00b7 Drag tabs to reorder \u00b7 Double-click or use \u270e to rename \u00b7 Shift+Delete removes a file immediately \u00b7 Export to move code to another device.'; bar.appendChild(note);
+      const note = document.createElement('p'); note.className = 'telemark-project-note'; note.textContent = 'Saved in this browser. Export to use your code on another device.'; bar.appendChild(note);
       bar.appendChild(status);
     }
     editor.addEventListener('input', save);

@@ -33,6 +33,7 @@
     let powerSprite = null;
     let slideReadoutEl = null;
     let animationCallbackId = -1;
+    let sceneReadoutObserver = null;
 
     function clamp(value, min, max) {
         return Math.max(min, Math.min(max, value));
@@ -185,7 +186,6 @@
                     border-radius: 8px;
                     background: rgba(8,8,14,0.88);
                     border: 1px solid rgba(34,211,238,0.28);
-                    box-shadow: 0 10px 24px rgba(0,0,0,0.34);
                     color: #e6e6ef;
                     font: 600 0.84rem "IBM Plex Sans", Arial, sans-serif;
                     pointer-events: none;
@@ -239,6 +239,17 @@
             '<div class="sim-unit101-readout-row"><span class="sim-unit101-label">Motor Power</span><span class="sim-unit101-value">' + power.toFixed(2) + '</span></div>',
             '<div class="sim-unit101-readout-row"><span class="sim-unit101-label">Slide Travel</span><span class="sim-unit101-value">' + slideInches.toFixed(2) + ' in</span></div>'
         ].join("");
+    }
+
+    function updateSceneReadoutVisibility() {
+        const container = document.getElementById("sim-scene-container");
+        if (!container) return;
+        // The world-space labels sit beside the slide on a wide canvas. A
+        // narrow scene clips their left edges, while the HTML monitor still
+        // provides the same measurements above the scene.
+        const showWorldLabels = container.clientWidth >= 480;
+        if (tickSprite) tickSprite.visible = showWorldLabels;
+        if (powerSprite) powerSprite.visible = showWorldLabels;
     }
 
     function createGear(radius, depth, teeth) {
@@ -398,6 +409,12 @@
         scene.add(powerSprite);
 
         ensureSceneOverlay();
+        updateSceneReadoutVisibility();
+        if (sceneReadoutObserver) sceneReadoutObserver.disconnect();
+        if (window.ResizeObserver) {
+            sceneReadoutObserver = new ResizeObserver(updateSceneReadoutVisibility);
+            sceneReadoutObserver.observe(document.getElementById("sim-scene-container"));
+        }
         resetVisuals();
     }
 

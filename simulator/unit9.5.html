@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Telemark Unit 9.5 Simulator</title>
     <script src="simulator_base.js"></script>
+    <script src="./cad-parts.js"></script>
   <script src="./telemark-java.js"></script>
   <script src="./telemark-editor.js"></script>
 <script src="./telemark-project.js"></script>
@@ -34,11 +35,11 @@
     let offsetArrowGroup = null;
     let leftTargetSprite = null;
     let rightTargetSprite = null;
-    let gripStatusSprite = null;
+    let cadClaw = null;
+    let sphereRest = { x: 0, y: 1.2, z: -1.07 };
     let animationCallbackId = -1;
 
     let overlayPanelEl = null;
-    let overlayStatusEl = null;
     let overlayDiffEl = null;
 
     const servoPositions = {
@@ -126,36 +127,6 @@
                 color: #ffd866;
                 font-weight: 700;
             }
-            .sim-unit95-status-chip {
-                position: absolute;
-                left: 16px;
-                top: 16px;
-                padding: 10px 14px;
-                border-radius: 999px;
-                border: 1px solid rgba(255,255,255,0.14);
-                background: rgba(10,10,18,0.82);
-                color: #d6d9e4;
-                font-family: "IBM Plex Sans", sans-serif;
-                font-size: 0.82rem;
-                font-weight: 800;
-                letter-spacing: 0.02em;
-                box-shadow: 0 10px 28px rgba(0,0,0,0.28);
-            }
-            .sim-unit95-status-chip.good {
-                color: #7cffb0;
-                border-color: rgba(124,255,176,0.38);
-                background: rgba(10,42,22,0.86);
-            }
-            .sim-unit95-status-chip.warn {
-                color: #ffd866;
-                border-color: rgba(255,216,102,0.34);
-                background: rgba(48,34,8,0.86);
-            }
-            .sim-unit95-status-chip.bad {
-                color: #ff9a9a;
-                border-color: rgba(255,154,154,0.34);
-                background: rgba(60,14,14,0.86);
-            }
         `;
         document.head.appendChild(style);
     }
@@ -181,12 +152,6 @@
             overlayDiffEl = overlayPanelEl.querySelector(".sim-unit95-diff");
         }
 
-        if (!overlayStatusEl) {
-            overlayStatusEl = document.createElement("div");
-            overlayStatusEl.className = "sim-unit95-status-chip";
-            overlayStatusEl.innerHTML = '<i class="fa-solid fa-circle-info"></i> Waiting for claw input';
-            sceneContainer.appendChild(overlayStatusEl);
-        }
     }
 
     function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
@@ -314,14 +279,13 @@
         const scene = window.scene;
         if (!scene) return;
 
-        ensureOverlay();
 
         window.setFieldVisible(false);
         window.setCameraOrbit({
-            radius: 7.8,
-            theta: 0.0,
-            phi: 1.12,
-            target: { x: 0, y: 1.35, z: 0.15 }
+            radius: 3.55,
+            theta: Math.PI / 2,
+            phi: 1.02,
+            target: { x: 0, y: 1.83, z: -1.1 }
         });
 
         const floor = new THREE.Mesh(
@@ -333,13 +297,6 @@
         floor.receiveShadow = true;
         scene.add(floor);
 
-        const robotShadowPad = new THREE.Mesh(
-            new THREE.CylinderGeometry(1.8, 1.8, 0.04, 32),
-            new THREE.MeshPhongMaterial({ color: 0x1d1d24 })
-        );
-        robotShadowPad.position.set(0, 0.02, 0.18);
-        robotShadowPad.receiveShadow = true;
-        scene.add(robotShadowPad);
 
         robotBody = new THREE.Group();
         scene.add(robotBody);
@@ -440,54 +397,23 @@
                 shininess: 50
             })
         );
-        sphereMesh.position.set(0, 1.42, -1.78);
+        sphereMesh.position.set(sphereRest.x, sphereRest.y, sphereRest.z);
         sphereMesh.castShadow = true;
         scene.add(sphereMesh);
 
-        const smallPad = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.36, 0.36, 0.05, 24),
-            new THREE.MeshPhongMaterial({ color: 0x202028 })
-        );
-        smallPad.position.set(0, 1.12, -1.78);
-        smallPad.receiveShadow = true;
-        scene.add(smallPad);
 
-        offsetArrowGroup = createArrowGroup();
-        offsetArrowGroup.position.set(0.93, 0.36, -0.42);
-        clawBase.add(offsetArrowGroup);
-
-        leftTargetSprite = makeTextSprite("servoL 0.10", {
-            color: "#8eb4ff",
-            background: "rgba(9,18,42,0.72)",
-            border: "rgba(142,180,255,0.2)",
-            scaleX: 1.85,
-            scaleY: 0.54,
-            font: "bold 48px monospace"
-        });
-        leftTargetSprite.position.set(-1.4, 0.92, -0.42);
-        clawBase.add(leftTargetSprite);
-
-        rightTargetSprite = makeTextSprite("servoR 0.85", {
-            color: "#ffb0b0",
-            background: "rgba(50,10,10,0.72)",
-            border: "rgba(255,176,176,0.2)",
-            scaleX: 1.9,
-            scaleY: 0.54,
-            font: "bold 48px monospace"
-        });
-        rightTargetSprite.position.set(1.46, 0.92, -0.42);
-        clawBase.add(rightTargetSprite);
-
-        gripStatusSprite = makeTextSprite("OPEN", {
-            color: "#d6d9e4",
-            background: "rgba(10,10,18,0.72)",
-            border: "rgba(255,255,255,0.14)",
-            scaleX: 1.7,
-            scaleY: 0.56,
-            font: "bold 54px sans-serif"
-        });
-        gripStatusSprite.position.set(0, 1.25, -0.18);
-        clawBase.add(gripStatusSprite);
+        if (window.TelemarkCadParts) {
+            window.TelemarkCadParts.mount("quixilver-claw", {
+                THREE: THREE,
+                parent: clawBase,
+                position: [0, -0.18, -0.1],
+                rotation: [0, Math.PI, 0],
+                fit: 1.75,
+                fallback: [robotBody, mountBar, centerBridge, leftFingerPivot, rightFingerPivot]
+            }).then(function (rig) {
+                cadClaw = rig;
+            }).catch(function () {});
+        }
 
         setInitialVisualState();
     }
@@ -498,7 +424,7 @@
     }
 
     function mapRightPositionToAngle(pos) {
-        const amount = clamp((pos - REST_POS) / (RIGHT_CLOSE - REST_POS), 0, 1.2);
+        const amount = clamp((pos - REST_POS) / (RIGHT_CLOSE - REST_POS), 0, 1);
         return amount * CLAW_MAX_ANGLE;
     }
 
@@ -510,70 +436,20 @@
         return approxEqual(servoPositions.servoL, LEFT_CLOSE, 0.03) && approxEqual(servoPositions.servoR, RIGHT_CLOSE, 0.03);
     }
 
-    function isMissingOffset() {
-        return approxEqual(servoPositions.servoL, LEFT_CLOSE, 0.03) && approxEqual(servoPositions.servoR, RIGHT_CLOSE_NO_OFFSET, 0.03);
-    }
-
-    function updateOverlayPanel() {
-        if (!overlayStatusEl || !overlayDiffEl) return;
-
-        overlayStatusEl.className = "sim-unit95-status-chip";
-        if (!isClosedCommand()) {
-            overlayStatusEl.classList.add("warn");
-            overlayStatusEl.innerHTML = '<i class="fa-solid fa-hand"></i> Claw open at rest position';
-        } else if (isGripAligned()) {
-            overlayStatusEl.classList.add("good");
-            overlayStatusEl.innerHTML = '<i class="fa-solid fa-circle-check"></i> Offset compensated — symmetric grip';
-        } else {
-            overlayStatusEl.classList.add("bad");
-            overlayStatusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Mechanical slop — offset not compensated';
-        }
-
-        if (isGripAligned()) {
-            overlayDiffEl.innerHTML = '<i class="fa-solid fa-arrow-right"></i> Difference highlighted: +0.05';
-        } else if (isMissingOffset()) {
-            overlayDiffEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Missing compensation: servoR is still 0.80';
-        } else {
-            overlayDiffEl.innerHTML = '<i class="fa-solid fa-ruler"></i> Target comparison: servoR should reach 0.85';
-        }
-    }
 
     function updateGripIndicators() {
-        if (!sphereMesh || !gripStatusSprite || !offsetArrowGroup) return;
+        if (!sphereMesh) return;
 
         if (!isClosedCommand()) {
             sphereMesh.material.color.setHex(0x8048d8);
             sphereMesh.material.emissive.setHex(0x101010);
-            updateTextSprite(gripStatusSprite, "OPEN", {
-                color: "#d6d9e4",
-                background: "rgba(10,10,18,0.72)",
-                border: "rgba(255,255,255,0.14)",
-                font: "bold 54px sans-serif"
-            });
-            offsetArrowGroup.visible = false;
         } else if (isGripAligned()) {
             sphereMesh.material.color.setHex(0x66dd88);
             sphereMesh.material.emissive.setHex(0x1e5a2d);
-            updateTextSprite(gripStatusSprite, "GRIPPED", {
-                color: "#7cffb0",
-                background: "rgba(10,42,22,0.76)",
-                border: "rgba(124,255,176,0.22)",
-                font: "bold 54px sans-serif"
-            });
-            offsetArrowGroup.visible = true;
         } else {
             sphereMesh.material.color.setHex(0x777777);
             sphereMesh.material.emissive.setHex(0x202020);
-            updateTextSprite(gripStatusSprite, "MISSED", {
-                color: "#ff9a9a",
-                background: "rgba(52,10,10,0.78)",
-                border: "rgba(255,154,154,0.22)",
-                font: "bold 54px sans-serif"
-            });
-            offsetArrowGroup.visible = false;
         }
-
-        updateOverlayPanel();
     }
 
     function updateRequirementVisuals() {
@@ -610,11 +486,7 @@
         if (leftFingerMesh) leftFingerMesh.material.emissive.setHex(0x08142f);
         if (rightFingerMesh) rightFingerMesh.material.emissive.setHex(0x340909);
         if (sphereMesh) {
-            sphereMesh.position.set(0, 1.42, -1.78);
-        }
-        if (offsetArrowGroup) {
-            offsetArrowGroup.visible = false;
-            offsetArrowGroup.position.y = 0.36;
+            sphereMesh.position.set(sphereRest.x, sphereRest.y, sphereRest.z);
         }
         updateGripIndicators();
     }
@@ -627,6 +499,11 @@
 
         leftFingerPivot.rotation.y = currentAngles.servoL;
         rightFingerPivot.rotation.y = currentAngles.servoR;
+        if (cadClaw) {
+            const leftAmount = clamp((REST_POS - servoPositions.servoL) / (REST_POS - LEFT_CLOSE), 0, 1);
+            const rightAmount = clamp((servoPositions.servoR - REST_POS) / (RIGHT_CLOSE - REST_POS), 0, 1);
+            cadClaw.setFingerProgress(leftAmount, rightAmount);
+        }
 
         if (isClosedCommand() && !isGripAligned()) {
             misalignmentPulse += 0.22;
@@ -635,8 +512,8 @@
                 rightFingerMesh.material.emissive.setHex(0x5a1111);
             }
             if (sphereMesh) {
-                sphereMesh.position.x = Math.sin(misalignmentPulse * 0.9) * 0.07;
-                sphereMesh.position.y = 1.40 + Math.abs(Math.sin(misalignmentPulse * 1.1)) * 0.03;
+                sphereMesh.position.x = sphereRest.x + Math.sin(misalignmentPulse * 0.9) * 0.07;
+                sphereMesh.position.y = sphereRest.y - 0.02 + Math.abs(Math.sin(misalignmentPulse * 1.1)) * 0.03;
             }
         } else {
             if (rightFingerMesh) {
@@ -644,14 +521,11 @@
                 rightFingerMesh.material.emissive.setHex(0x340909);
             }
             if (sphereMesh) {
-                sphereMesh.position.x += (0 - sphereMesh.position.x) * 0.18;
-                sphereMesh.position.y += (1.42 - sphereMesh.position.y) * 0.18;
+                sphereMesh.position.x += (sphereRest.x - sphereMesh.position.x) * 0.18;
+                sphereMesh.position.y += (sphereRest.y - sphereMesh.position.y) * 0.18;
             }
         }
 
-        if (offsetArrowGroup && offsetArrowGroup.visible) {
-            offsetArrowGroup.position.y = 0.36 + Math.sin(Date.now() * 0.006) * 0.03;
-        }
 
         if (leftFingerMesh && isGripAligned()) {
             leftFingerMesh.material.emissive.setHex(0x143c74);

@@ -120,7 +120,7 @@ body {
 :root:is([data-theme='light'], [data-telemark-theme='light']) .telemark-completion-menu {
   background: #ffffff;
   border-color: rgba(8, 127, 156, 0.38);
-  box-shadow: 0 12px 28px rgba(24, 56, 70, 0.18);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
 }
 
 /* Panel chrome, brought in line with the site's cards. */
@@ -1640,4 +1640,55 @@ textarea:focus-visible,
   border-left-color: var(--tm-blue) !important;
   background: rgba(23, 111, 156, 0.1) !important;
   color: var(--tm-blue) !important;
+}
+
+/* Keep the lesson brief and its grading in their own workspace panel. The
+   panel frame supplies the boundary, so the old challenge card need not draw
+   another card around the same content. */
+html[data-sim-workspace='true'] #sim-workspace-requirements,
+html[data-sim-workspace='true'] #sim-workspace-execution {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: auto;
+}
+
+html[data-sim-workspace='true'] #sim-workspace-requirements
+  :is(.sim-challenge-card, .challenge-card, .challenge-panel) {
+  width: 100%;
+  max-height: none;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent !important;
+}
+
+html[data-sim-workspace='true'] #sim-workspace-requirements #challenge-wrap {
+  padding: 0;
+}
+
+html[data-sim-workspace='true'] #sim-workspace-requirements #sim-challenge-body,
+html[data-sim-workspace='true'] #sim-workspace-requirements .challenge-body.open {
+  max-height: none;
+}
+
+html[data-sim-workspace='true'] #sim-workspace-execution {
+  display: flex;
+  flex-direction: column;
+  color: var(--tm-text);
+  font-family: 'Exo 2', sans-serif;
+}
+
+html[data-sim-workspace='true'] #sim-workspace-execution
+  :is(.sim-bottom-bar, .bottom-bar) {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
+html[data-sim-workspace='true'] #sim-workspace-execution
+  :is(.sim-telemetry-panel, .telemetry-panel) {
+  max-height: none;
+  flex: 1 1 auto;
 }

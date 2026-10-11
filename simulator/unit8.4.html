@@ -36,6 +36,7 @@ code{font-family:"Consolas","Courier New",monospace}
 /* Challenge */
 .challenge-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;margin:8px 10px;overflow:hidden;flex-shrink:0}
 .challenge-header{padding:9px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:#0d1721;font-weight:800;font-size:.9rem;color:var(--orange);user-select:none}
+#challenge-toggle{text-transform:none;letter-spacing:normal}
 .challenge-header i.chev{color:#888;font-size:.75rem;transition:transform .2s}.challenge-header.open i.chev{transform:rotate(90deg)}
 .challenge-body{display:none;padding:10px 12px;font-size:.85rem;line-height:1.55;color:#bbb}.challenge-body.open{display:block}
 .task{margin:6px 0 10px;color:#dbeafe;background:#05080d;padding:9px 10px;border-radius:5px;font-family:"Consolas","Courier New",monospace;font-size:.82rem;line-height:1.55;white-space:pre-wrap}
@@ -60,26 +61,22 @@ code{font-family:"Consolas","Courier New",monospace}
 #hint-container{display:flex;flex-direction:column;gap:4px}.hint{background:rgba(255,204,0,.12);border-left:3px solid var(--warn);padding:6px 8px;color:var(--warn);border-radius:3px;font-size:.82rem}.hint.error{background:rgba(204,0,0,.12);border-left-color:var(--danger);color:#ff6666}.hint.info{background:rgba(0,122,204,.12);border-left-color:var(--accent);color:#6db3f2}
 
 /* Right panel */
-.badge-strip{display:flex;gap:6px;flex-wrap:wrap;padding:10px 10px 0;flex-shrink:0}.hw-badge{padding:4px 10px;border-radius:6px;font-size:.78rem;font-weight:700;display:flex;align-items:center;gap:5px;border:1px solid var(--border)}.hw-badge.active{border-color:var(--orange);color:var(--orange);background:rgba(34,211,238,.1)}.hw-badge.tel{border-color:var(--accent);color:var(--accent);background:rgba(56,189,248,.1)}.hw-badge.inactive{background:#0d1721;color:#64748b}
+.badge-strip{display:flex;gap:6px;flex-wrap:wrap;padding:10px 10px 0;flex-shrink:0}.hw-badge{padding:4px 10px;border-radius:6px;font-size:.78rem;font-weight:700;display:flex;align-items:center;gap:5px;border:1px solid var(--border)}.hw-badge.active{border-color:var(--orange);color:var(--orange);background:rgba(34,211,238,.1)}.hw-badge.tel{border-color:var(--accent);color:var(--accent);background:rgba(56,189,248,.1)}.hw-badge.inactive{background:#0d1721;color:#a5b6c4}
 #scene-container{flex:1;position:relative;margin:10px;border-radius:8px;overflow:hidden;background:#0a0a0a;min-height:260px;border:1px solid #202020}
 #robot-canvas{display:block;width:100%;height:100%;cursor:grab}#robot-canvas:active{cursor:grabbing}
 
 .scene-label{position:absolute;left:10px;top:9px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:5px 10px;color:#bbb;font-size:.78rem;pointer-events:none;font-family:"Consolas","Courier New",monospace;z-index:10;}
-.estop-overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;pointer-events:none;z-index:20;background:rgba(20,0,0,0.65)}
-.estop-overlay.visible{display:flex}
-.estop-text{font-size:3.2rem;font-weight:900;color:#ff2222;text-shadow:0 0 40px #ff0000, 0 0 80px #ff0000;animation:pulseEstop 0.8s infinite alternate;letter-spacing:4px;text-align:center;line-height:1.1}
-@keyframes pulseEstop{from{opacity:0.75;transform:scale(0.94)}to{opacity:1;transform:scale(1.04)}}
 
 .status-panel{background:var(--panel);border:2px solid #243746;border-radius:8px;margin:0 10px 10px;padding:14px}
-.status-main{font-size:1.35rem;font-weight:900;padding:8px 16px;border-radius:6px;text-align:center;margin-bottom:12px;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:12px}
+.status-main{font-size:1.35rem;font-weight:900;padding:8px 16px;border-radius:6px;text-align:center;margin-bottom:12px;transition:background-color .2s,color .2s,border-color .2s;display:flex;align-items:center;justify-content:center;gap:12px}
 .status-main.normal{background:rgba(0,200,0,0.15);color:var(--good);border:1px solid var(--good)}
-.status-main.estop{background:rgba(220,0,0,0.25);color:#ff4444;border:2px solid #ff2222;animation:estopFlash 0.6s infinite alternate}
-@keyframes estopFlash{from{opacity:0.85}to{opacity:1}}
+.status-main.estop{background:rgba(220,0,0,0.16);color:#ffb4b4;border:1px solid #b94b4b}
+.status-main.failed{background:rgba(220,0,0,0.22);color:#ffb4b4;border:1px solid #f87171}
 
 .power-bar-container{margin:10px 0}
 .power-label{display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:4px;font-family:monospace}
 .power-bar{height:12px;background:#101d29;border-radius:6px;overflow:hidden;position:relative}
-.power-fill{height:100%;transition:width .08s linear}
+.power-fill{height:100%}
 .power-fill.m1{background:linear-gradient(90deg,#00dd88,#00aa66)}
 .power-fill.m2{background:linear-gradient(90deg,#38bdf8,#22d3ee)}
 .power-value{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:.75rem;font-weight:700;color:white;text-shadow:0 1px 3px black}
@@ -89,9 +86,6 @@ code{font-family:"Consolas","Courier New",monospace}
 .zpb-label{font-size:.75rem;color:var(--muted)}
 .zpb-value{font-family:monospace;font-weight:700;font-size:1.1rem}
 
-.scene-hint{position:absolute;left:50%;top:20px;transform:translateX(-50%);background:rgba(255,60,60,.9);color:white;padding:10px 20px;border-radius:8px;font-weight:800;font-size:1.1rem;white-space:nowrap;box-shadow:0 0 30px rgba(255,0,0,.6);display:none;z-index:15}
-.scene-hint.visible{display:block;animation:pulseHint 1s infinite alternate}
-@keyframes pulseHint{from{transform:translateX(-50%) scale(1)}to{transform:translateX(-50%) scale(1.08)}}
 
 /* Gamepad - identical to 8.3 */
 .gamepad-float-card{position:fixed;bottom:12px;right:12px;width:380px;min-width:240px;background:var(--panel);border:1px solid var(--border);border-radius:12px;z-index:1000;display:flex;flex-direction:column;box-shadow:0 6px 24px rgba(0,0,0,.5);overflow:hidden}
@@ -125,10 +119,10 @@ code{font-family:"Consolas","Courier New",monospace}
 .bumper-btn{width:14%;height:6%;border-radius:8px;border:2px solid rgba(255,255,255,.08);background:rgba(255,255,255,.01);opacity:.4}
 .left-bumper-btn{left:20%;top:12%;transform:translate(-50%,-50%)}.right-bumper-btn{left:80%;top:12%;transform:translate(-50%,-50%)}
 .trigger-slider{position:absolute;width:10%;height:14%;background:rgba(0,0,0,.4);border-radius:6px;border:1px solid rgba(255,255,255,.15);cursor:pointer;overflow:hidden;z-index:4}
-.trigger-slider-fill{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,var(--accent-2),var(--accent));transition:height .05s}
+.trigger-slider-fill{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,var(--accent-2),var(--accent))}
 .left-trigger-slider{left:21%;top:0;transform:translate(-50%,0)}
 .right-trigger-slider{left:79%;top:0;transform:translate(-50%,0)}
-.trigger-label{position:absolute;font-size:.6rem;font-family:monospace;color:var(--accent);font-weight:700;white-space:nowrap;z-index:4}
+.trigger-label{position:absolute;font-size:.8rem;font-family:monospace;color:var(--accent);font-weight:700;white-space:nowrap;z-index:4}
 .lt-label{left:5%;top:15%;transform:translate(0,-50%)}
 .rt-label{right:5%;top:15%;transform:translate(0,-50%)}
 .dpad-container{position:absolute;left:21.5%;top:41%;width:16%;height:24%;transform:translate(-50%,-50%);pointer-events:none;opacity:.3;z-index:4}
@@ -137,8 +131,8 @@ code{font-family:"Consolas","Courier New",monospace}
 .dpad-up{top:0;left:33%;border-radius:4px 4px 0 0}.dpad-down{bottom:0;left:33%;border-radius:0 0 4px 4px}
 .dpad-left{left:0;top:33%;border-radius:4px 0 0 4px}.dpad-right{right:0;top:33%;border-radius:0 4px 4px 0}
 .dpad-center{position:absolute;left:33%;top:33%;width:34%;height:34%;background:rgba(30,30,30,.9)}
-.axis-readout{position:absolute;left:50%;bottom:4%;transform:translateX(-50%);font-family:"Consolas","Courier New",monospace;color:#ccc;font-size:.69rem;z-index:7;background:rgba(0,0,0,.75);padding:4px 8px;border-radius:4px;white-space:nowrap;border:1px solid #444;}
-.gp-instruction{position:absolute;left:50%;top:4%;transform:translateX(-50%);font-size:.72rem;color:#ddd;font-family:"Consolas","Courier New",monospace;white-space:nowrap;z-index:7;background:rgba(0,0,0,0.6);padding:3px 8px;border-radius:4px;border:1px solid #444;}
+.axis-readout{position:absolute;left:50%;bottom:4%;transform:translateX(-50%);font-family:"Consolas","Courier New",monospace;color:#ccc;font-size:.8rem;z-index:7;background:rgba(0,0,0,.75);padding:4px 8px;border-radius:4px;white-space:nowrap;border:1px solid #444;}
+.gp-instruction{position:absolute;left:50%;top:4%;transform:translateX(-50%);font-size:.8rem;color:#ddd;font-family:"Consolas","Courier New",monospace;white-space:nowrap;z-index:7;background:rgba(0,0,0,0.6);padding:3px 8px;border-radius:4px;border:1px solid #444;}
 </style>
   <script src="./telemark-java.js"></script>
   <script src="./telemark-editor.js"></script>
@@ -146,7 +140,7 @@ code{font-family:"Consolas","Courier New",monospace}
 <script src="telemark-project-checks.js"></script>
 <link rel="stylesheet" href="./telemark-project.css"/>
   <script src="./gamepad-controls.js"></script>
-  <script src='./simulator_base.js' data-telemark-mode='legacy'></script>
+  <script src='./simulator_base.js' data-telemark-mode='embedded'></script>
 <link href="telemark-sim.css" rel="stylesheet"/>
 </head>
 <body>
@@ -237,16 +231,11 @@ public class EmergencyStop extends OpMode {
   <div id="scene-container">
     <canvas id="robot-canvas"></canvas>
     <div class="scene-label">Left Stick Y = Motor 1 • Right Stick Y = Motor 2 • B = Emergency Stop</div>
-    <div class="scene-hint" id="scene-hint"><i class="fa-solid fa-triangle-exclamation"></i> EMERGENCY STOP ACTIVATED</div>
-    
-    <div class="estop-overlay" id="estop-overlay">
-      <div class="estop-text"><i class="fa-solid fa-circle-exclamation" style="font-size:2.8rem;margin-bottom:12px;display:block"></i>EMERGENCY<br>STOP</div>
-    </div>
   </div>
 
   <div class="status-panel">
     <div class="status-main normal" id="status-main">
-      <i class="fa-solid fa-check-circle"></i> NORMAL OPERATION
+      <i class="fa-solid fa-check-circle"></i> Normal operation
     </div>
     
     <div class="power-bar-container">
@@ -285,7 +274,7 @@ public class EmergencyStop extends OpMode {
   </div>
   <div class="gamepad-card-body" id="gamepad-card-body">
     <div class="controller-wrap" id="controller-wrap">
-      <img class="controller-img" alt="controller" src="https://resource.logitechg.com/w_776,h_437,ar_16:9,c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/gaming/en/products/f310/f310-feature-3.png">
+      <img class="controller-img" alt="FTC-style gamepad" src="./gamepad-controller-original.jpg">
       <div class="trigger-slider left-trigger-slider" id="left-trigger-slider"><div class="trigger-slider-fill" id="left-trigger-fill"></div></div>
       <div class="trigger-slider right-trigger-slider" id="right-trigger-slider"><div class="trigger-slider-fill" id="right-trigger-fill"></div></div>
       <div class="trigger-label lt-label">LT</div>
@@ -311,7 +300,7 @@ public class EmergencyStop extends OpMode {
         <div class="dpad-btn dpad-left" id="dpad-left"><svg viewBox="0 0 24 24"><path d="M4 12l8-8v16z"/></svg></div>
         <div class="dpad-btn dpad-right" id="dpad-right"><svg viewBox="0 0 24 24"><path d="M20 12l-8 8V4z"/></svg></div>
       </div>
-      <div class="gp-instruction">Left Stick Y = Motor 1 • Right Stick Y = Motor 2<br><i class="fa-solid fa-b"></i> = EMERGENCY STOP</div>
+      <div class="gp-instruction">Left Stick Y = Motor 1 • Right Stick Y = Motor 2<br><i class="fa-solid fa-b"></i> = Emergency stop</div>
       <div class="axis-readout" id="axis-readout">LX 0.00 LY 0.00 | RX 0.00 RY 0.00</div>
     </div>
   </div>
@@ -326,12 +315,15 @@ let scene, camera, renderer, robotGroup;
 let motor1Housing, motor2Housing, motor1Arm, motor2Arm, redClamps1, redClamps2;
 let wheels = [];
 let estopActive = false;
+let estopFailed = false;
 let estopStartTime = 0;
 let lastStopTime = 0;
 
 let motor1Power = 0, motor2Power = 0;
 let motor1Velocity = 0, motor2Velocity = 0;
 let motor1Angle = Math.PI * 0.5, motor2Angle = Math.PI * -0.5; // nicer starting angle
+const ARM_MIN_ANGLE = -Math.PI * 0.82;
+const ARM_MAX_ANGLE = Math.PI * 0.82;
 
 let zeroPower1 = "BRAKE";
 let zeroPower2 = "BRAKE";
@@ -804,39 +796,33 @@ function initScene() {
 }
 
 function updateArmVisuals() {
-  motor1Angle += motor1Velocity * 0.118;
-  motor2Angle += motor2Velocity * 0.118;
+  // These are geared arms, not free-spinning flywheels. Keep the visual at
+  // its physical hard stops even when student code continues to apply power.
+  motor1Angle = Math.max(ARM_MIN_ANGLE, Math.min(ARM_MAX_ANGLE, motor1Angle + motor1Velocity * 0.118));
+  motor2Angle = Math.max(ARM_MIN_ANGLE, Math.min(ARM_MAX_ANGLE, motor2Angle + motor2Velocity * 0.118));
 
   if (motor1Arm) motor1Arm.rotation.x = motor1Angle;
   if (motor2Arm) motor2Arm.rotation.x = motor2Angle;
 
-  const isEstop = estopActive;
-  document.getElementById('estop-overlay').classList.toggle('visible', isEstop);
-  document.getElementById('scene-hint').classList.toggle('visible', isEstop);
-
-  const red = isEstop ? 0.9 : 0.05;
+  const red = estopFailed ? 0.8 : estopActive ? 0.2 : 0.05;
   if (motor1Housing && motor1Housing.material) motor1Housing.material.emissive = new THREE.Color(red, 0, 0);
   if (motor2Housing && motor2Housing.material) motor2Housing.material.emissive = new THREE.Color(red, 0, 0);
 
-  if (redClamps1) redClamps1.visible = isEstop;
-  if (redClamps2) redClamps2.visible = isEstop;
+  if (redClamps1) redClamps1.visible = estopFailed;
+  if (redClamps2) redClamps2.visible = estopFailed;
 }
 
 function simulatePhysics() {
-  const dt = 0.018;
-
-  if (!estopActive) {
-    motor1Velocity = motor1Power * 5.2;
-    motor2Velocity = motor2Power * 5.2;
-  } else {
-    motor1Power = motor2Power = 0;
-    const brake1 = (zeroPower1 === "BRAKE") ? 0.065 : 0.62;
-    const brake2 = (zeroPower2 === "BRAKE") ? 0.065 : 0.62;
-    motor1Velocity *= brake1;
-    motor2Velocity *= brake2;
-    if (Math.abs(motor1Velocity) < 0.018) motor1Velocity = 0;
-    if (Math.abs(motor2Velocity) < 0.018) motor2Velocity = 0;
-  }
+  // The button is only an input to student code. Actual motor commands decide
+  // whether the arms stop or continue into their physical limits.
+  motor1Velocity = Math.abs(motor1Power) > 0.02
+    ? motor1Power * 5.2
+    : motor1Velocity * (zeroPower1 === "BRAKE" ? 0.065 : 0.62);
+  motor2Velocity = Math.abs(motor2Power) > 0.02
+    ? motor2Power * 5.2
+    : motor2Velocity * (zeroPower2 === "BRAKE" ? 0.065 : 0.62);
+  if (Math.abs(motor1Velocity) < 0.018) motor1Velocity = 0;
+  if (Math.abs(motor2Velocity) < 0.018) motor2Velocity = 0;
 
   if (estopActive && Math.abs(motor1Velocity) < 0.02 && Math.abs(motor2Velocity) < 0.02 && lastStopTime === 0) {
     lastStopTime = (Date.now() - estopStartTime) / 1000;
@@ -860,15 +846,20 @@ function updateUI() {
   document.getElementById('zpb2').style.color = zeroPower2 === "BRAKE" ? "#ff5555" : "#77aaff";
 
   const statusEl = document.getElementById('status-main');
-  if (estopActive) {
+  if (estopFailed) {
+    statusEl.className = "status-main failed";
+    statusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Stop failed — motors powered`;
+    document.getElementById('stop-time').textContent = "—";
+    document.getElementById('stop-desc').textContent = "Set both motor powers to 0.0 while B is pressed.";
+  } else if (estopActive) {
     statusEl.className = "status-main estop";
-    statusEl.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> EMERGENCY STOP`;
+    statusEl.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> Emergency stop`;
     document.getElementById('stop-time').textContent = (lastStopTime || 0).toFixed(2) + "s";
     document.getElementById('stop-desc').innerHTML = (zeroPower1 === "BRAKE" && zeroPower2 === "BRAKE") ? 
       `<i class="fa-solid fa-bolt"></i> Instant Stop` : `<i class="fa-solid fa-wind"></i> Coasting`;
   } else {
     statusEl.className = "status-main normal";
-    statusEl.innerHTML = `<i class="fa-solid fa-check-circle"></i> NORMAL OPERATION`;
+    statusEl.innerHTML = `<i class="fa-solid fa-check-circle"></i> Normal operation`;
     document.getElementById('stop-time').textContent = "0.00s";
     document.getElementById('stop-desc').textContent = "—";
   }
@@ -922,6 +913,7 @@ function handleRun() {
   running = true;
   runtimeStart = Date.now();
   estopActive = false;
+  estopFailed = false;
   lastStopTime = 0;
   telemetryBuffer = [];
 
@@ -961,6 +953,12 @@ function handleRun() {
     telemetryBuffer = [];
     try {
       projectRunner.loop();
+      // Read the commanded state from the runner before judging the stop.
+      // This also keeps the scene in sync when a later callback updates the
+      // motor objects without changing the local display state.
+      const devices = projectRunner.runtime.devices;
+      motor1Power = devices.get('DcMotor:motor1')?.getPower() ?? 0;
+      motor2Power = devices.get('DcMotor:motor2')?.getPower() ?? 0;
     } catch(e) {
       document.getElementById('telemetry-log').innerHTML = `<span class="telemetry-error">loop() compile/runtime error: ${esc(e.message)}</span>`;
       console.error('Unit 8.4 loop() failed', e);
@@ -968,15 +966,14 @@ function handleRun() {
       return;
     }
 
-    if (gamepadState.b) {
-      if (!estopActive) {
-        estopActive = true;
-        estopStartTime = Date.now();
-        lastStopTime = 0;
-      }
-    } else if (estopActive) {
-      estopActive = false;
+    const stopRequested = gamepadState.b;
+    const powersCut = Math.abs(motor1Power) < 0.02 && Math.abs(motor2Power) < 0.02;
+    if (stopRequested && powersCut && !estopActive) {
+      estopStartTime = Date.now();
+      lastStopTime = 0;
     }
+    estopActive = stopRequested && powersCut;
+    estopFailed = stopRequested && !powersCut;
 
     simulatePhysics();
   }, 45);
@@ -991,10 +988,10 @@ function handleStop() {
   motor1Power = motor2Power = 0;
   motor1Velocity = motor2Velocity = 0;
   estopActive = false;
+  estopFailed = false;
   document.getElementById('ds-state').textContent = "STOPPED";
   document.getElementById('ds-state').style.color = "var(--danger)";
   document.getElementById('btn-run').disabled = false;
-  document.getElementById('estop-overlay').classList.remove('visible');
   updateUI();
 }
 
@@ -1004,6 +1001,7 @@ function resetSimulation() {
   motor1Velocity = motor2Velocity = 0;
   motor1Power = motor2Power = 0;
   estopActive = false;
+  estopFailed = false;
   lastStopTime = 0;
   updateArmVisuals();
   updateUI();
@@ -1031,7 +1029,7 @@ window.addEventListener('load', () => {
     if (typeof updateArmVisuals === "function") updateArmVisuals();
   }, 400);
 });
-if (window.TelemarkSimulatorBase) window.TelemarkSimulatorBase.installLegacy({
+if (window.TelemarkSimulatorBase) window.TelemarkSimulatorBase.installEmbedded({
   state: gamepadState,
   onInput: updateAxisReadout,
   onThemeChange: function(theme) {

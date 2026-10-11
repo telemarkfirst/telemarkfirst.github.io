@@ -67,10 +67,6 @@ code{font-family:"Consolas","Courier New",monospace}
 .mode-value{font-size:2.2rem;font-weight:900;font-family:"Consolas","Courier New",monospace;letter-spacing:-2px}
 .mode-value.brake{color:#ff4444}
 .mode-value.float{color:#888888}
-.lift-status{display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:.85rem}
-.status-item{background:#0d1721;padding:8px;border-radius:6px}
-.status-label{color:var(--muted);font-size:.75rem}
-.status-value{font-family:"Consolas","Courier New",monospace;font-weight:700;color:#0f0}
 /* Gamepad card */
 .gamepad-float-card{position:fixed;bottom:12px;right:12px;width:380px;min-width:240px;background:var(--panel);border:1px solid var(--border);border-radius:12px;z-index:1000;display:flex;flex-direction:column;box-shadow:0 6px 24px rgba(0,0,0,.5);overflow:hidden}
 .gamepad-float-card.collapsed .gamepad-card-body,
@@ -126,7 +122,7 @@ code{font-family:"Consolas","Courier New",monospace}
 <script src="telemark-project-checks.js"></script>
 <link rel="stylesheet" href="./telemark-project.css"/>
   <script src="./gamepad-controls.js"></script>
-  <script src="./simulator_base.js" data-telemark-mode="legacy"></script>
+  <script src="./simulator_base.js" data-telemark-mode="embedded"></script>
 <link href="telemark-sim.css" rel="stylesheet"/>
 </head>
 <body>
@@ -216,20 +212,6 @@ public class BrakeFloatDemo extends OpMode {
       </div>
       <div class="mode-value" id="mode-value">FLOAT</div>
       
-      <div class="lift-status">
-        <div class="status-item">
-          <div class="status-label">Lift Power</div>
-          <div class="status-value" id="lift-power-val">0.00</div>
-        </div>
-        <div class="status-item">
-          <div class="status-label">Height</div>
-          <div class="status-value" id="lift-height-val">42%</div>
-        </div>
-      </div>
-      
-      <div style="margin-top:10px;height:8px;background:#111;border-radius:4px;overflow:hidden">
-        <div id="height-bar" style="height:100%;width:42%;background:linear-gradient(90deg,#38bdf8,#22d3ee);transition:width .15s"></div>
-      </div>
     </div>
   </div>
 </div>
@@ -242,7 +224,7 @@ public class BrakeFloatDemo extends OpMode {
   </div>
   <div class="gamepad-card-body" id="gamepad-card-body">
     <div class="controller-wrap" id="controller-wrap">
-      <img class="controller-img" alt="controller" src="https://resource.logitechg.com/w_776,h_437,ar_16:9,c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/gaming/en/products/f310/f310-feature-3.png">
+      <img class="controller-img" alt="FTC-style gamepad" src="./gamepad-controller-original.jpg">
       <div class="trigger-slider left-trigger-slider" id="left-trigger-slider"><div class="trigger-slider-fill" id="left-trigger-fill"></div></div>
       <div class="trigger-slider right-trigger-slider" id="right-trigger-slider"><div class="trigger-slider-fill" id="right-trigger-fill"></div></div>
       <div class="trigger-label lt-label">left_trigger</div>
@@ -537,10 +519,6 @@ function updateLiftVisuals() {
   ghostCarriage.position.y = ghostY;
   liftCarriage.position.z = ghostCarriage.position.z = 0.35;
 
-  document.getElementById('lift-height-val').textContent = Math.round(liftHeight * 100) + '%';
-  document.getElementById('lift-power-val').textContent = currentPower.toFixed(2);
-  document.getElementById('height-bar').style.width = (liftHeight * 100) + '%';
-
   brakeClamps.visible = zeroPowerBehavior === "BRAKE";
   floatClamps.visible = zeroPowerBehavior === "FLOAT";
 
@@ -750,7 +728,7 @@ function syncScroll(el) {
   h.scrollTop = el.scrollTop;
   h.scrollLeft = el.scrollLeft;
 }
-window.TelemarkSimulatorBase.installLegacy({
+window.TelemarkSimulatorBase.installEmbedded({
   state: gamepad,
   onInput: updateAxisReadout,
   onThemeChange: applySimulatorTheme

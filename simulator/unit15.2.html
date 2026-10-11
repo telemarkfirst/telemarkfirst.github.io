@@ -102,7 +102,6 @@
   #sim-right-panel .u152-step.good {
     border-color: #22cc66;
     color: #bbf7d0;
-    box-shadow: 0 0 12px rgba(34, 204, 102, 0.12);
   }
 
   #sim-right-panel .u152-card.warn,
@@ -695,6 +694,10 @@ public class PedroLifecycle extends LinearOpMode {
     return { x: Number(x), y: Number(y), heading: Number(heading) };
   }
 
+  function createPoseDegrees(x, y, heading) {
+    return createPose(x, y, Number(heading) * Math.PI / 180);
+  }
+
   function setFollowerStartPose(pose) {
     state.poseSet = true;
     state.lifecycle.pose = true;
@@ -812,6 +815,7 @@ public class PedroLifecycle extends LinearOpMode {
         "createFollower",
         "setFollowerStartPose",
         "createPose",
+        "createPoseDegrees",
         "updateFollower",
         "isFollowerBusy",
         "getFollowerPose",
@@ -836,6 +840,7 @@ public class PedroLifecycle extends LinearOpMode {
         createFollower,
         setFollowerStartPose,
         createPose,
+        createPoseDegrees,
         updateFollower,
         isFollowerBusy,
         getFollowerPose,
@@ -864,7 +869,7 @@ public class PedroLifecycle extends LinearOpMode {
     let js = body || "";
     js = js
       .replace(/\bConstants\s*\.\s*create\s*\(\s*hardwareMap\s*\)/g, "createFollower()")
-      .replace(/\bPoseFactory\s*\.\s*degrees\s*\(\s*\)/g, "({ of: createPose })")
+      .replace(/\bPoseFactory\s*\.\s*degrees\s*\(\s*\)/g, "({ of: createPoseDegrees })")
       .replace(/\bfollower\s*\.\s*setPose\s*\(/g, "setFollowerStartPose(")
       .replace(/\bnew\s+Pose\s*\(/g, "createPose(")
       .replace(/\bfollower\s*\.\s*update\s*\(\s*\)/g, "updateFollower()")
@@ -880,7 +885,8 @@ public class PedroLifecycle extends LinearOpMode {
       .replace(/\btelemetry\s*\.\s*update\s*\(\s*\)/g, "updateTelemetry()")
       .replace(/\bwaitForStart\s*\(\s*\)\s*;/g, "await waitForStart(); if (!opModeIsActive()) return;")
       .replace(/\bsleep\s*\(/g, "await sleep(")
-      .replace(/\bwhile\s*\(([^)]*(?:opModeIsActive|isFollowerBusy)[^)]*)\)\s*\{/g, "while ($1) { await linearTick();")
+      .replace(/\bwhile\s*\(\s*opModeIsActive\s*\(\s*\)\s*(?:&&\s*isFollowerBusy\s*\(\s*\)\s*)?\)\s*\{/g,
+        function (match) { return match + " await linearTick();"; })
       .replace(/(^|[;{}\n]\s*)(?:final\s+)?(?:double|int|boolean|String|float|long|byte|short|char|Follower|Pose|PoseFactory)\s+([A-Za-z_$])/gm, "$1let $2");
     if (typeof _simTranspile === "function") js = _simTranspile(js);
     return js;

@@ -6,6 +6,7 @@
     <title>Telemark Unit 10.4 Simulator</title>
 
     <script src="simulator_base.js"></script>
+    <script src="./cad-parts.js"></script>
 
     <style>
         .encoder-panel {
@@ -343,6 +344,7 @@ public class MecanumEncoderDrive extends OpMode {
     });
 
     let robotGroup = null;
+    let cadDrivetrain = null;
     let pathLine = null;
     let animationCallbackId = -1;
     let currentSceneHint = "";
@@ -611,6 +613,22 @@ public class MecanumEncoderDrive extends OpMode {
             createWheel(THREE, "leftBack", -0.50, -0.36);
             createWheel(THREE, "rightBack", 0.50, -0.36);
 
+            if (window.TelemarkCadParts) {
+                const generatedChassis = [body].concat(Object.keys(wheels).map(function (name) {
+                    return wheels[name].group;
+                }));
+                window.TelemarkCadParts.mount("decode-drivetrain", {
+                    THREE: THREE,
+                    parent: robotGroup,
+                    rotation: [0, Math.PI, 0],
+                    fit: 1.18,
+                    castShadow: true,
+                    fallback: generatedChassis
+                }).then(function (rig) {
+                    cadDrivetrain = rig;
+                }).catch(function () {});
+            }
+
             pathLine = new THREE.Line(
                 new THREE.BufferGeometry(),
                 new THREE.LineBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.7 })
@@ -687,6 +705,14 @@ public class MecanumEncoderDrive extends OpMode {
             wheel.mesh.rotation.x += motor.appliedPower * spinRate;
             wheel.mesh.material.color.setHex(motor.mode === "RUN_USING_ENCODER" ? 0x245dff : 0x222222);
         });
+        if (cadDrivetrain) {
+            cadDrivetrain.setWheelAngles([
+                -sim.motors.leftFront.ticks * 0.02,
+                -sim.motors.leftBack.ticks * 0.02,
+                -sim.motors.rightFront.ticks * 0.02,
+                -sim.motors.rightBack.ticks * 0.02
+            ]);
+        }
 
         if (sim.running) {
             sim.pathPoints.push(new THREE.Vector3(robotGroup.position.x, 0.025, robotGroup.position.z));
@@ -964,6 +990,7 @@ public class MecanumEncoderDrive extends OpMode {
             robotGroup.position.set(0, 0, 0);
             robotGroup.rotation.y = 0;
         }
+        if (cadDrivetrain) cadDrivetrain.setWheelAngles([0, 0, 0, 0]);
         if (pathLine) {
             pathLine.geometry.setFromPoints([]);
         }

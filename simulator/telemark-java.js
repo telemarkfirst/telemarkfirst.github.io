@@ -1392,6 +1392,7 @@
         mode: "RUN_WITHOUT_ENCODER",
         targetPosition: 0,
         currentPosition: 0,
+        digitalState: true,
       };
       const value = {
         setPower(power) {
@@ -1438,7 +1439,8 @@
         getCurrentPosition: () =>
           options.getCurrentPosition?.(state) ?? state.currentPosition,
         isBusy: () => options.isBusy?.(state) ?? false,
-        getState: () => options.getDigitalState?.(state) ?? true,
+        getState: () => options.getDigitalState?.(state) ?? state.digitalState,
+        _setState(value) { state.digitalState = Boolean(value); },
         isPressed: () => options.isPressed?.(state) ?? false,
         getVoltage: () => options.getVoltage?.(state) ?? 0,
         getDistance: (unit) => options.getDistance?.(state, unit) ?? Infinity,
@@ -1767,14 +1769,23 @@ with(scope){${js}}`
     const staticInitializers = [];
     for (const classNode of ordered) {
       if (classNode === mainClass) continue;
-      const inheritedFields = classNode.superClass
-        ? ast.classes.find((candidate) => candidate.name === classNode.superClass)?.fields || []
-        : [];
+      const ancestors = [];
+      let parentName = classNode.superClass;
+      while (parentName) {
+        const parent = ast.classes.find((candidate) => candidate.name === parentName);
+        if (!parent) break;
+        ancestors.unshift(parent);
+        parentName = parent.superClass;
+      }
+      const lineage = ancestors.concat(classNode);
       const fieldNames = new Set(
-        [...inheritedFields, ...(classNode.fields || [])]
+        lineage.flatMap((owner) => owner.fields || [])
           .map((field) => field.name),
       );
-      const staticFieldOwners = Object.fromEntries((classNode.fields || []).filter(field => field.static).map(field => [field.name, classNode.name]));
+      const methodNames = new Set(lineage.flatMap((owner) =>
+        owner.methods.filter((method) => method.name !== owner.name).map((method) => method.name)));
+      const staticFieldOwners = Object.fromEntries(lineage.flatMap((owner) =>
+        (owner.fields || []).filter((field) => field.static).map((field) => [field.name, owner.name])));
       const constructor = classNode.methods.find((method) => method.name === classNode.name);
       if (classNode.methods.filter(m => m.name === classNode.name).length > 1) throw new TelemarkJavaError('Overloaded constructors are not supported yet; use one constructor.', constructor);
       function bodyOptions(method) {
@@ -1783,7 +1794,7 @@ with(scope){${js}}`
         tokens.forEach((t, i) => { if (isDeclarationType(tokens, i)) localNames.add(tokens[i + 1]?.value); });
         return {...options, preserveThis: true,
           fieldNames: new Set([...fieldNames].filter(name => !localNames.has(name))), staticFieldOwners,
-          methodNames: new Set(classNode.methods.filter(m => m.name !== classNode.name && !localNames.has(m.name)).map(m => m.name))};
+          methodNames: new Set([...methodNames].filter(name => !localNames.has(name)))};
       }
       const instanceInitializers = (classNode.fields || [])
         .filter((field) => !field.static)

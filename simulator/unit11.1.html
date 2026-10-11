@@ -7,6 +7,7 @@
 <title>Telemark Unit 11.1 Simulator</title>
 
 <script src="simulator_base.js"></script>
+<script src="./cad-parts.js"></script>
 
 <style>
 :root{
@@ -334,6 +335,8 @@ const HARD_STOP_HEIGHT = 0;
 let liftCarriage;
 let touchDisc;
 let railStress;
+let generatedLift;
+let cadLift;
 
 let sensorText;
 let powerFill;
@@ -713,6 +716,8 @@ function buildScene(){
         const scene =
             window.scene;
 
+        cadLift = null;
+
         if(window.setFieldVisible){
             window.setFieldVisible(false);
         }
@@ -780,6 +785,14 @@ function buildScene(){
 
         scene.add(body);
 
+        generatedLift =
+            new THREE.Group();
+
+        generatedLift.name =
+            "unit-11-1-procedural-lift-fallback";
+
+        scene.add(generatedLift);
+
         const railMaterial =
             new THREE.MeshPhysicalMaterial({
                 color:0x8d99ae,
@@ -803,14 +816,14 @@ function buildScene(){
             0
         );
 
-        scene.add(rail1);
+        generatedLift.add(rail1);
 
         const rail2 =
             rail1.clone();
 
         rail2.position.x = .5;
 
-        scene.add(rail2);
+        generatedLift.add(rail2);
 
         liftCarriage =
             new THREE.Mesh(
@@ -832,7 +845,24 @@ function buildScene(){
             0
         );
 
-        scene.add(liftCarriage);
+        generatedLift.add(liftCarriage);
+
+        if(window.TelemarkCadParts){
+            window.TelemarkCadParts.mount(
+                "skystone-lift",
+                {
+                    THREE:THREE,
+                    parent:scene,
+                    position:[0,.5,0],
+                    rotation:[0,0,0],
+                    fit:4,
+                    fallback:[body,generatedLift]
+                }
+            ).then(rig=>{
+                cadLift = rig;
+                cadLift.setProgress(clamp(sim.height,0,1));
+            }).catch(()=>{});
+        }
 
         touchDisc =
             new THREE.Mesh(
@@ -854,9 +884,9 @@ function buildScene(){
             Math.PI / 2;
 
         touchDisc.position.set(
-            -.9,
-            1.05,
-            0
+            -1.2,
+            1.25,
+            1.35
         );
 
         scene.add(touchDisc);
@@ -925,6 +955,12 @@ function update3D(){
 
     liftCarriage.position.y =
         1.1 + sim.height * 4.2;
+
+    if(cadLift){
+        cadLift.setProgress(
+            clamp(sim.height,0,1)
+        );
+    }
 
     touchDisc.material.color.setHex(
         sim.touchPressed

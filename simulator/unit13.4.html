@@ -6,6 +6,7 @@
     <title>Telemark Unit 13.4 Simulator</title>
 
     <script src="./simulator_base.js"></script>
+    <script src="./cad-parts.js"></script>
 
     <style>
         :root {
@@ -138,7 +139,6 @@
         }
 
         .device-label.good {
-            box-shadow: 0 0 14px rgba(243,234,215,0.22);
             border-color: rgba(243,234,215,0.52);
             color: #f3ead7;
         }
@@ -189,7 +189,7 @@
 
         .rename-box button {
             background: var(--orange);
-            color: white;
+            color: #04242c;
             border: none;
             border-radius: 10px;
             padding: 10px 14px;
@@ -487,16 +487,16 @@ const requirementChecks = [
         test: code => /public\s+static\s+final\s+String\s+RANGE_SENSOR\s*=\s*"range_sensor"/.test(code)
     },
     {
-        label: "CLAW_OPEN double constant defined",
-        test: code => /public\s+static\s+final\s+double\s+CLAW_OPEN/.test(code)
+        label: "CLAW_OPEN double constant set to 0.1",
+        test: code => /public\s+static\s+final\s+double\s+CLAW_OPEN\s*=\s*0\.10*\s*;/.test(code)
     },
     {
-        label: "CLAW_CLOSED double constant defined",
-        test: code => /public\s+static\s+final\s+double\s+CLAW_CLOSED/.test(code)
+        label: "CLAW_CLOSED double constant set to 0.9",
+        test: code => /public\s+static\s+final\s+double\s+CLAW_CLOSED\s*=\s*0\.90*\s*;/.test(code)
     },
     {
-        label: "WRIST_MAX_POWER double constant defined",
-        test: code => /public\s+static\s+final\s+double\s+WRIST_MAX_POWER/.test(code)
+        label: "WRIST_MAX_POWER double constant set to 0.5",
+        test: code => /public\s+static\s+final\s+double\s+WRIST_MAX_POWER\s*=\s*0\.50*\s*;/.test(code)
     },
     {
         label: "All constants declared public static final",
@@ -521,10 +521,14 @@ let clawRight;
 let wrist;
 let sensorBeam;
 let sceneRoot;
+let cadClaw = null;
+let cadWristArm = null;
+let cadClawAttached = false;
 let animationRegistered = false;
 
 let currentClawPos = 0.1;
 let currentWristPower = 0.0;
+let currentWristAngle = 0.0;
 let currentRangeDistance = 24;
 let currentClawName = "claw_servo";
 let currentWristName = "wrist_motor";
@@ -535,6 +539,8 @@ let currentWristMaxPower = 0.5;
 let telemetryStatus = "Ready";
 let compiledLoopFn = null;
 let compiledSource = "";
+const WRIST_MIN_ANGLE = -Math.PI * 0.35;
+const WRIST_MAX_ANGLE = Math.PI * 0.35;
 
 const sceneTheme = {
     background: 0x000000,
@@ -963,6 +969,38 @@ function buildScene() {
     sceneRoot.add(clawLeft);
     sceneRoot.add(clawRight);
 
+    cadClaw = null;
+    cadWristArm = null;
+    cadClawAttached = false;
+
+    if (window.TelemarkCadParts) {
+        window.TelemarkCadParts.mount("quixilver-arm", {
+            THREE: THREE,
+            parent: sceneRoot,
+            position: [0, 0.72, -2.05],
+            rotation: [0, Math.PI, 0],
+            fit: 3.2,
+            fallback: [robot, wrist]
+        }).then(function (rig) {
+            cadWristArm = rig;
+            attachCadClawToArm();
+            syncCadMechanisms();
+        }).catch(function () {});
+
+        window.TelemarkCadParts.mount("quixilver-claw", {
+            THREE: THREE,
+            parent: sceneRoot,
+            position: [-1.15, 0.6, -2.2],
+            rotation: [0, Math.PI, 0],
+            fit: 1.4,
+            fallback: [clawLeft, clawRight]
+        }).then(function (rig) {
+            cadClaw = rig;
+            attachCadClawToArm();
+            syncCadMechanisms();
+        }).catch(function () {});
+    }
+
     sensorBeam = new THREE.Mesh(
         new THREE.BoxGeometry(0.15, 0.15, 7),
         new THREE.MeshBasicMaterial({
@@ -981,13 +1019,48 @@ function buildScene() {
     }
 }
 
+function attachCadClawToArm() {
+    if (!cadWristArm || !cadClaw || cadClawAttached) return;
+    cadClawAttached = window.TelemarkCadParts.dock(
+        cadWristArm,
+        "tool_mount",
+        cadClaw,
+        "mount"
+    );
+}
+
+function syncCadMechanisms() {
+    if (cadClaw) {
+        const clawSpan = currentClawClosed - currentClawOpen;
+        const clawProgress = Math.abs(clawSpan) < 0.0001
+            ? 0
+            : (currentClawPos - currentClawOpen) / clawSpan;
+        cadClaw.setProgress(THREE.MathUtils.clamp(clawProgress, 0, 1));
+    }
+
+    if (cadWristArm) {
+        const wristProgress = THREE.MathUtils.clamp(
+            (currentWristAngle - WRIST_MIN_ANGLE) / (WRIST_MAX_ANGLE - WRIST_MIN_ANGLE),
+            0,
+            1
+        );
+        cadWristArm.setProgress(wristProgress);
+    }
+}
+
 function updateVisuals() {
     const spread = THREE.MathUtils.lerp(0.5, 2.0, 1.0 - currentClawPos);
 
     clawLeft.position.set(-spread, 1.3, -4.0);
     clawRight.position.set(spread, 1.3, -4.0);
 
-    wrist.rotation.y += currentWristPower * 0.04;
+    currentWristAngle = THREE.MathUtils.clamp(
+        currentWristAngle + currentWristPower * 0.04,
+        WRIST_MIN_ANGLE,
+        WRIST_MAX_ANGLE
+    );
+    wrist.rotation.y = currentWristAngle;
+    syncCadMechanisms();
 
     if (sensorBeam) {
         const length = THREE.MathUtils.clamp(currentRangeDistance / 4, 1.2, 7);
@@ -1003,11 +1076,11 @@ function animateScene() {
 }
 
 function updateClawVisual(name, value) {
-    currentClawPos = value;
+    currentClawPos = THREE.MathUtils.clamp(Number(value) || 0, 0, 1);
 }
 
 function updateWristVisual(name, value) {
-    currentWristPower = value;
+    currentWristPower = THREE.MathUtils.clamp(Number(value) || 0, -1, 1);
 }
 
 function getCodeSafe() {
@@ -1159,7 +1232,7 @@ function setClawPosition(value) {
 }
 
 function setWristPower(value) {
-    currentWristPower = Number(value) || 0;
+    currentWristPower = THREE.MathUtils.clamp(Number(value) || 0, -1, 1);
     const device = getHardwareDevice("DcMotor", currentWristName);
     if (device && typeof device.setPower === "function") device.setPower(currentWristPower);
 }
@@ -1358,12 +1431,15 @@ window.onSimulatorReady = function () {
     window.onRun = window.onInit;
 
     window.onStop = function () {
-        publishTelemetry("Stopped");
+        currentWristPower = 0.0;
+        const telemetry = document.getElementById("sim-telemetry-log");
+        if (!telemetry || !/ERROR:/.test(telemetry.textContent)) publishTelemetry("Stopped");
     };
 
     window.onReset = function () {
         currentClawPos = 0.1;
         currentWristPower = 0.0;
+        currentWristAngle = 0.0;
         currentRangeDistance = 24;
         currentClawName = "claw_servo";
         currentWristName = "wrist_motor";
@@ -1373,6 +1449,8 @@ window.onSimulatorReady = function () {
         currentWristMaxPower = 0.5;
         compiledLoopFn = null;
         compiledSource = "";
+        if (wrist) wrist.rotation.y = currentWristAngle;
+        syncCadMechanisms();
         const rangeSensor = hardwareMap._devices && hardwareMap._devices.range_sensor;
         if (rangeSensor && typeof rangeSensor._setDistance === "function") {
             rangeSensor._setDistance(currentRangeDistance);

@@ -132,7 +132,7 @@ html, body {
 }
 
 .apply-btn:hover {
-    background: #2ea043;
+    background: #196d31;
 }
 
 .status-banner {
@@ -641,10 +641,6 @@ window.createIMUParams = function(v) {
 };
 
 window.createHubOrientation = function(logo, usb) {
-    currentLogo = logo;
-    currentUsb = usb;
-    updateVisual();
-
     return {
         logo,
         usb
@@ -653,6 +649,9 @@ window.createHubOrientation = function(logo, usb) {
 
 window.updateHubVisual = function(params) {
     if (!params) return;
+    currentLogo = params.logo;
+    currentUsb = params.usb;
+    updateVisual();
 };
 
 window.LogoFacing = {
@@ -674,13 +673,12 @@ window.UsbFacing = {
 };
 
 function transpile(javaCode) {
-
-    parseDirections(javaCode);
-
     return javaCode
         .replace(/@TeleOp[^\n]*/g, "")
         .replace(/public class[\s\S]*?\{/g, "")
         .replace(/IMU imu;/g, "let imu;")
+        .replace(/\bRevHubOrientationOnRobot\s+([A-Za-z_$][\w$]*)\s*=/g, "let $1 =")
+        .replace(/\bIMU\.Parameters\s+([A-Za-z_$][\w$]*)\s*=/g, "let $1 =")
         .replace(/@Override/g, "")
         .replace(/public void init\(\)/g, "function init()")
         .replace(/public void loop\(\)/g, "function loop()")
@@ -717,6 +715,19 @@ function transpile(javaCode) {
             'updateTelemetry()'
         )
         .replace(/}\s*$/g, "");
+}
+
+function validateCode(javaCode) {
+    if (typeof window.setRequirement !== "function") return;
+    const code = javaCode.replace(/\/\/[^\n]*/g, "");
+    [
+        /hardwareMap\.get\s*\(\s*IMU\.class\s*,\s*"imu"\s*\)/.test(code),
+        /imu\.initialize\s*\(/.test(code),
+        /new\s+RevHubOrientationOnRobot\s*\(/.test(code),
+        /LogoFacingDirection\.RIGHT\b/.test(code),
+        /UsbFacingDirection\.UP\b/.test(code),
+        /telemetry\.addData\s*\(/.test(code)
+    ].forEach((passed, index) => window.setRequirement(index, passed));
 }
 
 let running = false;
@@ -758,6 +769,8 @@ window.onInit = () => {
         if (typeof init === "function") {
             init();
         }
+
+        validateCode(code);
 
         running = false;
         preparedLoop = typeof loop === "function" ? loop : null;

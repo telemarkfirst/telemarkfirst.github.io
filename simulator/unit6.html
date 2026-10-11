@@ -34,7 +34,7 @@ body{display:flex;height:100vh;overflow:hidden;background:var(--bg);color:var(--
 /* OpMode Toggle */
 .toggle-container{display:flex;background:#0d1721;border-radius:8px;border:1px solid var(--border);overflow:hidden}
 .toggle-btn{flex:1;padding:10px 14px;text-align:center;font-weight:700;font-size:.9rem;cursor:pointer;border:none;background:none;color:#888;transition:.15s}
-.toggle-btn.active{background:var(--accent);color:#fff}
+.toggle-btn.active{background:var(--accent);color:#071019}
 .toggle-btn:hover:not(.active){color:#dbeafe;background:#101d29}
 .explain-card{background:#0d1721;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:.82rem;color:#94a3b8;line-height:1.5}
 .explain-card code{color:#7dd3fc;background:#05080d;padding:1px 4px;border-radius:3px;font-size:.8rem}
@@ -55,11 +55,11 @@ body{display:flex;height:100vh;overflow:hidden;background:var(--bg);color:var(--
 .controls{display:flex;gap:8px}
 .controls button{flex:1;padding:10px;border-radius:6px;border:none;font-size:.9rem;font-weight:700;cursor:pointer;color:#fff;transition:.1s}
 .controls button:active{transform:translateY(1px)}
-.btn-init{background:var(--accent)}.btn-init:hover{background:var(--accent-2)}
-.btn-init:disabled{background:#444;color:#888;cursor:not-allowed;transform:none}
+.btn-init{background:var(--accent);color:#071019}.btn-init:hover{background:var(--accent-2)}
+.btn-init:disabled{background:#444;color:#d6e0e9;cursor:not-allowed;transform:none}
 .btn-stop{background:var(--danger)}.btn-stop:hover{filter:brightness(1.1)}
-.btn-start{background:var(--good)}.btn-start:hover{filter:brightness(1.1)}
-.btn-start:disabled{background:#444;color:#888;cursor:not-allowed;transform:none}
+.btn-start{background:var(--good);color:#071019}.btn-start:hover{filter:brightness(1.1)}
+.btn-start:disabled{background:#444;color:#d6e0e9;cursor:not-allowed;transform:none}
 
 /* Speed slider */
 .speed-row{display:flex;align-items:center;gap:6px;font-size:.8rem;color:#aaa}
@@ -75,13 +75,13 @@ body{display:flex;height:100vh;overflow:hidden;background:var(--bg);color:var(--
 .step-controls button{padding:6px 12px;border-radius:5px;border:none;font-size:.82rem;font-weight:700;cursor:pointer;color:#fff}
 .step-controls button:active{transform:translateY(1px)}
 .btn-step{background:#0e639c}.btn-step:hover{background:#1177bb}
-.btn-play{background:var(--good)}.btn-play:hover{filter:brightness(1.1)}.btn-play.running{background:var(--warn)}
+.btn-play{background:var(--good);color:#071019}.btn-play:hover{filter:brightness(1.1)}.btn-play.running{background:var(--warn)}
 .btn-reset{background:#555}.btn-reset:hover{background:#666}
 .iter-log{max-height:180px;overflow-y:auto;background:#05080d;border-radius:6px;font-family:monospace;font-size:.8rem}
 .iter-row{display:flex;gap:8px;padding:5px 10px;border-bottom:1px solid #0d1721}
 .iter-row.even{background:#151515}
 .iter-row.active-row{background:rgba(0,122,204,.2);border-left:3px solid var(--accent)}
-.iter-num{color:#666;width:22px;text-align:right;flex-shrink:0}
+.iter-num{color:#9aa7b5;width:22px;text-align:right;flex-shrink:0}
 .iter-vars{color:#9cdcfe;min-width:50px;flex-shrink:0}
 .iter-out{color:var(--good);flex:1}
 
@@ -155,6 +155,23 @@ body{display:flex;height:100vh;overflow:hidden;background:var(--bg);color:var(--
 .dpad-up{top:0;left:33%;border-radius:4px 4px 0 0}.dpad-down{bottom:0;left:33%;border-radius:0 0 4px 4px}
 .dpad-left{left:0;top:33%;border-radius:4px 0 0 4px}.dpad-right{right:0;top:33%;border-radius:0 4px 4px 0}
 .dpad-center{position:absolute;left:33%;top:33%;width:34%;height:34%;background:rgba(30,30,30,.9);pointer-events:none}
+
+  @media (max-width: 640px) {
+    html[data-sim-workspace="true"] .sim-widget-coding #editor-container {
+      position: absolute !important;
+      inset: 0 !important;
+      height: 100% !important;
+      min-height: 100% !important;
+    }
+    html[data-sim-workspace="true"] .sim-widget-coding .code-wrapper {
+      min-height: 280px;
+    }
+  }
+  .controls button.btn-stop { background: #b4232c; color: #fff; }
+  .controls button.btn-init:not(:disabled),
+  .controls button.btn-start:not(:disabled),
+  .step-controls button.btn-play,
+  .toggle-btn.active { color: #071019; }
 </style>
   <script src="./telemark-java.js"></script>
   <script src="./telemark-editor.js"></script>
@@ -219,18 +236,18 @@ body{display:flex;height:100vh;overflow:hidden;background:var(--bg);color:var(--
     <!-- Loop Step Visualizer -->
     <div class="panel-section" id="loop-step-panel">
       <div class="panel-title"><i class="fa-solid fa-shoe-prints"></i> Loop Step Visualizer</div>
-      <div class="loop-var-display" id="loop-var-display"><span style="color:#666;font-style:italic">No loop detected&hellip;</span></div>
+      <div class="loop-var-display" id="loop-var-display"><span style="color:#9aa7b5;font-style:italic">No loop detected&hellip;</span></div>
       <div class="progress-bar-wrap"><div class="progress-bar-fill" id="loop-progress"></div></div>
       <div class="step-controls">
         <button class="btn-step" onclick="manualStep()"><i class="fa-solid fa-forward-step"></i> Step</button>
         <button class="btn-play" id="btn-play" onclick="toggleStepPlay()"><i class="fa-solid fa-play"></i> Play</button>
         <button class="btn-reset" onclick="resetStepVisualizer()"><i class="fa-solid fa-rotate-left"></i> Reset</button>
       </div>
-      <div class="iter-log" id="iter-log"><div style="color:#666;font-style:italic;padding:8px">Press Step or Play&hellip;</div></div>
+      <div class="iter-log" id="iter-log"><div style="color:#9aa7b5;font-style:italic;padding:8px">Press Step or Play&hellip;</div></div>
     </div>
 
     <!-- Telemetry -->
-    <div class="telemetry-panel" id="telemetry-log"><span style="color:#666">Press INIT to start&hellip;</span></div>
+    <div class="telemetry-panel" id="telemetry-log"><span style="color:#9aa7b5">Press INIT to start&hellip;</span></div>
 
     <!-- Patterns -->
     <div class="panel-section">
@@ -260,7 +277,7 @@ public void loop() {
   </div>
   <div class="gamepad-card-body" id="gamepad-card-body">
     <div class="controller-wrap" id="controller-wrap">
-      <img class="controller-img" alt="controller" src="https://resource.logitechg.com/w_776,h_437,ar_16:9,c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/gaming/en/products/f310/f310-feature-3.png">
+      <img class="controller-img" alt="FTC-style gamepad" src="./gamepad-controller-original.jpg">
       <div class="trigger-slider left-trigger-slider" id="left-trigger-slider"><div class="trigger-slider-fill" id="left-trigger-fill"></div></div>
       <div class="trigger-slider right-trigger-slider" id="right-trigger-slider"><div class="trigger-slider-fill" id="right-trigger-fill"></div></div>
       <div class="overlay bumper-btn left-bumper-btn" id="btn-lb"></div><div class="overlay bumper-btn right-bumper-btn" id="btn-rb"></div>
@@ -425,7 +442,7 @@ function buildTelemetryCollector(){
 function renderTelemetry(lines){
   document.getElementById('telemetry-log').innerHTML=lines.length?lines.map(function(l){
     return'<div class="telemetry-line"><span class="telemetry-key">'+esc(l.key)+'</span>: '+esc(l.val)+'</div>';
-  }).join(''):'<span style="color:#666">No telemetry data</span>';
+  }).join(''):'<span style="color:#9aa7b5">No telemetry data</span>';
 }
 
 // ── OpMode Lifecycle ──
@@ -796,12 +813,12 @@ function renderStepUI(){
   var vd=document.getElementById('loop-var-display');
   var prog=document.getElementById('loop-progress');
   var log=document.getElementById('iter-log');
-  if(!stepForLoop){vd.innerHTML='<span style="color:#666;font-style:italic">No for loop detected</span>';prog.style.width='0';log.innerHTML='<div style="color:#666;font-style:italic;padding:8px">Write a for loop to use the step visualizer</div>';return}
+  if(!stepForLoop){vd.innerHTML='<span style="color:#9aa7b5;font-style:italic">No for loop detected</span>';prog.style.width='0';log.innerHTML='<div style="color:#9aa7b5;font-style:italic;padding:8px">Write a for loop to use the step visualizer</div>';return}
   var curVal=stepIter>0?stepForLoop.init+(stepIter-1)*stepForLoop.step:stepForLoop.init;
   vd.innerHTML='<div class="loop-var"><span class="vn">'+stepForLoop.varName+' =</span> <span class="vv">'+curVal+'</span></div>'
     +'<div class="loop-var"><span class="vn">iteration</span> <span class="vv">'+stepIter+' / '+stepForLoop.totalIters+'</span></div>';
   prog.style.width=stepForLoop.totalIters>0?(stepIter/stepForLoop.totalIters*100)+'%':'0';
-  if(!stepHistory.length){log.innerHTML='<div style="color:#666;font-style:italic;padding:8px">Press Step or Play</div>';return}
+  if(!stepHistory.length){log.innerHTML='<div style="color:#9aa7b5;font-style:italic;padding:8px">Press Step or Play</div>';return}
   log.innerHTML=stepHistory.map(function(h,idx){
     var cls='iter-row'+(idx%2===0?' even':'')+(idx===stepHistory.length-1?' active-row':'');
     var telStr=h.tel.map(function(t){return'<span style="color:#4ec9b0">'+esc(t.key)+'</span>: '+esc(t.val)}).join(' | ')||'<span style="color:#555">\u2014</span>';
