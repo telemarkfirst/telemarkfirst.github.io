@@ -699,6 +699,12 @@ html[data-sim-workspace="true"] [data-widget-id="gamepad"] :is(
 .sim-widget-palette-option strong { font-size: 0.82rem; }
 .sim-widget-palette-option span { color: var(--tm-text-muted, rgba(203, 230, 241, 0.54)); font-size: 0.7rem; }
 
+.sim-widget-palette-reset {
+  border: 1px solid var(--tm-border-quiet, rgba(156, 175, 194, 0.2));
+  background: var(--tm-surface-2, #0b1118);
+  color: var(--tm-text-strong, #effbff);
+}
+
 .sim-widget-palette-software {
   border: 1px solid rgba(96, 165, 250, 0.32);
   background: rgba(96, 165, 250, 0.1);
@@ -921,6 +927,7 @@ html[data-sim-workspace="true"] [data-widget-id="gamepad"] :is(
   }
 
   .sim-widget-coding { min-height: 760px; }
+  .sim-widget-execution { min-height: 220px; }
   html[data-sim-workspace="true"] #sim-challenge-body { max-height: 130px; }
   .sim-widget-robot_view,
   .sim-widget-lesson_output { min-height: 420px; }

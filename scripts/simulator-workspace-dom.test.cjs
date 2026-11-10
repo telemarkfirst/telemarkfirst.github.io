@@ -100,6 +100,9 @@ async function testSeparatedLessonSurfaces() {
   const coding = definition('coding');
   const requirements = definition('requirements');
   const execution = definition('execution');
+  const lessonOutput = definition('lesson_output');
+  assert.equal(capturedWidgets[0].identifier, 'execution',
+    'run controls should be the first panel in the narrow layout');
   assert.ok(coding?.node.querySelector('#sim-code-editor'), 'the code editor must remain in its own panel');
   assert.equal(coding.node.querySelector('#sim-challenge-card'), null, 'requirements must leave the editor panel');
   assert.equal(coding.node.querySelector('#sim-btn-run'), null, 'run controls must leave the editor panel');
@@ -110,6 +113,9 @@ async function testSeparatedLessonSurfaces() {
     'control instructions must sit with requirements instead of covering the gamepad');
   assert.ok(execution?.node.querySelector('#sim-btn-run'), 'run controls must be an independent panel');
   assert.ok(execution.node.querySelector('#sim-telemetry-log'), 'live telemetry must stay with run controls');
+  assert.ok(lessonOutput, 'a lesson without a 3D scene must keep its output panel');
+  assert.ok(execution.position.position_y + execution.position.height <= lessonOutput.position.position_y,
+    'non-3D output must begin below the run controls instead of covering them');
 
   const header = window.document.querySelector('#sim-workspace-lesson-header');
   assert.ok(header, 'the simulator and lesson names need a persistent workspace header');
@@ -193,6 +199,65 @@ function testSavedSplitPanelMigration() {
   }
   customWorkspace.workspace.destroy();
   customWorkspace.dom.window.close();
+}
+
+async function testFindCoveredExecutionPanel() {
+  const dom = new JSDOM('<!doctype html><html><body></body></html>', {
+    url: 'https://telemark.test/simulator/unit11.3.html',
+    runScripts: 'outside-only',
+    pretendToBeVisual: true,
+  });
+  const {window} = dom;
+  window.matchMedia = () => ({matches: false, addEventListener() {}, removeEventListener() {}});
+  window.requestAnimationFrame = (callback) => window.setTimeout(callback, 0);
+  let scrolledTo = null;
+  window.Element.prototype.scrollIntoView = function () { scrolledTo = this.dataset.widgetId; };
+  window.eval(source);
+  const workspace = window.TelemarkSimulatorWorkspace.mount({
+    root: window.document.body,
+    lessonId: 'unit11.3',
+    collision: 'overlap',
+    widgets: [
+      widget(window, 'coding', 'Code editor',
+        {position_x: 0, position_y: 0, width: 14, height: 13, tab_group: null},
+        {minWidth: 5, maxWidth: 24, minHeight: 5, maxHeight: 48}, 'software'),
+      widget(window, 'execution', 'Run and telemetry',
+        {position_x: 14, position_y: 0, width: 10, height: 5, tab_group: null},
+        {minWidth: 5, maxWidth: 24, minHeight: 5, maxHeight: 48}, 'software'),
+      widget(window, 'robot_view', '3D view',
+        {position_x: 14, position_y: 0, width: 10, height: 12, tab_group: null},
+        {minWidth: 5, maxWidth: 24, minHeight: 5, maxHeight: 48}),
+    ],
+  });
+  assert.ok(Number(frameFor(window, 'robot_view').style.zIndex)
+    > Number(frameFor(window, 'execution').style.zIndex),
+  'a saved overlap can cover the execution panel');
+  const findExecution = () => [...window.document.querySelectorAll('.sim-widget-palette-option')]
+    .find((option) => option.querySelector('strong')?.textContent === 'Run and telemetry');
+  assert.match(findExecution()?.textContent ?? '', /Show/,
+    'an open but covered execution panel must remain findable in Add panel');
+  findExecution().click();
+  await waitForTasks(window);
+  assert.ok(Number(frameFor(window, 'execution').style.zIndex)
+    > Number(frameFor(window, 'robot_view').style.zIndex),
+  'finding the execution panel must raise it above overlapping panels');
+  assert.equal(scrolledTo, 'execution', 'finding the execution panel must scroll it into view');
+  assert.equal(window.document.activeElement, frameFor(window, 'execution').querySelector('.sim-widget-header'),
+    'keyboard focus must follow the revealed panel');
+
+  workspace.removeWidget('execution');
+  assert.match(findExecution()?.textContent ?? '', /Add/,
+    'a removed execution panel must remain restorable from the same menu');
+  findExecution().click();
+  assert.ok(frameFor(window, 'execution'), 'Add panel must restore a removed execution panel');
+  workspace.removeWidget('execution');
+  const reset = [...window.document.querySelectorAll('.sim-widget-palette-option')]
+    .find((option) => option.querySelector('strong')?.textContent === 'Restore starting layout');
+  assert.ok(reset, 'saved layouts must offer a way back to the new starter arrangement');
+  reset.click();
+  assert.ok(frameFor(window, 'execution'), 'restoring the starter layout must reopen the run controls');
+  workspace.destroy();
+  window.close();
 }
 
 async function main() {
@@ -623,6 +688,7 @@ async function main() {
   dom.window.close();
   await testSeparatedLessonSurfaces();
   testSavedSplitPanelMigration();
+  await testFindCoveredExecutionPanel();
   console.log('Simulator workspace DOM regressions passed: overlap, stacking, four-corner resize, full-screen reflow, interactive tabs, shared persistence, storage sync, hidden widgets, and teardown.');
 }
 

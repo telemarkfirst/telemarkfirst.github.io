@@ -6061,6 +6061,17 @@
     let sceneNode = null;
     let hasThreeView = false;
 
+    if (lessonContent.executionNode) {
+      widgets.push({
+        identifier: "execution",
+        title: "Run and telemetry",
+        node: lessonContent.executionNode,
+        category: "software",
+        bounds: {minWidth: 5, minHeight: 5, maxWidth: 24, maxHeight: 48},
+        position: {position_x: 14, position_y: 0, width: 10, height: 5, tab_group: null},
+      });
+    }
+
     if (coding) {
       widgets.push({
         identifier: "coding",
@@ -6069,7 +6080,7 @@
         category: "software",
         bounds: {minWidth: 5, minHeight: 5, maxWidth: 24, maxHeight: 48},
         position: {position_x: 0, position_y: 0, width: 14,
-          height: lessonContent.requirementsNode ? 13 : 20, tab_group: null},
+          height: lessonContent.requirementsNode ? 17 : 24, tab_group: null},
       });
     }
 
@@ -6080,18 +6091,7 @@
         node: lessonContent.requirementsNode,
         category: "software",
         bounds: {minWidth: 5, minHeight: 5, maxWidth: 24, maxHeight: 48},
-        position: {position_x: 0, position_y: 13, width: 14, height: 7, tab_group: null},
-      });
-    }
-
-    if (lessonContent.executionNode) {
-      widgets.push({
-        identifier: "execution",
-        title: "Run and telemetry",
-        node: lessonContent.executionNode,
-        category: "software",
-        bounds: {minWidth: 5, minHeight: 5, maxWidth: 24, maxHeight: 48},
-        position: {position_x: 14, position_y: 0, width: 10, height: 5, tab_group: null},
+        position: {position_x: 0, position_y: 17, width: 14, height: 7, tab_group: null},
       });
     }
 
@@ -6113,24 +6113,50 @@
           category: "hardware",
           bounds: {minWidth: 5, minHeight: 5, maxWidth: 24, maxHeight: 48},
           position: {position_x: 14, position_y: lessonContent.executionNode ? 5 : 0,
-            width: 10, height: lessonContent.executionNode ? 8 : 12, tab_group: null},
+            width: 10, height: lessonContent.executionNode ? 10 : 15, tab_group: null},
         });
       }
     }
 
-    independentWidgets.forEach(function (definition) { widgets.push(definition); });
-
-    if (gamepadCard && gamepadCard !== coding && gamepadCard !== output) {
-      widgets.push({
-        identifier: "gamepad",
-        title: "Gamepad",
-        node: gamepadCard,
-        category: "hardware",
-        bounds: {minWidth: 5, minHeight: 5, maxWidth: 24, maxHeight: 48},
-        position: {position_x: 14, position_y: lessonContent.executionNode ? 13 : 12,
-          width: 10, height: lessonContent.executionNode ? 7 : 8, tab_group: null},
-      });
+    // Put the lesson's main live inspector beside the scene. Less immediate
+    // diagrams and tools continue below the coding and viewing workspace.
+    const primaryInspector = hasThreeView && independentWidgets.find(function (definition) {
+      return definition.position.width < 24 && definition.initiallyVisible !== false;
+    });
+    const secondaryWidgets = independentWidgets.filter(function (definition) {
+      return definition !== primaryInspector && definition.initiallyVisible !== false;
+    });
+    const optionalWidgets = independentWidgets.filter(function (definition) {
+      return definition.initiallyVisible === false;
+    });
+    if (primaryInspector) {
+      primaryInspector.position = {
+        position_x: 14, position_y: 15, width: 10, height: 9, tab_group: null,
+      };
+      widgets.push(primaryInspector);
     }
+
+    let secondaryRow = 24;
+    for (let index = 0; index < secondaryWidgets.length;) {
+      const first = secondaryWidgets[index];
+      const second = secondaryWidgets[index + 1];
+      const paired = second && first.position.width < 24 && second.position.width < 24;
+      const rowHeight = Math.max(first.position.height, paired ? second.position.height : 0);
+      first.position = {position_x: 0, position_y: secondaryRow,
+        width: paired ? 12 : 24, height: rowHeight, tab_group: null};
+      widgets.push(first);
+      if (paired) {
+        second.position = {position_x: 12, position_y: secondaryRow,
+          width: 12, height: rowHeight, tab_group: null};
+        widgets.push(second);
+      }
+      secondaryRow += rowHeight;
+      index += paired ? 2 : 1;
+    }
+    optionalWidgets.forEach(function (definition) {
+      definition.position.position_y = secondaryRow + (primaryInspector ? 7 : 0);
+      widgets.push(definition);
+    });
 
     // Non-3D legacy lessons still need their run controls and telemetry. When
     // a 3D scene exists, those lesson-specific teaching surfaces are already
@@ -6142,7 +6168,20 @@
         node: output,
         category: "hardware",
         bounds: {minWidth: 5, minHeight: 5, maxWidth: 24, maxHeight: 48},
-        position: {position_x: 14, position_y: 0, width: 10, height: 12, tab_group: null},
+        position: {position_x: 14, position_y: lessonContent.executionNode ? 5 : 0,
+          width: 10, height: lessonContent.executionNode ? 10 : 15, tab_group: null},
+      });
+    }
+
+    if (gamepadCard && gamepadCard !== coding && gamepadCard !== output) {
+      widgets.push({
+        identifier: "gamepad",
+        title: "Gamepad",
+        node: gamepadCard,
+        category: "hardware",
+        bounds: {minWidth: 5, minHeight: 5, maxWidth: 24, maxHeight: 48},
+        position: {position_x: 14, position_y: primaryInspector ? secondaryRow : 15,
+          width: 10, height: primaryInspector ? 7 : 9, tab_group: null},
       });
     }
 

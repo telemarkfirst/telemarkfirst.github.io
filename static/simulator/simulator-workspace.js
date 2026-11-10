@@ -436,7 +436,7 @@
     this.palette.className = "sim-widget-palette";
     this.palette.hidden = true;
     this.palette.setAttribute("role", "menu");
-    this.palette.setAttribute("aria-label", "Add a panel");
+    this.palette.setAttribute("aria-label", "Find or add a panel");
 
     this.addButton = makeButton(doc, "sim-widget-add", "Add panel", "M12 5v14M5 12h14");
     this.addButton.setAttribute("aria-expanded", "false");
@@ -1496,13 +1496,13 @@
     this.palette.innerHTML = "";
     const title = this.document.createElement("div");
     title.className = "sim-widget-palette-title";
-    title.textContent = "Available in this lesson";
+    title.textContent = "Find or add a panel";
     this.palette.appendChild(title);
     let optionCount = 0;
     const self = this;
     this.registry.forEach(function (definition, identifier) {
       const visible = self.records.some(function (record) { return record.identifier === identifier; });
-      if (visible || !self.available.has(identifier)) return;
+      if (!self.available.has(identifier)) return;
       optionCount += 1;
       const button = self.document.createElement("button");
       button.type = "button";
@@ -1512,21 +1512,34 @@
       const label = self.document.createElement("strong");
       label.textContent = definition.title;
       const category = self.document.createElement("span");
-      category.textContent = definition.kind === "tabs" ? "Container" : definition.category === "software" ? "Software" : "Hardware";
+      category.textContent = (visible ? "Show" : "Add") + " · "
+        + (definition.kind === "tabs" ? "Container" : definition.category === "software" ? "Software" : "Hardware");
       button.appendChild(label);
       button.appendChild(category);
       button.addEventListener("click", function () {
-        self.addWidget(identifier, null);
+        if (!visible) self.addWidget(identifier, null);
         self.closePalette();
+        self.revealWidget(identifier);
       });
       self.palette.appendChild(button);
     });
     if (!optionCount) {
       const empty = this.document.createElement("p");
       empty.className = "sim-widget-palette-empty";
-      empty.textContent = "All lesson panels are open.";
+      empty.textContent = "No panels are available in this lesson.";
       this.palette.appendChild(empty);
     }
+    const resetButton = this.document.createElement("button");
+    resetButton.type = "button";
+    resetButton.className = "sim-widget-palette-option sim-widget-palette-reset";
+    resetButton.setAttribute("role", "menuitem");
+    resetButton.innerHTML = "<strong>Restore starting layout</strong><span>Reset positions and open panels</span>";
+    resetButton.addEventListener("click", function () {
+      self.closePalette();
+      self.resetLayout();
+      self.scroll.scrollTop = 0;
+    });
+    this.palette.appendChild(resetButton);
   };
 
   Workspace.prototype.togglePalette = function () {
@@ -1547,6 +1560,32 @@
     this.palette.hidden = true;
     this.addButton.setAttribute("aria-expanded", "false");
     this.addButton.focus();
+  };
+
+  Workspace.prototype.revealWidget = function (identifier) {
+    const record = this.records.find(function (item) { return item.identifier === identifier; });
+    if (!record) return false;
+    if (record.tab_group) {
+      const separator = record.tab_group.indexOf("/");
+      const groupIdentifier = record.tab_group.slice(0, separator);
+      const tabIdentifier = record.tab_group.slice(separator + 1);
+      if (this.tabExists(groupIdentifier, tabIdentifier)) {
+        this.activateTab(groupIdentifier, tabIdentifier);
+        this.bringToFront(groupIdentifier);
+      }
+    }
+    this.bringToFront(identifier);
+    const self = this;
+    scheduleFrame(function () {
+      const frame = self.frames.get(identifier);
+      if (!frame) return;
+      if (typeof frame.scrollIntoView === "function") frame.scrollIntoView({block: "nearest"});
+      const header = frame.querySelector(".sim-widget-header");
+      if (header) header.focus({preventScroll: true});
+    });
+    const definition = this.registry.get(identifier);
+    this.announce((definition ? definition.title : identifier) + " shown.");
+    return true;
   };
 
   Workspace.prototype.contextGridFor = function (record) {
