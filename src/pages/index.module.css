@@ -32,17 +32,18 @@
 
 .heroCopy {
   min-width: 0;
+  container-type: inline-size;
 }
 
 .heroTitle {
   margin: 0 0 1.5rem;
   color: var(--tm-bg);
   font-family: var(--telemark-font-display);
-  font-size: clamp(52px, 6.25vw, 92px);
+  font-size: min(clamp(52px, 6.25vw, 92px), 18cqw);
   font-weight: var(--tm-weight-display);
   letter-spacing: -0.035em;
   line-height: 0.98;
-  text-shadow: 8px 9px 0 var(--tm-text-strong);
+  text-shadow: 0.087em 0.098em 0 var(--tm-text-strong);
   text-wrap: pretty;
 }
 
@@ -50,6 +51,7 @@
 .titleLine2 {
   display: block;
   color: var(--tm-bg);
+  white-space: nowrap;
 }
 
 .heroSub {
@@ -215,7 +217,7 @@
 
 @media (max-width: 520px) {
   .heroTitle {
-    font-size: clamp(44px, 16vw, 64px);
+    font-size: min(clamp(44px, 16vw, 64px), 18cqw);
   }
 
   .heroSub {
@@ -243,7 +245,7 @@
 
   .heroTitle {
     margin-bottom: 1rem;
-    font-size: clamp(38px, 7vh, 64px);
+    font-size: min(clamp(38px, 7vh, 64px), 18cqw);
   }
 
   .heroSub {
@@ -264,7 +266,7 @@
 
 @media (max-height: 700px) {
   .heroTitle {
-    font-size: clamp(32px, 6.5vh, 48px);
+    font-size: min(clamp(32px, 6.5vh, 48px), 18cqw);
   }
 
   .heroSub {
