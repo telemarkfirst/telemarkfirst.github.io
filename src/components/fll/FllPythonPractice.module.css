@@ -29,7 +29,7 @@
 
 .shell { container-type: inline-size; }
 
-.fullscreenExit { display: none; }
+.utility.fullscreenExit { display: none; }
 
 .toolbar {
   display: flex;

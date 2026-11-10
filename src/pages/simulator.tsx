@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import Layout from '@theme/Layout';
+import {useLocation} from '@docusaurus/router';
 import pageStyles from './simulator.module.css';
 import AuthenticatedSimulatorNavigator from '../components/AuthenticatedSimulatorNavigator';
 import ToolWorkbench from '../components/mechanical/ToolWorkbench';
@@ -16,25 +17,14 @@ type Bench = 'software' | 'mechanical';
  */
 
 export default function SimulatorPage(): React.JSX.Element {
-  const [bench, setBench] = useState<Bench>(() => {
-    if (typeof window === 'undefined') return 'software';
-    // Arriving from a lesson's "open in the workbench" link lands on the
-    // calculators, not on the Java simulator.
-    return TOOL_CATALOG.some((t) => t.id === window.location.hash.replace('#', ''))
-      ? 'mechanical'
-      : 'software';
-  });
+  const [bench, setBench] = useState<Bench>('software');
+  const {hash} = useLocation();
 
-  // A lesson link arriving while the page is already open should also switch
-  // to the calculators, not leave the visitor on the Java simulator.
+  // Router navigation can change the hash without a native hashchange event.
+  // Read it after hydration so server and first client render agree.
   useEffect(() => {
-    function onHashChange() {
-      const hash = window.location.hash.replace('#', '');
-      if (TOOL_CATALOG.some((t) => t.id === hash)) setBench('mechanical');
-    }
-    window.addEventListener('hashchange', onHashChange);
-    return () => window.removeEventListener('hashchange', onHashChange);
-  }, []);
+    if (TOOL_CATALOG.some((tool) => tool.id === hash.replace('#', ''))) setBench('mechanical');
+  }, [hash]);
 
   return (
     <Layout title="Tools · Telemark" noFooter>

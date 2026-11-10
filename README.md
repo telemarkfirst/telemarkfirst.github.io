@@ -353,3 +353,62 @@ never returns learner names, emails, or UIDs.
 
 See [ANALYTICS_SETUP.md](./ANALYTICS_SETUP.md) for the required one-time Google
 Analytics, Firebase, IAM, and GitHub Actions configuration.
+
+### Sharp AI lesson chat
+
+The lesson panel calls `https://sharp-ai.srivibhavp.workers.dev/api/ask` with the
+student’s Firebase ID token, `chat: true`, current lesson, and recent turns.
+The Worker must trust the `telemark-e9159` Firebase project and allow the
+Telemark site origin. An API health check alone does not verify either.
+
+Run `node scripts/ask-stream.test.cjs` to check the request contract, streamed
+answers, interrupted connections, cancellation, and actionable error messages.
+Minute limits ask the student to wait a minute; daily limits and expired
+sessions have separate messages. Changes to the Worker live in the Sharp AI
+repository and require a separate deployment.
+
+The lesson panel offers hints, explanations, worked solutions, and guided
+diagnosis. In **Lesson and code context**, choose **Attach current simulator
+code** to preview a snapshot of all Java project files, then **Explain this
+code** or ask a question. Refresh the snapshot after editing the simulator.
+You can also paste code, an exact error, and your attempt. Limits are six files
+and 16,000 code characters total, with the lesson section capped at 3,000
+characters. Code is never automatically run or applied.
+
+The chat now retains citation numbers and shows source passages under **Check
+sources and claims**. Matching words are an inspection aid, not proof that a
+claim is correct. Restricted sources show links instead of copied text.
+Personalized requests bypass Sharp AI's shared cache and query log; generated
+replies can remain in local browser history.
+
+Draft questions, help mode, attached code, errors, and attempts recover when
+the panel reopens or the lesson reloads in the same browser tab. Each lesson
+has a separate workspace, bounded to the ten most recently edited lessons in
+`sessionStorage`; this is not account sync. **Clear draft and context** removes
+the current workspace contents. Oversized attachments or denied browser storage
+show a recovery warning, so students know when to copy their work first.
+
+**Stop response** keeps the partial answer and immediately unlocks the composer.
+**Retry question** replaces the failed reply without duplicating its question,
+using the code and context currently displayed. Leaving a lesson cancels its
+request; late tokens cannot update a different lesson or a newer response.
+Interrupted saved answers recover with a retry message. Invalid saved entries
+are ignored, and restored evidence respects source excerpt restrictions.
+
+Regression checks: `node scripts/assistant-workspace.test.cjs`,
+`node scripts/chat-store.test.cjs`, and `node scripts/ask-stream.test.cjs`.
+On November 9, 2026, headed Chromium checks covered workspace isolation,
+reopening, retry, stop, late tokens, clearing context, and 390 px layout with
+explicitly synthetic authentication and answers. Actual local guest checks
+opened software, mechanical, and FLL lessons and their sign-in entry; the FLL
+measured-distance starter executed in Python and reported a 1.5-second route.
+These checks do not verify a real Google sign-in or an authenticated production
+answer. The production site must deploy the integrated revision separately.
+
+Calculator lesson links now follow the Docusaurus router hash after hydration,
+so direct links and in-app navigation select the matching design calculator.
+Headed checks covered `/simulator#gear-ratio` and the chain/belt lesson link with
+no hydration errors. The refreshed dependency set also passed a separate clean
+install, full site checks, TypeScript, and production build in the integration
+checkout. Build-time anchor warnings refer to calculator panels selected after
+hydration; the tested links work in the browser.

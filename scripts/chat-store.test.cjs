@@ -102,4 +102,29 @@ check(() => {
   assert.notEqual(store.newChatId(), store.newChatId());
 });
 
+check(() => {
+  const {store, backing} = freshStore();
+  backing.set('telemark:chats', JSON.stringify([null, 'broken', {id:'bad',title:'x',path:'/x',updatedAt:1,messages:{}},
+    {id:'good',title:'Lesson',path:'/x',updatedAt:2,messages:[{role:'ai',text:'Partial answer',complete:false}]}]));
+  const chats = store.listChats();
+  assert.equal(chats.length, 1);
+  assert.match(chats[0].messages[0].error, /interrupted/);
+});
+check(() => {
+  const {store, backing} = freshStore();
+  backing.set('telemark:chats', JSON.stringify([{id:'good',title:'Lesson',path:'/x',updatedAt:2,messages:[{role:'ai',text:'Answer',citations:[{n:1,url:'javascript:alert(1)'},{n:2,url:'https://example.org/docs'}],evidence:[{claim:'Claim',sources:[{n:2,status:'restricted',passage:'Do not restore this text'}]}]}]}]));
+  const message = store.listChats()[0].messages[0];
+  assert.equal(message.citations[0].url, undefined);
+  assert.equal(message.evidence[0].sources[0].passage, null);
+});
+
+check(() => {
+  const {store, backing} = freshStore();
+  const citations = [{n:1,mode:'summarize',canExcerpt:true},{n:2,mode:'link',canExcerpt:true},{n:3,canExcerpt:true},{n:4,mode:'full',canExcerpt:true}];
+  backing.set('telemark:chats', JSON.stringify([{id:'mode',title:'Lesson',path:'/x',updatedAt:2,messages:[{role:'ai',text:'Answer',citations,evidence:[{claim:'Claim',sources:citations.map(({n})=>({n,status:'matched',passage:'Passage'}))}]}]}]));
+  const message = store.listChats()[0].messages[0];
+  assert.deepEqual(message.citations.map(c=>c.canExcerpt), [false,false,true,true]);
+  assert.deepEqual(message.evidence[0].sources.map(s=>s.passage), [null,null,'Passage','Passage']);
+});
+
 console.log(`Chat store tests passed (${checks} cases)`);

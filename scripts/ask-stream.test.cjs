@@ -125,5 +125,100 @@ const check = async (fn) => { await fn(); checks += 1; };
     assert.equal(out, 'still here');
   });
 
+  await check(async () => {
+    let sent;
+    global.fetch = async (_url, request) => {
+      sent = JSON.parse(request.body);
+      return {ok: true, body: bodyOf([sse([{event: 'done', data: {}}])])};
+    };
+    const page = {title: 'Gear ratios', url: 'https://telemarkfirst.github.io/mechanical/ratios'};
+    const history = [{question: 'What is torque?', answer: 'Rotational force.'}];
+    await askSharpAi('Why?', {idToken: 'signed-token', page, history}, {});
+    assert.deepEqual(sent, {question: 'Why?', chat: true, idToken: 'signed-token', page, history});
+  });
+
+  await check(async () => {
+    const controller = new AbortController();
+    controller.abort();
+    global.fetch = async () => { throw new DOMException('aborted', 'AbortError'); };
+    let errors = 0;
+    await askSharpAi('q', {idToken: 't', signal: controller.signal}, {onError: () => errors++});
+    assert.equal(errors, 0);
+  });
+
+  for (const [status, detail, expected] of [
+    [429, {scope: 'minute'}, /Wait a minute/],
+    [429, {scope: 'day'}, /questions for today/],
+    [403, {error: 'auth-failed'}, /session expired/],
+    [403, {error: 'turnstile-failed'}, /sign-in connection is unavailable/],
+    [503, {error: 'auth-unavailable'}, /Try again shortly/],
+    [413, {maxChars: 500}, /under 500 characters/],
+  ]) {
+    await check(async () => {
+      stub({ok: false, status, json: async () => detail});
+      let message = '';
+      await askSharpAi('q', {idToken: 't'}, {onError: (m) => { message = m; }});
+      assert.match(message, expected);
+    });
+  }
+
+  await check(async () => {
+    const text = sse([{event: 'token', data: {t: 'complete'}}, {event: 'done', data: {}}]).replace(/\n/g, '\r\n');
+    stub({ok: true, body: bodyOf([...text])});
+    let answer = '';
+    let done = 0;
+    const errors = [];
+    await askSharpAi('q', {idToken: 't'}, {
+      onToken: (t) => { answer += t; }, onDone: () => done++, onError: (m) => errors.push(m),
+    });
+    assert.equal(answer, 'complete');
+    assert.equal(done, 1);
+    assert.deepEqual(errors, []);
+  });
+
+  await check(async () => {
+    stub({ok: true, body: bodyOf([sse([{event: 'token', data: {t: 'cut off'}}])])});
+    let error = '';
+    let done = 0;
+    await askSharpAi('q', {idToken: 't'}, {onError: (m) => { error = m; }, onDone: () => done++});
+    assert.match(error, /stopped partway/);
+    assert.equal(done, 1);
+  });
+
+  await check(async () => {
+    stub({ok: true, body: bodyOf([sse([
+      {event: 'beyond_start', data: {}}, {event: 'beyond', data: {t: 'reasoning'}},
+      {event: 'degrade', data: {answerMd: 'Sources only'}}, {event: 'done', data: {}},
+    ])])});
+    const seen = [];
+    await askSharpAi('q', {idToken: 't'}, {
+      onBeyondStart: () => seen.push('start'), onBeyond: (t) => seen.push(t), onDegrade: (t) => seen.push(t),
+    });
+    assert.deepEqual(seen, ['start', 'reasoning', 'Sources only']);
+  });
+
+  await check(async () => {
+    stub({ok: false, status: 502, json: async () => null});
+    let error = '';
+    await askSharpAi('q', {idToken: 't'}, {onError: (m) => { error = m; }});
+    assert.match(error, /could not answer/);
+  });
+
+  await check(async () => {
+    let sent;
+    const learning = {mode: 'hint', files: [{name: 'Main.java', source: 'motor.setPower(0);'}], error: 'Stopped'};
+    const tutor = {mode: 'hint', followUps: ['Show the solution.']};
+    const claims = [{claim: 'Set power.', sources: [{n: 1, status: 'matched', passage: 'Set power.', version: 'SDK 12'}]}];
+    global.fetch = async (_url, request) => {
+      sent = JSON.parse(request.body);
+      return {ok: true, body: bodyOf([sse([{event: 'meta', data: {citations: [{n: 1}], tutor}}, {event: 'evidence', data: {claims}}, {event: 'done', data: {}}])])};
+    };
+    let actualTutor, actualClaims;
+    await askSharpAi('Why?', {idToken: 't', learning}, {onMeta: (_citations, plan) => {actualTutor = plan;}, onEvidence: (e) => {actualClaims = e;}});
+    assert.deepEqual(sent.learning, learning);
+    assert.deepEqual(actualTutor, tutor);
+    assert.deepEqual(actualClaims, claims);
+  });
+
   console.log(`Answer stream tests passed (${checks} cases)`);
 })();
